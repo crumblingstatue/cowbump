@@ -32,3 +32,5 @@ Loading should also be multithreaded, so loading an image doesn't block the UI.
 The user might want to reorder images, for example comic pages are in the wrong order, and the user wants to specify the correct order without renaming the entries.
 
 This could be accomplished by ordering images by id, and reordering would be done by swapping the ids of two entries.
+
+Opening multiple selected images in external image viewer should preserve this ordering (arguments should be passed in the preserved order).
