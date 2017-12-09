@@ -26,3 +26,4 @@ Loading should also be multithreaded, so loading an image doesn't block the UI.
 - aliases (e.g. `happy` = `cheerful` = `merry`)
 - implies-relationship (e.g. `elephant` implies `pachyderm` implies `animal`)
 - excluding tags (e.g. `elephant not:happy` or `animal not:elephant`)
+- renaming tags. You might want to call it something different, or you made a spelling mistake, etc.
