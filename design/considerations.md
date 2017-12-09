@@ -35,6 +35,6 @@ that can't be reused.
 This might not be a problem in practice though if we make the id datatype large enough.
 If we make it 32 bit, it's unlikely that the user will ever add 4 billion images in total.
 If the user added 1 image every second, it would take 136 years to occupy all ids.
-There could potentially be a "compaction" feature, which would reshuffle the images to occupy
-the unused ids, and forcibly regenerate the thumbnail cache.
+There could potentially be a "compaction" feature, which would reassign all ids starting from 0,
+and forcibly regenerate the thumbnail cache.
 Would this feature be actually needed in practice? Probably not.
