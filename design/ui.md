@@ -9,6 +9,7 @@ Shift left clicking an image adds/removes it from the selection.
 Ctrl + A selects all filtered images.
 Ctrl + shift + A clears selection.
 Shift right clicking opens the `multi meta overlay`
+Pressing `return` opens all selected images in the currently set external image viewer.
 
 Pressing `/` brings up the `filter editor overlay`.
 
