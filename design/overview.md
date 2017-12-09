@@ -3,7 +3,7 @@
 Ever had a huge heap of images and wanted to quickly access the ones that interest you based on
 certain properties? No? Ok.
 
-Anyway, this is an application built to:
+Anyway, this is an application with the following features:
 
 ## Easily tag lots of images fast.
 
@@ -20,3 +20,8 @@ Oh, and image selection should persist between filterings. Meaning, if you have 
 If you have over 2000 images, you don't want to wait excruciating amounts of time waiting for them to load. This means a small thumbnail should be generated for each image, which can be quickly loaded compared to the large images. Obviously, this thumbnail cache should be saved to disk to persist between runs.
 
 Loading should also be multithreaded, so loading an image doesn't block the UI.
+
+## Advanced tagging system with the following features:
+
+- aliases (e.g. `happy` = `cheerful` = `merry`)
+- implies-relationship (e.g. `elephant` implies `pachyderm` implies `animal`)
