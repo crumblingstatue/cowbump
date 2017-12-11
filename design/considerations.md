@@ -38,3 +38,7 @@ If the user added 1 image every second, it would take 136 years to occupy all id
 There could potentially be a "compaction" feature, which would reassign all ids starting from 0,
 and forcibly regenerate the thumbnail cache.
 Would this feature be actually needed in practice? Probably not.
+
+Technically, when deleting an item, the gap could be stored in a vector of reusable ids, which
+could be used first when adding a new item, but not sure if the implementation complexity is
+worth it.

@@ -35,6 +35,9 @@ This could be accomplished by ordering images by id, and reordering would be don
 
 Opening multiple selected images in external image viewer should preserve this ordering (arguments should be passed in the preserved order).
 
+Note that displaying images in order requires that we can iterate through the underlying collection
+in a defined order. This might preclude HashMap.
+
 ## Allow specifying external viewer by extension
 
 [feh doesn't play gifs](https://github.com/derf/feh/issues/308), but it respects command line argument order, which is good for ordered viewing. So it would be nice to have, say, `mpv` as external viewer for gifs, but `feh` for everything else.

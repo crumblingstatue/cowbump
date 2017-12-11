@@ -35,8 +35,15 @@ struct Tag {
 }
 ```
 
-# HashMap vs. Vec for storing id-referred items.
+# BTreeMap vs. Vec for storing id-referred items.
 
 Vec would be obviously faster and more compact, and removal of items would leave no gaps.
 However, since closing the gap means shifting all items to cover the gap, all referrers that refer
-to ids greater than the removed item's id would get invalidated. They would have to be manually updated to make sure it points to the new, correct ids. This is more complicated to implement than just using a HashMap.
+to ids greater than the removed item's id would get invalidated.
+They would have to be manually updated to make sure it points to the new, correct ids.
+This is more complicated to implement than just using a BTreeMap.
+
+Also, shifting items using Vec would also invalidate the on-disk thumbnail cache,
+so that would need to be updated too.
+
+We can't use HashMap, because we want ordered iteration.
