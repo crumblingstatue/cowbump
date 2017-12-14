@@ -31,7 +31,13 @@ impl ThumbnailLoader {
             let image_slot = Arc::clone(&self.image_slot);
             let name = name.to_owned();
             ::std::thread::spawn(move || {
-                let mut f = File::open(name).unwrap();
+                let mut f = match File::open(name) {
+                    Ok(f) => f,
+                    Err(e) => {
+                        *image_slot.lock().unwrap() = Some(Err(image::ImageError::IoError(e)));
+                        return;
+                    }
+                };
                 // Try to load file as efficiently as possible, using a single compact allocation.
                 // We trust that `len` returned by metadata is correct.
                 let len = f.metadata().unwrap().len() as usize;
