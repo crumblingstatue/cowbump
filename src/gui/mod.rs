@@ -53,7 +53,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                             selected_uids.insert(uid);
                         }
                     } else {
-                        open_in_image_viewer(&[&thumb.path]);
+                        open_with_external(&[&thumb.path]);
                     }
                 },
                 Event::KeyPressed { code, .. } => if code == Key::PageDown {
@@ -70,7 +70,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                     for &uid in &selected_uids {
                         paths.push(&db.entries[uid as usize].path);
                     }
-                    open_in_image_viewer(&paths);
+                    open_with_external(&paths);
                 },
                 _ => {}
             }
@@ -185,7 +185,58 @@ impl State {
     }
 }
 
-fn open_in_image_viewer(names: &[&Path]) {
+fn open_with_external(paths: &[&Path]) {
     use std::process::Command;
-    Command::new("feh").args(names).spawn().unwrap();
+    struct Cmd {
+        command: Command,
+        exts: Vec<String>,
+        have_args: bool,
+    }
+    let mut general_cmd = Cmd {
+        command: Command::new("feh"),
+        exts: vec![],
+        have_args: false,
+    };
+    let mut commands = vec![
+        Cmd {
+            command: {
+                let mut c = Command::new("mpv");
+                c.arg("--ab-loop-a=0");
+                c
+            },
+            exts: vec!["gif".into(), "webm".into()],
+            have_args: false,
+        },
+        Cmd {
+            command: {
+                let mut c = Command::new("swfopen");
+                c.arg("chromium");
+                c
+            },
+            exts: vec!["swf".into()],
+            have_args: false,
+        },
+    ];
+    for path in paths {
+        let mut cmd = &mut general_cmd;
+        match path.extension().and_then(|ext| ext.to_str()) {
+            Some(ext) => for c in &mut commands {
+                if c.exts.iter().find(|e| e == &ext).is_some() {
+                    cmd = c;
+                }
+            },
+            None => {}
+        }
+        cmd.command.arg(path);
+        cmd.have_args = true;
+    }
+    if general_cmd.have_args {
+        general_cmd.command.spawn().unwrap();
+    }
+
+    for mut c in commands {
+        if c.have_args {
+            c.command.spawn().unwrap();
+        }
+    }
 }
