@@ -4,7 +4,8 @@ use failure::Error;
 use db::{Db, Uid};
 use FilterSpec;
 
-use sfml::graphics::{Color, RenderTarget, RenderWindow, Sprite, Texture, TextureBox, Transformable};
+use sfml::graphics::{Color, Font, FontBox, RenderTarget, RenderWindow, Sprite, Text, Texture,
+                     TextureBox, Transformable};
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
 use std::collections::{BTreeSet, HashMap};
 use self::thumbnail_loader::ThumbnailLoader;
@@ -110,6 +111,7 @@ struct State {
     error_texture: TextureBox,
     thumbnail_cache: HashMap<Uid, Option<TextureBox>>,
     thumbnail_loader: ThumbnailLoader,
+    font: FontBox,
 }
 
 impl State {
@@ -130,6 +132,7 @@ impl State {
             ).unwrap(),
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
+            font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),
         }
     }
     fn draw_thumbnails(
@@ -144,10 +147,25 @@ impl State {
             .write_to_cache(&mut self.thumbnail_cache);
         let mut sprite = Sprite::new();
         for (i, &uid) in uids.iter().enumerate() {
+            let column = (i as u32) % self.thumbnails_per_row;
+            let row = (i as u32) / self.thumbnails_per_row;
+            let x = (column * thumb_size) as f32;
+            let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
             let texture = match self.thumbnail_cache.get(&uid) {
                 Some(opt_texture) => match *opt_texture {
                     Some(ref tex) => tex,
-                    None => &self.error_texture,
+                    None => {
+                        if let Some(ext) = db.entries[uid as usize]
+                            .path
+                            .extension()
+                            .map(|e| e.to_str())
+                        {
+                            let mut text = Text::new(ext.unwrap(), &self.font, 20);
+                            text.set_position((x, y + 64.0));
+                            window.draw(&text);
+                        }
+                        &self.error_texture
+                    }
                 },
                 None => {
                     let entry = &db.entries[uid as usize];
@@ -161,10 +179,6 @@ impl State {
             } else {
                 sprite.set_color(&Color::WHITE);
             }
-            let column = (i as u32) % self.thumbnails_per_row;
-            let row = (i as u32) / self.thumbnails_per_row;
-            let x = (column * thumb_size) as f32;
-            let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
             sprite.set_position((x, y));
             window.draw(&sprite);
         }
