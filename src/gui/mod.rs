@@ -1,4 +1,5 @@
 mod thumbnail_loader;
+mod dialog;
 
 use failure::Error;
 use db::{Db, Uid};
@@ -37,49 +38,85 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         }
 
         while let Some(event) = window.poll_event() {
-            match event {
-                Event::Closed => window.close(),
-                Event::MouseButtonPressed { button, x, y } => if button == mouse::Button::Left {
-                    let thumb_x = x as u32 / state.thumbnail_size;
-                    let rel_offset = state.y_offset as u32 % state.thumbnail_size;
-                    let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
-                    let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
-                    let uid: Uid = on_screen_uids[thumb_index as usize];
-                    let thumb = &mut db.entries[uid as usize];
-                    if Key::LShift.is_pressed() {
-                        if selected_uids.contains(&uid) {
-                            selected_uids.remove(&uid);
-                        } else {
-                            selected_uids.insert(uid);
-                        }
-                    } else {
-                        open_with_external(&[&thumb.path]);
-                    }
-                },
-                Event::KeyPressed { code, .. } => if code == Key::PageDown {
-                    state.y_offset += window.size().y as f32;
-                    recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
-                } else if code == Key::PageUp {
-                    state.y_offset -= window.size().y as f32;
-                    if state.y_offset < 0.0 {
-                        state.y_offset = 0.0;
-                    }
-                    recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
-                } else if code == Key::Return {
-                    let mut paths: Vec<&Path> = Vec::new();
-                    for &uid in &selected_uids {
-                        paths.push(&db.entries[uid as usize].path);
-                    }
-                    open_with_external(&paths);
-                },
-                _ => {}
+            if let Event::Closed = event {
+                window.close();
+            }
+            if !state.dialog_stack.handle_event(event) {
+                handle_event_viewer(
+                    event,
+                    &mut state,
+                    &mut on_screen_uids,
+                    db,
+                    &mut selected_uids,
+                    &window,
+                );
             }
         }
         window.clear(&Color::BLACK);
         state.draw_thumbnails(&mut window, db, &on_screen_uids, &selected_uids);
+        state.dialog_stack.draw(
+            &mut window,
+            &state.font,
+            db,
+            &state.thumbnail_cache,
+            state.thumbnail_size,
+            &state.error_texture,
+            &state.loading_texture,
+            &mut state.thumbnail_loader,
+        );
         window.display();
     }
     Ok(())
+}
+
+fn handle_event_viewer(
+    event: Event,
+    state: &mut State,
+    on_screen_uids: &mut Vec<Uid>,
+    db: &mut Db,
+    selected_uids: &mut BTreeSet<Uid>,
+    window: &RenderWindow,
+) {
+    match event {
+        Event::MouseButtonPressed { button, x, y } => {
+            let thumb_x = x as u32 / state.thumbnail_size;
+            let rel_offset = state.y_offset as u32 % state.thumbnail_size;
+            let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
+            let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
+            let uid: Uid = on_screen_uids[thumb_index as usize];
+            let thumb = &mut db.entries[uid as usize];
+            if button == mouse::Button::Left {
+                if Key::LShift.is_pressed() {
+                    if selected_uids.contains(&uid) {
+                        selected_uids.remove(&uid);
+                    } else {
+                        selected_uids.insert(uid);
+                    }
+                } else {
+                    open_with_external(&[&thumb.path]);
+                }
+            } else if button == mouse::Button::Right {
+                state.dialog_stack.push(Box::new(dialog::Meta::new(uid)));
+            }
+        }
+        Event::KeyPressed { code, .. } => if code == Key::PageDown {
+            state.y_offset += window.size().y as f32;
+            recalc_on_screen_items(on_screen_uids, db, &state, window.size().y);
+        } else if code == Key::PageUp {
+            state.y_offset -= window.size().y as f32;
+            if state.y_offset < 0.0 {
+                state.y_offset = 0.0;
+            }
+            recalc_on_screen_items(on_screen_uids, db, &state, window.size().y);
+        } else if code == Key::Return {
+            let mut paths: Vec<&Path> = Vec::new();
+            for &uid in selected_uids.iter() {
+                paths.push(&db.entries[uid as usize].path);
+            }
+            open_with_external(&paths);
+        },
+        _ => {}
+    }
 }
 
 fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_height: u32) {
@@ -102,6 +139,8 @@ fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_he
     );
 }
 
+type ThumbnailCache = HashMap<Uid, Option<TextureBox>>;
+
 struct State {
     thumbnails_per_row: u32,
     y_offset: f32,
@@ -109,9 +148,10 @@ struct State {
     filter: FilterSpec,
     loading_texture: TextureBox,
     error_texture: TextureBox,
-    thumbnail_cache: HashMap<Uid, Option<TextureBox>>,
+    thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
     font: FontBox,
+    dialog_stack: dialog::Stack,
 }
 
 impl State {
@@ -133,6 +173,7 @@ impl State {
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
             font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),
+            dialog_stack: Default::default(),
         }
     }
     fn draw_thumbnails(
@@ -151,38 +192,68 @@ impl State {
             let row = (i as u32) / self.thumbnails_per_row;
             let x = (column * thumb_size) as f32;
             let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
-            let texture = match self.thumbnail_cache.get(&uid) {
-                Some(opt_texture) => match *opt_texture {
-                    Some(ref tex) => tex,
-                    None => {
-                        if let Some(ext) = db.entries[uid as usize]
-                            .path
-                            .extension()
-                            .map(|e| e.to_str())
-                        {
-                            let mut text = Text::new(ext.unwrap(), &self.font, 20);
-                            text.set_position((x, y + 64.0));
-                            window.draw(&text);
-                        }
-                        &self.error_texture
-                    }
-                },
-                None => {
-                    let entry = &db.entries[uid as usize];
-                    self.thumbnail_loader.request(&entry.path, thumb_size, uid);
-                    &self.loading_texture
-                }
-            };
-            sprite.set_texture(texture, true);
             if selected_uids.contains(&uid) {
                 sprite.set_color(&Color::GREEN);
             } else {
                 sprite.set_color(&Color::WHITE);
             }
-            sprite.set_position((x, y));
-            window.draw(&sprite);
+            draw_thumbnail(
+                &self.thumbnail_cache,
+                db,
+                window,
+                x,
+                y,
+                uid,
+                thumb_size,
+                &mut sprite,
+                &self.font,
+                &self.error_texture,
+                &self.loading_texture,
+                &mut self.thumbnail_loader,
+            );
         }
     }
+}
+
+fn draw_thumbnail<'a: 'b, 'b>(
+    thumbnail_cache: &'a ThumbnailCache,
+    db: &Db,
+    window: &mut RenderWindow,
+    x: f32,
+    y: f32,
+    uid: Uid,
+    thumb_size: u32,
+    sprite: &mut Sprite<'b>,
+    font: &Font,
+    error_texture: &'a Texture,
+    loading_texture: &'a Texture,
+    thumbnail_loader: &mut ThumbnailLoader,
+) {
+    let texture = match thumbnail_cache.get(&uid) {
+        Some(opt_texture) => match *opt_texture {
+            Some(ref tex) => tex,
+            None => {
+                if let Some(ext) = db.entries[uid as usize]
+                    .path
+                    .extension()
+                    .map(|e| e.to_str())
+                {
+                    let mut text = Text::new(ext.unwrap(), &font, 20);
+                    text.set_position((x, y + 64.0));
+                    window.draw(&text);
+                }
+                error_texture
+            }
+        },
+        None => {
+            let entry = &db.entries[uid as usize];
+            thumbnail_loader.request(&entry.path, thumb_size, uid);
+            loading_texture
+        }
+    };
+    sprite.set_texture(texture, true);
+    sprite.set_position((x, y));
+    window.draw(sprite);
 }
 
 fn open_with_external(paths: &[&Path]) {
