@@ -199,7 +199,7 @@ impl State {
             } else {
                 sprite.set_color(&Color::WHITE);
             }
-            draw_thumbnail_m!(self, db, window, x, y, uid, thumb_size, &mut sprite);
+            draw_thumbnail(self, db, window, x, y, uid, thumb_size, &mut sprite);
         }
     }
 }
@@ -212,7 +212,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     y: f32,
     uid: Uid,
     thumb_size: u32,
-    sprite: &mut Sprite<'a>,
+    sprite: &mut Sprite<'b>,
 ) {
     let texture = match state.thumbnail_cache.get(&uid) {
         Some(opt_texture) => match *opt_texture {
