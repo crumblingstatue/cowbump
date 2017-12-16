@@ -19,7 +19,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         Style::NONE,
         &Default::default(),
     );
-    window.set_framerate_limit(60);
+    window.set_vertical_sync_enabled(true);
     let mut state = State::new(window.size().x);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
