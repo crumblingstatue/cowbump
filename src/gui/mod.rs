@@ -41,7 +41,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             if let Event::Closed = event {
                 window.close();
             }
-            if !state.dialog_stack.handle_event(event) {
+            if !state.dialog_stack.handle_event(event, &window, db) {
                 handle_event_viewer(
                     event,
                     &mut state,
@@ -84,7 +84,6 @@ fn handle_event_viewer(
             let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
             let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
             let uid: Uid = on_screen_uids[thumb_index as usize];
-            let thumb = &mut db.entries[uid as usize];
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
                     if selected_uids.contains(&uid) {
@@ -93,21 +92,23 @@ fn handle_event_viewer(
                         selected_uids.insert(uid);
                     }
                 } else {
-                    open_with_external(&[&thumb.path]);
+                    open_with_external(&[&db.entries[uid as usize].path]);
                 }
             } else if button == mouse::Button::Right {
-                state.dialog_stack.push(Box::new(dialog::Meta::new(uid)));
+                state
+                    .dialog_stack
+                    .push(Box::new(dialog::Meta::new(uid, db)));
             }
         }
         Event::KeyPressed { code, .. } => if code == Key::PageDown {
             state.y_offset += window.size().y as f32;
-            recalc_on_screen_items(on_screen_uids, db, &state, window.size().y);
+            recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
         } else if code == Key::PageUp {
             state.y_offset -= window.size().y as f32;
             if state.y_offset < 0.0 {
                 state.y_offset = 0.0;
             }
-            recalc_on_screen_items(on_screen_uids, db, &state, window.size().y);
+            recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
         } else if code == Key::Return {
             let mut paths: Vec<&Path> = Vec::new();
             for &uid in selected_uids.iter() {
@@ -215,6 +216,7 @@ impl State {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
     db: &Db,
@@ -238,7 +240,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
                     .extension()
                     .map(|e| e.to_str())
                 {
-                    let mut text = Text::new(ext.unwrap(), &font, 20);
+                    let mut text = Text::new(ext.unwrap(), font, 20);
                     text.set_position((x, y + 64.0));
                     window.draw(&text);
                 }
@@ -290,13 +292,12 @@ fn open_with_external(paths: &[&Path]) {
     ];
     for path in paths {
         let mut cmd = &mut general_cmd;
-        match path.extension().and_then(|ext| ext.to_str()) {
-            Some(ext) => for c in &mut commands {
-                if c.exts.iter().find(|e| e == &ext).is_some() {
+        if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
+            for c in &mut commands {
+                if c.exts.iter().any(|e| e == ext) {
                     cmd = c;
                 }
-            },
-            None => {}
+            }
         }
         cmd.command.arg(path);
         cmd.have_args = true;

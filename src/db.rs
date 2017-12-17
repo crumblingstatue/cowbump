@@ -14,7 +14,7 @@ pub struct Db {
     /// List of entries
     pub entries: Vec<Entry>,
     /// List of tags
-    tags: Vec<Tag>,
+    pub tags: Vec<Tag>,
 }
 
 /// Unique identifier for entries/tags.
