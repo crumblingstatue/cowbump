@@ -3,7 +3,8 @@ use std::sync::{Arc, Mutex};
 use image::{self, FilterType, ImageBuffer, ImageResult, Rgba};
 use std::fs::File;
 use std::io::prelude::*;
-use sfml::graphics::{Texture, TextureBox};
+use sfml::graphics::Texture;
+use sfml::system::SfBox;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -60,7 +61,7 @@ impl ThumbnailLoader {
             });
         }
     }
-    pub fn write_to_cache(&mut self, cache: &mut HashMap<Uid, Option<TextureBox>>) {
+    pub fn write_to_cache(&mut self, cache: &mut HashMap<Uid, Option<SfBox<Texture>>>) {
         if let Some(result) = self.image_slot.lock().unwrap().take() {
             match result {
                 Ok(buf) => {

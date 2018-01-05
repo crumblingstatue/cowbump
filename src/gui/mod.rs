@@ -5,9 +5,9 @@ use failure::Error;
 use db::{Db, Uid};
 use FilterSpec;
 
-use sfml::graphics::{Color, Font, FontBox, RenderTarget, RenderWindow, Sprite, Text, Texture,
-                     TextureBox, Transformable};
+use sfml::graphics::{Color, Font, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable};
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
+use sfml::system::SfBox;
 use std::collections::{BTreeSet, HashMap};
 use self::thumbnail_loader::ThumbnailLoader;
 use std::path::Path;
@@ -140,18 +140,18 @@ fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_he
     );
 }
 
-type ThumbnailCache = HashMap<Uid, Option<TextureBox>>;
+type ThumbnailCache = HashMap<Uid, Option<SfBox<Texture>>>;
 
 struct State {
     thumbnails_per_row: u32,
     y_offset: f32,
     thumbnail_size: u32,
     filter: FilterSpec,
-    loading_texture: TextureBox,
-    error_texture: TextureBox,
+    loading_texture: SfBox<Texture>,
+    error_texture: SfBox<Texture>,
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
-    font: FontBox,
+    font: SfBox<Font>,
     dialog_stack: dialog::Stack,
 }
 
