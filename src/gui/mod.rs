@@ -222,7 +222,7 @@ impl State {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
+#[allow(clippy::too_many_arguments)]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
     db: &Db,

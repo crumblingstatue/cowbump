@@ -41,7 +41,7 @@ impl Button {
 }
 
 impl Stack {
-    #[cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
+    #[allow(clippy::too_many_arguments)]
     pub fn draw(
         &self,
         window: &mut RenderWindow,
@@ -112,7 +112,7 @@ impl Stack {
 }
 
 pub trait Dialog {
-    #[cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
+    #[allow(clippy::too_many_arguments)]
     fn draw(
         &self,
         window: &mut RenderWindow,
