@@ -1,12 +1,12 @@
 use crate::db::{Db, Uid};
 use crate::gui::thumbnail_loader::ThumbnailLoader;
+use crate::tag::Tag;
 use sfml::graphics::{
     Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite, Text, Texture,
     Transformable,
 };
 use sfml::system::{Vector2f, Vector2u};
 use sfml::window::{Event, Key};
-use crate::tag::Tag;
 
 /// A stack of dialogues
 #[derive(Default)]

@@ -1,9 +1,9 @@
 use bincode;
 use crate::entry::Entry;
+use crate::tag::Tag;
 use failure::Error;
 use std::fs::File;
 use std::path::Path;
-use crate::tag::Tag;
 use walkdir::WalkDir;
 
 /// The database of all entries.
