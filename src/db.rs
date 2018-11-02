@@ -75,17 +75,13 @@ impl Db {
     }
     pub fn save_to_fs(&self) -> Result<(), Error> {
         let mut f = File::create(DB_FILENAME)?;
-        bincode::serialize_into(&mut f, self, bincode::Bounded(BINCODE_BOUND))?;
+        bincode::serialize_into(&mut f, self)?;
         Ok(())
     }
     pub fn load_from_fs() -> Result<Self, Error> {
         let mut f = File::open(DB_FILENAME)?;
-        Ok(bincode::deserialize_from(
-            &mut f,
-            bincode::Bounded(BINCODE_BOUND),
-        )?)
+        Ok(bincode::deserialize_from(&mut f)?)
     }
 }
 
-const BINCODE_BOUND: u64 = 100_000_000;
 const DB_FILENAME: &str = "cowbump.db";

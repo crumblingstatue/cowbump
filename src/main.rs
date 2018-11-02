@@ -1,5 +1,3 @@
-#![feature(conservative_impl_trait)]
-
 extern crate bincode;
 extern crate failure;
 extern crate image;

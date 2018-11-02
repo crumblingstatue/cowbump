@@ -29,11 +29,11 @@ impl Button {
     fn draw(&self, x: f32, y: f32, font: &Font, window: &mut RenderWindow) {
         let mut rect = RectangleShape::with_size(Vector2f::new(self.w as f32, self.h as f32));
         rect.set_position((x + self.x, y + self.y));
-        rect.set_fill_color(&Color::rgb(200, 200, 200));
+        rect.set_fill_color(Color::rgb(200, 200, 200));
         window.draw(&rect);
         let mut text = Text::new(&self.text, font, self.h);
         text.set_position((x + self.x, y + self.y));
-        text.set_fill_color(&Color::rgb(50, 50, 50));
+        text.set_fill_color(Color::rgb(50, 50, 50));
         window.draw(&text);
     }
 }
@@ -130,8 +130,8 @@ pub trait Dialog {
         let mut rect = RectangleShape::new();
         rect.set_position((x, y));
         rect.set_size(self.size());
-        rect.set_fill_color(&Color::rgb(90, 90, 90));
-        rect.set_outline_color(&Color::WHITE);
+        rect.set_fill_color(Color::rgb(90, 90, 90));
+        rect.set_outline_color(Color::WHITE);
         rect.set_outline_thickness(1.0);
         window.draw(&rect);
     }

@@ -52,7 +52,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 );
             }
         }
-        window.clear(&Color::BLACK);
+        window.clear(Color::BLACK);
         state.draw_thumbnails(&mut window, db, &on_screen_uids, &selected_uids);
         state.dialog_stack.draw(
             &mut window,
@@ -194,9 +194,9 @@ impl State {
             let x = (column * thumb_size) as f32;
             let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
             if selected_uids.contains(&uid) {
-                sprite.set_color(&Color::GREEN);
+                sprite.set_color(Color::GREEN);
             } else {
-                sprite.set_color(&Color::WHITE);
+                sprite.set_color(Color::WHITE);
             }
             draw_thumbnail(
                 &self.thumbnail_cache,
