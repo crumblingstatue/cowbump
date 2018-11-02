@@ -12,7 +12,7 @@ mod entry;
 mod gui;
 mod tag;
 
-use db::{Db, Uid};
+use crate::db::{Db, Uid};
 use std::env;
 
 fn main() {

@@ -1,4 +1,4 @@
-use db::Uid;
+use crate::db::Uid;
 
 /// An identifiable quality that entries can be tagged by.
 #[derive(Serialize, Deserialize)]

@@ -1,4 +1,4 @@
-use db::{Uid, UID_NONE};
+use crate::db::{Uid, UID_NONE};
 use image::{self, FilterType, ImageBuffer, ImageResult, Rgba};
 use sfml::graphics::Texture;
 use sfml::system::SfBox;

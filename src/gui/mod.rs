@@ -1,9 +1,9 @@
 mod dialog;
 mod thumbnail_loader;
 
-use db::{Db, Uid};
+use crate::db::{Db, Uid};
 use failure::Error;
-use FilterSpec;
+use crate::FilterSpec;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use sfml::graphics::{

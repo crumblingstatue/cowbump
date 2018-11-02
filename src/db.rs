@@ -1,9 +1,9 @@
 use bincode;
-use entry::Entry;
+use crate::entry::Entry;
 use failure::Error;
 use std::fs::File;
 use std::path::Path;
-use tag::Tag;
+use crate::tag::Tag;
 use walkdir::WalkDir;
 
 /// The database of all entries.
@@ -64,7 +64,7 @@ impl Db {
     pub fn add_new_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
     }
-    pub fn filter<'a>(&'a self, spec: &'a ::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
+    pub fn filter<'a>(&'a self, spec: &'a crate::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
         self.entries.iter().enumerate().filter_map(move |en| {
             for required_tag in &spec.has_tags {
                 if !en.1.tags.contains(required_tag) {

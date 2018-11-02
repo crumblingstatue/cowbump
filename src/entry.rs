@@ -1,4 +1,4 @@
-use db::Uid;
+use crate::db::Uid;
 use std::path::PathBuf;
 
 /// Path to an image, along with associated tags
