@@ -1,12 +1,12 @@
 use db::{Uid, UID_NONE};
-use std::sync::{Arc, Mutex};
 use image::{self, FilterType, ImageBuffer, ImageResult, Rgba};
-use std::fs::File;
-use std::io::prelude::*;
 use sfml::graphics::Texture;
 use sfml::system::SfBox;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 

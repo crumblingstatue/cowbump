@@ -1,10 +1,10 @@
-use entry::Entry;
-use tag::Tag;
-use std::path::Path;
-use failure::Error;
-use walkdir::WalkDir;
-use std::fs::File;
 use bincode;
+use entry::Entry;
+use failure::Error;
+use std::fs::File;
+use std::path::Path;
+use tag::Tag;
+use walkdir::WalkDir;
 
 /// The database of all entries.
 ///
@@ -39,7 +39,8 @@ impl Db {
                 continue;
             }
             let dir_entry_path = dir_entry.path();
-            let already_have: bool = self.entries
+            let already_have: bool = self
+                .entries
                 .iter()
                 .any(|db_en| db_en.path == dir_entry_path);
             if !already_have {

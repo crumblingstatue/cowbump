@@ -1,15 +1,17 @@
-mod thumbnail_loader;
 mod dialog;
+mod thumbnail_loader;
 
-use failure::Error;
 use db::{Db, Uid};
+use failure::Error;
 use FilterSpec;
 
-use sfml::graphics::{Color, Font, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable};
-use sfml::window::{mouse, Event, Key, Style, VideoMode};
-use sfml::system::SfBox;
-use std::collections::{BTreeSet, HashMap};
 use self::thumbnail_loader::ThumbnailLoader;
+use sfml::graphics::{
+    Color, Font, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable,
+};
+use sfml::system::SfBox;
+use sfml::window::{mouse, Event, Key, Style, VideoMode};
+use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 
 pub fn run(db: &mut Db) -> Result<(), Error> {
@@ -100,22 +102,24 @@ fn handle_event_viewer(
                     .push(Box::new(dialog::Meta::new(uid, db)));
             }
         }
-        Event::KeyPressed { code, .. } => if code == Key::PageDown {
-            state.y_offset += window.size().y as f32;
-            recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
-        } else if code == Key::PageUp {
-            state.y_offset -= window.size().y as f32;
-            if state.y_offset < 0.0 {
-                state.y_offset = 0.0;
+        Event::KeyPressed { code, .. } => {
+            if code == Key::PageDown {
+                state.y_offset += window.size().y as f32;
+                recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
+            } else if code == Key::PageUp {
+                state.y_offset -= window.size().y as f32;
+                if state.y_offset < 0.0 {
+                    state.y_offset = 0.0;
+                }
+                recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
+            } else if code == Key::Return {
+                let mut paths: Vec<&Path> = Vec::new();
+                for &uid in selected_uids.iter() {
+                    paths.push(&db.entries[uid as usize].path);
+                }
+                open_with_external(&paths);
             }
-            recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
-        } else if code == Key::Return {
-            let mut paths: Vec<&Path> = Vec::new();
-            for &uid in selected_uids.iter() {
-                paths.push(&db.entries[uid as usize].path);
-            }
-            open_with_external(&paths);
-        },
+        }
         _ => {}
     }
 }
@@ -166,11 +170,13 @@ impl State {
             loading_texture: Texture::from_memory(
                 include_bytes!("../../loading.png"),
                 &Default::default(),
-            ).unwrap(),
+            )
+            .unwrap(),
             error_texture: Texture::from_memory(
                 include_bytes!("../../error.png"),
                 &Default::default(),
-            ).unwrap(),
+            )
+            .unwrap(),
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
             font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),

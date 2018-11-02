@@ -1,9 +1,11 @@
-use sfml::graphics::{Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite, Text,
-                     Texture, Transformable};
+use db::{Db, Uid};
+use gui::thumbnail_loader::ThumbnailLoader;
+use sfml::graphics::{
+    Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite, Text, Texture,
+    Transformable,
+};
 use sfml::system::{Vector2f, Vector2u};
 use sfml::window::{Event, Key};
-use gui::thumbnail_loader::ThumbnailLoader;
-use db::{Db, Uid};
 use tag::Tag;
 
 /// A stack of dialogues
@@ -264,7 +266,9 @@ fn mouse_overlaps_button(
     let button_y = dialog_y + button.y as u32;
     let mouse_x = mouse_x as u32;
     let mouse_y = mouse_y as u32;
-    mouse_x > button_x && mouse_y > button_y && mouse_x < button_x + button.w
+    mouse_x > button_x
+        && mouse_y > button_y
+        && mouse_x < button_x + button.w
         && mouse_y < button_y + button.h
 }
 

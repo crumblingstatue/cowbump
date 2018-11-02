@@ -9,8 +9,8 @@ extern crate walkdir;
 
 mod db;
 mod entry;
-mod tag;
 mod gui;
+mod tag;
 
 use db::{Db, Uid};
 use std::env;
@@ -24,7 +24,8 @@ fn main() {
                 .nth(1)
                 .expect("Need path to image folder")
                 .as_ref(),
-        ).unwrap();
+        )
+        .unwrap();
         db
     });
     gui::run(&mut db).unwrap();
