@@ -11,7 +11,7 @@ use sfml::window::{Event, Key};
 /// A stack of dialogues
 #[derive(Default)]
 pub struct Stack {
-    dialogs: Vec<Box<Dialog>>,
+    dialogs: Vec<Box<dyn Dialog>>,
 }
 
 struct Button {
@@ -74,10 +74,10 @@ impl Stack {
             );
         }
     }
-    pub fn push(&mut self, dialog: Box<Dialog>) {
+    pub fn push(&mut self, dialog: Box<dyn Dialog>) {
         self.dialogs.push(dialog);
     }
-    pub fn pop(&mut self) -> Option<Box<Dialog>> {
+    pub fn pop(&mut self) -> Option<Box<dyn Dialog>> {
         self.dialogs.pop()
     }
     pub fn handle_event(&mut self, event: Event, window: &RenderWindow, db: &mut Db) -> bool {
@@ -191,7 +191,7 @@ fn tag_buttons_from_uid(uid: Uid, db: &Db) -> Vec<TagButton> {
 pub enum Msg {
     Nothing,
     PopMe,
-    PushNew(Box<Dialog>),
+    PushNew(Box<dyn Dialog>),
 }
 
 impl Dialog for Meta {
