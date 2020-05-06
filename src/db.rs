@@ -1,6 +1,5 @@
 use crate::entry::Entry;
 use crate::tag::Tag;
-use bincode;
 use failure::Error;
 use std::fs::File;
 use std::path::Path;
