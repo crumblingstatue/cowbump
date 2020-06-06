@@ -1,5 +1,5 @@
 use crate::db::{Uid, UID_NONE};
-use image::{self, FilterType, ImageBuffer, ImageResult, Rgba};
+use image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba};
 use sfml::graphics::Texture;
 use sfml::system::SfBox;
 use std::collections::HashMap;

@@ -5,12 +5,12 @@ authors = ["Mika Attila <radiantstatue@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-failure = "0.1.5"
-walkdir = "2.2.7"
-serde = "1.0.87"
-serde_derive = "1.0.87"
-bincode = "1.1.1"
-image = "0.21.0"
+failure = "0.1.8"
+walkdir = "2.3.1"
+serde = "1.0.111"
+serde_derive = "1.0.111"
+bincode = "1.2.1"
+image = "0.23.4"
 
 [dependencies.sfml]
 git = "https://github.com/jeremyletang/rust-sfml.git"
