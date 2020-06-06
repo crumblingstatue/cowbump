@@ -7,7 +7,7 @@ use failure::Error;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use sfml::graphics::{
-    Color, Font, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable,
+    Color, Font, RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable,
 };
 use sfml::system::SfBox;
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
@@ -248,7 +248,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
                 {
                     let mut text = Text::new(ext.unwrap(), font, 20);
                     text.set_position((x, y + 64.0));
-                    window.draw(&text);
+                    window.draw_text(&text, &RenderStates::DEFAULT);
                 }
                 error_texture
             }
@@ -261,7 +261,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     };
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
-    window.draw(sprite);
+    window.draw_sprite(sprite, &RenderStates::DEFAULT);
 }
 
 fn open_with_external(paths: &[&Path]) {

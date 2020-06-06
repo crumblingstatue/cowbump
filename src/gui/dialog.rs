@@ -2,8 +2,8 @@ use crate::db::{Db, Uid};
 use crate::gui::thumbnail_loader::ThumbnailLoader;
 use crate::tag::Tag;
 use sfml::graphics::{
-    Color, Font, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite, Text, Texture,
-    Transformable,
+    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
+    Texture, Transformable,
 };
 use sfml::system::{Vector2f, Vector2u};
 use sfml::window::{Event, Key};
@@ -32,11 +32,11 @@ impl Button {
         let mut rect = RectangleShape::with_size(Vector2f::new(self.w as f32, self.h as f32));
         rect.set_position((x + self.x, y + self.y));
         rect.set_fill_color(Color::rgb(200, 200, 200));
-        window.draw(&rect);
+        window.draw_rectangle_shape(&rect, &RenderStates::DEFAULT);
         let mut text = Text::new(&self.text, font, self.h);
         text.set_position((x + self.x, y + self.y));
         text.set_fill_color(Color::rgb(50, 50, 50));
-        window.draw(&text);
+        window.draw_text(&text, &RenderStates::DEFAULT);
     }
 }
 
@@ -135,7 +135,7 @@ pub trait Dialog {
         rect.set_fill_color(Color::rgb(90, 90, 90));
         rect.set_outline_color(Color::WHITE);
         rect.set_outline_thickness(1.0);
-        window.draw(&rect);
+        window.draw_rectangle_shape(&rect, &RenderStates::DEFAULT);
     }
 }
 
@@ -213,7 +213,7 @@ impl Dialog for Meta {
         let path = &en.path;
         let mut text = Text::new(&path.display().to_string(), font, 10);
         text.set_position((x, y));
-        window.draw(&text);
+        window.draw_text(&text, &RenderStates::DEFAULT);
         let mut sprite = Sprite::new();
         super::draw_thumbnail(
             thumbnail_cache,
@@ -388,7 +388,7 @@ impl Dialog for LineEdit {
         self.draw_bg(x, y, window);
         let mut text = Text::new(&self.text, font, 24);
         text.set_position((x, y));
-        window.draw(&text);
+        window.draw_text(&text, &RenderStates::DEFAULT);
     }
     fn size(&self) -> Vector2f {
         Vector2f::new(400., 32.)
