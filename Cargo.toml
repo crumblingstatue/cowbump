@@ -10,7 +10,7 @@ walkdir = "2.3.1"
 serde = "1.0.111"
 serde_derive = "1.0.111"
 bincode = "1.2.1"
-image = "0.23.4"
+image = "0.23.5"
 
 [dependencies.sfml]
 git = "https://github.com/jeremyletang/rust-sfml.git"
