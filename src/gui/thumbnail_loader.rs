@@ -3,8 +3,6 @@ use image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba};
 use sfml::graphics::Texture;
 use sfml::system::SfBox;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::prelude::*;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
@@ -32,29 +30,14 @@ impl ThumbnailLoader {
             let image_slot = Arc::clone(&self.image_slot);
             let name = name.to_owned();
             ::std::thread::spawn(move || {
-                let mut f = match File::open(name) {
-                    Ok(f) => f,
+                let data = match std::fs::read(name) {
+                    Ok(data) => data,
                     Err(e) => {
                         *image_slot.lock().unwrap() = Some(Err(image::ImageError::IoError(e)));
                         return;
                     }
                 };
-                // Try to load file as efficiently as possible, using a single compact allocation.
-                // We trust that `len` returned by metadata is correct.
-                let len = f.metadata().unwrap().len() as usize;
-                let mut buf = Vec::with_capacity(len as usize);
-                unsafe {
-                    // Set length for `read_exact` to fill.
-                    buf.set_len(len);
-                    // This should fill all the uninitialized buffer.
-                    f.read_exact(&mut buf).unwrap();
-                }
-                // Because loading images is memory intensive, and we might load multiple images
-                // in parallel, we eagerly drop some stuff in order to free up memory
-                // as soon as possible.
-                drop(f);
-                let image_result = image::load_from_memory(&buf);
-                drop(buf);
+                let image_result = image::load_from_memory(&data);
                 let result =
                     image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba());
                 *image_slot.lock().unwrap() = Some(result);
