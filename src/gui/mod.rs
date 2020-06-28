@@ -268,7 +268,7 @@ fn open_with_external(paths: &[&Path]) {
     use std::process::Command;
     struct Cmd {
         command: Command,
-        exts: Vec<String>,
+        exts: Vec<&'static str>,
         have_args: bool,
     }
     let mut general_cmd = Cmd {
@@ -283,7 +283,7 @@ fn open_with_external(paths: &[&Path]) {
                 c.arg("--ab-loop-a=0");
                 c
             },
-            exts: vec!["gif".into(), "webm".into()],
+            exts: vec!["gif", "webm"],
             have_args: false,
         },
         Cmd {
@@ -292,7 +292,7 @@ fn open_with_external(paths: &[&Path]) {
                 c.arg("chromium");
                 c
             },
-            exts: vec!["swf".into()],
+            exts: vec!["swf"],
             have_args: false,
         },
     ];
@@ -300,7 +300,7 @@ fn open_with_external(paths: &[&Path]) {
         let mut cmd = &mut general_cmd;
         if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
             for c in &mut commands {
-                if c.exts.iter().any(|e| e == ext) {
+                if c.exts.iter().any(|&e| e == ext) {
                     cmd = c;
                 }
             }
