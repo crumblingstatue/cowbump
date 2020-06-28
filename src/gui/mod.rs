@@ -283,7 +283,7 @@ fn open_with_external(paths: &[&Path]) {
                 c.arg("--ab-loop-a=0");
                 c
             },
-            exts: vec!["gif", "webm"],
+            exts: vec!["gif", "webm", "mov", "mp4", "m4v", "wmv", "avi"],
             have_args: false,
         },
         Cmd {
