@@ -272,7 +272,11 @@ fn open_with_external(paths: &[&Path]) {
         have_args: bool,
     }
     let mut general_cmd = Cmd {
-        command: Command::new("feh"),
+        command: {
+            let mut c = Command::new("feh");
+            c.arg("--auto-rotate");
+            c
+        },
         exts: vec![],
         have_args: false,
     };
