@@ -237,23 +237,15 @@ fn draw_thumbnail<'a: 'b, 'b>(
     loading_texture: &'a Texture,
     thumbnail_loader: &mut ThumbnailLoader,
 ) {
-    let has_img;
-    let texture = match thumbnail_cache.get(&uid) {
+    let (has_img, texture) = match thumbnail_cache.get(&uid) {
         Some(opt_texture) => match *opt_texture {
-            Some(ref tex) => {
-                has_img = true;
-                tex
-            }
-            None => {
-                has_img = false;
-                error_texture
-            }
+            Some(ref tex) => (true, tex as &Texture),
+            None => (false, error_texture),
         },
         None => {
-            has_img = false;
             let entry = &db.entries[uid as usize];
             thumbnail_loader.request(&entry.path, thumb_size, uid);
-            loading_texture
+            (false, loading_texture)
         }
     };
     sprite.set_texture(texture, true);
