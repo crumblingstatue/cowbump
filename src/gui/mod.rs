@@ -241,12 +241,12 @@ fn draw_thumbnail<'a: 'b, 'b>(
         Some(opt_texture) => match *opt_texture {
             Some(ref tex) => tex,
             None => {
-                if let Some(ext) = db.entries[uid as usize]
+                if let Some(file_name) = db.entries[uid as usize]
                     .path
-                    .extension()
+                    .file_name()
                     .map(|e| e.to_str())
                 {
-                    let mut text = Text::new(ext.unwrap(), font, 20);
+                    let mut text = Text::new(file_name.unwrap(), font, 12);
                     text.set_position((x, y + 64.0));
                     window.draw_text(&text, &RenderStates::DEFAULT);
                 }
