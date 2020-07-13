@@ -237,23 +237,20 @@ fn draw_thumbnail<'a: 'b, 'b>(
     loading_texture: &'a Texture,
     thumbnail_loader: &mut ThumbnailLoader,
 ) {
+    let has_img;
     let texture = match thumbnail_cache.get(&uid) {
         Some(opt_texture) => match *opt_texture {
-            Some(ref tex) => tex,
+            Some(ref tex) => {
+                has_img = true;
+                tex
+            }
             None => {
-                if let Some(file_name) = db.entries[uid as usize]
-                    .path
-                    .file_name()
-                    .map(|e| e.to_str())
-                {
-                    let mut text = Text::new(file_name.unwrap(), font, 12);
-                    text.set_position((x, y + 64.0));
-                    window.draw_text(&text, &RenderStates::DEFAULT);
-                }
+                has_img = false;
                 error_texture
             }
         },
         None => {
+            has_img = false;
             let entry = &db.entries[uid as usize];
             thumbnail_loader.request(&entry.path, thumb_size, uid);
             loading_texture
@@ -262,6 +259,17 @@ fn draw_thumbnail<'a: 'b, 'b>(
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
+    if !has_img {
+        if let Some(file_name) = db.entries[uid as usize]
+            .path
+            .file_name()
+            .map(|e| e.to_str())
+        {
+            let mut text = Text::new(file_name.unwrap(), font, 12);
+            text.set_position((x, y + 64.0));
+            window.draw_text(&text, &RenderStates::DEFAULT);
+        }
+    }
 }
 
 fn open_with_external(paths: &[&Path]) {
