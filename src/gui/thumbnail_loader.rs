@@ -1,8 +1,9 @@
-use crate::db::{Uid, UID_NONE};
+use crate::{
+    db::{Uid, UID_NONE},
+    gui::ThumbnailCache,
+};
 use image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba};
 use sfml::graphics::Texture;
-use sfml::system::SfBox;
-use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
@@ -44,7 +45,7 @@ impl ThumbnailLoader {
             });
         }
     }
-    pub fn write_to_cache(&mut self, cache: &mut HashMap<Uid, Option<SfBox<Texture>>>) {
+    pub fn write_to_cache(&mut self, cache: &mut ThumbnailCache) {
         if let Some(result) = self.image_slot.lock().unwrap().take() {
             match result {
                 Ok(buf) => {
