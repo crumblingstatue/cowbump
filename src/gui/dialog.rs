@@ -52,6 +52,7 @@ impl Stack {
         error_texture: &Texture,
         loading_texture: &Texture,
         thumbnail_loader: &mut ThumbnailLoader,
+        load_anim_rotation: f32,
     ) {
         let Vector2u { x: ww, y: wh } = window.size();
         let wcx = ww / 2;
@@ -71,6 +72,7 @@ impl Stack {
                 error_texture,
                 loading_texture,
                 thumbnail_loader,
+                load_anim_rotation,
             );
         }
     }
@@ -125,6 +127,7 @@ pub trait Dialog {
         error_texture: &Texture,
         loading_texture: &Texture,
         thumbnail_loader: &mut ThumbnailLoader,
+        load_anim_rotation: f32,
     );
     fn size(&self) -> Vector2f;
     fn handle_event(&mut self, x: u32, y: u32, event: Event, db: &mut Db) -> Msg;
@@ -207,6 +210,7 @@ impl Dialog for Meta {
         error_texture: &Texture,
         loading_texture: &Texture,
         thumbnail_loader: &mut ThumbnailLoader,
+        load_anim_rotation: f32,
     ) {
         self.draw_bg(x, y, window);
         let en = &db.entries[self.uid as usize];
@@ -228,6 +232,7 @@ impl Dialog for Meta {
             error_texture,
             loading_texture,
             thumbnail_loader,
+            load_anim_rotation,
         );
         self.close_button.draw(x, y, font, window);
         self.add_tag_button.draw(x, y, font, window);
@@ -315,6 +320,7 @@ impl Dialog for AddTagPicker {
         _error_texture: &Texture,
         _loading_texture: &Texture,
         _thumbnail_loader: &mut ThumbnailLoader,
+        _load_anim_rotation: f32,
     ) {
         self.draw_bg(x, y, window);
         self.new_tag_button.draw(x, y, font, window);
@@ -384,6 +390,7 @@ impl Dialog for LineEdit {
         _error_texture: &Texture,
         _loading_texture: &Texture,
         _thumbnail_loader: &mut ThumbnailLoader,
+        _load_anim_rotation: f32,
     ) {
         self.draw_bg(x, y, window);
         let mut text = Text::new(&self.text, font, 24);

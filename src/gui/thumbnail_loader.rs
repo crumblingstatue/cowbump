@@ -62,4 +62,7 @@ impl ThumbnailLoader {
             self.busy_with = UID_NONE;
         }
     }
+    pub fn busy_with(&self) -> Uid {
+        self.busy_with
+    }
 }

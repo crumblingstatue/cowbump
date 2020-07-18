@@ -25,6 +25,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut state = State::new(window.size().x);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
+    let mut load_anim_rotation = 0.0;
     recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
     while window.is_open() {
         let scroll_speed = 8.0;
@@ -55,7 +56,13 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             }
         }
         window.clear(Color::BLACK);
-        state.draw_thumbnails(&mut window, db, &on_screen_uids, &selected_uids);
+        state.draw_thumbnails(
+            &mut window,
+            db,
+            &on_screen_uids,
+            &selected_uids,
+            load_anim_rotation,
+        );
         state.dialog_stack.draw(
             &mut window,
             &state.font,
@@ -65,8 +72,10 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             &state.error_texture,
             &state.loading_texture,
             &mut state.thumbnail_loader,
+            load_anim_rotation,
         );
         window.display();
+        load_anim_rotation += 2.0;
     }
     Ok(())
 }
@@ -189,6 +198,7 @@ impl State {
         db: &Db,
         uids: &[Uid],
         selected_uids: &BTreeSet<Uid>,
+        load_anim_rotation: f32,
     ) {
         let thumb_size = self.thumbnail_size;
         self.thumbnail_loader
@@ -217,6 +227,7 @@ impl State {
                 &self.error_texture,
                 &self.loading_texture,
                 &mut self.thumbnail_loader,
+                load_anim_rotation,
             );
         }
     }
@@ -236,6 +247,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     error_texture: &'a Texture,
     loading_texture: &'a Texture,
     thumbnail_loader: &mut ThumbnailLoader,
+    load_anim_rotation: f32,
 ) {
     let (has_img, texture) = match thumbnail_cache.get(&uid) {
         Some(opt_texture) => match *opt_texture {
@@ -250,6 +262,14 @@ fn draw_thumbnail<'a: 'b, 'b>(
     };
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
+    if thumbnail_loader.busy_with() == uid {
+        sprite.set_origin((27.0, 6.0));
+        sprite.move_((48.0, 48.0));
+        sprite.set_rotation(load_anim_rotation);
+    } else {
+        sprite.set_rotation(0.0);
+        sprite.set_origin((0.0, 0.0));
+    }
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
     if !has_img {
         if let Some(file_name) = db.entries[uid as usize]
