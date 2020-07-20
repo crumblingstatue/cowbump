@@ -94,7 +94,10 @@ fn handle_event_viewer(
             let rel_offset = state.y_offset as u32 % state.thumbnail_size;
             let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
             let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
-            let uid: Uid = on_screen_uids[thumb_index as usize];
+            let uid: Uid = match on_screen_uids.get(thumb_index as usize) {
+                Some(uid) => *uid,
+                None => return,
+            };
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
                     if selected_uids.contains(&uid) {
