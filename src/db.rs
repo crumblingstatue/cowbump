@@ -37,13 +37,13 @@ impl Db {
             if dir_entry.file_type().is_dir() {
                 continue;
             }
-            let dir_entry_path = dir_entry.path();
+            let dir_entry_path = dir_entry.into_path();
             let already_have: bool = self
                 .entries
                 .iter()
                 .any(|db_en| db_en.path == dir_entry_path);
             if !already_have {
-                self.entries.push(Entry::new(dir_entry_path.to_owned()));
+                self.entries.push(Entry::new(dir_entry_path));
             }
         }
         Ok(())
