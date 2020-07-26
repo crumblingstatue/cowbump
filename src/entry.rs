@@ -1,4 +1,5 @@
 use crate::db::Uid;
+use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Path to an image, along with associated tags

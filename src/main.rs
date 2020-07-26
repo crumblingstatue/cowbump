@@ -1,12 +1,3 @@
-extern crate bincode;
-extern crate failure;
-extern crate image;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate sfml;
-extern crate walkdir;
-
 mod db;
 mod entry;
 mod gui;

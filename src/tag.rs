@@ -1,4 +1,5 @@
 use crate::db::Uid;
+use serde_derive::{Deserialize, Serialize};
 
 /// An identifiable quality that entries can be tagged by.
 #[derive(Serialize, Deserialize)]

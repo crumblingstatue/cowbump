@@ -1,6 +1,7 @@
 use crate::entry::Entry;
 use crate::tag::Tag;
 use failure::Error;
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::File;
 use std::path::Path;
