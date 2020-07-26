@@ -107,6 +107,10 @@ impl Db {
         let mut f = File::open(DB_FILENAME)?;
         Ok(bincode::deserialize_from(&mut f)?)
     }
+    /// Sort the entries alphabetically
+    pub fn sort_entries(&mut self) {
+        self.entries.sort_by(|en1, en2| en1.path.cmp(&en2.path));
+    }
 }
 
 const DB_FILENAME: &str = "cowbump.db";

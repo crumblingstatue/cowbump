@@ -13,6 +13,7 @@ fn main() {
         Db::default()
     });
     db.update_from_folder(&dir).unwrap();
+    db.sort_entries();
     gui::run(&mut db).unwrap();
     db.save_to_fs().unwrap();
 }
