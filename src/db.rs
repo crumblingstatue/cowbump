@@ -1,6 +1,7 @@
 use crate::entry::Entry;
 use crate::tag::Tag;
 use failure::Error;
+use std::collections::HashSet;
 use std::fs::File;
 use std::path::Path;
 use walkdir::WalkDir;
@@ -29,8 +30,10 @@ pub type Uid = u32;
 pub const UID_NONE: Uid = Uid::max_value();
 
 impl Db {
-    pub fn add_from_folder(&mut self, path: &Path) -> Result<(), Error> {
+    pub fn update_from_folder(&mut self, path: &Path) -> Result<(), Error> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
+        // Indices in the entries vector that correspond to valid images that exist
+        let mut valid_indices = HashSet::new();
 
         for dir_entry in wd {
             let dir_entry = dir_entry?;
@@ -38,14 +41,35 @@ impl Db {
                 continue;
             }
             let dir_entry_path = dir_entry.into_path();
-            let already_have: bool = self
-                .entries
-                .iter()
-                .any(|db_en| db_en.path == dir_entry_path);
-            if !already_have {
+            let mut already_have = false;
+            for (i, en) in self.entries.iter().enumerate() {
+                if en.path == dir_entry_path {
+                    already_have = true;
+                    valid_indices.insert(i);
+                    break;
+                }
+            }
+            let mut should_add = !already_have;
+            let file_name = dir_entry_path.file_name().unwrap();
+            if file_name == DB_FILENAME {
+                should_add = false;
+            }
+            if should_add {
+                eprintln!("Adding {}", dir_entry_path.display());
+                valid_indices.insert(self.entries.len());
                 self.entries.push(Entry::new(dir_entry_path));
             }
         }
+        // Remove indices that don't correspond to valid images
+        let mut i = 0;
+        self.entries.retain(|en| {
+            let keep = valid_indices.contains(&i);
+            if !keep {
+                eprintln!("Removing {}", en.path.display());
+            }
+            i += 1;
+            keep
+        });
         Ok(())
     }
     /// Add a tag for an entry.
