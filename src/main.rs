@@ -16,16 +16,11 @@ use crate::db::{Db, Uid};
 use std::env;
 
 fn main() {
+    let dir = env::current_dir().unwrap();
     let mut db = Db::load_from_fs().unwrap_or_else(|e| {
         eprintln!("Error loading db: {}, creating new default db.", e);
         let mut db = Db::default();
-        db.add_from_folder(
-            env::args_os()
-                .nth(1)
-                .expect("Need path to image folder")
-                .as_ref(),
-        )
-        .unwrap();
+        db.add_from_folder(&dir).unwrap();
         db
     });
     gui::run(&mut db).unwrap();
