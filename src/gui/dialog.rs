@@ -148,6 +148,7 @@ pub struct Meta {
     close_button: Button,
     add_tag_button: Button,
     tag_buttons: Vec<TagButton>,
+    rename_string: String,
 }
 
 impl Meta {
@@ -169,6 +170,7 @@ impl Meta {
                 h: 16,
             },
             tag_buttons: tag_buttons_from_uid(uid, db),
+            rename_string: String::default(),
         }
     }
 }
@@ -239,6 +241,15 @@ impl Dialog for Meta {
         for b in &self.tag_buttons {
             b.button.draw(x, y, font, window);
         }
+        if !self.rename_string.is_empty() {
+            text.move_((0.0, 100.0));
+            text.set_fill_color(Color::RED);
+            text.set_string(&self.rename_string);
+            text.set_outline_color(Color::WHITE);
+            text.set_outline_thickness(1.0);
+            text.set_character_size(16);
+            window.draw(&text);
+        }
     }
     fn size(&self) -> Vector2f {
         Vector2f::new(512., 384.)
@@ -246,16 +257,41 @@ impl Dialog for Meta {
     fn handle_event(&mut self, x: u32, y: u32, event: Event, db: &mut Db) -> Msg {
         // kek, hack again
         self.tag_buttons = tag_buttons_from_uid(self.uid, db);
-        if let Event::MouseButtonPressed { x: mx, y: my, .. } = event {
-            if mouse_overlaps_button(x, y, mx, my, &self.close_button) {
-                Msg::PopMe
-            } else if mouse_overlaps_button(x, y, mx, my, &self.add_tag_button) {
-                Msg::PushNew(Box::new(AddTagPicker::new(self.uid)))
-            } else {
+        match event {
+            Event::MouseButtonPressed { x: mx, y: my, .. } => {
+                if mouse_overlaps_button(x, y, mx, my, &self.close_button) {
+                    Msg::PopMe
+                } else if mouse_overlaps_button(x, y, mx, my, &self.add_tag_button) {
+                    Msg::PushNew(Box::new(AddTagPicker::new(self.uid)))
+                } else {
+                    Msg::Nothing
+                }
+            }
+            Event::KeyPressed { code, .. } => match code {
+                Key::F2 => {
+                    let entry = &db.entries[self.uid as usize];
+                    let filename = entry.path.file_name().unwrap();
+                    self.rename_string = filename.to_string_lossy().into_owned();
+                    Msg::Nothing
+                }
+                Key::Return => {
+                    let path = &mut db.entries[self.uid as usize].path;
+                    let new_path = path.parent().unwrap().join(&self.rename_string);
+                    std::fs::rename(&path, &new_path).unwrap();
+                    *path = new_path;
+                    Msg::Nothing
+                }
+                _ => Msg::Nothing,
+            },
+            Event::TextEntered { unicode } => {
+                if unicode == 0x08 as char {
+                    self.rename_string.pop();
+                } else if !unicode.is_ascii_control() {
+                    self.rename_string.push(unicode);
+                }
                 Msg::Nothing
             }
-        } else {
-            Msg::Nothing
+            _ => Msg::Nothing,
         }
     }
 }
