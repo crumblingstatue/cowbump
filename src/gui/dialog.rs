@@ -283,6 +283,10 @@ impl Dialog for Meta {
                     let filename = entry.path.file_name().unwrap();
                     self.rename_string = filename.to_string_lossy().into_owned();
                     self.renaming = true;
+                    self.rename_cursor = self
+                        .rename_string
+                        .rfind('.')
+                        .unwrap_or_else(|| self.rename_string.chars().count());
                     Msg::Nothing
                 }
                 Key::Return => {
