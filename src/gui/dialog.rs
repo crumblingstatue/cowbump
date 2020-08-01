@@ -150,6 +150,7 @@ pub struct Meta {
     tag_buttons: Vec<TagButton>,
     rename_string: String,
     renaming: bool,
+    rename_cursor: usize,
 }
 
 impl Meta {
@@ -173,6 +174,7 @@ impl Meta {
             tag_buttons: tag_buttons_from_uid(uid, db),
             rename_string: String::default(),
             renaming: false,
+            rename_cursor: 0,
         }
     }
 }
@@ -251,6 +253,14 @@ impl Dialog for Meta {
             text.set_outline_thickness(1.0);
             text.set_character_size(16);
             window.draw(&text);
+            let mut cursor_shape = RectangleShape::with_size((4., 24.).into());
+            cursor_shape.set_fill_color(Color::BLUE);
+            let text_bounds = text.global_bounds();
+            cursor_shape.set_position((
+                text_bounds.left + self.rename_cursor as f32 * 9.4,
+                text_bounds.top,
+            ));
+            window.draw(&cursor_shape);
         }
     }
     fn size(&self) -> Vector2f {
@@ -283,6 +293,7 @@ impl Dialog for Meta {
                         let new_path = path.parent().unwrap().join(&self.rename_string);
                         std::fs::rename(&path, &new_path).unwrap();
                         *path = new_path;
+                        self.renaming = false;
                     }
                     Msg::Nothing
                 }
@@ -295,13 +306,23 @@ impl Dialog for Meta {
                         Msg::PopMe
                     }
                 }
+                Key::Right => {
+                    self.rename_cursor += 1;
+                    Msg::Nothing
+                }
+                Key::Left => {
+                    self.rename_cursor -= 1;
+                    Msg::Nothing
+                }
                 _ => Msg::Nothing,
             },
             Event::TextEntered { unicode } => {
                 if unicode == 0x08 as char {
-                    self.rename_string.pop();
+                    self.rename_cursor -= 1;
+                    self.rename_string.remove(self.rename_cursor);
                 } else if !unicode.is_ascii_control() {
-                    self.rename_string.push(unicode);
+                    self.rename_string.insert(self.rename_cursor, unicode);
+                    self.rename_cursor += 1;
                 }
                 Msg::Nothing
             }
