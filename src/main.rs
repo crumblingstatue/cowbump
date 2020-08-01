@@ -2,9 +2,6 @@ mod db;
 mod entry;
 mod gui;
 mod tag;
-mod util {
-    pub mod string;
-}
 
 use crate::db::{Db, Uid};
 use std::env;

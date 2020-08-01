@@ -1,7 +1,7 @@
 use crate::db::{Db, Uid};
 use crate::gui::thumbnail_loader::ThumbnailLoader;
 use crate::tag::Tag;
-use crate::util::string;
+use ropey::Rope;
 use sfml::graphics::{
     Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
     Texture, Transformable,
@@ -149,9 +149,9 @@ pub struct Meta {
     close_button: Button,
     add_tag_button: Button,
     tag_buttons: Vec<TagButton>,
-    rename_string: String,
     renaming: bool,
     rename_cursor: usize,
+    rename_rope: Rope,
 }
 
 impl Meta {
@@ -173,9 +173,9 @@ impl Meta {
                 h: 16,
             },
             tag_buttons: tag_buttons_from_uid(uid, db),
-            rename_string: String::default(),
             renaming: false,
             rename_cursor: 0,
+            rename_rope: Rope::new(),
         }
     }
 }
@@ -249,7 +249,8 @@ impl Dialog for Meta {
         if self.renaming {
             text.move_((0.0, 100.0));
             text.set_fill_color(Color::RED);
-            text.set_string(&self.rename_string);
+            let rename_string: String = self.rename_rope.clone().into();
+            text.set_string(&rename_string);
             text.set_outline_color(Color::WHITE);
             text.set_outline_thickness(1.0);
             text.set_character_size(16);
@@ -257,7 +258,7 @@ impl Dialog for Meta {
             let mut cursor_shape = RectangleShape::with_size((4., 24.).into());
             cursor_shape.set_fill_color(Color::BLUE);
             let text_bounds = text.global_bounds();
-            let offset = calc_cursor_offset(&self.rename_string, font, self.rename_cursor);
+            let offset = calc_cursor_offset(&rename_string, font, self.rename_cursor);
             cursor_shape.set_position((text_bounds.left + offset, text_bounds.top));
             window.draw(&cursor_shape);
         }
@@ -282,18 +283,20 @@ impl Dialog for Meta {
                 Key::F2 => {
                     let entry = &db.entries[self.uid as usize];
                     let filename = entry.path.file_name().unwrap();
-                    self.rename_string = filename.to_string_lossy().into_owned();
+                    self.rename_rope = Rope::from(filename.to_string_lossy());
                     self.renaming = true;
-                    self.rename_cursor = self
-                        .rename_string
+                    self.rename_cursor = String::from(self.rename_rope.clone())
                         .rfind('.')
-                        .unwrap_or_else(|| self.rename_string.chars().count());
+                        .unwrap_or_else(|| String::from(self.rename_rope.clone()).chars().count());
                     Msg::Nothing
                 }
                 Key::Return => {
                     if self.renaming {
                         let path = &mut db.entries[self.uid as usize].path;
-                        let new_path = path.parent().unwrap().join(&self.rename_string);
+                        let new_path = path
+                            .parent()
+                            .unwrap()
+                            .join(&String::from(self.rename_rope.clone()));
                         std::fs::rename(&path, &new_path).unwrap();
                         *path = new_path;
                         self.renaming = false;
@@ -303,14 +306,17 @@ impl Dialog for Meta {
                 Key::Escape => {
                     if self.renaming {
                         self.renaming = false;
-                        self.rename_string.clear();
+                        self.rename_rope = Rope::new();
                         Msg::Nothing
                     } else {
                         Msg::PopMe
                     }
                 }
                 Key::Right => {
-                    if self.renaming && self.rename_cursor < self.rename_string.chars().count() {
+                    if self.renaming
+                        && self.rename_cursor
+                            < String::from(self.rename_rope.clone()).chars().count()
+                    {
                         self.rename_cursor += 1;
                     }
                     Msg::Nothing
@@ -323,9 +329,9 @@ impl Dialog for Meta {
                 }
                 Key::BackSpace => {
                     if self.renaming && self.rename_cursor > 0 {
+                        self.rename_rope
+                            .remove(self.rename_cursor - 1..self.rename_cursor);
                         self.rename_cursor -= 1;
-                        self.rename_string =
-                            string::remove_char_at(&self.rename_string, self.rename_cursor);
                     }
                     Msg::Nothing
                 }
@@ -333,8 +339,7 @@ impl Dialog for Meta {
             },
             Event::TextEntered { unicode } => {
                 if self.renaming && !unicode.is_ascii_control() {
-                    self.rename_string =
-                        string::insert_char_at(&self.rename_string, unicode, self.rename_cursor);
+                    self.rename_rope.insert_char(self.rename_cursor, unicode);
                     self.rename_cursor += 1;
                 }
                 Msg::Nothing
