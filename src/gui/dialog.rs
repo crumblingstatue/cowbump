@@ -335,6 +335,21 @@ impl Dialog for Meta {
                     }
                     Msg::Nothing
                 }
+                Key::Home => {
+                    self.rename_cursor = 0;
+                    Msg::Nothing
+                }
+                Key::End => {
+                    self.rename_cursor = self.rename_rope.len_chars();
+                    Msg::Nothing
+                }
+                Key::Delete => {
+                    if self.rename_rope.len_chars() > 0 {
+                        self.rename_rope
+                            .remove(self.rename_cursor..self.rename_cursor + 1);
+                    }
+                    Msg::Nothing
+                }
                 _ => Msg::Nothing,
             },
             Event::TextEntered { unicode } => {
