@@ -1,6 +1,7 @@
 use crate::db::{Db, Uid};
 use crate::gui::thumbnail_loader::ThumbnailLoader;
 use crate::tag::Tag;
+use crate::util::string;
 use sfml::graphics::{
     Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
     Texture, Transformable,
@@ -324,7 +325,7 @@ impl Dialog for Meta {
                     if self.renaming && self.rename_cursor > 0 {
                         self.rename_cursor -= 1;
                         self.rename_string =
-                            string_remove_char_at(&self.rename_string, self.rename_cursor);
+                            string::remove_char_at(&self.rename_string, self.rename_cursor);
                     }
                     Msg::Nothing
                 }
@@ -333,7 +334,7 @@ impl Dialog for Meta {
             Event::TextEntered { unicode } => {
                 if self.renaming && !unicode.is_ascii_control() {
                     self.rename_string =
-                        string_insert_char_at(&self.rename_string, unicode, self.rename_cursor);
+                        string::insert_char_at(&self.rename_string, unicode, self.rename_cursor);
                     self.rename_cursor += 1;
                 }
                 Msg::Nothing
@@ -341,36 +342,6 @@ impl Dialog for Meta {
             _ => Msg::Nothing,
         }
     }
-}
-
-fn string_insert_char_at(old: &str, ch: char, at: usize) -> String {
-    // Unicode strings are hard. Let's just do the slow but lazy and somewhat working approach.
-    let mut old_chars = old.chars();
-    let mut new_string = String::new();
-    for _ in 0..at {
-        let ch = old_chars.next().unwrap();
-        new_string.push(ch);
-    }
-    new_string.push(ch);
-    for old_ch in old_chars {
-        new_string.push(old_ch);
-    }
-    new_string
-}
-
-fn string_remove_char_at(old: &str, at: usize) -> String {
-    let mut old_chars = old.chars();
-    let mut new_string = String::new();
-    for _ in 0..at {
-        let ch = old_chars.next().unwrap();
-        new_string.push(ch);
-    }
-    // Skip the char we want to delete
-    let _ = old_chars.next();
-    for old_ch in old_chars {
-        new_string.push(old_ch);
-    }
-    new_string
 }
 
 fn calc_cursor_offset(rename_string: &str, font: &Font, rename_cursor: usize) -> f32 {
