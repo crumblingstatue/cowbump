@@ -149,6 +149,7 @@ pub struct Meta {
     add_tag_button: Button,
     tag_buttons: Vec<TagButton>,
     rename_string: String,
+    renaming: bool,
 }
 
 impl Meta {
@@ -171,6 +172,7 @@ impl Meta {
             },
             tag_buttons: tag_buttons_from_uid(uid, db),
             rename_string: String::default(),
+            renaming: false,
         }
     }
 }
@@ -241,7 +243,7 @@ impl Dialog for Meta {
         for b in &self.tag_buttons {
             b.button.draw(x, y, font, window);
         }
-        if !self.rename_string.is_empty() {
+        if self.renaming {
             text.move_((0.0, 100.0));
             text.set_fill_color(Color::RED);
             text.set_string(&self.rename_string);
@@ -272,14 +274,26 @@ impl Dialog for Meta {
                     let entry = &db.entries[self.uid as usize];
                     let filename = entry.path.file_name().unwrap();
                     self.rename_string = filename.to_string_lossy().into_owned();
+                    self.renaming = true;
                     Msg::Nothing
                 }
                 Key::Return => {
-                    let path = &mut db.entries[self.uid as usize].path;
-                    let new_path = path.parent().unwrap().join(&self.rename_string);
-                    std::fs::rename(&path, &new_path).unwrap();
-                    *path = new_path;
+                    if self.renaming {
+                        let path = &mut db.entries[self.uid as usize].path;
+                        let new_path = path.parent().unwrap().join(&self.rename_string);
+                        std::fs::rename(&path, &new_path).unwrap();
+                        *path = new_path;
+                    }
                     Msg::Nothing
+                }
+                Key::Escape => {
+                    if self.renaming {
+                        self.renaming = false;
+                        self.rename_string.clear();
+                        Msg::Nothing
+                    } else {
+                        Msg::PopMe
+                    }
                 }
                 _ => Msg::Nothing,
             },
