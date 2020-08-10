@@ -297,6 +297,9 @@ impl Dialog for Meta {
                             .parent()
                             .unwrap()
                             .join(&String::from(self.rename_rope.clone()));
+                        if new_path.exists() {
+                            todo!("Handle path exists");
+                        }
                         std::fs::rename(&path, &new_path).unwrap();
                         *path = new_path;
                         self.renaming = false;
