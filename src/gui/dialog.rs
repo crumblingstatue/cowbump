@@ -246,18 +246,15 @@ impl Dialog for Meta {
         if self.renaming {
             text.move_((0.0, 100.0));
             text.set_fill_color(Color::RED);
-            let rename_string = self.rename_edit.string();
-            text.set_string(&*rename_string);
             text.set_outline_color(Color::WHITE);
             text.set_outline_thickness(1.0);
             text.set_character_size(16);
-            window.draw(&text);
+
             let mut cursor_shape = RectangleShape::with_size((4., 24.).into());
             cursor_shape.set_fill_color(Color::BLUE);
-            let text_bounds = text.global_bounds();
-            let offset = calc_cursor_offset(&rename_string, font, self.rename_edit.cursor());
-            cursor_shape.set_position((text_bounds.left + offset, text_bounds.top));
-            window.draw(&cursor_shape);
+
+            self.rename_edit
+                .draw_sfml(window, font, &mut text, &mut cursor_shape);
         }
     }
     fn size(&self) -> Vector2f {
@@ -327,15 +324,6 @@ impl Dialog for Meta {
             _ => Msg::Nothing,
         }
     }
-}
-
-fn calc_cursor_offset(rename_string: &str, font: &Font, rename_cursor: usize) -> f32 {
-    let mut offset = 0.0;
-    for ch in rename_string.chars().take(rename_cursor) {
-        let glyph = font.glyph(ch as u32, 16, false, 1.0);
-        offset += glyph.advance;
-    }
-    offset
 }
 
 fn mouse_overlaps_button(

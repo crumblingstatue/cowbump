@@ -9,7 +9,8 @@ use text_edit::TextEdit;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use sfml::graphics::{
-    Color, Font, RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable,
+    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture,
+    Transformable,
 };
 use sfml::system::SfBox;
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
@@ -77,12 +78,11 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             load_anim_rotation,
         );
         if state.searching {
-            let text = Text::new(
-                &format!("Search string: {:?}", &*state.search_edit.string()),
-                &state.font,
-                10,
-            );
-            window.draw(&text);
+            let mut text = Text::new("", &state.font, 16);
+            let mut cursor = RectangleShape::with_size((3.0, 20.0).into());
+            state
+                .search_edit
+                .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
         }
         window.display();
         load_anim_rotation += 2.0;

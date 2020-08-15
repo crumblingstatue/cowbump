@@ -1,4 +1,5 @@
 use ropey::Rope;
+use sfml::graphics::{Font, RectangleShape, RenderTarget, RenderWindow, Text, Transformable};
 use sfml::window::Key;
 use std::borrow::Cow;
 
@@ -55,9 +56,6 @@ impl TextEdit {
     pub fn set_cursor(&mut self, pos: usize) {
         self.cursor = pos;
     }
-    pub fn cursor(&self) -> usize {
-        self.cursor
-    }
     pub fn handle_sfml_key(&mut self, key: Key) {
         match key {
             Key::Right => {
@@ -81,4 +79,28 @@ impl TextEdit {
             _ => {}
         }
     }
+    pub fn draw_sfml(
+        &self,
+        window: &mut RenderWindow,
+        font: &Font,
+        text: &mut Text,
+        cursor: &mut RectangleShape,
+    ) {
+        let rename_string = self.string();
+        text.set_string(&*rename_string);
+        let offset = calc_cursor_offset(&rename_string, font, self.cursor);
+        let text_bounds = text.global_bounds();
+        cursor.set_position((text_bounds.left + offset, text_bounds.top));
+        window.draw(text);
+        window.draw(cursor);
+    }
+}
+
+fn calc_cursor_offset(rename_string: &str, font: &Font, rename_cursor: usize) -> f32 {
+    let mut offset = 0.0;
+    for ch in rename_string.chars().take(rename_cursor) {
+        let glyph = font.glyph(ch as u32, 16, false, 1.0);
+        offset += glyph.advance;
+    }
+    offset
 }
