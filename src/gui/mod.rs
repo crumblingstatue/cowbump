@@ -1,4 +1,5 @@
 mod dialog;
+mod text_edit;
 mod thumbnail_loader;
 
 use crate::db::{Db, Uid};

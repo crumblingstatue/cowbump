@@ -1,7 +1,6 @@
 use crate::db::{Db, Uid};
-use crate::gui::thumbnail_loader::ThumbnailLoader;
+use crate::gui::{text_edit::TextEdit, thumbnail_loader::ThumbnailLoader};
 use crate::tag::Tag;
-use ropey::Rope;
 use sfml::graphics::{
     Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
     Texture, Transformable,
@@ -150,8 +149,7 @@ pub struct Meta {
     add_tag_button: Button,
     tag_buttons: Vec<TagButton>,
     renaming: bool,
-    rename_cursor: usize,
-    rename_rope: Rope,
+    rename_edit: TextEdit,
 }
 
 impl Meta {
@@ -174,8 +172,7 @@ impl Meta {
             },
             tag_buttons: tag_buttons_from_uid(uid, db),
             renaming: false,
-            rename_cursor: 0,
-            rename_rope: Rope::new(),
+            rename_edit: TextEdit::default(),
         }
     }
 }
@@ -249,8 +246,8 @@ impl Dialog for Meta {
         if self.renaming {
             text.move_((0.0, 100.0));
             text.set_fill_color(Color::RED);
-            let rename_string: String = self.rename_rope.clone().into();
-            text.set_string(&rename_string);
+            let rename_string = self.rename_edit.string();
+            text.set_string(&*rename_string);
             text.set_outline_color(Color::WHITE);
             text.set_outline_thickness(1.0);
             text.set_character_size(16);
@@ -258,7 +255,7 @@ impl Dialog for Meta {
             let mut cursor_shape = RectangleShape::with_size((4., 24.).into());
             cursor_shape.set_fill_color(Color::BLUE);
             let text_bounds = text.global_bounds();
-            let offset = calc_cursor_offset(&rename_string, font, self.rename_cursor);
+            let offset = calc_cursor_offset(&rename_string, font, self.rename_edit.cursor());
             cursor_shape.set_position((text_bounds.left + offset, text_bounds.top));
             window.draw(&cursor_shape);
         }
@@ -283,20 +280,20 @@ impl Dialog for Meta {
                 Key::F2 => {
                     let entry = &db.entries[self.uid as usize];
                     let filename = entry.path.file_name().unwrap();
-                    self.rename_rope = Rope::from(filename.to_string_lossy());
+                    self.rename_edit.set_string(filename.to_string_lossy());
                     self.renaming = true;
-                    self.rename_cursor = String::from(self.rename_rope.clone())
-                        .rfind('.')
-                        .unwrap_or_else(|| String::from(self.rename_rope.clone()).chars().count());
+                    self.rename_edit.set_cursor(
+                        self.rename_edit
+                            .string()
+                            .rfind('.')
+                            .unwrap_or_else(|| self.rename_edit.string().chars().count()),
+                    );
                     Msg::Nothing
                 }
                 Key::Return => {
                     if self.renaming {
                         let path = &mut db.entries[self.uid as usize].path;
-                        let new_path = path
-                            .parent()
-                            .unwrap()
-                            .join(&String::from(self.rename_rope.clone()));
+                        let new_path = path.parent().unwrap().join(&*self.rename_edit.string());
                         if new_path.exists() {
                             todo!("Handle path exists");
                         }
@@ -309,56 +306,21 @@ impl Dialog for Meta {
                 Key::Escape => {
                     if self.renaming {
                         self.renaming = false;
-                        self.rename_rope = Rope::new();
+                        self.rename_edit.clear();
                         Msg::Nothing
                     } else {
                         Msg::PopMe
                     }
                 }
-                Key::Right => {
-                    if self.renaming
-                        && self.rename_cursor
-                            < String::from(self.rename_rope.clone()).chars().count()
-                    {
-                        self.rename_cursor += 1;
-                    }
-                    Msg::Nothing
-                }
-                Key::Left => {
-                    if self.renaming && self.rename_cursor > 0 {
-                        self.rename_cursor -= 1;
-                    }
-                    Msg::Nothing
-                }
-                Key::BackSpace => {
-                    if self.renaming && self.rename_cursor > 0 {
-                        self.rename_rope
-                            .remove(self.rename_cursor - 1..self.rename_cursor);
-                        self.rename_cursor -= 1;
-                    }
-                    Msg::Nothing
-                }
-                Key::Home => {
-                    self.rename_cursor = 0;
-                    Msg::Nothing
-                }
-                Key::End => {
-                    self.rename_cursor = self.rename_rope.len_chars();
-                    Msg::Nothing
-                }
-                Key::Delete => {
-                    if self.rename_rope.len_chars() > 0 {
-                        self.rename_rope
-                            .remove(self.rename_cursor..self.rename_cursor + 1);
-                    }
+                key if self.renaming => {
+                    self.rename_edit.handle_sfml_key(key);
                     Msg::Nothing
                 }
                 _ => Msg::Nothing,
             },
             Event::TextEntered { unicode } => {
-                if self.renaming && !unicode.is_ascii_control() {
-                    self.rename_rope.insert_char(self.rename_cursor, unicode);
-                    self.rename_cursor += 1;
+                if self.renaming {
+                    self.rename_edit.type_(unicode)
                 }
                 Msg::Nothing
             }
