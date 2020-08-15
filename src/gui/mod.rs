@@ -5,6 +5,7 @@ mod thumbnail_loader;
 use crate::db::{Db, Uid};
 use crate::FilterSpec;
 use failure::Error;
+use text_edit::TextEdit;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use sfml::graphics::{
@@ -75,6 +76,14 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             &mut state.thumbnail_loader,
             load_anim_rotation,
         );
+        if state.searching {
+            let text = Text::new(
+                &format!("Search string: {:?}", &*state.search_edit.string()),
+                &state.font,
+                10,
+            );
+            window.draw(&text);
+        }
         window.display();
         load_anim_rotation += 2.0;
     }
@@ -115,8 +124,21 @@ fn handle_event_viewer(
                     .push(Box::new(dialog::Meta::new(uid, db)));
             }
         }
+        Event::TextEntered { unicode } => {
+            if !state.swallow {
+                state.search_edit.type_(unicode);
+            }
+            state.swallow = false;
+        }
         Event::KeyPressed { code, .. } => {
-            if code == Key::PageDown {
+            if state.searching {
+                if code == Key::Return {
+                    state.searching = false;
+                    state.search_edit.clear();
+                } else {
+                    state.search_edit.handle_sfml_key(code);
+                }
+            } else if code == Key::PageDown {
                 state.y_offset += window.size().y as f32;
                 recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
             } else if code == Key::PageUp {
@@ -131,6 +153,9 @@ fn handle_event_viewer(
                     paths.push(&db.entries[uid as usize].path);
                 }
                 open_with_external(&paths);
+            } else if code == Key::Slash {
+                state.swallow = true;
+                state.searching = true;
             }
         }
         _ => {}
@@ -170,6 +195,11 @@ struct State {
     thumbnail_loader: ThumbnailLoader,
     font: SfBox<Font>,
     dialog_stack: dialog::Stack,
+    searching: bool,
+    search_edit: TextEdit,
+    /// When we press a key to start the editor, that key will also be sent as TextEntered event.
+    /// We need to swallow that first event.
+    swallow: bool,
 }
 
 impl State {
@@ -194,6 +224,9 @@ impl State {
             thumbnail_loader: Default::default(),
             font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),
             dialog_stack: Default::default(),
+            searching: false,
+            search_edit: TextEdit::default(),
+            swallow: false,
         }
     }
     fn draw_thumbnails(

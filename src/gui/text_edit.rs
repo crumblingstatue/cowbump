@@ -17,6 +17,7 @@ impl TextEdit {
     }
     pub fn clear(&mut self) {
         self.rope = Rope::new();
+        self.cursor = 0;
     }
     pub fn backspace(&mut self) {
         if self.cursor > 0 {
