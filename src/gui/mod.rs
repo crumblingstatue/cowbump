@@ -291,8 +291,8 @@ fn open_with_external(paths: &[&Path]) {
     use std::process::Command;
     struct Cmd {
         command: Command,
-        exts: Vec<&'static str>,
         have_args: bool,
+        exts: &'static [&'static str],
     }
     let mut general_cmd = Cmd {
         command: {
@@ -300,7 +300,7 @@ fn open_with_external(paths: &[&Path]) {
             c.arg("--auto-rotate");
             c
         },
-        exts: vec![],
+        exts: &[],
         have_args: false,
     };
     let mut commands = vec![
@@ -310,7 +310,7 @@ fn open_with_external(paths: &[&Path]) {
                 c.arg("--ab-loop-a=0");
                 c
             },
-            exts: vec!["gif", "webm", "mov", "mp4", "m4v", "wmv", "avi"],
+            exts: &["gif", "webm", "mov", "mp4", "m4v", "wmv", "avi"],
             have_args: false,
         },
         Cmd {
@@ -319,7 +319,7 @@ fn open_with_external(paths: &[&Path]) {
                 c.arg("chromium");
                 c
             },
-            exts: vec!["swf"],
+            exts: &["swf"],
             have_args: false,
         },
     ];
