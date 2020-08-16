@@ -9,8 +9,8 @@ use text_edit::TextEdit;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use sfml::graphics::{
-    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture,
-    Transformable,
+    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
+    Texture, Transformable,
 };
 use sfml::system::SfBox;
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
@@ -79,7 +79,11 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         );
         if state.searching {
             let mut text = Text::new("", &state.font, 16);
-            let mut cursor = RectangleShape::with_size((3.0, 20.0).into());
+            text.set_outline_color(Color::BLACK);
+            text.set_outline_thickness(2.0);
+            let mut cursor = RectangleShape::with_size((2.0, 18.0).into());
+            cursor.set_outline_color(Color::BLACK);
+            cursor.set_outline_thickness(1.0);
             state
                 .search_edit
                 .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
@@ -124,9 +128,19 @@ fn handle_event_viewer(
                     .push(Box::new(dialog::Meta::new(uid, db)));
             }
         }
-        Event::TextEntered { unicode } => {
+        Event::TextEntered { unicode } if state.searching => {
             if !state.swallow {
                 state.search_edit.type_(unicode);
+                let string = state.search_edit.string().to_lowercase();
+                for (i, item) in db.entries.iter().enumerate() {
+                    if item.path.to_string_lossy().to_lowercase().contains(&string) {
+                        let y_of_item = i as u32 / state.thumbnails_per_row;
+                        let y: f32 = (y_of_item * state.thumbnail_size) as f32;
+                        state.y_offset = y;
+                        break;
+                    }
+                }
+                recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
             }
             state.swallow = false;
         }
