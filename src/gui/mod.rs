@@ -79,7 +79,11 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         );
         if state.searching {
             let mut text = Text::new("", &state.font, 16);
-            text.set_outline_color(Color::BLACK);
+            if state.search_success {
+                text.set_outline_color(Color::BLACK);
+            } else {
+                text.set_outline_color(Color::RED);
+            }
             text.set_outline_thickness(2.0);
             let mut cursor = RectangleShape::with_size((2.0, 18.0).into());
             cursor.set_outline_color(Color::BLACK);
@@ -87,6 +91,9 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             state
                 .search_edit
                 .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
+        }
+        if state.search_success {
+            window.draw(&state.search_highlight);
         }
         window.display();
         load_anim_rotation += 2.0;
@@ -131,16 +138,8 @@ fn handle_event_viewer(
         Event::TextEntered { unicode } if state.searching => {
             if !state.swallow {
                 state.search_edit.type_(unicode);
-                let string = state.search_edit.string().to_lowercase();
-                for (i, item) in db.entries.iter().enumerate() {
-                    if item.path.to_string_lossy().to_lowercase().contains(&string) {
-                        let y_of_item = i as u32 / state.thumbnails_per_row;
-                        let y: f32 = (y_of_item * state.thumbnail_size) as f32;
-                        state.y_offset = y;
-                        break;
-                    }
-                }
-                recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
+                state.search_cursor = 0;
+                search_goto(state, db, on_screen_uids, window);
             }
             state.swallow = false;
         }
@@ -148,7 +147,6 @@ fn handle_event_viewer(
             if state.searching {
                 if code == Key::Return {
                     state.searching = false;
-                    state.search_edit.clear();
                 } else {
                     state.search_edit.handle_sfml_key(code);
                 }
@@ -170,10 +168,54 @@ fn handle_event_viewer(
             } else if code == Key::Slash {
                 state.swallow = true;
                 state.searching = true;
+            } else if code == Key::N {
+                state.search_cursor += 1;
+                search_goto(state, db, on_screen_uids, window);
+                // Keep the last entry highlighted even if search fails
+                if !state.search_success {
+                    state.search_cursor -= 1;
+                    state.search_success = true;
+                }
+            } else if code == Key::P {
+                if state.search_cursor > 0 {
+                    state.search_cursor -= 1;
+                }
+                search_goto(state, db, on_screen_uids, window);
             }
         }
         _ => {}
     }
+}
+
+fn search_goto(state: &mut State, db: &Db, uids: &mut Vec<Uid>, window: &RenderWindow) {
+    let string = state.search_edit.string().to_lowercase();
+    state.search_success = false;
+    let mut found_idx = 0;
+    for (i, item) in db.entries.iter().enumerate() {
+        if item
+            .path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .to_lowercase()
+            .contains(&string)
+        {
+            if state.search_cursor > found_idx {
+                found_idx += 1;
+                continue;
+            }
+            let y_of_item = i as u32 / state.thumbnails_per_row;
+            let x_of_item = i as u32 % state.thumbnails_per_row;
+            let y: f32 = (y_of_item * state.thumbnail_size) as f32;
+            state.y_offset = y;
+            state
+                .search_highlight
+                .set_position((x_of_item as f32 * state.thumbnail_size as f32, 0.0));
+            state.search_success = true;
+            break;
+        }
+    }
+    recalc_on_screen_items(uids, db, state, window.size().y);
 }
 
 fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_height: u32) {
@@ -214,15 +256,25 @@ struct State {
     /// When we press a key to start the editor, that key will also be sent as TextEntered event.
     /// We need to swallow that first event.
     swallow: bool,
+    /// The same search can be used to seek multiple entries
+    search_cursor: usize,
+    search_highlight: RectangleShape<'static>,
+    search_success: bool,
 }
 
 impl State {
     fn new(window_width: u32) -> Self {
         let thumbnails_per_row = 5;
+        let thumbnail_size = window_width / thumbnails_per_row;
+        let mut search_highlight =
+            RectangleShape::with_size((thumbnail_size as f32, thumbnail_size as f32).into());
+        search_highlight.set_fill_color(Color::TRANSPARENT);
+        search_highlight.set_outline_color(Color::RED);
+        search_highlight.set_outline_thickness(-2.0);
         Self {
             thumbnails_per_row,
             y_offset: 0.0,
-            thumbnail_size: window_width / thumbnails_per_row,
+            thumbnail_size,
             filter: FilterSpec { has_tags: vec![] },
             loading_texture: Texture::from_memory(
                 include_bytes!("../../loading.png"),
@@ -241,6 +293,9 @@ impl State {
             searching: false,
             search_edit: TextEdit::default(),
             swallow: false,
+            search_cursor: 0,
+            search_highlight,
+            search_success: false,
         }
     }
     fn draw_thumbnails(
