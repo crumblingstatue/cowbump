@@ -432,13 +432,13 @@ impl Dialog for AddTagPicker {
 }
 
 struct LineEdit {
-    text: String,
+    text_edit: TextEdit,
 }
 
 impl LineEdit {
     pub fn new() -> Self {
         Self {
-            text: String::new(),
+            text_edit: TextEdit::default(),
         }
     }
 }
@@ -459,33 +459,31 @@ impl Dialog for LineEdit {
         _load_anim_rotation: f32,
     ) {
         self.draw_bg(x, y, window);
-        let mut text = Text::new(&self.text, font, 24);
+        let mut text = Text::new("", font, 24);
         text.set_position((x, y));
-        window.draw_text(&text, &RenderStates::DEFAULT);
+        let mut cursor = RectangleShape::with_size((2., 24.).into());
+        cursor.set_outline_color(Color::BLACK);
+        cursor.set_fill_color(Color::WHITE);
+        cursor.set_outline_thickness(2.0);
+        self.text_edit
+            .draw_sfml(window, font, &mut text, &mut cursor)
     }
     fn size(&self) -> Vector2f {
         Vector2f::new(400., 32.)
     }
     fn handle_event(&mut self, _x: u32, _y: u32, event: Event, db: &mut Db) -> Msg {
         match event {
-            Event::KeyPressed { code, .. } => match code {
-                Key::Return => {
-                    db.add_new_tag(Tag {
-                        names: vec![self.text.clone()],
-                        implies: Vec::new(),
-                    });
-                    return Msg::PopMe;
-                }
-                Key::BackSpace => {
-                    self.text.pop();
-                }
-                _ => {}
-            },
-            Event::TextEntered { unicode } => {
-                if !unicode.is_control() {
-                    self.text.push(unicode);
-                }
+            Event::KeyPressed {
+                code: Key::Return, ..
+            } => {
+                db.add_new_tag(Tag {
+                    names: vec![self.text_edit.string().into_owned()],
+                    implies: Vec::new(),
+                });
+                return Msg::PopMe;
             }
+            Event::KeyPressed { code, .. } => self.text_edit.handle_sfml_key(code),
+            Event::TextEntered { unicode } => self.text_edit.type_(unicode),
             _ => {}
         }
         Msg::Nothing

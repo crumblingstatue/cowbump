@@ -88,7 +88,7 @@ impl TextEdit {
     ) {
         let rename_string = self.string();
         text.set_string(&*rename_string);
-        let offset = calc_cursor_offset(&rename_string, font, self.cursor);
+        let offset = calc_cursor_offset(&rename_string, font, self.cursor, text.character_size());
         let text_bounds = text.global_bounds();
         cursor.set_position((text_bounds.left + offset, text_bounds.top));
         window.draw(text);
@@ -96,10 +96,15 @@ impl TextEdit {
     }
 }
 
-fn calc_cursor_offset(rename_string: &str, font: &Font, rename_cursor: usize) -> f32 {
+fn calc_cursor_offset(
+    rename_string: &str,
+    font: &Font,
+    rename_cursor: usize,
+    character_size: u32,
+) -> f32 {
     let mut offset = 0.0;
     for ch in rename_string.chars().take(rename_cursor) {
-        let glyph = font.glyph(ch as u32, 16, false, 1.0);
+        let glyph = font.glyph(ch as u32, character_size, false, 1.0);
         offset += glyph.advance;
     }
     offset
