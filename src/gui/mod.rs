@@ -429,8 +429,9 @@ fn open_with_external(paths: &[&Path]) {
     for path in paths {
         let mut cmd = &mut general_cmd;
         if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
+            let lower = &ext.to_lowercase();
             for c in &mut commands {
-                if c.exts.iter().any(|&e| e == ext) {
+                if c.exts.iter().any(|&e| e == lower) {
                     cmd = c;
                 }
             }
