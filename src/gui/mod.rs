@@ -85,7 +85,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 text.set_outline_color(Color::RED);
             }
             text.set_outline_thickness(2.0);
-            let mut cursor = RectangleShape::with_size((2.0, 18.0).into());
+            let mut cursor = RectangleShape::default();
             cursor.set_outline_color(Color::BLACK);
             cursor.set_outline_thickness(1.0);
             state

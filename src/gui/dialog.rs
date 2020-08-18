@@ -250,7 +250,7 @@ impl Dialog for Meta {
             text.set_outline_thickness(1.0);
             text.set_character_size(16);
 
-            let mut cursor_shape = RectangleShape::with_size((4., 24.).into());
+            let mut cursor_shape = RectangleShape::default();
             cursor_shape.set_fill_color(Color::BLUE);
 
             self.rename_edit
@@ -461,7 +461,7 @@ impl Dialog for LineEdit {
         self.draw_bg(x, y, window);
         let mut text = Text::new("", font, 24);
         text.set_position((x, y));
-        let mut cursor = RectangleShape::with_size((2., 24.).into());
+        let mut cursor = RectangleShape::default();
         cursor.set_outline_color(Color::BLACK);
         cursor.set_fill_color(Color::WHITE);
         cursor.set_outline_thickness(2.0);

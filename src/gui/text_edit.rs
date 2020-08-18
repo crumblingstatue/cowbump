@@ -86,6 +86,7 @@ impl TextEdit {
         text: &mut Text,
         cursor: &mut RectangleShape,
     ) {
+        cursor.set_size((2.0, text.character_size() as f32));
         let rename_string = self.string();
         text.set_string(&*rename_string);
         let offset = calc_cursor_offset(&rename_string, font, self.cursor, text.character_size());
