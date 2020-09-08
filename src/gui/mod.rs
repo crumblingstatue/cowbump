@@ -44,8 +44,14 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         }
 
         while let Some(event) = window.poll_event() {
-            if let Event::Closed = event {
-                window.close();
+            match event {
+                Event::Closed => window.close(),
+                Event::KeyPressed {
+                    code: Key::Escape, ..
+                } => {
+                    selected_uids.clear();
+                }
+                _ => {}
             }
             if !state.dialog_stack.handle_event(event, &window, db) {
                 handle_event_viewer(
