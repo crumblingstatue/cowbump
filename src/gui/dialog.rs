@@ -281,7 +281,6 @@ impl Dialog for Meta {
                     self.renaming = true;
                     self.rename_edit.set_cursor(
                         self.rename_edit
-                            .string()
                             .rfind('.')
                             .unwrap_or_else(|| self.rename_edit.string().chars().count()),
                     );

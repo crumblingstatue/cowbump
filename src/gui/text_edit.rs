@@ -95,6 +95,11 @@ impl TextEdit {
         window.draw(text);
         window.draw(cursor);
     }
+    /// Returns char position of the desired char, if it's found
+    pub fn rfind(&self, c: char) -> Option<usize> {
+        let s: Cow<str> = self.rope.clone().into();
+        s.rfind(c).map(|pos| self.rope.byte_to_char(pos))
+    }
 }
 
 fn calc_cursor_offset(
