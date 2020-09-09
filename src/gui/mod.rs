@@ -29,28 +29,47 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
-    recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
+    macro_rules! recalc {
+        () => {
+            recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
+        };
+    }
+    recalc!();
     while window.is_open() {
         let scroll_speed = 8.0;
         if Key::Down.is_pressed() {
             state.y_offset += scroll_speed;
-            recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
+            recalc!();
         } else if Key::Up.is_pressed() {
             state.y_offset -= scroll_speed;
             if state.y_offset < 0.0 {
                 state.y_offset = 0.0;
             }
-            recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
+            recalc!();
         }
 
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => window.close(),
-                Event::KeyPressed {
-                    code: Key::Escape, ..
-                } => {
-                    selected_uids.clear();
-                }
+                Event::KeyPressed { code, .. } => match code {
+                    Key::Escape => selected_uids.clear(),
+                    Key::Home => {
+                        state.y_offset = 0.0;
+                        recalc!();
+                    }
+                    Key::End => {
+                        // Align the bottom edge of the view with the bottom edge of the last row.
+                        // To do align the camera with a bottom edge, we need to subtract the screen
+                        // height from it.
+                        let bottom_align = |y: f32| y - window.size().y as f32;
+                        let n_pics = db.filter(&state.filter).count();
+                        let rows = n_pics as u32 / state.thumbnails_per_row;
+                        let bottom = (rows + 1) * state.thumbnail_size;
+                        state.y_offset = bottom_align(bottom as f32);
+                        recalc!();
+                    }
+                    _ => {}
+                },
                 _ => {}
             }
             if !state.dialog_stack.handle_event(event, &window, db) {
