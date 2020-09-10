@@ -1,3 +1,4 @@
+mod debug;
 mod dialog;
 mod text_edit;
 mod thumbnail_loader;
@@ -58,6 +59,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                         let bottom = (rows + 1) * state.thumbnail_size;
                         state.y_offset = bottom_align(bottom as f32);
                     }
+                    Key::F12 => debug::toggle(),
                     _ => {}
                 },
                 _ => {}
@@ -111,6 +113,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         if state.search_success {
             window.draw(&state.search_highlight);
         }
+        debug::draw(&mut window, &state.font);
         window.display();
         load_anim_rotation += 2.0;
     }
