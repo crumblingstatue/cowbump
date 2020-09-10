@@ -1,3 +1,5 @@
+#![feature(decl_macro)]
+
 mod db;
 mod entry;
 mod gui;

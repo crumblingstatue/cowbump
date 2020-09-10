@@ -41,3 +41,7 @@ pub fn toggle() {
     let current = ENABLED.load(Ordering::Acquire);
     ENABLED.store(!current, Ordering::Release);
 }
+
+pub macro var($name:ident) {
+    crate::gui::debug::info(format!(concat!(stringify!($name), " = {}"), $name));
+}
