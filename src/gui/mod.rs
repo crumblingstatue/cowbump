@@ -29,23 +29,15 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
-    macro_rules! recalc {
-        () => {
-            recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
-        };
-    }
-    recalc!();
     while window.is_open() {
         let scroll_speed = 8.0;
         if Key::Down.is_pressed() {
             state.y_offset += scroll_speed;
-            recalc!();
         } else if Key::Up.is_pressed() {
             state.y_offset -= scroll_speed;
             if state.y_offset < 0.0 {
                 state.y_offset = 0.0;
             }
-            recalc!();
         }
 
         while let Some(event) = window.poll_event() {
@@ -55,7 +47,6 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                     Key::Escape => selected_uids.clear(),
                     Key::Home => {
                         state.y_offset = 0.0;
-                        recalc!();
                     }
                     Key::End => {
                         // Align the bottom edge of the view with the bottom edge of the last row.
@@ -66,7 +57,6 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                         let rows = n_pics as u32 / state.thumbnails_per_row;
                         let bottom = (rows + 1) * state.thumbnail_size;
                         state.y_offset = bottom_align(bottom as f32);
-                        recalc!();
                     }
                     _ => {}
                 },
@@ -83,6 +73,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 );
             }
         }
+        recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
         window.clear(Color::BLACK);
         state.draw_thumbnails(
             &mut window,
@@ -164,7 +155,7 @@ fn handle_event_viewer(
             if !state.swallow {
                 state.search_edit.type_(unicode);
                 state.search_cursor = 0;
-                search_goto(state, db, on_screen_uids, window);
+                search_goto(state, db);
             }
             state.swallow = false;
         }
@@ -177,13 +168,11 @@ fn handle_event_viewer(
                 }
             } else if code == Key::PageDown {
                 state.y_offset += window.size().y as f32;
-                recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
             } else if code == Key::PageUp {
                 state.y_offset -= window.size().y as f32;
                 if state.y_offset < 0.0 {
                     state.y_offset = 0.0;
                 }
-                recalc_on_screen_items(on_screen_uids, db, state, window.size().y);
             } else if code == Key::Return {
                 let mut paths: Vec<&Path> = Vec::new();
                 for &uid in selected_uids.iter() {
@@ -195,7 +184,7 @@ fn handle_event_viewer(
                 state.searching = true;
             } else if code == Key::N {
                 state.search_cursor += 1;
-                search_goto(state, db, on_screen_uids, window);
+                search_goto(state, db);
                 // Keep the last entry highlighted even if search fails
                 if !state.search_success {
                     state.search_cursor -= 1;
@@ -205,14 +194,14 @@ fn handle_event_viewer(
                 if state.search_cursor > 0 {
                     state.search_cursor -= 1;
                 }
-                search_goto(state, db, on_screen_uids, window);
+                search_goto(state, db);
             }
         }
         _ => {}
     }
 }
 
-fn search_goto(state: &mut State, db: &Db, uids: &mut Vec<Uid>, window: &RenderWindow) {
+fn search_goto(state: &mut State, db: &Db) {
     let string = state.search_edit.string().to_lowercase();
     state.search_success = false;
     let mut found_idx = 0;
@@ -240,7 +229,6 @@ fn search_goto(state: &mut State, db: &Db, uids: &mut Vec<Uid>, window: &RenderW
             break;
         }
     }
-    recalc_on_screen_items(uids, db, state, window.size().y);
 }
 
 fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_height: u32) {
