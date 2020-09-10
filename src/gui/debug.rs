@@ -42,6 +42,6 @@ pub fn toggle() {
     ENABLED.store(!current, Ordering::Release);
 }
 
-pub macro var($name:ident) {
-    crate::gui::debug::info(format!(concat!(stringify!($name), " = {}"), $name));
+pub macro info($x:expr) {
+    crate::gui::debug::info(format!(concat!(stringify!($x), " = {}"), $x));
 }
