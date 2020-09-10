@@ -23,17 +23,15 @@ pub fn info(msg: String) {
 pub fn draw(rw: &mut RenderWindow, font: &Font) {
     if ENABLED.load(Ordering::Acquire) {
         let mut infos = INFOS.lock().unwrap();
-        let mut text = Text::new("= Debug panel =", font, 16);
+        let mut text = Text::new("= Debug panel =", font, 20);
         text.set_fill_color(Color::RED);
-        let mut y = 0.0;
-        text.set_position((0.0, y));
-        y += 17.0;
+        let mut y = 20.0;
         rw.draw(&text);
         for info in infos.iter() {
             text.set_string(info);
             text.set_position((0.0, y));
             rw.draw(&text);
-            y += 17.0;
+            y += 20.0;
         }
         infos.clear();
     }
