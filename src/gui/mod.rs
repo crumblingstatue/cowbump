@@ -110,8 +110,22 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 .search_edit
                 .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
         }
-        if state.search_success {
-            window.draw(&state.search_highlight);
+        if let Some(id) = state.highlight {
+            let mut search_highlight = RectangleShape::with_size(
+                (state.thumbnail_size as f32, state.thumbnail_size as f32).into(),
+            );
+            search_highlight.set_fill_color(Color::TRANSPARENT);
+            search_highlight.set_outline_color(Color::RED);
+            search_highlight.set_outline_thickness(-2.0);
+            let y_of_item = id as u32 / state.thumbnails_per_row;
+            let pixel_y = y_of_item as f32 * state.thumbnail_size as f32;
+            let highlight_offset = pixel_y - state.y_offset;
+            let x_of_item = id as u32 % state.thumbnails_per_row;
+            search_highlight.set_position((
+                x_of_item as f32 * state.thumbnail_size as f32,
+                highlight_offset,
+            ));
+            window.draw(&search_highlight);
         }
         debug::draw(&mut window, &state.font);
         window.display();
@@ -158,7 +172,7 @@ fn handle_event_viewer(
             if !state.swallow {
                 state.search_edit.type_(unicode);
                 state.search_cursor = 0;
-                search_goto(state, db);
+                search_goto_cursor(state, db);
             }
             state.swallow = false;
         }
@@ -187,50 +201,49 @@ fn handle_event_viewer(
                 state.searching = true;
             } else if code == Key::N {
                 state.search_cursor += 1;
-                search_goto(state, db);
+                search_goto_cursor(state, db);
                 // Keep the last entry highlighted even if search fails
                 if !state.search_success {
                     state.search_cursor -= 1;
-                    state.search_success = true;
                 }
             } else if code == Key::P {
                 if state.search_cursor > 0 {
                     state.search_cursor -= 1;
                 }
-                search_goto(state, db);
+                search_goto_cursor(state, db);
             }
         }
         _ => {}
     }
 }
 
-fn search_goto(state: &mut State, db: &Db) {
+fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
     let string = state.search_edit.string().to_lowercase();
-    state.search_success = false;
-    let mut found_idx = 0;
-    for (i, item) in db.entries.iter().enumerate() {
-        if item
-            .path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_lowercase()
-            .contains(&string)
-        {
-            if state.search_cursor > found_idx {
-                found_idx += 1;
-                continue;
-            }
-            let y_of_item = i as u32 / state.thumbnails_per_row;
-            let x_of_item = i as u32 % state.thumbnails_per_row;
-            let y: f32 = (y_of_item * state.thumbnail_size) as f32;
-            state.y_offset = y;
-            state
-                .search_highlight
-                .set_position((x_of_item as f32 * state.thumbnail_size as f32, 0.0));
-            state.search_success = true;
-            break;
-        }
+    db.entries
+        .iter()
+        .enumerate()
+        .filter(|(_, entry)| {
+            entry
+                .path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_lowercase()
+                .contains(&string)
+        })
+        .map(|(i, _)| i as Uid)
+        .nth(nth)
+}
+
+fn search_goto_cursor(state: &mut State, db: &Db) {
+    if let Some(uid) = find_nth(state, db, state.search_cursor) {
+        state.highlight = Some(uid);
+        state.search_success = true;
+        let y_of_item = uid / state.thumbnails_per_row;
+        let y: f32 = (y_of_item * state.thumbnail_size) as f32;
+        state.y_offset = y;
+    } else {
+        state.search_success = false;
     }
 }
 
@@ -274,19 +287,14 @@ struct State {
     swallow: bool,
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
-    search_highlight: RectangleShape<'static>,
     search_success: bool,
+    highlight: Option<Uid>,
 }
 
 impl State {
     fn new(window_width: u32) -> Self {
         let thumbnails_per_row = 5;
         let thumbnail_size = window_width / thumbnails_per_row;
-        let mut search_highlight =
-            RectangleShape::with_size((thumbnail_size as f32, thumbnail_size as f32).into());
-        search_highlight.set_fill_color(Color::TRANSPARENT);
-        search_highlight.set_outline_color(Color::RED);
-        search_highlight.set_outline_thickness(-2.0);
         Self {
             thumbnails_per_row,
             y_offset: 0.0,
@@ -310,8 +318,8 @@ impl State {
             search_edit: TextEdit::default(),
             swallow: false,
             search_cursor: 0,
-            search_highlight,
             search_success: false,
+            highlight: None,
         }
     }
     fn draw_thumbnails(
