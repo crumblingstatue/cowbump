@@ -286,7 +286,7 @@ impl Dialog for Meta {
                     );
                     Msg::Nothing
                 }
-                Key::Return => {
+                Key::ENTER => {
                     if self.renaming {
                         let path = &mut db.entries[self.uid as usize].path;
                         let new_path = path.parent().unwrap().join(&*self.rename_edit.string());
@@ -299,7 +299,7 @@ impl Dialog for Meta {
                     }
                     Msg::Nothing
                 }
-                Key::Escape => {
+                Key::ESCAPE => {
                     if self.renaming {
                         self.renaming = false;
                         self.rename_edit.clear();
@@ -473,7 +473,7 @@ impl Dialog for LineEdit {
     fn handle_event(&mut self, _x: u32, _y: u32, event: Event, db: &mut Db) -> Msg {
         match event {
             Event::KeyPressed {
-                code: Key::Return, ..
+                code: Key::ENTER, ..
             } => {
                 db.add_new_tag(Tag {
                     names: vec![self.text_edit.string().into_owned()],

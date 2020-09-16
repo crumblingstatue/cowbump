@@ -58,22 +58,22 @@ impl TextEdit {
     }
     pub fn handle_sfml_key(&mut self, key: Key) {
         match key {
-            Key::Right => {
+            Key::RIGHT => {
                 self.right();
             }
-            Key::Left => {
+            Key::LEFT => {
                 self.left();
             }
-            Key::BackSpace => {
+            Key::BACKSPACE => {
                 self.backspace();
             }
-            Key::Home => {
+            Key::HOME => {
                 self.home();
             }
-            Key::End => {
+            Key::END => {
                 self.end();
             }
-            Key::Delete => {
+            Key::DELETE => {
                 self.delete();
             }
             _ => {}
@@ -111,7 +111,7 @@ fn calc_cursor_offset(
     let mut offset = 0.0;
     for ch in rename_string.chars().take(rename_cursor) {
         let glyph = font.glyph(ch as u32, character_size, false, 1.0);
-        offset += glyph.advance;
+        offset += glyph.advance();
     }
     offset
 }

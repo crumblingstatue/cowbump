@@ -32,9 +32,9 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut load_anim_rotation = 0.0;
     while window.is_open() {
         let scroll_speed = 8.0;
-        if Key::Down.is_pressed() {
+        if Key::DOWN.is_pressed() {
             state.y_offset += scroll_speed;
-        } else if Key::Up.is_pressed() {
+        } else if Key::UP.is_pressed() {
             state.y_offset -= scroll_speed;
             if state.y_offset < 0.0 {
                 state.y_offset = 0.0;
@@ -45,11 +45,11 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             match event {
                 Event::Closed => window.close(),
                 Event::KeyPressed { code, .. } => match code {
-                    Key::Escape => selected_uids.clear(),
-                    Key::Home => {
+                    Key::ESCAPE => selected_uids.clear(),
+                    Key::HOME => {
                         state.y_offset = 0.0;
                     }
-                    Key::End => {
+                    Key::END => {
                         // Align the bottom edge of the view with the bottom edge of the last row.
                         // To do align the camera with a bottom edge, we need to subtract the screen
                         // height from it.
@@ -152,8 +152,8 @@ fn handle_event_viewer(
                 Some(uid) => *uid,
                 None => return,
             };
-            if button == mouse::Button::Left {
-                if Key::LShift.is_pressed() {
+            if button == mouse::Button::LEFT {
+                if Key::LSHIFT.is_pressed() {
                     if selected_uids.contains(&uid) {
                         selected_uids.remove(&uid);
                     } else {
@@ -162,7 +162,7 @@ fn handle_event_viewer(
                 } else {
                     open_with_external(&[&db.entries[uid as usize].path]);
                 }
-            } else if button == mouse::Button::Right {
+            } else if button == mouse::Button::RIGHT {
                 state
                     .dialog_stack
                     .push(Box::new(dialog::Meta::new(uid, db)));
@@ -178,25 +178,25 @@ fn handle_event_viewer(
         }
         Event::KeyPressed { code, .. } => {
             if state.searching {
-                if code == Key::Return {
+                if code == Key::ENTER {
                     state.searching = false;
                 } else {
                     state.search_edit.handle_sfml_key(code);
                 }
-            } else if code == Key::PageDown {
+            } else if code == Key::PAGEDOWN {
                 state.y_offset += window.size().y as f32;
-            } else if code == Key::PageUp {
+            } else if code == Key::PAGEUP {
                 state.y_offset -= window.size().y as f32;
                 if state.y_offset < 0.0 {
                     state.y_offset = 0.0;
                 }
-            } else if code == Key::Return {
+            } else if code == Key::ENTER {
                 let mut paths: Vec<&Path> = Vec::new();
                 for &uid in selected_uids.iter() {
                     paths.push(&db.entries[uid as usize].path);
                 }
                 open_with_external(&paths);
-            } else if code == Key::Slash {
+            } else if code == Key::SLASH {
                 state.swallow = true;
                 state.searching = true;
             } else if code == Key::N {
