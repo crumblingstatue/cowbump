@@ -22,4 +22,5 @@ fn main() {
 
 pub struct FilterSpec {
     has_tags: Vec<Uid>,
+    substring_match: String,
 }

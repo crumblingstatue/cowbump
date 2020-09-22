@@ -90,6 +90,17 @@ impl Db {
     }
     pub fn filter<'a>(&'a self, spec: &'a crate::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
         self.entries.iter().enumerate().filter_map(move |en| {
+            if !en
+                .1
+                .path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_lowercase()
+                .contains(&spec.substring_match)
+            {
+                return None;
+            }
             for required_tag in &spec.has_tags {
                 if !en.1.tags.contains(required_tag) {
                     return None;

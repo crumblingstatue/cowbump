@@ -95,20 +95,34 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             &mut state.thumbnail_loader,
             load_anim_rotation,
         );
-        if state.searching {
-            let mut text = Text::new("", &state.font, 16);
-            if state.search_success {
-                text.set_outline_color(Color::BLACK);
-            } else {
-                text.set_outline_color(Color::RED);
+        match state.active_elem {
+            Some(ActiveElem::SearchEdit) => {
+                let mut text = Text::new("", &state.font, 16);
+                if state.search_success {
+                    text.set_outline_color(Color::BLACK);
+                } else {
+                    text.set_outline_color(Color::RED);
+                }
+                text.set_outline_thickness(2.0);
+                let mut cursor = RectangleShape::default();
+                cursor.set_outline_color(Color::BLACK);
+                cursor.set_outline_thickness(1.0);
+                state
+                    .search_edit
+                    .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
             }
-            text.set_outline_thickness(2.0);
-            let mut cursor = RectangleShape::default();
-            cursor.set_outline_color(Color::BLACK);
-            cursor.set_outline_thickness(1.0);
-            state
-                .search_edit
-                .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
+            Some(ActiveElem::FilterEdit) => {
+                let mut text = Text::new("", &state.font, 16);
+                text.set_outline_color(Color::BLACK);
+                text.set_outline_thickness(2.0);
+                let mut cursor = RectangleShape::default();
+                cursor.set_outline_color(Color::BLACK);
+                cursor.set_outline_thickness(1.0);
+                state
+                    .filter_edit
+                    .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
+            }
+            None => {}
         }
         if let Some(id) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
@@ -168,49 +182,74 @@ fn handle_event_viewer(
                     .push(Box::new(dialog::Meta::new(uid, db)));
             }
         }
-        Event::TextEntered { unicode } if state.searching => {
-            if !state.swallow {
-                state.search_edit.type_(unicode);
-                state.search_cursor = 0;
-                search_goto_cursor(state, db);
+        Event::TextEntered { unicode } => match state.active_elem {
+            Some(ActiveElem::SearchEdit) => {
+                if !state.swallow {
+                    state.search_edit.type_(unicode);
+                    state.search_cursor = 0;
+                    search_goto_cursor(state, db);
+                }
+                state.swallow = false;
             }
-            state.swallow = false;
-        }
+            Some(ActiveElem::FilterEdit) => {
+                if !state.swallow {
+                    state.filter_edit.type_(unicode);
+                    state.filter.substring_match = state.filter_edit.string().into_owned();
+                }
+                state.swallow = false;
+            }
+            None => {}
+        },
         Event::KeyPressed { code, .. } => {
-            if state.searching {
-                if code == Key::ENTER {
-                    state.searching = false;
-                } else {
-                    state.search_edit.handle_sfml_key(code);
+            match state.active_elem {
+                Some(ActiveElem::SearchEdit) => {
+                    if code == Key::ENTER {
+                        state.active_elem = None;
+                    } else {
+                        state.search_edit.handle_sfml_key(code);
+                    }
                 }
-            } else if code == Key::PAGEDOWN {
-                state.y_offset += window.size().y as f32;
-            } else if code == Key::PAGEUP {
-                state.y_offset -= window.size().y as f32;
-                if state.y_offset < 0.0 {
-                    state.y_offset = 0.0;
+                Some(ActiveElem::FilterEdit) => {
+                    if code == Key::ENTER {
+                        state.active_elem = None;
+                    } else {
+                        state.filter_edit.handle_sfml_key(code);
+                    }
                 }
-            } else if code == Key::ENTER {
-                let mut paths: Vec<&Path> = Vec::new();
-                for &uid in selected_uids.iter() {
-                    paths.push(&db.entries[uid as usize].path);
+                None => {
+                    if code == Key::PAGEDOWN {
+                        state.y_offset += window.size().y as f32;
+                    } else if code == Key::PAGEUP {
+                        state.y_offset -= window.size().y as f32;
+                        if state.y_offset < 0.0 {
+                            state.y_offset = 0.0;
+                        }
+                    } else if code == Key::ENTER {
+                        let mut paths: Vec<&Path> = Vec::new();
+                        for &uid in selected_uids.iter() {
+                            paths.push(&db.entries[uid as usize].path);
+                        }
+                        open_with_external(&paths);
+                    } else if code == Key::SLASH {
+                        state.swallow = true;
+                        state.active_elem = Some(ActiveElem::SearchEdit);
+                    } else if code == Key::N {
+                        state.search_cursor += 1;
+                        search_goto_cursor(state, db);
+                        // Keep the last entry highlighted even if search fails
+                        if !state.search_success {
+                            state.search_cursor -= 1;
+                        }
+                    } else if code == Key::P {
+                        if state.search_cursor > 0 {
+                            state.search_cursor -= 1;
+                        }
+                        search_goto_cursor(state, db);
+                    } else if code == Key::F {
+                        state.swallow = true;
+                        state.active_elem = Some(ActiveElem::FilterEdit);
+                    }
                 }
-                open_with_external(&paths);
-            } else if code == Key::SLASH {
-                state.swallow = true;
-                state.searching = true;
-            } else if code == Key::N {
-                state.search_cursor += 1;
-                search_goto_cursor(state, db);
-                // Keep the last entry highlighted even if search fails
-                if !state.search_success {
-                    state.search_cursor -= 1;
-                }
-            } else if code == Key::P {
-                if state.search_cursor > 0 {
-                    state.search_cursor -= 1;
-                }
-                search_goto_cursor(state, db);
             }
         }
         _ => {}
@@ -269,6 +308,11 @@ fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_he
 
 type ThumbnailCache = HashMap<Uid, Option<SfBox<Texture>>>;
 
+enum ActiveElem {
+    SearchEdit,
+    FilterEdit,
+}
+
 struct State {
     thumbnails_per_row: u32,
     y_offset: f32,
@@ -280,7 +324,7 @@ struct State {
     thumbnail_loader: ThumbnailLoader,
     font: SfBox<Font>,
     dialog_stack: dialog::Stack,
-    searching: bool,
+    active_elem: Option<ActiveElem>,
     search_edit: TextEdit,
     /// When we press a key to start the editor, that key will also be sent as TextEntered event.
     /// We need to swallow that first event.
@@ -289,6 +333,7 @@ struct State {
     search_cursor: usize,
     search_success: bool,
     highlight: Option<Uid>,
+    filter_edit: TextEdit,
 }
 
 impl State {
@@ -299,7 +344,10 @@ impl State {
             thumbnails_per_row,
             y_offset: 0.0,
             thumbnail_size,
-            filter: FilterSpec { has_tags: vec![] },
+            filter: FilterSpec {
+                has_tags: vec![],
+                substring_match: String::new(),
+            },
             loading_texture: Texture::from_memory(
                 include_bytes!("../../loading.png"),
                 &Default::default(),
@@ -314,12 +362,13 @@ impl State {
             thumbnail_loader: Default::default(),
             font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),
             dialog_stack: Default::default(),
-            searching: false,
+            active_elem: None,
             search_edit: TextEdit::default(),
             swallow: false,
             search_cursor: 0,
             search_success: false,
             highlight: None,
+            filter_edit: TextEdit::default(),
         }
     }
     fn draw_thumbnails(
