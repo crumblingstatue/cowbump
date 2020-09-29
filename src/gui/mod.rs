@@ -229,6 +229,11 @@ fn handle_event_viewer(
                         for &uid in selected_uids.iter() {
                             paths.push(&db.entries[uid as usize].path);
                         }
+                        if paths.is_empty() && state.filter.active() {
+                            for uid in db.filter(&state.filter) {
+                                paths.push(&db.entries[uid as usize].path);
+                            }
+                        }
                         open_with_external(&paths);
                     } else if code == Key::SLASH {
                         state.swallow = true;
