@@ -9,6 +9,7 @@ use failure::Error;
 use text_edit::TextEdit;
 
 use self::thumbnail_loader::ThumbnailLoader;
+use arboard::Clipboard;
 use sfml::graphics::{
     Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
     Texture, Transformable,
@@ -148,6 +149,17 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     Ok(())
 }
 
+fn get_uid_xy(x: i32, y: i32, state: &State, on_screen_uids: &[Uid]) -> Option<Uid> {
+    let thumb_x = x as u32 / state.thumbnail_size;
+    let rel_offset = state.y_offset as u32 % state.thumbnail_size;
+    let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
+    let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
+    match on_screen_uids.get(thumb_index as usize) {
+        Some(uid) => Some(*uid),
+        None => None,
+    }
+}
+
 fn handle_event_viewer(
     event: Event,
     state: &mut State,
@@ -158,12 +170,8 @@ fn handle_event_viewer(
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
-            let thumb_x = x as u32 / state.thumbnail_size;
-            let rel_offset = state.y_offset as u32 % state.thumbnail_size;
-            let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
-            let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
-            let uid: Uid = match on_screen_uids.get(thumb_index as usize) {
-                Some(uid) => *uid,
+            let uid = match get_uid_xy(x, y, state, on_screen_uids) {
+                Some(uid) => uid,
                 None => return,
             };
             if button == mouse::Button::LEFT {
@@ -253,6 +261,22 @@ fn handle_event_viewer(
                     } else if code == Key::F {
                         state.swallow = true;
                         state.active_elem = Some(ActiveElem::FilterEdit);
+                    } else if code == Key::C {
+                        use arboard::ImageData;
+                        let mp = window.mouse_position();
+                        let uid = match get_uid_xy(mp.x, mp.y, state, on_screen_uids) {
+                            Some(uid) => uid,
+                            None => return,
+                        };
+                        let imgpath = &db.entries[uid as usize].path;
+                        let img = image::open(imgpath).unwrap();
+                        let rgba = img.to_rgba();
+                        let img_data = ImageData {
+                            width: rgba.width() as usize,
+                            height: rgba.height() as usize,
+                            bytes: rgba.into_raw().into(),
+                        };
+                        state.clipboard_ctx.set_image(img_data).unwrap();
                     }
                 }
             }
@@ -339,6 +363,7 @@ struct State {
     search_success: bool,
     highlight: Option<Uid>,
     filter_edit: TextEdit,
+    clipboard_ctx: Clipboard,
 }
 
 impl State {
@@ -374,6 +399,7 @@ impl State {
             search_success: false,
             highlight: None,
             filter_edit: TextEdit::default(),
+            clipboard_ctx: Clipboard::new().unwrap(),
         }
     }
     fn draw_thumbnails(
