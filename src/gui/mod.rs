@@ -269,14 +269,22 @@ fn handle_event_viewer(
                             None => return,
                         };
                         let imgpath = &db.entries[uid as usize].path;
-                        let img = image::open(imgpath).unwrap();
+                        let img = match image::open(imgpath) {
+                            Ok(img) => img,
+                            Err(e) => {
+                                eprintln!("(clipboard) Image open error: {}", e);
+                                return;
+                            }
+                        };
                         let rgba = img.to_rgba();
                         let img_data = ImageData {
                             width: rgba.width() as usize,
                             height: rgba.height() as usize,
                             bytes: rgba.into_raw().into(),
                         };
-                        state.clipboard_ctx.set_image(img_data).unwrap();
+                        if let Err(e) = state.clipboard_ctx.set_image(img_data) {
+                            eprintln!("Error setting clipboard: {}", e);
+                        }
                     }
                 }
             }
