@@ -269,7 +269,8 @@ fn handle_event_viewer(
                             None => return,
                         };
                         let imgpath = &db.entries[uid as usize].path;
-                        let img = match image::open(imgpath) {
+                        let buf = std::fs::read(imgpath).unwrap();
+                        let img = match image::load_from_memory(&buf) {
                             Ok(img) => img,
                             Err(e) => {
                                 eprintln!("(clipboard) Image open error: {}", e);
