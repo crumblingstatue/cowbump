@@ -19,3 +19,8 @@ arboard = "1.0.1"
 git = "https://github.com/jeremyletang/rust-sfml.git"
 default-features = false
 features = ["graphics"]
+
+[profile.release]
+codegen-units = 1
+panic = "abort"
+lto = "thin"
