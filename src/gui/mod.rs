@@ -14,7 +14,7 @@ use sfml::graphics::{
     Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
     Texture, Transformable,
 };
-use sfml::system::SfBox;
+use sfml::SfBox;
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
