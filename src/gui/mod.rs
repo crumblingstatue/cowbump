@@ -203,6 +203,7 @@ fn handle_event_viewer(
                 if !state.swallow {
                     state.filter_edit.type_(unicode);
                     state.filter.substring_match = state.filter_edit.string().into_owned();
+                    state.y_offset = 0.0;
                 }
                 state.swallow = false;
             }
