@@ -40,7 +40,7 @@ impl ThumbnailLoader {
                 };
                 let image_result = image::load_from_memory(&data);
                 let result =
-                    image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba());
+                    image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba8());
                 *image_slot.lock().unwrap() = Some(result);
             });
         }

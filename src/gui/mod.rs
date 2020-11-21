@@ -278,7 +278,7 @@ fn handle_event_viewer(
                                 return;
                             }
                         };
-                        let rgba = img.to_rgba();
+                        let rgba = img.to_rgba8();
                         let img_data = ImageData {
                             width: rgba.width() as usize,
                             height: rgba.height() as usize,
