@@ -413,18 +413,26 @@ impl Dialog for AddTagPicker {
                 uid: i as Uid,
             });
         }
-        if let Event::MouseButtonPressed { x: mx, y: my, .. } = event {
-            if mouse_overlaps_button(x, y, mx, my, &self.close_button) {
-                return Msg::PopMe;
-            } else if mouse_overlaps_button(x, y, mx, my, &self.new_tag_button) {
-                return Msg::PushNew(Box::new(LineEdit::new()));
-            }
-            for b in &self.tag_buttons {
-                if mouse_overlaps_button(x, y, mx, my, &b.button) {
-                    db.add_tag_for(self.for_uid, b.uid);
+        match event {
+            Event::MouseButtonPressed { x: mx, y: my, .. } => {
+                if mouse_overlaps_button(x, y, mx, my, &self.close_button) {
                     return Msg::PopMe;
+                } else if mouse_overlaps_button(x, y, mx, my, &self.new_tag_button) {
+                    return Msg::PushNew(Box::new(LineEdit::new()));
+                }
+                for b in &self.tag_buttons {
+                    if mouse_overlaps_button(x, y, mx, my, &b.button) {
+                        db.add_tag_for(self.for_uid, b.uid);
+                        return Msg::PopMe;
+                    }
                 }
             }
+            Event::KeyPressed {
+                code: Key::ESCAPE, ..
+            } => {
+                return Msg::PopMe;
+            }
+            _ => {}
         }
         Msg::Nothing
     }
