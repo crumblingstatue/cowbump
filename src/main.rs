@@ -9,6 +9,9 @@ use crate::db::{Db, Uid};
 use std::env;
 
 fn main() {
+    if !atty::is(atty::Stream::Stdout) {
+        return;
+    }
     let dir = env::current_dir().unwrap();
     let mut db = Db::load_from_fs().unwrap_or_else(|e| {
         eprintln!("Error loading db: {}, creating new default db.", e);
