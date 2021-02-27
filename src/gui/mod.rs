@@ -78,24 +78,37 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed => window.close(),
-                Event::KeyPressed { code, .. } => match code {
-                    Key::ESCAPE => selected_uids.clear(),
-                    Key::HOME => {
-                        state.y_offset = 0.0;
+                Event::KeyPressed { code, .. } => {
+                    if let Some(key) = sf_kp_to_egui_kp(code) {
+                        raw_input.events.push(egui::Event::Key {
+                            key,
+                            modifiers: egui::Modifiers::default(),
+                            pressed: true,
+                        });
                     }
-                    Key::END => {
-                        // Align the bottom edge of the view with the bottom edge of the last row.
-                        // To do align the camera with a bottom edge, we need to subtract the screen
-                        // height from it.
-                        let bottom_align = |y: f32| y - window.size().y as f32;
-                        let n_pics = db.filter(&state.filter).count();
-                        let rows = n_pics as u32 / state.thumbnails_per_row;
-                        let bottom = (rows + 1) * state.thumbnail_size;
-                        state.y_offset = bottom_align(bottom as f32);
+                    match code {
+                        Key::ESCAPE => selected_uids.clear(),
+                        Key::HOME => {
+                            if !egui_ctx.wants_keyboard_input() {
+                                state.y_offset = 0.0;
+                            }
+                        }
+                        Key::END => {
+                            if !egui_ctx.wants_keyboard_input() {
+                                // Align the bottom edge of the view with the bottom edge of the last row.
+                                // To do align the camera with a bottom edge, we need to subtract the screen
+                                // height from it.
+                                let bottom_align = |y: f32| y - window.size().y as f32;
+                                let n_pics = db.filter(&state.filter).count();
+                                let rows = n_pics as u32 / state.thumbnails_per_row;
+                                let bottom = (rows + 1) * state.thumbnail_size;
+                                state.y_offset = bottom_align(bottom as f32);
+                            }
+                        }
+                        Key::F12 => debug::toggle(),
+                        _ => {}
                     }
-                    Key::F12 => debug::toggle(),
-                    _ => {}
-                },
+                }
                 Event::MouseMoved { x, y } => {
                     raw_input
                         .events
@@ -117,6 +130,11 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                         modifiers: Modifiers::default(),
                     });
                 }
+                Event::TextEntered { unicode } => {
+                    if !unicode.is_control() {
+                        raw_input.events.push(EguiEv::Text(unicode.to_string()));
+                    }
+                }
                 _ => {}
             }
             if !(egui_ctx.wants_pointer_input() || egui_ctx.wants_keyboard_input()) {
@@ -131,6 +149,15 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             }
         }
         egui_ctx.begin_frame(raw_input);
+        if state.filter_edit {
+            egui::Window::new("Filter").show(&egui_ctx, |ui| {
+                let ed = ui.text_edit_singleline(&mut state.filter.substring_match);
+                ui.memory().request_kb_focus(ed.id);
+                if ed.lost_kb_focus() {
+                    state.filter_edit = false;
+                }
+            });
+        }
         state.image_prop_windows.retain(|&id| {
             let mut open = true;
             egui::Window::new(db.entries[id as usize].path.display().to_string())
@@ -175,17 +202,6 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 cursor.set_outline_thickness(1.0);
                 state
                     .search_edit
-                    .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
-            }
-            Some(ActiveElem::FilterEdit) => {
-                let mut text = Text::new("", &state.font, 16);
-                text.set_outline_color(Color::BLACK);
-                text.set_outline_thickness(2.0);
-                let mut cursor = RectangleShape::default();
-                cursor.set_outline_color(Color::BLACK);
-                cursor.set_outline_thickness(1.0);
-                state
-                    .filter_edit
                     .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
             }
             None => {}
@@ -245,6 +261,64 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     Ok(())
 }
 
+fn sf_kp_to_egui_kp(code: Key) -> Option<egui::Key> {
+    use egui::Key as EKey;
+    Some(match code {
+        Key::DOWN => EKey::ArrowDown,
+        Key::LEFT => EKey::ArrowLeft,
+        Key::RIGHT => EKey::ArrowRight,
+        Key::UP => EKey::ArrowUp,
+        Key::ESCAPE => EKey::Escape,
+        Key::TAB => EKey::Tab,
+        Key::BACKSPACE => EKey::Backspace,
+        Key::ENTER => EKey::Enter,
+        Key::SPACE => EKey::Space,
+        Key::INSERT => EKey::Insert,
+        Key::DELETE => EKey::Delete,
+        Key::HOME => EKey::Home,
+        Key::END => EKey::End,
+        Key::PAGEUP => EKey::PageUp,
+        Key::PAGEDOWN => EKey::PageDown,
+        Key::NUM0 => EKey::Num0,
+        Key::NUM1 => EKey::Num1,
+        Key::NUM2 => EKey::Num2,
+        Key::NUM3 => EKey::Num3,
+        Key::NUM4 => EKey::Num4,
+        Key::NUM5 => EKey::Num5,
+        Key::NUM6 => EKey::Num6,
+        Key::NUM7 => EKey::Num7,
+        Key::NUM8 => EKey::Num8,
+        Key::NUM9 => EKey::Num9,
+        Key::A => EKey::A,
+        Key::B => EKey::B,
+        Key::C => EKey::C,
+        Key::D => EKey::D,
+        Key::E => EKey::E,
+        Key::F => EKey::F,
+        Key::G => EKey::G,
+        Key::H => EKey::H,
+        Key::I => EKey::I,
+        Key::J => EKey::J,
+        Key::K => EKey::K,
+        Key::L => EKey::L,
+        Key::M => EKey::M,
+        Key::N => EKey::N,
+        Key::O => EKey::O,
+        Key::P => EKey::P,
+        Key::Q => EKey::Q,
+        Key::R => EKey::R,
+        Key::S => EKey::S,
+        Key::T => EKey::T,
+        Key::U => EKey::U,
+        Key::V => EKey::V,
+        Key::W => EKey::W,
+        Key::X => EKey::X,
+        Key::Y => EKey::Y,
+        Key::Z => EKey::Z,
+        _ => return None,
+    })
+}
+
 fn sf_button_to_egui(button: mouse::Button) -> PointerButton {
     match button {
         mouse::Button::LEFT => PointerButton::Primary,
@@ -299,14 +373,6 @@ fn handle_event_viewer(
                 }
                 state.swallow = false;
             }
-            Some(ActiveElem::FilterEdit) => {
-                if !state.swallow {
-                    state.filter_edit.type_(unicode);
-                    state.filter.substring_match = state.filter_edit.string().into_owned();
-                    state.y_offset = 0.0;
-                }
-                state.swallow = false;
-            }
             None => {}
         },
         Event::KeyPressed { code, .. } => {
@@ -316,13 +382,6 @@ fn handle_event_viewer(
                         state.active_elem = None;
                     } else {
                         state.search_edit.handle_sfml_key(code);
-                    }
-                }
-                Some(ActiveElem::FilterEdit) => {
-                    if code == Key::ENTER {
-                        state.active_elem = None;
-                    } else {
-                        state.filter_edit.handle_sfml_key(code);
                     }
                 }
                 None => {
@@ -360,8 +419,7 @@ fn handle_event_viewer(
                         }
                         search_goto_cursor(state, db);
                     } else if code == Key::F {
-                        state.swallow = true;
-                        state.active_elem = Some(ActiveElem::FilterEdit);
+                        state.filter_edit = true;
                     } else if code == Key::C {
                         use arboard::ImageData;
                         let mp = window.mouse_position();
@@ -449,7 +507,6 @@ type ThumbnailCache = HashMap<Uid, Option<SfBox<Texture>>>;
 
 enum ActiveElem {
     SearchEdit,
-    FilterEdit,
 }
 
 struct State {
@@ -472,7 +529,7 @@ struct State {
     search_cursor: usize,
     search_success: bool,
     highlight: Option<Uid>,
-    filter_edit: TextEdit,
+    filter_edit: bool,
     clipboard_ctx: Clipboard,
     image_prop_windows: Vec<Uid>,
 }
@@ -509,7 +566,7 @@ impl State {
             search_cursor: 0,
             search_success: false,
             highlight: None,
-            filter_edit: TextEdit::default(),
+            filter_edit: false,
             clipboard_ctx: Clipboard::new().unwrap(),
             image_prop_windows: Vec::new(),
         }
