@@ -170,13 +170,26 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 }
             });
         }
-        state.image_prop_windows.retain(|&id| {
+        state.image_prop_windows.retain(|ids| {
             let mut open = true;
-            egui::Window::new(db.entries[id as usize].path.display().to_string())
-                .id(egui::Id::new(id))
+            let title = {
+                if ids.len() == 1 {
+                    db.entries[ids[0] as usize].path.display().to_string()
+                } else {
+                    format!("{} images", ids.len())
+                }
+            };
+            egui::Window::new(title)
                 .open(&mut open)
                 .show(&egui_ctx, |ui| {
-                    ui.image(TextureId::User(id as u64), (512.0, 512.0));
+                    ui.horizontal_wrapped(|ui| {
+                        for &id in ids {
+                            ui.image(
+                                TextureId::User(id as u64),
+                                (512.0 / ids.len() as f32, 512.0 / ids.len() as f32),
+                            );
+                        }
+                    });
                 });
             open
         });
@@ -344,7 +357,12 @@ fn handle_event_viewer(
                     open_with_external(&[&db.entries[uid as usize].path]);
                 }
             } else if button == mouse::Button::RIGHT {
-                state.image_prop_windows.push(uid);
+                let vec = if selected_uids.contains(&uid) {
+                    selected_uids.iter().cloned().collect()
+                } else {
+                    vec![uid]
+                };
+                state.image_prop_windows.push(vec);
             }
         }
         Event::KeyPressed { code, .. } => {
@@ -483,7 +501,7 @@ struct State {
     highlight: Option<Uid>,
     filter_edit: bool,
     clipboard_ctx: Clipboard,
-    image_prop_windows: Vec<Uid>,
+    image_prop_windows: Vec<Vec<Uid>>,
 }
 
 impl State {
