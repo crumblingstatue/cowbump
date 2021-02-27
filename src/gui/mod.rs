@@ -1,13 +1,10 @@
 mod debug;
-mod dialog;
-mod text_edit;
 mod thumbnail_loader;
 
 use crate::db::{Db, Uid};
 use crate::FilterSpec;
 use egui::{Event as EguiEv, Modifiers, PointerButton, Pos2, RawInput, TextureId};
 use failure::Error;
-use text_edit::TextEdit;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
@@ -149,6 +146,21 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             }
         }
         egui_ctx.begin_frame(raw_input);
+        if state.search_edit {
+            egui::Window::new("Search").show(&egui_ctx, |ui| {
+                let prev = state.search_string.clone();
+                let re = ui.text_edit_singleline(&mut state.search_string);
+                ui.memory().request_kb_focus(re.id);
+                if re.lost_kb_focus() {
+                    state.search_edit = false;
+                }
+                // Text was changed. TODO: Figure out if there is better way to see
+                if prev != state.search_string {
+                    state.search_cursor = 0;
+                    search_goto_cursor(&mut state, db);
+                }
+            });
+        }
         if state.filter_edit {
             egui::Window::new("Filter").show(&egui_ctx, |ui| {
                 let ed = ui.text_edit_singleline(&mut state.filter.substring_match);
@@ -177,35 +189,6 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             &selected_uids,
             load_anim_rotation,
         );
-        state.dialog_stack.draw(
-            &mut window,
-            &state.font,
-            db,
-            &state.thumbnail_cache,
-            state.thumbnail_size,
-            &state.error_texture,
-            &state.loading_texture,
-            &mut state.thumbnail_loader,
-            load_anim_rotation,
-        );
-        match state.active_elem {
-            Some(ActiveElem::SearchEdit) => {
-                let mut text = Text::new("", &state.font, 16);
-                if state.search_success {
-                    text.set_outline_color(Color::BLACK);
-                } else {
-                    text.set_outline_color(Color::RED);
-                }
-                text.set_outline_thickness(2.0);
-                let mut cursor = RectangleShape::default();
-                cursor.set_outline_color(Color::BLACK);
-                cursor.set_outline_thickness(1.0);
-                state
-                    .search_edit
-                    .draw_sfml(&mut window, &state.font, &mut text, &mut cursor);
-            }
-            None => {}
-        }
         if let Some(id) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
                 (state.thumbnail_size as f32, state.thumbnail_size as f32).into(),
@@ -364,88 +347,65 @@ fn handle_event_viewer(
                 state.image_prop_windows.push(uid);
             }
         }
-        Event::TextEntered { unicode } => match state.active_elem {
-            Some(ActiveElem::SearchEdit) => {
-                if !state.swallow {
-                    state.search_edit.type_(unicode);
-                    state.search_cursor = 0;
-                    search_goto_cursor(state, db);
-                }
-                state.swallow = false;
-            }
-            None => {}
-        },
         Event::KeyPressed { code, .. } => {
-            match state.active_elem {
-                Some(ActiveElem::SearchEdit) => {
-                    if code == Key::ENTER {
-                        state.active_elem = None;
-                    } else {
-                        state.search_edit.handle_sfml_key(code);
+            if code == Key::PAGEDOWN {
+                state.y_offset += window.size().y as f32;
+            } else if code == Key::PAGEUP {
+                state.y_offset -= window.size().y as f32;
+                if state.y_offset < 0.0 {
+                    state.y_offset = 0.0;
+                }
+            } else if code == Key::ENTER {
+                let mut paths: Vec<&Path> = Vec::new();
+                for &uid in selected_uids.iter() {
+                    paths.push(&db.entries[uid as usize].path);
+                }
+                if paths.is_empty() && state.filter.active() {
+                    for uid in db.filter(&state.filter) {
+                        paths.push(&db.entries[uid as usize].path);
                     }
                 }
-                None => {
-                    if code == Key::PAGEDOWN {
-                        state.y_offset += window.size().y as f32;
-                    } else if code == Key::PAGEUP {
-                        state.y_offset -= window.size().y as f32;
-                        if state.y_offset < 0.0 {
-                            state.y_offset = 0.0;
-                        }
-                    } else if code == Key::ENTER {
-                        let mut paths: Vec<&Path> = Vec::new();
-                        for &uid in selected_uids.iter() {
-                            paths.push(&db.entries[uid as usize].path);
-                        }
-                        if paths.is_empty() && state.filter.active() {
-                            for uid in db.filter(&state.filter) {
-                                paths.push(&db.entries[uid as usize].path);
-                            }
-                        }
-                        open_with_external(&paths);
-                    } else if code == Key::SLASH {
-                        state.swallow = true;
-                        state.active_elem = Some(ActiveElem::SearchEdit);
-                    } else if code == Key::N {
-                        state.search_cursor += 1;
-                        search_goto_cursor(state, db);
-                        // Keep the last entry highlighted even if search fails
-                        if !state.search_success {
-                            state.search_cursor -= 1;
-                        }
-                    } else if code == Key::P {
-                        if state.search_cursor > 0 {
-                            state.search_cursor -= 1;
-                        }
-                        search_goto_cursor(state, db);
-                    } else if code == Key::F {
-                        state.filter_edit = true;
-                    } else if code == Key::C {
-                        use arboard::ImageData;
-                        let mp = window.mouse_position();
-                        let uid = match get_uid_xy(mp.x, mp.y, state, on_screen_uids) {
-                            Some(uid) => uid,
-                            None => return,
-                        };
-                        let imgpath = &db.entries[uid as usize].path;
-                        let buf = std::fs::read(imgpath).unwrap();
-                        let img = match image::load_from_memory(&buf) {
-                            Ok(img) => img,
-                            Err(e) => {
-                                eprintln!("(clipboard) Image open error: {}", e);
-                                return;
-                            }
-                        };
-                        let rgba = img.to_rgba8();
-                        let img_data = ImageData {
-                            width: rgba.width() as usize,
-                            height: rgba.height() as usize,
-                            bytes: rgba.into_raw().into(),
-                        };
-                        if let Err(e) = state.clipboard_ctx.set_image(img_data) {
-                            eprintln!("Error setting clipboard: {}", e);
-                        }
+                open_with_external(&paths);
+            } else if code == Key::SLASH {
+                state.search_edit = true;
+            } else if code == Key::N {
+                state.search_cursor += 1;
+                search_goto_cursor(state, db);
+                // Keep the last entry highlighted even if search fails
+                if !state.search_success {
+                    state.search_cursor -= 1;
+                }
+            } else if code == Key::P {
+                if state.search_cursor > 0 {
+                    state.search_cursor -= 1;
+                }
+                search_goto_cursor(state, db);
+            } else if code == Key::F {
+                state.filter_edit = true;
+            } else if code == Key::C {
+                use arboard::ImageData;
+                let mp = window.mouse_position();
+                let uid = match get_uid_xy(mp.x, mp.y, state, on_screen_uids) {
+                    Some(uid) => uid,
+                    None => return,
+                };
+                let imgpath = &db.entries[uid as usize].path;
+                let buf = std::fs::read(imgpath).unwrap();
+                let img = match image::load_from_memory(&buf) {
+                    Ok(img) => img,
+                    Err(e) => {
+                        eprintln!("(clipboard) Image open error: {}", e);
+                        return;
                     }
+                };
+                let rgba = img.to_rgba8();
+                let img_data = ImageData {
+                    width: rgba.width() as usize,
+                    height: rgba.height() as usize,
+                    bytes: rgba.into_raw().into(),
+                };
+                if let Err(e) = state.clipboard_ctx.set_image(img_data) {
+                    eprintln!("Error setting clipboard: {}", e);
                 }
             }
         }
@@ -454,7 +414,7 @@ fn handle_event_viewer(
 }
 
 fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
-    let string = state.search_edit.string().to_lowercase();
+    let string = state.search_string.to_lowercase();
     db.entries
         .iter()
         .enumerate()
@@ -505,10 +465,6 @@ fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_he
 
 type ThumbnailCache = HashMap<Uid, Option<SfBox<Texture>>>;
 
-enum ActiveElem {
-    SearchEdit,
-}
-
 struct State {
     thumbnails_per_row: u32,
     y_offset: f32,
@@ -519,12 +475,8 @@ struct State {
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
     font: SfBox<Font>,
-    dialog_stack: dialog::Stack,
-    active_elem: Option<ActiveElem>,
-    search_edit: TextEdit,
-    /// When we press a key to start the editor, that key will also be sent as TextEntered event.
-    /// We need to swallow that first event.
-    swallow: bool,
+    search_edit: bool,
+    search_string: String,
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
@@ -559,10 +511,8 @@ impl State {
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
             font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),
-            dialog_stack: Default::default(),
-            active_elem: None,
-            search_edit: TextEdit::default(),
-            swallow: false,
+            search_edit: false,
+            search_string: String::new(),
             search_cursor: 0,
             search_success: false,
             highlight: None,
