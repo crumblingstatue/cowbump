@@ -76,41 +76,6 @@ impl Stack {
             );
         }
     }
-    pub fn push(&mut self, dialog: Box<dyn Dialog>) {
-        self.dialogs.push(dialog);
-    }
-    pub fn pop(&mut self) -> Option<Box<dyn Dialog>> {
-        self.dialogs.pop()
-    }
-    pub fn handle_event(&mut self, event: Event, window: &RenderWindow, db: &mut Db) -> bool {
-        let Vector2u { x: ww, y: wh } = window.size();
-        let wcx = ww / 2;
-        let wcy = wh / 2;
-        let mut pop = false;
-        let mut push = None;
-        let result = match self.dialogs.last_mut() {
-            Some(last) => {
-                let Vector2f { x: dw, y: dh } = last.size();
-                let dcx = dw as u32 / 2;
-                let dcy = dh as u32 / 2;
-                let msg = last.handle_event(wcx - dcx, wcy - dcy, event, db);
-                match msg {
-                    Msg::PopMe => pop = true,
-                    Msg::PushNew(dial) => push = Some(dial),
-                    Msg::Nothing => {}
-                }
-                true
-            }
-            None => false,
-        };
-        if pop {
-            self.pop();
-        }
-        if let Some(dial) = push {
-            self.push(dial);
-        }
-        result
-    }
 }
 
 pub trait Dialog {
@@ -150,31 +115,6 @@ pub struct Meta {
     tag_buttons: Vec<TagButton>,
     renaming: bool,
     rename_edit: TextEdit,
-}
-
-impl Meta {
-    pub fn new(uid: Uid, db: &Db) -> Self {
-        Self {
-            uid,
-            close_button: Button {
-                text: "X".into(),
-                x: 512.0 - 16.0,
-                y: 0.0,
-                w: 16,
-                h: 16,
-            },
-            add_tag_button: Button {
-                text: "+tag".into(),
-                x: 512.0 - 64.0,
-                y: 96.0,
-                w: 64,
-                h: 16,
-            },
-            tag_buttons: tag_buttons_from_uid(uid, db),
-            renaming: false,
-            rename_edit: TextEdit::default(),
-        }
-    }
 }
 
 fn tag_buttons_from_uid(uid: Uid, db: &Db) -> Vec<TagButton> {

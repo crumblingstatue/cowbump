@@ -5,19 +5,29 @@ mod thumbnail_loader;
 
 use crate::db::{Db, Uid};
 use crate::FilterSpec;
+use egui::{Event as EguiEv, Modifiers, PointerButton, Pos2, RawInput, TextureId};
 use failure::Error;
 use text_edit::TextEdit;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
 use sfml::graphics::{
-    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
-    Texture, Transformable,
+    Color, Font, PrimitiveType, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
+    Sprite, Text, Texture, Transformable, Vertex, VertexArray,
 };
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
 use sfml::SfBox;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
+
+fn egui_tex_to_rgba_vec(tex: &egui::Texture) -> Vec<u8> {
+    let srgba = tex.srgba_pixels();
+    let mut vec = Vec::new();
+    for c in srgba {
+        vec.extend_from_slice(&c.to_array());
+    }
+    vec
+}
 
 pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut window = RenderWindow::new(
@@ -31,6 +41,22 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
+    let mut egui_ctx = egui::CtxRef::default();
+    // Texture isn't valid until first call to begin_frame, so we just render a dummy frame
+    egui_ctx.begin_frame(RawInput::default());
+    let _ = egui_ctx.end_frame();
+    let egui_tex = egui_ctx.texture();
+    let mut tex = Texture::new(egui_tex.width as u32, egui_tex.height as u32).unwrap();
+    let tex_pixels = egui_tex_to_rgba_vec(&egui_tex);
+    unsafe {
+        tex.update_from_pixels(
+            &tex_pixels,
+            egui_tex.width as u32,
+            egui_tex.height as u32,
+            0,
+            0,
+        );
+    }
     while window.is_open() {
         let scroll_speed = 8.0;
         if Key::DOWN.is_pressed() {
@@ -41,6 +67,13 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 state.y_offset = 0.0;
             }
         }
+        let mut raw_input = RawInput {
+            screen_rect: Some(egui::Rect {
+                min: Pos2::new(0., 0.),
+                max: Pos2::new(window.size().x as f32, window.size().y as f32),
+            }),
+            ..Default::default()
+        };
 
         while let Some(event) = window.poll_event() {
             match event {
@@ -63,9 +96,30 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                     Key::F12 => debug::toggle(),
                     _ => {}
                 },
+                Event::MouseMoved { x, y } => {
+                    raw_input
+                        .events
+                        .push(EguiEv::PointerMoved(Pos2::new(x as f32, y as f32)));
+                }
+                Event::MouseButtonPressed { x, y, button } => {
+                    raw_input.events.push(EguiEv::PointerButton {
+                        pos: Pos2::new(x as f32, y as f32),
+                        button: sf_button_to_egui(button),
+                        pressed: true,
+                        modifiers: Modifiers::default(),
+                    });
+                }
+                Event::MouseButtonReleased { x, y, button } => {
+                    raw_input.events.push(EguiEv::PointerButton {
+                        pos: Pos2::new(x as f32, y as f32),
+                        button: sf_button_to_egui(button),
+                        pressed: false,
+                        modifiers: Modifiers::default(),
+                    });
+                }
                 _ => {}
             }
-            if !state.dialog_stack.handle_event(event, &window, db) {
+            if !(egui_ctx.wants_pointer_input() || egui_ctx.wants_keyboard_input()) {
                 handle_event_viewer(
                     event,
                     &mut state,
@@ -76,6 +130,17 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 );
             }
         }
+        egui_ctx.begin_frame(raw_input);
+        state.image_prop_windows.retain(|&id| {
+            let mut open = true;
+            egui::Window::new(db.entries[id as usize].path.display().to_string())
+                .id(egui::Id::new(id))
+                .open(&mut open)
+                .show(&egui_ctx, |ui| {
+                    ui.image(TextureId::User(id as u64), (512.0, 512.0));
+                });
+            open
+        });
         recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
         window.clear(Color::BLACK);
         state.draw_thumbnails(
@@ -142,6 +207,37 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             ));
             window.draw(&search_highlight);
         }
+        let (_output, shapes) = egui_ctx.end_frame();
+        for egui::ClippedMesh(_rect, mesh) in egui_ctx.tessellate(shapes) {
+            let mut arr = VertexArray::new(PrimitiveType::TRIANGLES, mesh.indices.len());
+            let (tw, th, tex) = match mesh.texture_id {
+                TextureId::Egui => (egui_tex.width as f32, egui_tex.height as f32, &*tex),
+                TextureId::User(id) => {
+                    let (_has, tex) = get_tex_for_uid(
+                        &state.thumbnail_cache,
+                        id as u32,
+                        &state.error_texture,
+                        db,
+                        &mut state.thumbnail_loader,
+                        state.thumbnail_size,
+                        &state.loading_texture,
+                    );
+                    (tex.size().x as f32, tex.size().y as f32, tex)
+                }
+            };
+            for idx in mesh.indices {
+                let v = mesh.vertices[idx as usize];
+                let sf_v = Vertex::new(
+                    (v.pos.x, v.pos.y).into(),
+                    Color::rgba(v.color.r(), v.color.g(), v.color.b(), v.color.a()),
+                    (v.uv.x * tw, v.uv.y * th).into(),
+                );
+                arr.append(&sf_v);
+            }
+            let mut rs = RenderStates::default();
+            rs.set_texture(Some(&tex));
+            window.draw_with_renderstates(&arr, &rs);
+        }
         debug::draw(&mut window, &state.font);
         window.display();
         load_anim_rotation += 2.0;
@@ -149,15 +245,21 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     Ok(())
 }
 
+fn sf_button_to_egui(button: mouse::Button) -> PointerButton {
+    match button {
+        mouse::Button::LEFT => PointerButton::Primary,
+        mouse::Button::RIGHT => PointerButton::Secondary,
+        mouse::Button::MIDDLE => PointerButton::Middle,
+        _ => panic!("Unhandled pointer button: {:?}", button),
+    }
+}
+
 fn get_uid_xy(x: i32, y: i32, state: &State, on_screen_uids: &[Uid]) -> Option<Uid> {
     let thumb_x = x as u32 / state.thumbnail_size;
     let rel_offset = state.y_offset as u32 % state.thumbnail_size;
     let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
     let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
-    match on_screen_uids.get(thumb_index as usize) {
-        Some(uid) => Some(*uid),
-        None => None,
-    }
+    on_screen_uids.get(thumb_index as usize).copied()
 }
 
 fn handle_event_viewer(
@@ -185,9 +287,7 @@ fn handle_event_viewer(
                     open_with_external(&[&db.entries[uid as usize].path]);
                 }
             } else if button == mouse::Button::RIGHT {
-                state
-                    .dialog_stack
-                    .push(Box::new(dialog::Meta::new(uid, db)));
+                state.image_prop_windows.push(uid);
             }
         }
         Event::TextEntered { unicode } => match state.active_elem {
@@ -374,6 +474,7 @@ struct State {
     highlight: Option<Uid>,
     filter_edit: TextEdit,
     clipboard_ctx: Clipboard,
+    image_prop_windows: Vec<Uid>,
 }
 
 impl State {
@@ -410,6 +511,7 @@ impl State {
             highlight: None,
             filter_edit: TextEdit::default(),
             clipboard_ctx: Clipboard::new().unwrap(),
+            image_prop_windows: Vec::new(),
         }
     }
     fn draw_thumbnails(
@@ -469,17 +571,15 @@ fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_loader: &mut ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
-    let (has_img, texture) = match thumbnail_cache.get(&uid) {
-        Some(opt_texture) => match *opt_texture {
-            Some(ref tex) => (true, tex as &Texture),
-            None => (false, error_texture),
-        },
-        None => {
-            let entry = &db.entries[uid as usize];
-            thumbnail_loader.request(&entry.path, thumb_size, uid);
-            (false, loading_texture)
-        }
-    };
+    let (has_img, texture) = get_tex_for_uid(
+        thumbnail_cache,
+        uid,
+        error_texture,
+        db,
+        thumbnail_loader,
+        thumb_size,
+        loading_texture,
+    );
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
     if thumbnail_loader.busy_with() == uid {
@@ -502,6 +602,29 @@ fn draw_thumbnail<'a: 'b, 'b>(
             window.draw_text(&text, &RenderStates::DEFAULT);
         }
     }
+}
+
+fn get_tex_for_uid<'t>(
+    thumbnail_cache: &'t HashMap<u32, Option<SfBox<Texture>>>,
+    uid: u32,
+    error_texture: &'t Texture,
+    db: &Db,
+    thumbnail_loader: &mut ThumbnailLoader,
+    thumb_size: u32,
+    loading_texture: &'t Texture,
+) -> (bool, &'t Texture) {
+    let (has_img, texture) = match thumbnail_cache.get(&uid) {
+        Some(opt_texture) => match *opt_texture {
+            Some(ref tex) => (true, tex as &Texture),
+            None => (false, error_texture),
+        },
+        None => {
+            let entry = &db.entries[uid as usize];
+            thumbnail_loader.request(&entry.path, thumb_size, uid);
+            (false, loading_texture)
+        }
+    };
+    (has_img, texture)
 }
 
 fn open_with_external(paths: &[&Path]) {
@@ -531,11 +654,7 @@ fn open_with_external(paths: &[&Path]) {
             have_args: false,
         },
         Cmd {
-            command: {
-                let mut c = Command::new("swfopen");
-                c.arg("chromium");
-                c
-            },
+            command: Command::new("ruffle"),
             exts: &["swf"],
             have_args: false,
         },
