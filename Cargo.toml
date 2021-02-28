@@ -16,6 +16,7 @@ lazy_static = "1.4.0"
 arboard = "1.1.0"
 atty = "0.2.14"
 egui = "0.10.0"
+retain_mut = "0.1.2"
 
 [dependencies.sfml]
 git = "https://github.com/jeremyletang/rust-sfml.git"

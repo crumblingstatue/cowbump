@@ -193,6 +193,7 @@ dependencies = [
  "failure",
  "image",
  "lazy_static",
+ "retain_mut",
  "ropey",
  "serde",
  "serde_derive",
@@ -648,6 +649,12 @@ dependencies = [
  "lazy_static",
  "num_cpus",
 ]
+
+[[package]]
+name = "retain_mut"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53552c6c49e1e13f1a203ef0080ab3bbef0beb570a528993e83df057a9d9bba1"
 
 [[package]]
 name = "ropey"

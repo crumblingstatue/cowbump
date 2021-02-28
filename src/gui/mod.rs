@@ -3,8 +3,9 @@ mod thumbnail_loader;
 
 use crate::db::{Db, Uid};
 use crate::FilterSpec;
-use egui::{Event as EguiEv, Modifiers, PointerButton, Pos2, RawInput, TextureId};
+use egui::{Color32, Event as EguiEv, Label, Modifiers, PointerButton, Pos2, RawInput, TextureId};
 use failure::Error;
+use retain_mut::RetainMut;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
@@ -168,29 +169,34 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 }
             });
         }
-        state.image_prop_windows.retain(|ids| {
-            let mut open = true;
-            let title = {
-                if ids.len() == 1 {
-                    db.entries[ids[0] as usize].path.display().to_string()
-                } else {
-                    format!("{} images", ids.len())
-                }
-            };
-            egui::Window::new(title)
-                .open(&mut open)
-                .show(&egui_ctx, |ui| {
-                    ui.horizontal_wrapped(|ui| {
-                        for &id in ids {
-                            ui.image(
-                                TextureId::User(id as u64),
-                                (512.0 / ids.len() as f32, 512.0 / ids.len() as f32),
-                            );
-                        }
-                    });
+        if state.tag_window {
+            egui::Window::new("Tag editor").show(&egui_ctx, |ui| {
+                ui.vertical(|ui| {
+                    for tag in &db.tags {
+                        ui.label(tag.names[0].clone());
+                    }
+                    if ui.button("Add tag").clicked() {
+                        state.add_tag = Some(AddTag::default());
+                    }
                 });
-            open
-        });
+            });
+        }
+        if let Some(add_tag) = &mut state.add_tag {
+            let mut rem = false;
+            egui::Window::new("Add new tag").show(&egui_ctx, |ui| {
+                if ui.text_edit_singleline(&mut add_tag.name).lost_kb_focus() {
+                    rem = true;
+                    db.add_new_tag(crate::tag::Tag {
+                        names: vec![add_tag.name.clone()],
+                        implies: vec![],
+                    });
+                }
+            });
+            if rem {
+                state.add_tag = None;
+            }
+        }
+        image_windows_ui(&mut state, db, &egui_ctx);
         recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
         window.clear(Color::BLACK);
         state.draw_thumbnails(
@@ -253,6 +259,83 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         load_anim_rotation += 2.0;
     }
     Ok(())
+}
+
+fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+    state.image_prop_windows.retain_mut(|propwin| {
+        let mut open = true;
+        let n_images = propwin.image_uids.len();
+        let title = {
+            if propwin.image_uids.len() == 1 {
+                db.entries[propwin.image_uids[0] as usize]
+                    .path
+                    .display()
+                    .to_string()
+            } else {
+                format!("{} images", n_images)
+            }
+        };
+        egui::Window::new(title)
+            .open(&mut open)
+            .show(egui_ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        for &id in &propwin.image_uids {
+                            ui.image(
+                                TextureId::User(id as u64),
+                                (512.0 / n_images as f32, 512.0 / n_images as f32),
+                            );
+                        }
+                    });
+                    ui.horizontal_wrapped(|ui| {
+                        for tagid in common_tags(&propwin.image_uids, db) {
+                            ui.group(|ui| {
+                                ui.add(
+                                    Label::new(db.tags[tagid as usize].names[0].clone())
+                                        .wrap(false)
+                                        .background_color(Color32::from_rgb(50, 40, 45)),
+                                );
+                                if ui.button("x").clicked() {
+                                    // TODO: This only works for 1 item windows
+                                    db.entries[propwin.image_uids[0] as usize]
+                                        .tags
+                                        .retain(|&t| t != tagid);
+                                }
+                            });
+                        }
+                        let plus_re = ui.button("+");
+                        let popup_id = ui.make_persistent_id("popid");
+                        if plus_re.clicked() {
+                            ui.memory().toggle_popup(popup_id);
+                        }
+                        egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
+                            ui.set_min_width(100.0);
+                            let mut tag_add = None;
+                            for (i, tag) in db.tags.iter().enumerate() {
+                                let name = tag.names[0].clone();
+                                if ui.button(name).clicked() {
+                                    tag_add = Some((propwin.image_uids[0], i as u32));
+                                }
+                            }
+                            if let Some((image_id, tag_id)) = tag_add {
+                                db.add_tag_for(image_id, tag_id);
+                            }
+                        });
+                    })
+                });
+            });
+        open
+    });
+}
+
+fn common_tags(ids: &[u32], db: &Db) -> BTreeSet<Uid> {
+    let mut set = BTreeSet::new();
+    for &id in ids {
+        for &tagid in &db.entries[id as usize].tags {
+            set.insert(tagid);
+        }
+    }
+    set
 }
 
 fn sf_kp_to_egui_kp(code: Key) -> Option<egui::Key> {
@@ -360,7 +443,7 @@ fn handle_event_viewer(
                 } else {
                     vec![uid]
                 };
-                state.image_prop_windows.push(vec);
+                state.image_prop_windows.push(ImagePropWindow::new(vec));
             }
         }
         Event::KeyPressed { code, .. } => {
@@ -423,6 +506,8 @@ fn handle_event_viewer(
                 if let Err(e) = state.clipboard_ctx.set_image(img_data) {
                     eprintln!("Error setting clipboard: {}", e);
                 }
+            } else if code == Key::T {
+                state.tag_window = !state.tag_window;
             }
         }
         _ => {}
@@ -499,7 +584,26 @@ struct State {
     highlight: Option<Uid>,
     filter_edit: bool,
     clipboard_ctx: Clipboard,
-    image_prop_windows: Vec<Vec<Uid>>,
+    image_prop_windows: Vec<ImagePropWindow>,
+    tag_window: bool,
+    add_tag: Option<AddTag>,
+}
+
+/// Add tag state when adding a new tag
+#[derive(Default)]
+struct AddTag {
+    name: String,
+}
+
+/// Image properties window
+struct ImagePropWindow {
+    image_uids: Vec<Uid>,
+}
+
+impl ImagePropWindow {
+    fn new(image_uids: Vec<Uid>) -> Self {
+        Self { image_uids }
+    }
 }
 
 impl State {
@@ -535,6 +639,8 @@ impl State {
             filter_edit: false,
             clipboard_ctx: Clipboard::new().unwrap(),
             image_prop_windows: Vec::new(),
+            tag_window: false,
+            add_tag: None,
         }
     }
     fn draw_thumbnails(
