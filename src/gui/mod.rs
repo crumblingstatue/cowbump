@@ -148,14 +148,12 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         egui_ctx.begin_frame(raw_input);
         if state.search_edit {
             egui::Window::new("Search").show(&egui_ctx, |ui| {
-                let prev = state.search_string.clone();
                 let re = ui.text_edit_singleline(&mut state.search_string);
                 ui.memory().request_kb_focus(re.id);
                 if re.lost_kb_focus() {
                     state.search_edit = false;
                 }
-                // Text was changed. TODO: Figure out if there is better way to see
-                if prev != state.search_string {
+                if re.changed() {
                     state.search_cursor = 0;
                     search_goto_cursor(&mut state, db);
                 }
