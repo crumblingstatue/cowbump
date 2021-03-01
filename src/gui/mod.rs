@@ -170,16 +170,20 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             });
         }
         if state.tag_window {
-            egui::Window::new("Tag editor").show(&egui_ctx, |ui| {
-                ui.vertical(|ui| {
-                    for tag in &db.tags {
-                        ui.label(tag.names[0].clone());
-                    }
-                    if ui.button("Add tag").clicked() {
-                        state.add_tag = Some(AddTag::default());
-                    }
+            let add_tag = &mut state.add_tag;
+            let tags = &db.tags;
+            egui::Window::new("Tag editor")
+                .open(&mut state.tag_window)
+                .show(&egui_ctx, move |ui| {
+                    ui.vertical(|ui| {
+                        for tag in tags {
+                            ui.label(tag.names[0].clone());
+                        }
+                        if ui.button("Add tag").clicked() {
+                            *add_tag = Some(AddTag::default());
+                        }
+                    });
                 });
-            });
         }
         if let Some(add_tag) = &mut state.add_tag {
             let mut rem = false;
