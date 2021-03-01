@@ -135,16 +135,16 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 }
                 _ => {}
             }
-            if !(egui_ctx.wants_pointer_input() || egui_ctx.wants_keyboard_input()) {
-                handle_event_viewer(
-                    event,
-                    &mut state,
-                    &mut on_screen_uids,
-                    db,
-                    &mut selected_uids,
-                    &window,
-                );
-            }
+            handle_event_viewer(
+                event,
+                &mut state,
+                &mut on_screen_uids,
+                db,
+                &mut selected_uids,
+                &window,
+                egui_ctx.wants_pointer_input(),
+                egui_ctx.wants_keyboard_input(),
+            );
         }
         egui_ctx.begin_frame(raw_input);
         if state.search_edit {
@@ -424,9 +424,14 @@ fn handle_event_viewer(
     db: &mut Db,
     selected_uids: &mut BTreeSet<Uid>,
     window: &RenderWindow,
+    egui_mouse: bool,
+    egui_kb: bool,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
+            if egui_mouse {
+                return;
+            }
             let uid = match get_uid_xy(x, y, state, on_screen_uids) {
                 Some(uid) => uid,
                 None => return,
@@ -451,6 +456,9 @@ fn handle_event_viewer(
             }
         }
         Event::KeyPressed { code, .. } => {
+            if egui_kb {
+                return;
+            }
             if code == Key::PAGEDOWN {
                 state.y_offset += window.size().y as f32;
             } else if code == Key::PAGEUP {
