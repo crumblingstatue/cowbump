@@ -188,7 +188,9 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         if let Some(add_tag) = &mut state.add_tag {
             let mut rem = false;
             egui::Window::new("Add new tag").show(&egui_ctx, |ui| {
-                if ui.text_edit_singleline(&mut add_tag.name).lost_kb_focus() {
+                let re = ui.text_edit_singleline(&mut add_tag.name);
+                ui.memory().request_kb_focus(re.id);
+                if re.lost_kb_focus() {
                     rem = true;
                     db.add_new_tag(crate::tag::Tag {
                         names: vec![add_tag.name.clone()],
