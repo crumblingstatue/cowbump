@@ -190,6 +190,7 @@ dependencies = [
  "atty",
  "bincode",
  "egui",
+ "egui-sfml",
  "failure",
  "image",
  "lazy_static",
@@ -299,6 +300,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04fa506a0f70b14bc9d04b59b862e621521728df5beae4403ce69a033658f78f"
 dependencies = [
  "epaint",
+]
+
+[[package]]
+name = "egui-sfml"
+version = "0.1.0"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git#94179d46f696fe9a803fce00ba512f14064a4eaa"
+dependencies = [
+ "egui",
+ "sfml",
 ]
 
 [[package]]

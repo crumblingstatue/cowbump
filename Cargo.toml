@@ -23,6 +23,9 @@ git = "https://github.com/jeremyletang/rust-sfml.git"
 default-features = false
 features = ["graphics"]
 
+[dependencies.egui-sfml]
+git = "https://github.com/crumblingstatue/egui-sfml.git"
+
 [profile.release]
 codegen-units = 1
 panic = "abort"

@@ -3,29 +3,20 @@ mod thumbnail_loader;
 
 use crate::db::{Db, Uid};
 use crate::FilterSpec;
-use egui::{Color32, Event as EguiEv, Label, Modifiers, PointerButton, Pos2, RawInput, TextureId};
+use egui::{Color32, Label, TextureId};
 use failure::Error;
 use retain_mut::RetainMut;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
 use sfml::graphics::{
-    Color, Font, PrimitiveType, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
-    Sprite, Text, Texture, Transformable, Vertex, VertexArray,
+    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
+    Texture, Transformable,
 };
 use sfml::window::{mouse, Event, Key, Style, VideoMode};
 use sfml::SfBox;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
-
-fn egui_tex_to_rgba_vec(tex: &egui::Texture) -> Vec<u8> {
-    let srgba = tex.srgba_pixels();
-    let mut vec = Vec::new();
-    for c in srgba {
-        vec.extend_from_slice(&c.to_array());
-    }
-    vec
-}
 
 pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut window = RenderWindow::new(
@@ -40,21 +31,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
     let mut egui_ctx = egui::CtxRef::default();
-    // Texture isn't valid until first call to begin_frame, so we just render a dummy frame
-    egui_ctx.begin_frame(RawInput::default());
-    let _ = egui_ctx.end_frame();
-    let egui_tex = egui_ctx.texture();
-    let mut tex = Texture::new(egui_tex.width as u32, egui_tex.height as u32).unwrap();
-    let tex_pixels = egui_tex_to_rgba_vec(&egui_tex);
-    unsafe {
-        tex.update_from_pixels(
-            &tex_pixels,
-            egui_tex.width as u32,
-            egui_tex.height as u32,
-            0,
-            0,
-        );
-    }
+    let tex = egui_sfml::create_texture(&mut egui_ctx, &window);
     while window.is_open() {
         let scroll_speed = 8.0;
         if Key::DOWN.is_pressed() {
@@ -65,25 +42,13 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 state.y_offset = 0.0;
             }
         }
-        let mut raw_input = RawInput {
-            screen_rect: Some(egui::Rect {
-                min: Pos2::new(0., 0.),
-                max: Pos2::new(window.size().x as f32, window.size().y as f32),
-            }),
-            ..Default::default()
-        };
+        let mut raw_input = egui_sfml::make_raw_input(&window);
 
         while let Some(event) = window.poll_event() {
+            egui_sfml::handle_event(&mut raw_input, &event);
             match event {
                 Event::Closed => window.close(),
                 Event::KeyPressed { code, .. } => {
-                    if let Some(key) = sf_kp_to_egui_kp(code) {
-                        raw_input.events.push(egui::Event::Key {
-                            key,
-                            modifiers: egui::Modifiers::default(),
-                            pressed: true,
-                        });
-                    }
                     match code {
                         Key::ESCAPE => selected_uids.clear(),
                         Key::HOME => {
@@ -105,32 +70,6 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                         }
                         Key::F12 => debug::toggle(),
                         _ => {}
-                    }
-                }
-                Event::MouseMoved { x, y } => {
-                    raw_input
-                        .events
-                        .push(EguiEv::PointerMoved(Pos2::new(x as f32, y as f32)));
-                }
-                Event::MouseButtonPressed { x, y, button } => {
-                    raw_input.events.push(EguiEv::PointerButton {
-                        pos: Pos2::new(x as f32, y as f32),
-                        button: sf_button_to_egui(button),
-                        pressed: true,
-                        modifiers: Modifiers::default(),
-                    });
-                }
-                Event::MouseButtonReleased { x, y, button } => {
-                    raw_input.events.push(EguiEv::PointerButton {
-                        pos: Pos2::new(x as f32, y as f32),
-                        button: sf_button_to_egui(button),
-                        pressed: false,
-                        modifiers: Modifiers::default(),
-                    });
-                }
-                Event::TextEntered { unicode } => {
-                    if !unicode.is_control() {
-                        raw_input.events.push(EguiEv::Text(unicode.to_string()));
                     }
                 }
                 _ => {}
@@ -230,36 +169,11 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             window.draw(&search_highlight);
         }
         let (_output, shapes) = egui_ctx.end_frame();
-        for egui::ClippedMesh(_rect, mesh) in egui_ctx.tessellate(shapes) {
-            let mut arr = VertexArray::new(PrimitiveType::TRIANGLES, mesh.indices.len());
-            let (tw, th, tex) = match mesh.texture_id {
-                TextureId::Egui => (egui_tex.width as f32, egui_tex.height as f32, &*tex),
-                TextureId::User(id) => {
-                    let (_has, tex) = get_tex_for_uid(
-                        &state.thumbnail_cache,
-                        id as u32,
-                        &state.error_texture,
-                        db,
-                        &mut state.thumbnail_loader,
-                        state.thumbnail_size,
-                        &state.loading_texture,
-                    );
-                    (tex.size().x as f32, tex.size().y as f32, tex)
-                }
-            };
-            for idx in mesh.indices {
-                let v = mesh.vertices[idx as usize];
-                let sf_v = Vertex::new(
-                    (v.pos.x, v.pos.y).into(),
-                    Color::rgba(v.color.r(), v.color.g(), v.color.b(), v.color.a()),
-                    (v.uv.x * tw, v.uv.y * th).into(),
-                );
-                arr.append(&sf_v);
-            }
-            let mut rs = RenderStates::default();
-            rs.set_texture(Some(&tex));
-            window.draw_with_renderstates(&arr, &rs);
-        }
+        let mut tex_src = TexSrc {
+            state: &mut state,
+            db,
+        };
+        egui_sfml::draw(&mut window, &egui_ctx, &tex, shapes, &mut tex_src);
         debug::draw(&mut window, &state.font);
         window.display();
         load_anim_rotation += 2.0;
@@ -342,73 +256,6 @@ fn common_tags(ids: &[u32], db: &Db) -> BTreeSet<Uid> {
         }
     }
     set
-}
-
-fn sf_kp_to_egui_kp(code: Key) -> Option<egui::Key> {
-    use egui::Key as EKey;
-    Some(match code {
-        Key::DOWN => EKey::ArrowDown,
-        Key::LEFT => EKey::ArrowLeft,
-        Key::RIGHT => EKey::ArrowRight,
-        Key::UP => EKey::ArrowUp,
-        Key::ESCAPE => EKey::Escape,
-        Key::TAB => EKey::Tab,
-        Key::BACKSPACE => EKey::Backspace,
-        Key::ENTER => EKey::Enter,
-        Key::SPACE => EKey::Space,
-        Key::INSERT => EKey::Insert,
-        Key::DELETE => EKey::Delete,
-        Key::HOME => EKey::Home,
-        Key::END => EKey::End,
-        Key::PAGEUP => EKey::PageUp,
-        Key::PAGEDOWN => EKey::PageDown,
-        Key::NUM0 => EKey::Num0,
-        Key::NUM1 => EKey::Num1,
-        Key::NUM2 => EKey::Num2,
-        Key::NUM3 => EKey::Num3,
-        Key::NUM4 => EKey::Num4,
-        Key::NUM5 => EKey::Num5,
-        Key::NUM6 => EKey::Num6,
-        Key::NUM7 => EKey::Num7,
-        Key::NUM8 => EKey::Num8,
-        Key::NUM9 => EKey::Num9,
-        Key::A => EKey::A,
-        Key::B => EKey::B,
-        Key::C => EKey::C,
-        Key::D => EKey::D,
-        Key::E => EKey::E,
-        Key::F => EKey::F,
-        Key::G => EKey::G,
-        Key::H => EKey::H,
-        Key::I => EKey::I,
-        Key::J => EKey::J,
-        Key::K => EKey::K,
-        Key::L => EKey::L,
-        Key::M => EKey::M,
-        Key::N => EKey::N,
-        Key::O => EKey::O,
-        Key::P => EKey::P,
-        Key::Q => EKey::Q,
-        Key::R => EKey::R,
-        Key::S => EKey::S,
-        Key::T => EKey::T,
-        Key::U => EKey::U,
-        Key::V => EKey::V,
-        Key::W => EKey::W,
-        Key::X => EKey::X,
-        Key::Y => EKey::Y,
-        Key::Z => EKey::Z,
-        _ => return None,
-    })
-}
-
-fn sf_button_to_egui(button: mouse::Button) -> PointerButton {
-    match button {
-        mouse::Button::LEFT => PointerButton::Primary,
-        mouse::Button::RIGHT => PointerButton::Secondary,
-        mouse::Button::MIDDLE => PointerButton::Middle,
-        _ => panic!("Unhandled pointer button: {:?}", button),
-    }
 }
 
 fn get_uid_xy(x: i32, y: i32, state: &State, on_screen_uids: &[Uid]) -> Option<Uid> {
@@ -601,6 +448,26 @@ struct State {
     image_prop_windows: Vec<ImagePropWindow>,
     tag_window: bool,
     add_tag: Option<AddTag>,
+}
+
+struct TexSrc<'state, 'db> {
+    state: &'state mut State,
+    db: &'db Db,
+}
+
+impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
+    fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
+        let (_has, tex) = get_tex_for_uid(
+            &self.state.thumbnail_cache,
+            id as u32,
+            &self.state.error_texture,
+            self.db,
+            &mut self.state.thumbnail_loader,
+            self.state.thumbnail_size,
+            &self.state.loading_texture,
+        );
+        (tex.size().x as f32, tex.size().y as f32, tex)
+    }
 }
 
 /// Add tag state when adding a new tag
