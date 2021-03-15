@@ -1,0 +1,142 @@
+use crate::db::Db;
+use crate::gui::{common_tags, search_goto_cursor, AddTag, State};
+use egui::{Color32, Label, TextureId};
+use retain_mut::RetainMut;
+
+pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
+    if state.search_edit {
+        egui::Window::new("Search").show(egui_ctx, |ui| {
+            let re = ui.text_edit_singleline(&mut state.search_string);
+            ui.memory().request_kb_focus(re.id);
+            if re.lost_kb_focus() {
+                state.search_edit = false;
+            }
+            if re.changed() {
+                state.search_cursor = 0;
+                search_goto_cursor(state, db);
+            }
+        });
+    }
+    if state.filter_edit {
+        egui::Window::new("Filter").show(egui_ctx, |ui| {
+            let ed = ui.text_edit_singleline(&mut state.filter.substring_match);
+            ui.memory().request_kb_focus(ed.id);
+            if ed.lost_kb_focus() {
+                state.filter_edit = false;
+            }
+        });
+    }
+    if state.tag_window {
+        let add_tag = &mut state.add_tag;
+        let tags = &mut db.tags;
+        let entries = &mut db.entries;
+        egui::Window::new("Tag editor")
+            .open(&mut state.tag_window)
+            .show(egui_ctx, move |ui| {
+                ui.vertical(|ui| {
+                    let mut i = 0;
+                    tags.retain(|tag| {
+                        ui.label(tag.names[0].clone());
+                        let keep = if ui.button("x").clicked() {
+                            for en in entries.iter_mut() {
+                                en.tags.retain(|&uid| uid != i);
+                            }
+                            false
+                        } else {
+                            true
+                        };
+                        i += 1;
+                        keep
+                    });
+                    if ui.button("Add tag").clicked() {
+                        *add_tag = Some(AddTag::default());
+                    }
+                });
+            });
+    }
+    if let Some(add_tag) = &mut state.add_tag {
+        let mut rem = false;
+        egui::Window::new("Add new tag").show(egui_ctx, |ui| {
+            let re = ui.text_edit_singleline(&mut add_tag.name);
+            ui.memory().request_kb_focus(re.id);
+            if re.ctx.input().key_down(egui::Key::Enter) {
+                rem = true;
+                db.add_new_tag(crate::tag::Tag {
+                    names: vec![add_tag.name.clone()],
+                    implies: vec![],
+                });
+            }
+        });
+        if rem {
+            state.add_tag = None;
+        }
+    }
+    image_windows_ui(state, db, egui_ctx);
+}
+
+fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+    state.image_prop_windows.retain_mut(|propwin| {
+        let mut open = true;
+        let n_images = propwin.image_uids.len();
+        let title = {
+            if propwin.image_uids.len() == 1 {
+                db.entries[propwin.image_uids[0] as usize]
+                    .path
+                    .display()
+                    .to_string()
+            } else {
+                format!("{} images", n_images)
+            }
+        };
+        egui::Window::new(title)
+            .open(&mut open)
+            .show(egui_ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        for &id in &propwin.image_uids {
+                            ui.image(
+                                TextureId::User(id as u64),
+                                (512.0 / n_images as f32, 512.0 / n_images as f32),
+                            );
+                        }
+                    });
+                    ui.horizontal_wrapped(|ui| {
+                        for tagid in common_tags(&propwin.image_uids, db) {
+                            ui.group(|ui| {
+                                ui.add(
+                                    Label::new(db.tags[tagid as usize].names[0].clone())
+                                        .wrap(false)
+                                        .background_color(Color32::from_rgb(50, 40, 45)),
+                                );
+                                if ui.button("x").clicked() {
+                                    // TODO: This only works for 1 item windows
+                                    db.entries[propwin.image_uids[0] as usize]
+                                        .tags
+                                        .retain(|&t| t != tagid);
+                                }
+                            });
+                        }
+                        let plus_re = ui.button("+");
+                        let popup_id = ui.make_persistent_id("popid");
+                        if plus_re.clicked() {
+                            ui.memory().toggle_popup(popup_id);
+                        }
+                        egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
+                            ui.set_min_width(100.0);
+                            let mut tag_add = None;
+                            for (i, tag) in db.tags.iter().enumerate() {
+                                let name = tag.names[0].clone();
+                                if ui.button(name).clicked() {
+                                    tag_add = Some((propwin.image_uids[0], i as u32));
+                                }
+                            }
+                            if let Some((image_id, tag_id)) = tag_add {
+                                db.add_tag_for(image_id, tag_id);
+                            }
+                        });
+                    })
+                });
+            });
+        open
+    });
+}
