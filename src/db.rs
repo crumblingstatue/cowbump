@@ -71,13 +71,11 @@ impl Db {
             }
         }
         // Remove indices that don't correspond to valid images
-        let mut i = 0;
-        self.entries.retain(|_uid, en| {
-            let keep = valid_uids.contains(&i);
+        self.entries.retain(|uid, en| {
+            let keep = valid_uids.contains(uid);
             if !keep {
                 eprintln!("Removing {}", en.path.display());
             }
-            i += 1;
             keep
         });
         Ok(())
