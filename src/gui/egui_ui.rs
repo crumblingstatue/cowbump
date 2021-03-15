@@ -189,12 +189,9 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
     state.egui_state.image_rename_windows.retain_mut(|win| {
         let mut open = true;
         egui::Window::new("Rename").show(egui_ctx, |ui| {
-            if ui
-                .text_edit_singleline(&mut win.name_buffer)
-                .ctx
-                .input()
-                .key_pressed(egui::Key::Enter)
-            {
+            let re = ui.text_edit_singleline(&mut win.name_buffer);
+            ui.memory().request_kb_focus(re.id);
+            if re.ctx.input().key_pressed(egui::Key::Enter) {
                 db.rename(win.uid, &win.name_buffer);
                 open = false;
             }
