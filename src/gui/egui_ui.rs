@@ -35,10 +35,10 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .show(egui_ctx, move |ui| {
                 ui.vertical(|ui| {
                     let mut i = 0;
-                    tags.retain(|tag| {
+                    tags.retain(|_uid, tag| {
                         ui.label(tag.names[0].clone());
                         let keep = if ui.button("x").clicked() {
-                            for en in entries.iter_mut() {
+                            for (_uid, en) in entries.iter_mut() {
                                 en.tags.retain(|&uid| uid != i);
                             }
                             false
@@ -80,7 +80,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
         let n_images = propwin.image_uids.len();
         let title = {
             if propwin.image_uids.len() == 1 {
-                db.entries[propwin.image_uids[0] as usize]
+                db.entries[&propwin.image_uids[0]]
                     .path
                     .display()
                     .to_string()
@@ -88,6 +88,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                 format!("{} images", n_images)
             }
         };
+        let mut close = false;
         egui::Window::new(title)
             .open(&mut open)
             .show(egui_ctx, |ui| {
@@ -104,13 +105,15 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         for tagid in common_tags(&propwin.image_uids, db) {
                             ui.group(|ui| {
                                 ui.add(
-                                    Label::new(db.tags[tagid as usize].names[0].clone())
+                                    Label::new(db.tags[&tagid].names[0].clone())
                                         .wrap(false)
                                         .background_color(Color32::from_rgb(50, 40, 45)),
                                 );
                                 if ui.button("x").clicked() {
                                     // TODO: This only works for 1 item windows
-                                    db.entries[propwin.image_uids[0] as usize]
+                                    db.entries
+                                        .get_mut(&propwin.image_uids[0])
+                                        .unwrap()
                                         .tags
                                         .retain(|&t| t != tagid);
                                 }
@@ -124,7 +127,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
                             ui.set_min_width(100.0);
                             let mut tag_add = None;
-                            for (i, tag) in db.tags.iter().enumerate() {
+                            for (i, (_uid, tag)) in db.tags.iter().enumerate() {
                                 let name = tag.names[0].clone();
                                 if ui.button(name).clicked() {
                                     tag_add = Some((propwin.image_uids[0], i as u32));
@@ -134,9 +137,22 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 db.add_tag_for(image_id, tag_id);
                             }
                         });
+                        if ui.button("Delete from disk").clicked() {
+                            for &uid in &propwin.image_uids {
+                                let path = &db.entries[&uid].path;
+                                if let Err(e) = std::fs::remove_file(path) {
+                                    eprintln!("Remove error: {}", e);
+                                }
+                                db.entries.remove(&uid);
+                                close = true;
+                            }
+                        }
                     })
                 });
             });
+        if close {
+            open = false;
+        }
         open
     });
 }

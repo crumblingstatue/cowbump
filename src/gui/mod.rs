@@ -128,7 +128,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
 fn common_tags(ids: &[u32], db: &Db) -> BTreeSet<Uid> {
     let mut set = BTreeSet::new();
     for &id in ids {
-        for &tagid in &db.entries[id as usize].tags {
+        for &tagid in &db.entries[&id].tags {
             set.insert(tagid);
         }
     }
@@ -170,7 +170,7 @@ fn handle_event_viewer(
                         selected_uids.insert(uid);
                     }
                 } else {
-                    open_with_external(&[&db.entries[uid as usize].path]);
+                    open_with_external(&[&db.entries[&uid].path]);
                 }
             } else if button == mouse::Button::RIGHT {
                 let vec = if selected_uids.contains(&uid) {
@@ -195,11 +195,11 @@ fn handle_event_viewer(
             } else if code == Key::ENTER {
                 let mut paths: Vec<&Path> = Vec::new();
                 for &uid in selected_uids.iter() {
-                    paths.push(&db.entries[uid as usize].path);
+                    paths.push(&db.entries[&uid].path);
                 }
                 if paths.is_empty() && state.filter.active() {
                     for uid in db.filter(&state.filter) {
-                        paths.push(&db.entries[uid as usize].path);
+                        paths.push(&db.entries[&uid].path);
                     }
                 }
                 open_with_external(&paths);
@@ -226,7 +226,7 @@ fn handle_event_viewer(
                     Some(uid) => uid,
                     None => return,
                 };
-                let imgpath = &db.entries[uid as usize].path;
+                let imgpath = &db.entries[&uid].path;
                 let buf = std::fs::read(imgpath).unwrap();
                 let img = match image::load_from_memory(&buf) {
                     Ok(img) => img,
@@ -257,7 +257,7 @@ fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
     db.entries
         .iter()
         .enumerate()
-        .filter(|(_, entry)| {
+        .filter(|(_, (_uid, entry))| {
             entry
                 .path
                 .file_name()
@@ -479,11 +479,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
     if !has_img {
-        if let Some(file_name) = db.entries[uid as usize]
-            .path
-            .file_name()
-            .map(|e| e.to_str())
-        {
+        if let Some(file_name) = db.entries[&uid].path.file_name().map(|e| e.to_str()) {
             let mut text = Text::new(file_name.unwrap(), font, 12);
             text.set_position((x, y + 64.0));
             window.draw_text(&text, &RenderStates::DEFAULT);
@@ -506,7 +502,7 @@ fn get_tex_for_uid<'t>(
             None => (false, error_texture),
         },
         None => {
-            let entry = &db.entries[uid as usize];
+            let entry = &db.entries[&uid];
             thumbnail_loader.request(&entry.path, thumb_size, uid);
             (false, loading_texture)
         }

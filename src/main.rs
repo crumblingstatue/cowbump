@@ -1,4 +1,4 @@
-#![feature(decl_macro)]
+#![feature(decl_macro, btree_retain)]
 
 mod db;
 mod entry;
@@ -18,7 +18,6 @@ fn main() {
         Db::default()
     });
     db.update_from_folder(&dir).unwrap();
-    db.sort_entries();
     gui::run(&mut db).unwrap();
     db.save_to_fs().unwrap();
 }
