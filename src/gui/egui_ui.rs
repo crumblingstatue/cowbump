@@ -7,11 +7,16 @@ use std::path::Path;
 #[derive(Default)]
 pub(super) struct EguiState {
     image_rename_windows: Vec<ImageRenameWindow>,
+    delete_confirm_windows: Vec<DeleteConfirmWindow>,
 }
 
 struct ImageRenameWindow {
     uid: Uid,
     name_buffer: String,
+}
+
+struct DeleteConfirmWindow {
+    uids: Vec<Uid>,
 }
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
@@ -84,6 +89,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     }
     image_windows_ui(state, db, egui_ctx);
     image_rename_windows_ui(state, db, egui_ctx);
+    delete_confirm_windows_ui(state, db, egui_ctx);
 }
 
 fn get_filename_from_path(path: &Path) -> String {
@@ -111,7 +117,6 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                 format!("{} images", n_images)
             }
         };
-        let mut close = false;
         egui::Window::new(title)
             .open(&mut open)
             .show(egui_ctx, |ui| {
@@ -169,21 +174,13 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             egui_state.image_rename_windows.push(win);
                         }
                         if ui.button("Delete from disk").clicked() {
-                            for &uid in &propwin.image_uids {
-                                let path = &db.entries[&uid].path;
-                                if let Err(e) = std::fs::remove_file(path) {
-                                    eprintln!("Remove error: {}", e);
-                                }
-                                db.entries.remove(&uid);
-                                close = true;
-                            }
+                            egui_state.delete_confirm_windows.push(DeleteConfirmWindow {
+                                uids: propwin.image_uids.clone(),
+                            });
                         }
                     })
                 });
             });
-        if close {
-            open = false;
-        }
         open
     });
 }
@@ -204,4 +201,30 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
         });
         open
     });
+}
+
+fn delete_confirm_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+    let mut retain = true;
+    state.egui_state.delete_confirm_windows.retain(|win| {
+        egui::Window::new("Delete confirm request").show(egui_ctx, |ui| {
+            if ui.button("Yes").clicked() {
+                remove_images(&win.uids, db);
+                retain = false;
+            }
+            if ui.button("No").clicked() {
+                retain = false;
+            }
+        });
+        retain
+    });
+}
+
+fn remove_images(image_uids: &[Uid], db: &mut Db) {
+    for &uid in image_uids {
+        let path = &db.entries[&uid].path;
+        if let Err(e) = std::fs::remove_file(path) {
+            eprintln!("Remove error: {}", e);
+        }
+        db.entries.remove(&uid);
+    }
 }
