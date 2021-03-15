@@ -2,6 +2,7 @@ use crate::db::{Db, Uid};
 use crate::gui::{common_tags, search_goto_cursor, AddTag, State};
 use egui::{Color32, Label, TextureId};
 use retain_mut::RetainMut;
+use std::path::Path;
 
 #[derive(Default)]
 pub(super) struct EguiState {
@@ -11,15 +12,6 @@ pub(super) struct EguiState {
 struct ImageRenameWindow {
     uid: Uid,
     name_buffer: String,
-}
-
-impl ImageRenameWindow {
-    pub(super) fn new(uid: Uid) -> Self {
-        Self {
-            uid,
-            name_buffer: String::new(),
-        }
-    }
 }
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
@@ -94,6 +86,15 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     image_rename_windows_ui(state, db, egui_ctx);
 }
 
+fn get_filename_from_path(path: &Path) -> String {
+    path.components()
+        .last()
+        .unwrap()
+        .as_os_str()
+        .to_string_lossy()
+        .to_string()
+}
+
 fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
     let image_prop_windows = &mut state.image_prop_windows;
     let egui_state = &mut state.egui_state;
@@ -161,9 +162,11 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         });
                         if propwin.image_uids.len() == 1 && ui.button("Rename").clicked() {
                             let uid = propwin.image_uids[0];
-                            egui_state
-                                .image_rename_windows
-                                .push(ImageRenameWindow::new(uid));
+                            let win = ImageRenameWindow {
+                                uid,
+                                name_buffer: get_filename_from_path(&db.entries[&uid].path),
+                            };
+                            egui_state.image_rename_windows.push(win);
                         }
                         if ui.button("Delete from disk").clicked() {
                             for &uid in &propwin.image_uids {
