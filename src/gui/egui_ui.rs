@@ -1,7 +1,26 @@
-use crate::db::Db;
+use crate::db::{Db, Uid};
 use crate::gui::{common_tags, search_goto_cursor, AddTag, State};
 use egui::{Color32, Label, TextureId};
 use retain_mut::RetainMut;
+
+#[derive(Default)]
+pub(super) struct EguiState {
+    image_rename_windows: Vec<ImageRenameWindow>,
+}
+
+struct ImageRenameWindow {
+    uid: Uid,
+    name_buffer: String,
+}
+
+impl ImageRenameWindow {
+    pub(super) fn new(uid: Uid) -> Self {
+        Self {
+            uid,
+            name_buffer: String::new(),
+        }
+    }
+}
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     if state.search_edit {
@@ -72,10 +91,13 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         }
     }
     image_windows_ui(state, db, egui_ctx);
+    image_rename_windows_ui(state, db, egui_ctx);
 }
 
 fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    state.image_prop_windows.retain_mut(|propwin| {
+    let image_prop_windows = &mut state.image_prop_windows;
+    let egui_state = &mut state.egui_state;
+    image_prop_windows.retain_mut(|propwin| {
         let mut open = true;
         let n_images = propwin.image_uids.len();
         let title = {
@@ -137,6 +159,12 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 db.add_tag_for(image_id, tag_id);
                             }
                         });
+                        if propwin.image_uids.len() == 1 && ui.button("Rename").clicked() {
+                            let uid = propwin.image_uids[0];
+                            egui_state
+                                .image_rename_windows
+                                .push(ImageRenameWindow::new(uid));
+                        }
                         if ui.button("Delete from disk").clicked() {
                             for &uid in &propwin.image_uids {
                                 let path = &db.entries[&uid].path;
@@ -153,6 +181,24 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
         if close {
             open = false;
         }
+        open
+    });
+}
+
+fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+    state.egui_state.image_rename_windows.retain_mut(|win| {
+        let mut open = true;
+        egui::Window::new("Rename").show(egui_ctx, |ui| {
+            if ui
+                .text_edit_singleline(&mut win.name_buffer)
+                .ctx
+                .input()
+                .key_pressed(egui::Key::Enter)
+            {
+                db.rename(win.uid, &win.name_buffer);
+                open = false;
+            }
+        });
         open
     });
 }

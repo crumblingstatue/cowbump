@@ -17,6 +17,43 @@ use sfml::SfBox;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 
+struct EntriesView {
+    uids: Vec<Uid>,
+}
+
+impl EntriesView {
+    pub fn from_db(db: &Db) -> Self {
+        let mut uids: Vec<Uid> = db.entries.keys().cloned().collect();
+        uids.sort_by_key(|uid| &db.entries[uid].path);
+        Self { uids }
+    }
+    pub fn filter<'a>(
+        &'a self,
+        db: &'a Db,
+        spec: &'a crate::FilterSpec,
+    ) -> impl Iterator<Item = Uid> + 'a {
+        self.uids.iter().filter_map(move |uid| {
+            let en = &db.entries[uid];
+            if !en
+                .path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_lowercase()
+                .contains(&spec.substring_match)
+            {
+                return None;
+            }
+            for required_tag in &spec.has_tags {
+                if !en.tags.contains(required_tag) {
+                    return None;
+                }
+            }
+            Some(*uid)
+        })
+    }
+}
+
 pub fn run(db: &mut Db) -> Result<(), Error> {
     let mut window = RenderWindow::new(
         VideoMode::desktop_mode(),
@@ -26,6 +63,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     );
     window.set_vertical_sync_enabled(true);
     let mut state = State::new(window.size().x);
+    let entries_view = EntriesView::from_db(db);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
@@ -61,7 +99,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                                 // To do align the camera with a bottom edge, we need to subtract the screen
                                 // height from it.
                                 let bottom_align = |y: f32| y - window.size().y as f32;
-                                let n_pics = db.filter(&state.filter).count();
+                                let n_pics = entries_view.filter(db, &state.filter).count();
                                 let rows = n_pics as u32 / state.thumbnails_per_row;
                                 let bottom = (rows + 1) * state.thumbnail_size;
                                 state.y_offset = bottom_align(bottom as f32);
@@ -86,7 +124,13 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         }
         egui_ctx.begin_frame(raw_input);
         egui_ui::do_ui(&mut state, &egui_ctx, db);
-        recalc_on_screen_items(&mut on_screen_uids, db, &state, window.size().y);
+        recalc_on_screen_items(
+            &mut on_screen_uids,
+            db,
+            &entries_view,
+            &state,
+            window.size().y,
+        );
         window.clear(Color::BLACK);
         state.draw_thumbnails(
             &mut window,
@@ -282,7 +326,13 @@ fn search_goto_cursor(state: &mut State, db: &Db) {
     }
 }
 
-fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_height: u32) {
+fn recalc_on_screen_items(
+    uids: &mut Vec<Uid>,
+    db: &Db,
+    entries_view: &EntriesView,
+    state: &State,
+    window_height: u32,
+) {
     uids.clear();
     let thumb_size = state.thumbnail_size;
     let mut thumbnails_per_column = window_height / thumb_size;
@@ -296,7 +346,8 @@ fn recalc_on_screen_items(uids: &mut Vec<Uid>, db: &Db, state: &State, window_he
     let row_offset = state.y_offset as u32 / thumb_size;
     let skip = row_offset * state.thumbnails_per_row;
     uids.extend(
-        db.filter(&state.filter)
+        entries_view
+            .filter(db, &state.filter)
             .skip(skip as usize)
             .take(thumbnails_per_screen),
     );
@@ -325,6 +376,7 @@ struct State {
     image_prop_windows: Vec<ImagePropWindow>,
     tag_window: bool,
     add_tag: Option<AddTag>,
+    egui_state: egui_ui::EguiState,
 }
 
 struct TexSrc<'state, 'db> {
@@ -399,6 +451,7 @@ impl State {
             image_prop_windows: Vec::new(),
             tag_window: false,
             add_tag: None,
+            egui_state: Default::default(),
         }
     }
     fn draw_thumbnails(

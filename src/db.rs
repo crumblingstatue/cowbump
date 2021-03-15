@@ -2,20 +2,27 @@ use crate::entry::Entry;
 use crate::tag::Tag;
 use failure::Error;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
 use std::fs::File;
 use std::path::Path;
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 use walkdir::WalkDir;
 
 /// The database of all entries.
 ///
 /// This is the data that is saved to disk between runs.
+///
+/// Note that this is not where any kind of sorting happens.
+/// That happens at the view level. This just maps Uids to entries.
+/// Nothing else.
 #[derive(Default, Serialize, Deserialize)]
 pub struct Db {
     /// List of entries
-    pub entries: BTreeMap<Uid, Entry>,
+    pub entries: HashMap<Uid, Entry>,
     /// List of tags
-    pub tags: BTreeMap<Uid, Tag>,
+    pub tags: HashMap<Uid, Tag>,
     uid_counter: Uid,
 }
 
@@ -128,6 +135,21 @@ impl Db {
         self.uid_counter += 1;
         uid
     }
+    pub fn rename(&mut self, uid: Uid, new: &str) {
+        let en = self.entries.get_mut(&uid).unwrap();
+        pathbuf_rename_filename(&mut en.path, new);
+    }
+}
+
+/// Rename the last component (filename) of a PathBuf, and rename it on the filesystem too.
+fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) {
+    let mut new_buf = buf.clone();
+    new_buf.pop();
+    new_buf.push(new_name);
+    if let Err(e) = std::fs::rename(&buf, &new_buf) {
+        eprintln!("Rename error: {}", e);
+    }
+    *buf = new_buf;
 }
 
 const DB_FILENAME: &str = "cowbump.db";
