@@ -195,6 +195,9 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
                 db.rename(win.uid, &win.name_buffer);
                 open = false;
             }
+            if re.lost_kb_focus() {
+                open = false;
+            }
         });
         open
     });
