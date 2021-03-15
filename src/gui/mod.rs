@@ -110,14 +110,26 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         }
         if state.tag_window {
             let add_tag = &mut state.add_tag;
-            let tags = &db.tags;
+            let tags = &mut db.tags;
+            let entries = &mut db.entries;
             egui::Window::new("Tag editor")
                 .open(&mut state.tag_window)
                 .show(&egui_ctx, move |ui| {
                     ui.vertical(|ui| {
-                        for tag in tags {
+                        let mut i = 0;
+                        tags.retain(|tag| {
                             ui.label(tag.names[0].clone());
-                        }
+                            let keep = if ui.button("x").clicked() {
+                                for en in entries.iter_mut() {
+                                    en.tags.retain(|&uid| uid != i);
+                                }
+                                false
+                            } else {
+                                true
+                            };
+                            i += 1;
+                            keep
+                        });
                         if ui.button("Add tag").clicked() {
                             *add_tag = Some(AddTag::default());
                         }
