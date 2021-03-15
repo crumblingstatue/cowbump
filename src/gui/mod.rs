@@ -56,6 +56,10 @@ impl EntriesView {
             Some(*uid)
         })
     }
+    /// Delete `uid` from the list.
+    pub fn delete(&mut self, uid: Uid) {
+        self.uids.retain(|&rhs| uid != rhs);
+    }
 }
 
 pub fn run(db: &mut Db) -> Result<(), Error> {
@@ -66,8 +70,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         &Default::default(),
     );
     window.set_vertical_sync_enabled(true);
-    let mut state = State::new(window.size().x);
-    let mut entries_view = EntriesView::from_db(db);
+    let mut state = State::new(window.size().x, db);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
@@ -103,7 +106,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                                 // To do align the camera with a bottom edge, we need to subtract the screen
                                 // height from it.
                                 let bottom_align = |y: f32| y - window.size().y as f32;
-                                let n_pics = entries_view.filter(db, &state.filter).count();
+                                let n_pics = state.entries_view.filter(db, &state.filter).count();
                                 let rows = n_pics as u32 / state.thumbnails_per_row;
                                 let bottom = (rows + 1) * state.thumbnail_size;
                                 state.y_offset = bottom_align(bottom as f32);
@@ -124,7 +127,6 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 &window,
                 egui_ctx.wants_pointer_input(),
                 egui_ctx.wants_keyboard_input(),
-                &mut entries_view,
             );
         }
         egui_ctx.begin_frame(raw_input);
@@ -132,7 +134,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
         recalc_on_screen_items(
             &mut on_screen_uids,
             db,
-            &entries_view,
+            &state.entries_view,
             &state,
             window.size().y,
         );
@@ -201,7 +203,6 @@ fn handle_event_viewer(
     window: &RenderWindow,
     egui_mouse: bool,
     egui_kb: bool,
-    entries_view: &mut EntriesView,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
@@ -297,7 +298,7 @@ fn handle_event_viewer(
             } else if code == Key::T {
                 state.tag_window = !state.tag_window;
             } else if code == Key::S {
-                entries_view.sort(db);
+                state.entries_view.sort(db);
             }
         }
         _ => {}
@@ -306,10 +307,13 @@ fn handle_event_viewer(
 
 fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
     let string = state.search_string.to_lowercase();
-    db.entries
+    state
+        .entries_view
+        .uids
         .iter()
         .enumerate()
-        .filter(|(_, (_uid, entry))| {
+        .filter(|(_, uid)| {
+            let entry = &db.entries[uid];
             entry
                 .path
                 .file_name()
@@ -385,6 +389,7 @@ struct State {
     tag_window: bool,
     add_tag: Option<AddTag>,
     egui_state: egui_ui::EguiState,
+    entries_view: EntriesView,
 }
 
 struct TexSrc<'state, 'db> {
@@ -425,7 +430,7 @@ impl ImagePropWindow {
 }
 
 impl State {
-    fn new(window_width: u32) -> Self {
+    fn new(window_width: u32, db: &Db) -> Self {
         let thumbnails_per_row = 5;
         let thumbnail_size = window_width / thumbnails_per_row;
         Self {
@@ -460,6 +465,7 @@ impl State {
             tag_window: false,
             add_tag: None,
             egui_state: Default::default(),
+            entries_view: EntriesView::from_db(db),
         }
     }
     fn draw_thumbnails(

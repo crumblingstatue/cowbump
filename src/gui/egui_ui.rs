@@ -205,26 +205,36 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
 
 fn delete_confirm_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
     let mut retain = true;
-    state.egui_state.delete_confirm_windows.retain(|win| {
+    let entries_view = &mut state.entries_view;
+    let egui_state = &mut state.egui_state;
+    let mut i = 0;
+    let mut removes = Vec::new();
+    egui_state.delete_confirm_windows.retain(|win| {
         egui::Window::new("Delete confirm request").show(egui_ctx, |ui| {
             if ui.button("Yes").clicked() {
-                remove_images(&win.uids, db);
+                remove_images(entries_view, &win.uids, db);
+                removes.push(i);
                 retain = false;
             }
             if ui.button("No").clicked() {
                 retain = false;
             }
         });
+        i += 1;
         retain
     });
+    for i in removes {
+        state.image_prop_windows.remove(i);
+    }
 }
 
-fn remove_images(image_uids: &[Uid], db: &mut Db) {
+fn remove_images(view: &mut super::EntriesView, image_uids: &[Uid], db: &mut Db) {
     for &uid in image_uids {
         let path = &db.entries[&uid].path;
         if let Err(e) = std::fs::remove_file(path) {
             eprintln!("Remove error: {}", e);
         }
+        view.delete(uid);
         db.entries.remove(&uid);
     }
 }
