@@ -141,7 +141,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
             egui::Window::new("Add new tag").show(&egui_ctx, |ui| {
                 let re = ui.text_edit_singleline(&mut add_tag.name);
                 ui.memory().request_kb_focus(re.id);
-                if re.lost_kb_focus() {
+                if re.ctx.input().key_down(egui::Key::Enter) {
                     rem = true;
                     db.add_new_tag(crate::tag::Tag {
                         names: vec![add_tag.name.clone()],
