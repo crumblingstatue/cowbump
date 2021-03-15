@@ -23,9 +23,13 @@ struct EntriesView {
 
 impl EntriesView {
     pub fn from_db(db: &Db) -> Self {
-        let mut uids: Vec<Uid> = db.entries.keys().cloned().collect();
-        uids.sort_by_key(|uid| &db.entries[uid].path);
-        Self { uids }
+        let uids: Vec<Uid> = db.entries.keys().cloned().collect();
+        let mut this = Self { uids };
+        this.sort(db);
+        this
+    }
+    pub fn sort(&mut self, db: &Db) {
+        self.uids.sort_by_key(|uid| &db.entries[uid].path);
     }
     pub fn filter<'a>(
         &'a self,
@@ -63,7 +67,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     );
     window.set_vertical_sync_enabled(true);
     let mut state = State::new(window.size().x);
-    let entries_view = EntriesView::from_db(db);
+    let mut entries_view = EntriesView::from_db(db);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: BTreeSet<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
@@ -120,6 +124,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
                 &window,
                 egui_ctx.wants_pointer_input(),
                 egui_ctx.wants_keyboard_input(),
+                &mut entries_view,
             );
         }
         egui_ctx.begin_frame(raw_input);
@@ -196,6 +201,7 @@ fn handle_event_viewer(
     window: &RenderWindow,
     egui_mouse: bool,
     egui_kb: bool,
+    entries_view: &mut EntriesView,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
@@ -290,6 +296,8 @@ fn handle_event_viewer(
                 }
             } else if code == Key::T {
                 state.tag_window = !state.tag_window;
+            } else if code == Key::S {
+                entries_view.sort(db);
             }
         }
         _ => {}
