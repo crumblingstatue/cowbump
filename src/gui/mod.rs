@@ -72,7 +72,7 @@ pub fn run(db: &mut Db) -> Result<(), Error> {
     window.set_vertical_sync_enabled(true);
     let mut state = State::new(window.size().x, db);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
-    let mut selected_uids: BTreeSet<Uid> = Default::default();
+    let mut selected_uids: Vec<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
     let mut egui_ctx = egui::CtxRef::default();
     let tex = egui_sfml::create_texture(&mut egui_ctx, &window);
@@ -199,7 +199,7 @@ fn handle_event_viewer(
     state: &mut State,
     on_screen_uids: &mut Vec<Uid>,
     db: &mut Db,
-    selected_uids: &mut BTreeSet<Uid>,
+    selected_uids: &mut Vec<Uid>,
     window: &RenderWindow,
     egui_mouse: bool,
     egui_kb: bool,
@@ -216,16 +216,16 @@ fn handle_event_viewer(
             if button == mouse::Button::LEFT {
                 if Key::LSHIFT.is_pressed() {
                     if selected_uids.contains(&uid) {
-                        selected_uids.remove(&uid);
+                        selected_uids.retain(|&rhs| rhs != uid);
                     } else {
-                        selected_uids.insert(uid);
+                        selected_uids.push(uid);
                     }
                 } else {
                     open_with_external(&[&db.entries[&uid].path]);
                 }
             } else if button == mouse::Button::RIGHT {
                 let vec = if selected_uids.contains(&uid) {
-                    selected_uids.iter().cloned().collect()
+                    selected_uids.clone()
                 } else {
                     vec![uid]
                 };
@@ -253,6 +253,7 @@ fn handle_event_viewer(
                         paths.push(&db.entries[&uid].path);
                     }
                 }
+                paths.sort();
                 open_with_external(&paths);
             } else if code == Key::SLASH {
                 state.search_edit = true;
@@ -473,7 +474,7 @@ impl State {
         window: &mut RenderWindow,
         db: &Db,
         uids: &[Uid],
-        selected_uids: &BTreeSet<Uid>,
+        selected_uids: &[Uid],
         load_anim_rotation: f32,
     ) {
         let thumb_size = self.thumbnail_size;
