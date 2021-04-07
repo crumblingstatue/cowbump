@@ -23,8 +23,8 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     if state.search_edit {
         egui::Window::new("Search").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut state.search_string);
-            ui.memory().request_kb_focus(re.id);
-            if re.lost_kb_focus() {
+            ui.memory().request_focus(re.id);
+            if re.lost_focus() {
                 state.search_edit = false;
             }
             if re.changed() {
@@ -36,8 +36,8 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     if state.filter_edit {
         egui::Window::new("Filter").show(egui_ctx, |ui| {
             let ed = ui.text_edit_singleline(&mut state.filter.substring_match);
-            ui.memory().request_kb_focus(ed.id);
-            if ed.lost_kb_focus() {
+            ui.memory().request_focus(ed.id);
+            if ed.lost_focus() {
                 state.filter_edit = false;
             }
         });
@@ -74,7 +74,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         let mut rem = false;
         egui::Window::new("Add new tag").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut add_tag.name);
-            ui.memory().request_kb_focus(re.id);
+            ui.memory().request_focus(re.id);
             if re.ctx.input().key_down(egui::Key::Enter) {
                 rem = true;
                 db.add_new_tag(crate::tag::Tag {
@@ -190,12 +190,12 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
         let mut open = true;
         egui::Window::new("Rename").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut win.name_buffer);
-            ui.memory().request_kb_focus(re.id);
+            ui.memory().request_focus(re.id);
             if re.ctx.input().key_pressed(egui::Key::Enter) {
                 db.rename(win.uid, &win.name_buffer);
                 open = false;
             }
-            if re.lost_kb_focus() {
+            if re.lost_focus() {
                 open = false;
             }
         });
