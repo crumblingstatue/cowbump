@@ -169,10 +169,12 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
                             ui.set_min_width(100.0);
                             let mut tag_add = None;
-                            for (i, (_uid, tag)) in db.tags.iter().enumerate() {
-                                let name = tag.names[0].clone();
-                                if ui.button(name).clicked() {
-                                    tag_add = Some((propwin.image_uids[0], i as u32));
+                            for (&uid, tag) in db.tags.iter() {
+                                if !db.has_tag(propwin.image_uids[0], uid) {
+                                    let name = tag.names[0].clone();
+                                    if ui.button(name).clicked() {
+                                        tag_add = Some((propwin.image_uids[0], uid));
+                                    }
                                 }
                             }
                             if let Some((image_id, tag_id)) = tag_add {
