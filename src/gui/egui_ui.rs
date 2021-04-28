@@ -131,6 +131,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.horizontal_wrapped(|ui| {
+                        ui.set_max_width(512.0);
                         for &id in &propwin.image_uids {
                             ui.image(
                                 TextureId::User(id as u64),
@@ -156,7 +157,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 }
                             });
                         }
-                        let plus_re = ui.button("+");
+                        let plus_re = ui.button("Add tag");
                         let popup_id = ui.make_persistent_id("popid");
                         if plus_re.clicked() {
                             ui.memory().toggle_popup(popup_id);
