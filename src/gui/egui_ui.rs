@@ -23,7 +23,6 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     if state.search_edit {
         egui::Window::new("Search").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut state.search_string);
-            ui.memory().request_focus(re.id);
             if re.lost_focus() {
                 state.search_edit = false;
             }
@@ -31,15 +30,16 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 state.search_cursor = 0;
                 search_goto_cursor(state, db);
             }
+            ui.memory().request_focus(re.id);
         });
     }
     if state.filter_edit {
         egui::Window::new("Filter").show(egui_ctx, |ui| {
             let ed = ui.text_edit_singleline(&mut state.filter.substring_match);
-            ui.memory().request_focus(ed.id);
             if ed.lost_focus() {
                 state.filter_edit = false;
             }
+            ui.memory().request_focus(ed.id);
         });
     }
     if state.tag_window {
@@ -70,11 +70,11 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 });
             });
     }
+    let mut close = false;
     if let Some(add_tag) = &mut state.add_tag {
         let mut rem = false;
         egui::Window::new("Add new tag").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut add_tag.name);
-            ui.memory().request_focus(re.id);
             if re.ctx.input().key_down(egui::Key::Enter) {
                 rem = true;
                 db.add_new_tag(crate::tag::Tag {
@@ -82,10 +82,17 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     implies: vec![],
                 });
             }
+            if re.lost_focus() {
+                close = true;
+            }
+            ui.memory().request_focus(re.id);
         });
         if rem {
             state.add_tag = None;
         }
+    }
+    if close {
+        state.add_tag = None;
     }
     image_windows_ui(state, db, egui_ctx);
     image_rename_windows_ui(state, db, egui_ctx);
@@ -190,7 +197,6 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
         let mut open = true;
         egui::Window::new("Rename").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut win.name_buffer);
-            ui.memory().request_focus(re.id);
             if re.ctx.input().key_pressed(egui::Key::Enter) {
                 db.rename(win.uid, &win.name_buffer);
                 open = false;
@@ -198,6 +204,7 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
             if re.lost_focus() {
                 open = false;
             }
+            ui.memory().request_focus(re.id);
         });
         open
     });
