@@ -2,7 +2,7 @@ use crate::{
     db::{Db, Uid},
     gui::{common_tags, search_goto_cursor, AddTag, State},
 };
-use egui::{Color32, Label, TextureId};
+use egui::{Button, Color32, Label, TextureId};
 use retain_mut::RetainMut;
 use std::path::Path;
 
@@ -139,24 +139,28 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             );
                         }
                     });
-                    ui.horizontal_wrapped(|ui| {
-                        for tagid in common_tags(&propwin.image_uids, db) {
-                            ui.group(|ui| {
-                                ui.add(
-                                    Label::new(db.tags[&tagid].names[0].clone())
-                                        .wrap(false)
-                                        .background_color(Color32::from_rgb(50, 40, 45)),
-                                );
-                                if ui.button("x").clicked() {
-                                    // TODO: This only works for 1 item windows
-                                    db.entries
-                                        .get_mut(&propwin.image_uids[0])
-                                        .unwrap()
-                                        .tags
-                                        .retain(|&t| t != tagid);
-                                }
-                            });
-                        }
+                    ui.vertical(|ui| {
+                        ui.horizontal_wrapped(|ui| {
+                            for tagid in common_tags(&propwin.image_uids, db) {
+                                ui.group(|ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.add(
+                                            Label::new(db.tags[&tagid].names[0].clone())
+                                                .wrap(false)
+                                                .background_color(Color32::from_rgb(50, 40, 45)),
+                                        );
+                                        if ui.button("x").clicked() {
+                                            // TODO: This only works for 1 item windows
+                                            db.entries
+                                                .get_mut(&propwin.image_uids[0])
+                                                .unwrap()
+                                                .tags
+                                                .retain(|&t| t != tagid);
+                                        }
+                                    })
+                                });
+                            }
+                        });
                         let plus_re = ui.button("Add tag");
                         let popup_id = ui.make_persistent_id("popid");
                         if plus_re.clicked() {
@@ -175,7 +179,9 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 db.add_tag_for(image_id, tag_id);
                             }
                         });
-                        if propwin.image_uids.len() == 1 && ui.button("Rename").clicked() {
+                        if propwin.image_uids.len() == 1
+                            && ui.add(Button::new("Rename").wrap(false)).clicked()
+                        {
                             let uid = propwin.image_uids[0];
                             let win = ImageRenameWindow {
                                 uid,
@@ -183,12 +189,15 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             };
                             egui_state.image_rename_windows.push(win);
                         }
-                        if ui.button("Delete from disk").clicked() {
+                        if ui
+                            .add(Button::new("Delete from disk").wrap(false))
+                            .clicked()
+                        {
                             egui_state.delete_confirm_windows.push(DeleteConfirmWindow {
                                 uids: propwin.image_uids.clone(),
                             });
                         }
-                    })
+                    });
                 });
             });
         open
