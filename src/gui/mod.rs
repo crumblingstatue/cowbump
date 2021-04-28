@@ -4,7 +4,7 @@ mod thumbnail_loader;
 
 use crate::db::{Db, Uid};
 use crate::FilterSpec;
-use failure::Error;
+use std::error::Error;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
@@ -62,7 +62,7 @@ impl EntriesView {
     }
 }
 
-pub fn run(db: &mut Db) -> Result<(), Error> {
+pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     let mut window = RenderWindow::new(
         VideoMode::desktop_mode(),
         "Cowbump",

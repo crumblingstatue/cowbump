@@ -1,7 +1,7 @@
 use crate::entry::Entry;
 use crate::tag::Tag;
-use failure::Error;
 use serde_derive::{Deserialize, Serialize};
+use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 use std::{
@@ -39,7 +39,7 @@ pub type Uid = u32;
 pub const UID_NONE: Uid = Uid::max_value();
 
 impl Db {
-    pub fn update_from_folder(&mut self, path: &Path) -> Result<(), Error> {
+    pub fn update_from_folder(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid images that exist
         let mut valid_uids = HashSet::new();
@@ -119,12 +119,12 @@ impl Db {
                 Some(*en.0)
             })
     }
-    pub fn save_to_fs(&self) -> Result<(), Error> {
+    pub fn save_to_fs(&self) -> Result<(), Box<dyn Error>> {
         let mut f = File::create(DB_FILENAME)?;
         bincode::serialize_into(&mut f, self)?;
         Ok(())
     }
-    pub fn load_from_fs() -> Result<Self, Error> {
+    pub fn load_from_fs() -> Result<Self, Box<dyn Error>> {
         let mut f = File::open(DB_FILENAME)?;
         Ok(bincode::deserialize_from(&mut f)?)
     }
