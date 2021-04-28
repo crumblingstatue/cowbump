@@ -1,4 +1,4 @@
-#![feature(decl_macro, btree_retain)]
+#![feature(decl_macro)]
 
 mod db;
 mod entry;
