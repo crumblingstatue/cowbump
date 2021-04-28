@@ -1,12 +1,10 @@
-use crate::entry::Entry;
-use crate::tag::Tag;
+use crate::{entry::Entry, tag::Tag};
 use serde_derive::{Deserialize, Serialize};
-use std::error::Error;
-use std::fs::File;
-use std::path::Path;
 use std::{
     collections::{HashMap, HashSet},
-    path::PathBuf,
+    error::Error,
+    fs::File,
+    path::{Path, PathBuf},
 };
 use walkdir::WalkDir;
 

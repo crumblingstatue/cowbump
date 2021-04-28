@@ -2,20 +2,26 @@ mod debug;
 mod egui_ui;
 mod thumbnail_loader;
 
-use crate::db::{Db, Uid};
-use crate::FilterSpec;
+use crate::{
+    db::{Db, Uid},
+    FilterSpec,
+};
 use std::error::Error;
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
-use sfml::graphics::{
-    Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
-    Texture, Transformable,
+use sfml::{
+    graphics::{
+        Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
+        Texture, Transformable,
+    },
+    window::{mouse, Event, Key, Style, VideoMode},
+    SfBox,
 };
-use sfml::window::{mouse, Event, Key, Style, VideoMode};
-use sfml::SfBox;
-use std::collections::{BTreeSet, HashMap};
-use std::path::Path;
+use std::{
+    collections::{BTreeSet, HashMap},
+    path::Path,
+};
 
 struct EntriesView {
     uids: Vec<Uid>,

@@ -1,5 +1,7 @@
-use crate::db::{Db, Uid};
-use crate::gui::{common_tags, search_goto_cursor, AddTag, State};
+use crate::{
+    db::{Db, Uid},
+    gui::{common_tags, search_goto_cursor, AddTag, State},
+};
 use egui::{Color32, Label, TextureId};
 use retain_mut::RetainMut;
 use std::path::Path;
