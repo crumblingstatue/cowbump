@@ -2,14 +2,15 @@ use crate::{
     db::{Db, Uid},
     gui::{common_tags, search_goto_cursor, AddTag, State},
 };
-use egui::{Button, Color32, Label, TextureId};
+use egui::{Button, Color32, Label, Rgba, TextureId};
 use retain_mut::RetainMut;
-use std::path::Path;
+use std::{path::Path, process::Command};
 
 #[derive(Default)]
 pub(super) struct EguiState {
     image_rename_windows: Vec<ImageRenameWindow>,
     delete_confirm_windows: Vec<DeleteConfirmWindow>,
+    custom_command_windows: Vec<CustomCommandWindow>,
 }
 
 struct ImageRenameWindow {
@@ -99,6 +100,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     image_windows_ui(state, db, egui_ctx);
     image_rename_windows_ui(state, db, egui_ctx);
     delete_confirm_windows_ui(state, db, egui_ctx);
+    custom_command_windows_ui(state, db, egui_ctx);
 }
 
 fn get_filename_from_path(path: &Path) -> String {
@@ -199,11 +201,29 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 uids: propwin.image_uids.clone(),
                             });
                         }
+                        if ui
+                            .add(Button::new("Run custom command").wrap(false))
+                            .clicked()
+                        {
+                            let uid = propwin.image_uids[0];
+                            let win = CustomCommandWindow {
+                                uid,
+                                cmd_buffer: String::new(),
+                                err_str: String::new(),
+                            };
+                            egui_state.custom_command_windows.push(win);
+                        }
                     });
                 });
             });
         open
     });
+}
+
+struct CustomCommandWindow {
+    uid: u32,
+    cmd_buffer: String,
+    err_str: String,
 }
 
 fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
@@ -214,6 +234,30 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
             if re.ctx.input().key_pressed(egui::Key::Enter) {
                 db.rename(win.uid, &win.name_buffer);
                 open = false;
+            }
+            if re.lost_focus() {
+                open = false;
+            }
+            ui.memory().request_focus(re.id);
+        });
+        open
+    });
+}
+
+fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+    state.egui_state.custom_command_windows.retain_mut(|win| {
+        let mut open = true;
+        egui::Window::new("Command").show(egui_ctx, |ui| {
+            let re = ui.text_edit_singleline(&mut win.cmd_buffer);
+            if re.ctx.input().key_pressed(egui::Key::Enter) {
+                let en = &db.entries[&win.uid];
+                match Command::new(&win.cmd_buffer).arg(&en.path).spawn() {
+                    Ok(_) => open = false,
+                    Err(e) => win.err_str = e.to_string(),
+                }
+            }
+            if !win.err_str.is_empty() {
+                ui.add(Label::new(format!("Error: {}", win.err_str)).text_color(Rgba::RED));
             }
             if re.lost_focus() {
                 open = false;
