@@ -238,7 +238,7 @@ fn handle_event_viewer(
                 state.image_prop_windows.push(ImagePropWindow::new(vec));
             }
         }
-        Event::KeyPressed { code, .. } => {
+        Event::KeyPressed { code, ctrl, .. } => {
             if egui_kb {
                 return;
             }
@@ -261,6 +261,12 @@ fn handle_event_viewer(
                 }
                 paths.sort();
                 open_with_external(&paths);
+            } else if code == Key::A && ctrl {
+                // Select all (according to filter)
+                selected_uids.clear();
+                for uid in db.filter(&state.filter) {
+                    selected_uids.push(uid);
+                }
             } else if code == Key::SLASH {
                 state.search_edit = true;
             } else if code == Key::N {
