@@ -205,9 +205,8 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             .add(Button::new("Run custom command").wrap(false))
                             .clicked()
                         {
-                            let uid = propwin.image_uids[0];
                             let win = CustomCommandWindow {
-                                uid,
+                                uids: propwin.image_uids.clone(),
                                 cmd_buffer: String::new(),
                                 err_str: String::new(),
                             };
@@ -221,7 +220,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
 }
 
 struct CustomCommandWindow {
-    uid: u32,
+    uids: Vec<u32>,
     cmd_buffer: String,
     err_str: String,
 }
@@ -250,8 +249,12 @@ fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::Ct
         egui::Window::new("Command").show(egui_ctx, |ui| {
             let re = ui.text_edit_singleline(&mut win.cmd_buffer);
             if re.ctx.input().key_pressed(egui::Key::Enter) {
-                let en = &db.entries[&win.uid];
-                match Command::new(&win.cmd_buffer).arg(&en.path).spawn() {
+                let mut cmd = Command::new(&win.cmd_buffer);
+                for uid in &win.uids {
+                    let en = &db.entries[uid];
+                    cmd.arg(&en.path);
+                }
+                match cmd.spawn() {
                     Ok(_) => open = false,
                     Err(e) => win.err_str = e.to_string(),
                 }
