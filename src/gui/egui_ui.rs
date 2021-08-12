@@ -2,7 +2,7 @@ use crate::{
     db::{Db, Uid},
     gui::{common_tags, search_goto_cursor, AddTag, State},
 };
-use egui::{Align2, Button, Color32, Label, Rgba, TextureId};
+use egui::{Align2, Button, Color32, Label, Rgba, TextEdit, TextureId};
 use retain_mut::RetainMut;
 use std::{path::Path, process::Command};
 
@@ -31,7 +31,11 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("search");
-                    let re = ui.text_edit_singleline(&mut state.search_string);
+                    let mut te = TextEdit::singleline(&mut state.search_string);
+                    if !state.search_success {
+                        te = te.text_color(Color32::RED);
+                    }
+                    let re = ui.add(te);
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.search_edit = false;
                     }
@@ -51,7 +55,14 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("filter");
-                    let re = ui.text_edit_singleline(&mut state.filter.substring_match);
+                    // https://github.com/rust-lang/rust-clippy/issues/7561
+                    #[allow(clippy::filter_next)]
+                    let no_entries = db.filter(&state.filter).next().is_none();
+                    let mut te = TextEdit::singleline(&mut state.filter.substring_match);
+                    if no_entries {
+                        te = te.text_color(Color32::RED);
+                    }
+                    let re = ui.add(te);
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.filter_edit = false;
                     }
