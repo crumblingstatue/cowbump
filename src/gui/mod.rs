@@ -324,8 +324,7 @@ fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
     let string = state.search_string.to_lowercase();
     state
         .entries_view
-        .uids
-        .iter()
+        .filter(db, &state.filter)
         .enumerate()
         .filter(|(_, uid)| {
             let entry = &db.entries[uid];
