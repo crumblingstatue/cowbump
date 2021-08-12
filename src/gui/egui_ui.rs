@@ -68,6 +68,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     }
                     if re.changed() {
                         state.wipe_search();
+                        state.y_offset = 0.0;
                     }
                     ui.memory().request_focus(re.id);
                 });
