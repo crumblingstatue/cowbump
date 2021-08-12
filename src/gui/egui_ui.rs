@@ -35,7 +35,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.search_edit = false;
                     }
-                    if re.changed() {
+                    if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
                         state.search_cursor = 0;
                         search_goto_cursor(state, db);
                     }
@@ -54,6 +54,9 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     let re = ui.text_edit_singleline(&mut state.filter.substring_match);
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.filter_edit = false;
+                    }
+                    if re.changed() {
+                        state.wipe_search();
                     }
                     ui.memory().request_focus(re.id);
                 });

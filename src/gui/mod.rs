@@ -83,13 +83,15 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     let mut egui_ctx = egui::CtxRef::default();
     let tex = egui_sfml::create_texture(&mut egui_ctx, &window);
     while window.is_open() {
-        let scroll_speed = 8.0;
-        if Key::DOWN.is_pressed() {
-            state.y_offset += scroll_speed;
-        } else if Key::UP.is_pressed() {
-            state.y_offset -= scroll_speed;
-            if state.y_offset < 0.0 {
-                state.y_offset = 0.0;
+        if !egui_ctx.wants_keyboard_input() {
+            let scroll_speed = 8.0;
+            if Key::DOWN.is_pressed() {
+                state.y_offset += scroll_speed;
+            } else if Key::UP.is_pressed() {
+                state.y_offset -= scroll_speed;
+                if state.y_offset < 0.0 {
+                    state.y_offset = 0.0;
+                }
             }
         }
         let mut raw_input = egui_sfml::make_raw_input(&window);
@@ -519,6 +521,12 @@ impl State {
                 load_anim_rotation,
             );
         }
+    }
+    fn wipe_search(&mut self) {
+        self.search_cursor = 0;
+        self.search_edit = false;
+        self.search_success = false;
+        self.highlight = None;
     }
 }
 
