@@ -2,7 +2,7 @@ use crate::{
     db::{Db, Uid},
     gui::{common_tags, search_goto_cursor, AddTag, State},
 };
-use egui::{Button, Color32, Label, Rgba, TextureId};
+use egui::{Align2, Button, Color32, Label, Rgba, TextureId};
 use retain_mut::RetainMut;
 use std::{path::Path, process::Command};
 
@@ -24,26 +24,40 @@ struct DeleteConfirmWindow {
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     if state.search_edit {
-        egui::Window::new("Search").show(egui_ctx, |ui| {
-            let re = ui.text_edit_singleline(&mut state.search_string);
-            if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                state.search_edit = false;
-            }
-            if re.changed() {
-                state.search_cursor = 0;
-                search_goto_cursor(state, db);
-            }
-            ui.memory().request_focus(re.id);
-        });
+        egui::Window::new("Search")
+            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
+            .title_bar(false)
+            .auto_sized()
+            .show(egui_ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("search");
+                    let re = ui.text_edit_singleline(&mut state.search_string);
+                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
+                        state.search_edit = false;
+                    }
+                    if re.changed() {
+                        state.search_cursor = 0;
+                        search_goto_cursor(state, db);
+                    }
+                    ui.memory().request_focus(re.id);
+                });
+            });
     }
     if state.filter_edit {
-        egui::Window::new("Filter").show(egui_ctx, |ui| {
-            let re = ui.text_edit_singleline(&mut state.filter.substring_match);
-            if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                state.filter_edit = false;
-            }
-            ui.memory().request_focus(re.id);
-        });
+        egui::Window::new("Filter")
+            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
+            .title_bar(false)
+            .auto_sized()
+            .show(egui_ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("filter");
+                    let re = ui.text_edit_singleline(&mut state.filter.substring_match);
+                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
+                        state.filter_edit = false;
+                    }
+                    ui.memory().request_focus(re.id);
+                });
+            });
     }
     if state.tag_window {
         let add_tag = &mut state.add_tag;
