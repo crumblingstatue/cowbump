@@ -565,10 +565,20 @@ fn draw_thumbnail<'a: 'b, 'b>(
         sprite.set_origin((0.0, 0.0));
     }
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
-    if !has_img {
+    let mut show_filename = !has_img;
+    let fname_pos = (x, y + 64.0);
+    if Key::LALT.is_pressed() {
+        show_filename = true;
+        let mut rect = RectangleShape::new();
+        rect.set_fill_color(Color::rgba(0, 0, 0, 128));
+        rect.set_size((380., 24.));
+        rect.set_position(fname_pos);
+        window.draw(&rect);
+    }
+    if show_filename {
         if let Some(file_name) = db.entries[&uid].path.file_name().map(|e| e.to_str()) {
             let mut text = Text::new(file_name.unwrap(), font, 12);
-            text.set_position((x, y + 64.0));
+            text.set_position(fname_pos);
             window.draw_text(&text, &RenderStates::DEFAULT);
         }
     }
