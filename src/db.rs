@@ -30,12 +30,6 @@ pub struct Db {
 /// but still large enough that we will not run out of new ids in practice.
 pub type Uid = u32;
 
-/// Special Uid value that represents "None".
-///
-/// It uses the max value of u32, which means it is not expected to have
-/// as much unique items as that.
-pub const UID_NONE: Uid = Uid::max_value();
-
 impl Db {
     pub fn update_from_folder(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));

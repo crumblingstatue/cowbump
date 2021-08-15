@@ -571,7 +571,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     );
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
-    if thumbnail_loader.busy_with() == uid {
+    if thumbnail_loader.busy_with().contains(&uid) {
         sprite.set_origin((27.0, 6.0));
         sprite.move_((48.0, 48.0));
         sprite.set_rotation(load_anim_rotation);
