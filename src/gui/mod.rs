@@ -81,7 +81,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     let mut selected_uids: Vec<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
     let mut egui_ctx = egui::CtxRef::default();
-    let tex = egui_sfml::create_texture(&mut egui_ctx, &window);
+    let mut tex = egui_sfml::get_first_texture(&mut egui_ctx, &window);
     while window.is_open() {
         if !egui_ctx.wants_keyboard_input() {
             let scroll_speed = 8.0;
@@ -178,6 +178,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
         };
         egui_sfml::draw(&mut window, &egui_ctx, &tex, shapes, &mut tex_src);
         debug::draw(&mut window, &state.font);
+        tex = egui_sfml::get_new_texture(&egui_ctx);
         window.display();
         load_anim_rotation += 2.0;
     }
