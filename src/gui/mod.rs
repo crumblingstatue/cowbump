@@ -6,10 +6,11 @@ use crate::{
     db::{Db, Uid},
     FilterSpec,
 };
-use std::error::Error;
+use std::{collections::BTreeMap, error::Error};
 
 use self::thumbnail_loader::ThumbnailLoader;
 use arboard::Clipboard;
+use egui::{FontDefinitions, FontFamily, TextStyle};
 use sfml::{
     graphics::{
         Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
@@ -81,6 +82,19 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     let mut selected_uids: Vec<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
     let mut egui_ctx = egui::CtxRef::default();
+    let font_defs = FontDefinitions {
+        family_and_size: {
+            let mut fam_size = BTreeMap::new();
+            fam_size.insert(TextStyle::Small, (FontFamily::Proportional, 10.0));
+            fam_size.insert(TextStyle::Body, (FontFamily::Proportional, 20.0));
+            fam_size.insert(TextStyle::Button, (FontFamily::Proportional, 20.0));
+            fam_size.insert(TextStyle::Heading, (FontFamily::Proportional, 20.0));
+            fam_size.insert(TextStyle::Monospace, (FontFamily::Monospace, 13.0));
+            fam_size
+        },
+        ..Default::default()
+    };
+    egui_ctx.set_fonts(font_defs);
     let mut tex = egui_sfml::get_first_texture(&mut egui_ctx, &window);
     while window.is_open() {
         if !egui_ctx.wants_keyboard_input() {
