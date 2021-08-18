@@ -96,9 +96,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "1.3.1"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2da1976d75adbe5fbc88130ecd119529cf1cc6a93ae1546d8696ee66f0d21af1"
+checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "block"
@@ -261,36 +261,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "csfml-graphics-sys"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b592b4e5f26de6d46b53f762a2a46e80826f69e008272d302a49e87c27a6c996"
-dependencies = [
- "csfml-system-sys",
- "csfml-window-sys",
- "sfml-build",
-]
-
-[[package]]
-name = "csfml-system-sys"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4019b7cb9ece70481603aaadb9a0094c9a6455d1a71d82d24c5a0b47c037cfaf"
-dependencies = [
- "sfml-build",
-]
-
-[[package]]
-name = "csfml-window-sys"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e27076c2b6aafd377d396700f25bbf5020c695781d20aed6a399bef7ea351a17"
-dependencies = [
- "csfml-system-sys",
- "sfml-build",
-]
-
-[[package]]
 name = "deflate"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -312,7 +282,7 @@ dependencies = [
 [[package]]
 name = "egui-sfml"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/egui-sfml.git#cb560a684e7f326222f764c5b012be35e5d99d3d"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git#dd488461e02929d75f6435ca5b3fea1ef9188f56"
 dependencies = [
  "egui",
  "sfml",
@@ -458,6 +428,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7f823d141fe0a24df1e23b4af4e3c7ba9e5966ec514ea068c93024aa7deb765"
 
 [[package]]
+name = "link-cplusplus"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f1becd27d473556dc610b8afa1636ef90747b574a84553bc11e82371d5ef2d1"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -514,14 +493,15 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa9b4819da1bc61c0ea48b63b7bc8604064dd43013e7cc325df098d49cd7c18a"
+checksum = "df8e5e343312e7fbeb2a52139114e9e702991ef9c2aea6817ff2440b35647d56"
 dependencies = [
  "bitflags",
  "cc",
  "cfg-if",
  "libc",
+ "memoffset",
 ]
 
 [[package]]
@@ -773,22 +753,14 @@ dependencies = [
 [[package]]
 name = "sfml"
 version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4c72108133019d399b24d0c0bd179cc26aa2909b0001e4202d756e4c90c21b4"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#e4f1149554735f87471c75cbb2424d81f05de678"
 dependencies = [
  "bitflags",
- "csfml-graphics-sys",
- "csfml-system-sys",
- "csfml-window-sys",
+ "cc",
+ "link-cplusplus",
  "once_cell",
  "widestring",
 ]
-
-[[package]]
-name = "sfml-build"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e0893aaf18583de27202b17007258377d5c4be16e1d0b601fd6943bc36c98b"
 
 [[package]]
 name = "smallvec"
