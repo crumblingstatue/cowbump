@@ -237,7 +237,9 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             let win = CustomCommandWindow {
                                 uids: propwin.image_uids.clone(),
                                 cmd_buffer: String::new(),
+                                args_buffer: String::new(),
                                 err_str: String::new(),
+                                just_opened: true,
                             };
                             egui_state.custom_command_windows.push(win);
                         }
@@ -251,7 +253,9 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
 struct CustomCommandWindow {
     uids: Vec<u32>,
     cmd_buffer: String,
+    args_buffer: String,
     err_str: String,
+    just_opened: bool,
 }
 
 fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
@@ -275,13 +279,28 @@ fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxR
 fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
     state.egui_state.custom_command_windows.retain_mut(|win| {
         let mut open = true;
-        egui::Window::new("Command").show(egui_ctx, |ui| {
+        egui::Window::new("Custom Command").show(egui_ctx, |ui| {
+            ui.label("Command");
             let re = ui.text_edit_singleline(&mut win.cmd_buffer);
+            if win.just_opened {
+                re.request_focus();
+            }
+            ui.label("Args (use {} for image path, or leave empty)");
+            ui.text_edit_singleline(&mut win.args_buffer);
             if re.ctx.input().key_pressed(egui::Key::Enter) {
                 let mut cmd = Command::new(&win.cmd_buffer);
                 for uid in &win.uids {
                     let en = &db.entries[uid];
-                    cmd.arg(&en.path);
+                    for arg in win.args_buffer.split_whitespace() {
+                        if arg == "{}" {
+                            cmd.arg(&en.path);
+                        } else {
+                            cmd.arg(arg);
+                        }
+                    }
+                    if win.args_buffer.is_empty() {
+                        cmd.arg(&en.path);
+                    }
                 }
                 match cmd.spawn() {
                     Ok(_) => open = false,
@@ -291,11 +310,8 @@ fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::Ct
             if !win.err_str.is_empty() {
                 ui.add(Label::new(format!("Error: {}", win.err_str)).text_color(Rgba::RED));
             }
-            if re.lost_focus() {
-                open = false;
-            }
-            ui.memory().request_focus(re.id);
         });
+        win.just_opened = false;
         open
     });
 }
