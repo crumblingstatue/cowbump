@@ -63,6 +63,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
+                    state.filter.substring_match.make_ascii_lowercase();
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.filter_edit = false;
                     }
