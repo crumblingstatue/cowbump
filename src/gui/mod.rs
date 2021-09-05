@@ -462,6 +462,14 @@ impl State {
     fn new(window_width: u32, db: &Db) -> Self {
         let thumbnails_per_row = 5;
         let thumbnail_size = window_width / thumbnails_per_row;
+        let mut loading_texture = Texture::new().unwrap();
+        let mut error_texture = Texture::new().unwrap();
+        loading_texture
+            .load_from_memory(include_bytes!("../../loading.png"), None)
+            .unwrap();
+        error_texture
+            .load_from_memory(include_bytes!("../../error.png"), None)
+            .unwrap();
         Self {
             thumbnails_per_row,
             y_offset: 0.0,
@@ -470,16 +478,8 @@ impl State {
                 has_tags: vec![],
                 substring_match: String::new(),
             },
-            loading_texture: Texture::from_memory(
-                include_bytes!("../../loading.png"),
-                &Default::default(),
-            )
-            .unwrap(),
-            error_texture: Texture::from_memory(
-                include_bytes!("../../error.png"),
-                &Default::default(),
-            )
-            .unwrap(),
+            loading_texture,
+            error_texture,
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
             font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),

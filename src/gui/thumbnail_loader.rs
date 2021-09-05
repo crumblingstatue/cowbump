@@ -55,7 +55,10 @@ impl ThumbnailLoader {
                 match result {
                     Ok(buf) => {
                         let (w, h) = buf.dimensions();
-                        let mut tex = Texture::new(w, h).unwrap();
+                        let mut tex = Texture::new().unwrap();
+                        if !tex.create(w, h) {
+                            panic!("Failed to create texture");
+                        }
                         unsafe {
                             tex.update_from_pixels(&buf.into_raw(), w, h, 0, 0);
                         }
