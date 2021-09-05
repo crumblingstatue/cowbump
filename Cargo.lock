@@ -941,7 +941,7 @@ dependencies = [
 [[package]]
 name = "sfml"
 version = "0.16.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#01ee40413233197953aeb7c5fb50ad1447e296ab"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#f4b2b5f7efb5438fc3939510d8b6a984d9f2695f"
 dependencies = [
  "bindgen",
  "bitflags",

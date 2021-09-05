@@ -13,8 +13,8 @@ use arboard::Clipboard;
 use egui::{FontDefinitions, FontFamily, TextStyle};
 use sfml::{
     graphics::{
-        Color, Font, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
-        Texture, Transformable,
+        Color, Font, IntRect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
+        Sprite, Text, Texture, Transformable,
     },
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
@@ -465,10 +465,10 @@ impl State {
         let mut loading_texture = Texture::new().unwrap();
         let mut error_texture = Texture::new().unwrap();
         loading_texture
-            .load_from_memory(include_bytes!("../../loading.png"), None)
+            .load_from_memory(include_bytes!("../../loading.png"), IntRect::default())
             .unwrap();
         error_texture
-            .load_from_memory(include_bytes!("../../error.png"), None)
+            .load_from_memory(include_bytes!("../../error.png"), IntRect::default())
             .unwrap();
         Self {
             thumbnails_per_row,
