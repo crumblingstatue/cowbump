@@ -55,8 +55,6 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("filter");
-                    // https://github.com/rust-lang/rust-clippy/issues/7561
-                    #[allow(clippy::filter_next)]
                     let no_entries = db.filter(&state.filter).next().is_none();
                     let mut te = TextEdit::singleline(&mut state.filter.substring_match);
                     if no_entries {
