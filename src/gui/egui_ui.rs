@@ -83,16 +83,19 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 ui.vertical(|ui| {
                     let mut i = 0;
                     tags.retain(|_uid, tag| {
-                        ui.label(tag.names[0].clone());
-                        let keep = if ui.button("x").clicked() {
-                            for (_uid, en) in entries.iter_mut() {
-                                en.tags.retain(|&uid| uid != i);
-                            }
-                            false
-                        } else {
-                            true
-                        };
-                        i += 1;
+                        let mut keep = false;
+                        ui.horizontal(|ui| {
+                            ui.label(tag.names[0].clone());
+                            keep = if ui.button("x").clicked() {
+                                for (_uid, en) in entries.iter_mut() {
+                                    en.tags.retain(|&uid| uid != i);
+                                }
+                                false
+                            } else {
+                                true
+                            };
+                            i += 1;
+                        });
                         keep
                     });
                     if ui.button("Add tag").clicked() {
