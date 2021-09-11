@@ -11,16 +11,9 @@ type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
 type ImageSlot = Option<ImageResult<RgbaBuf>>;
 
 /// Loads images on a separate thread, one at a time.
+#[derive(Default)]
 pub struct ThumbnailLoader {
     image_slots: Arc<Mutex<HashMap<Uid, ImageSlot>>>,
-}
-
-impl Default for ThumbnailLoader {
-    fn default() -> Self {
-        Self {
-            image_slots: Default::default(),
-        }
-    }
 }
 
 impl ThumbnailLoader {
