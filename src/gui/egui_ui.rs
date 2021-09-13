@@ -221,8 +221,12 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         ui.scope(|ui| {
                             // Add tag button is enabled when there are tags in the database that
                             // haven't been added to the image yet
-                            let enabled =
-                                db.image_tag_count(propwin.image_uids[0]) < db.tag_count();
+                            let enabled = db.tags.iter().any(|(&tag_uid, _)| {
+                                !propwin
+                                    .image_uids
+                                    .iter()
+                                    .all(|&image_uid| db.image_has_tag(image_uid, tag_uid))
+                            });
                             ui.set_enabled(enabled);
                             let plus_re = ui.button("Add tag");
                             let popup_id = ui.make_persistent_id("popid");
@@ -232,16 +236,22 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
                                 ui.set_min_width(100.0);
                                 let mut tag_add = None;
-                                for (&uid, tag) in db.tags.iter() {
-                                    if !db.image_has_tag(propwin.image_uids[0], uid) {
+                                for (&tag_uid, tag) in db.tags.iter() {
+                                    if !propwin
+                                        .image_uids
+                                        .iter()
+                                        .all(|&image_uid| db.image_has_tag(image_uid, tag_uid))
+                                    {
                                         let name = tag.names[0].clone();
                                         if ui.button(name).clicked() {
-                                            tag_add = Some((propwin.image_uids[0], uid));
+                                            tag_add = Some(tag_uid);
                                         }
                                     }
                                 }
-                                if let Some((image_id, tag_id)) = tag_add {
-                                    db.add_tag_for(image_id, tag_id);
+                                if let Some(tag_id) = tag_add {
+                                    for &image_uid in &propwin.image_uids {
+                                        db.add_tag_for(image_uid, tag_id);
+                                    }
                                 }
                             });
                         });

@@ -132,14 +132,6 @@ impl Db {
         let en = self.entries.get_mut(&uid).unwrap();
         pathbuf_rename_filename(&mut en.path, new);
     }
-    /// The number of unique tags
-    pub(crate) fn tag_count(&self) -> usize {
-        self.tags.len()
-    }
-    /// The number of tags an image has
-    pub(crate) fn image_tag_count(&self, uid: u32) -> usize {
-        self.entries[&uid].tags.len()
-    }
 
     pub(crate) fn resolve_tag(&self, word: &str) -> Option<Uid> {
         for (k, v) in &self.tags {
