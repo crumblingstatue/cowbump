@@ -24,12 +24,12 @@ fn main() {
 
 pub struct FilterSpec {
     has_tags: Vec<Uid>,
-    substring_match: String,
+    filename_substring: String,
 }
 
 impl FilterSpec {
     /// Whether this filter actually filters anything or just shows everything
     pub fn active(&self) -> bool {
-        !self.has_tags.is_empty() || !self.substring_match.is_empty()
+        !self.has_tags.is_empty() || !self.filename_substring.is_empty()
     }
 }

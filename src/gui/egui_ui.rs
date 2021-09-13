@@ -68,12 +68,12 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 ui.horizontal(|ui| {
                     ui.label("filter");
                     let no_entries = db.filter(&state.filter).next().is_none();
-                    let mut te = TextEdit::singleline(&mut state.filter.substring_match);
+                    let mut te = TextEdit::singleline(&mut state.filter.filename_substring);
                     if no_entries {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
-                    state.filter.substring_match.make_ascii_lowercase();
+                    state.filter.filename_substring.make_ascii_lowercase();
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.filter_edit = false;
                     }

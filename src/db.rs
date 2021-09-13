@@ -102,7 +102,7 @@ impl Db {
                     .unwrap()
                     .to_string_lossy()
                     .to_lowercase()
-                    .contains(&spec.substring_match)
+                    .contains(&spec.filename_substring)
                 {
                     return None;
                 }

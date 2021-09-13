@@ -51,7 +51,7 @@ impl EntriesView {
                 .unwrap()
                 .to_string_lossy()
                 .to_lowercase()
-                .contains(&spec.substring_match)
+                .contains(&spec.filename_substring)
             {
                 return None;
             }
@@ -464,7 +464,7 @@ impl State {
             thumbnail_size,
             filter: FilterSpec {
                 has_tags: vec![],
-                substring_match: String::new(),
+                filename_substring: String::new(),
             },
             loading_texture,
             error_texture,
