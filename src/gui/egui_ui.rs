@@ -233,7 +233,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 ui.set_min_width(100.0);
                                 let mut tag_add = None;
                                 for (&uid, tag) in db.tags.iter() {
-                                    if !db.has_tag(propwin.image_uids[0], uid) {
+                                    if !db.image_has_tag(propwin.image_uids[0], uid) {
                                         let name = tag.names[0].clone();
                                         if ui.button(name).clicked() {
                                             tag_add = Some((propwin.image_uids[0], uid));

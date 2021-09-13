@@ -84,7 +84,7 @@ impl Db {
             true
         }
     }
-    pub fn has_tag(&self, entry: Uid, tag: Uid) -> bool {
+    pub fn image_has_tag(&self, entry: Uid, tag: Uid) -> bool {
         self.entries[&entry].tags.contains(&tag)
     }
     pub fn add_new_tag(&mut self, tag: Tag) {
