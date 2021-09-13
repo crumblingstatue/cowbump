@@ -140,6 +140,15 @@ impl Db {
     pub(crate) fn image_tag_count(&self, uid: u32) -> usize {
         self.entries[&uid].tags.len()
     }
+
+    pub(crate) fn resolve_tag(&self, word: &str) -> Option<Uid> {
+        for (k, v) in &self.tags {
+            if v.names.iter().any(|name| name == word) {
+                return Some(*k);
+            }
+        }
+        None
+    }
 }
 
 /// Rename the last component (filename) of a PathBuf, and rename it on the filesystem too.

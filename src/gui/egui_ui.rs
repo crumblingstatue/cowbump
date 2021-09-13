@@ -1,6 +1,7 @@
 use crate::{
     db::{Db, Uid},
     gui::{common_tags, search_goto_cursor, AddTag, State},
+    FilterSpec,
 };
 use egui::{Align2, Button, Color32, Label, Rgba, TextEdit, TextureId};
 use retain_mut::RetainMut;
@@ -65,15 +66,22 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .title_bar(false)
             .auto_sized()
             .show(egui_ctx, |ui| {
+                let mut err = None;
                 ui.horizontal(|ui| {
                     ui.label("filter");
                     let no_entries = db.filter(&state.filter).next().is_none();
-                    let mut te = TextEdit::singleline(&mut state.filter.filename_substring);
+                    let mut te = TextEdit::singleline(&mut state.filter_string);
                     if no_entries {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
-                    state.filter.filename_substring.make_ascii_lowercase();
+                    state.filter_string.make_ascii_lowercase();
+                    match FilterSpec::parse_and_resolve(&state.filter_string, db) {
+                        Ok(spec) => state.filter = spec,
+                        Err(e) => {
+                            err = Some(format!("Error: {}", e));
+                        }
+                    };
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.filter_edit = false;
                     }
@@ -83,6 +91,9 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     }
                     ui.memory().request_focus(re.id);
                 });
+                if let Some(e) = err {
+                    ui.label(e);
+                }
             });
     }
     if state.tag_window {

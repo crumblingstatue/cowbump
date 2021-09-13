@@ -291,6 +291,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "sfml",
+ "thiserror",
  "walkdir",
 ]
 
