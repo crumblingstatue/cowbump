@@ -93,20 +93,18 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .open(&mut state.tag_window)
             .show(egui_ctx, move |ui| {
                 ui.vertical(|ui| {
-                    let mut i = 0;
-                    tags.retain(|_uid, tag| {
+                    tags.retain(|tag_uid, tag| {
                         let mut keep = false;
                         ui.horizontal(|ui| {
                             ui.label(tag.names[0].clone());
                             keep = if ui.button("x").clicked() {
                                 for (_uid, en) in entries.iter_mut() {
-                                    en.tags.retain(|&uid| uid != i);
+                                    en.tags.retain(|&uid| uid != *tag_uid);
                                 }
                                 false
                             } else {
                                 true
                             };
-                            i += 1;
                         });
                         keep
                     });
