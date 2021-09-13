@@ -188,8 +188,12 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             for tagid in common_tags(&propwin.image_uids, db) {
                                 ui.group(|ui| {
                                     ui.horizontal(|ui| {
+                                        let tag_name = match db.tags.get(&tagid) {
+                                            Some(tag) => &tag.names[0],
+                                            None => "<unknown tag>",
+                                        };
                                         ui.add(
-                                            Label::new(db.tags[&tagid].names[0].clone())
+                                            Label::new(tag_name)
                                                 .wrap(false)
                                                 .background_color(Color32::from_rgb(50, 40, 45)),
                                         );
