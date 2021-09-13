@@ -252,7 +252,7 @@ fn handle_event_viewer(
                 } else {
                     vec![uid]
                 };
-                state.image_prop_windows.push(ImagePropWindow::new(vec));
+                state.egui_state.add_image_prop_window(vec);
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
@@ -414,7 +414,6 @@ struct State {
     highlight: Option<Uid>,
     filter_edit: bool,
     clipboard_ctx: Clipboard,
-    image_prop_windows: Vec<ImagePropWindow>,
     tag_window: bool,
     add_tag: Option<AddTag>,
     egui_state: egui_ui::EguiState,
@@ -445,17 +444,6 @@ impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
 #[derive(Default)]
 struct AddTag {
     name: String,
-}
-
-/// Image properties window
-struct ImagePropWindow {
-    image_uids: Vec<Uid>,
-}
-
-impl ImagePropWindow {
-    fn new(image_uids: Vec<Uid>) -> Self {
-        Self { image_uids }
-    }
 }
 
 impl State {
@@ -490,7 +478,6 @@ impl State {
             highlight: None,
             filter_edit: false,
             clipboard_ctx: Clipboard::new().unwrap(),
-            image_prop_windows: Vec::new(),
             tag_window: false,
             add_tag: None,
             egui_state: Default::default(),

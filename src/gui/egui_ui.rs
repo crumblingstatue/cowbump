@@ -11,6 +11,18 @@ pub(super) struct EguiState {
     image_rename_windows: Vec<ImageRenameWindow>,
     delete_confirm_windows: Vec<DeleteConfirmWindow>,
     custom_command_windows: Vec<CustomCommandWindow>,
+    image_prop_windows: Vec<ImagePropWindow>,
+}
+
+/// Image properties window
+struct ImagePropWindow {
+    image_uids: Vec<Uid>,
+}
+
+impl ImagePropWindow {
+    fn new(image_uids: Vec<Uid>) -> Self {
+        Self { image_uids }
+    }
 }
 
 struct ImageRenameWindow {
@@ -144,9 +156,8 @@ fn get_filename_from_path(path: &Path) -> String {
 }
 
 fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    let image_prop_windows = &mut state.image_prop_windows;
     let egui_state = &mut state.egui_state;
-    image_prop_windows.retain_mut(|propwin| {
+    egui_state.image_prop_windows.retain_mut(|propwin| {
         let mut open = true;
         let n_images = propwin.image_uids.len();
         let title = {
@@ -339,7 +350,7 @@ fn delete_confirm_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::Ct
         retain
     });
     for i in removes {
-        state.image_prop_windows.remove(i);
+        state.egui_state.image_prop_windows.remove(i);
     }
 }
 
@@ -351,5 +362,10 @@ fn remove_images(view: &mut super::EntriesView, image_uids: &[Uid], db: &mut Db)
         }
         view.delete(uid);
         db.entries.remove(&uid);
+    }
+}
+impl EguiState {
+    pub(crate) fn add_image_prop_window(&mut self, vec: Vec<u32>) {
+        self.image_prop_windows.push(ImagePropWindow::new(vec));
     }
 }
