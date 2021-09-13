@@ -207,26 +207,34 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 });
                             }
                         });
-                        let plus_re = ui.button("Add tag");
-                        let popup_id = ui.make_persistent_id("popid");
-                        if plus_re.clicked() {
-                            ui.memory().toggle_popup(popup_id);
-                        }
-                        egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
-                            ui.set_min_width(100.0);
-                            let mut tag_add = None;
-                            for (&uid, tag) in db.tags.iter() {
-                                if !db.has_tag(propwin.image_uids[0], uid) {
-                                    let name = tag.names[0].clone();
-                                    if ui.button(name).clicked() {
-                                        tag_add = Some((propwin.image_uids[0], uid));
+                        ui.scope(|ui| {
+                            // Add tag button is enabled when there are tags in the database that
+                            // haven't been added to the image yet
+                            let enabled =
+                                db.image_tag_count(propwin.image_uids[0]) < db.tag_count();
+                            ui.set_enabled(enabled);
+                            let plus_re = ui.button("Add tag");
+                            let popup_id = ui.make_persistent_id("popid");
+                            if plus_re.clicked() {
+                                ui.memory().toggle_popup(popup_id);
+                            }
+                            egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
+                                ui.set_min_width(100.0);
+                                let mut tag_add = None;
+                                for (&uid, tag) in db.tags.iter() {
+                                    if !db.has_tag(propwin.image_uids[0], uid) {
+                                        let name = tag.names[0].clone();
+                                        if ui.button(name).clicked() {
+                                            tag_add = Some((propwin.image_uids[0], uid));
+                                        }
                                     }
                                 }
-                            }
-                            if let Some((image_id, tag_id)) = tag_add {
-                                db.add_tag_for(image_id, tag_id);
-                            }
+                                if let Some((image_id, tag_id)) = tag_add {
+                                    db.add_tag_for(image_id, tag_id);
+                                }
+                            });
                         });
+
                         if propwin.image_uids.len() == 1
                             && ui.add(Button::new("Rename").wrap(false)).clicked()
                         {
