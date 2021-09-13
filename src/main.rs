@@ -23,8 +23,10 @@ fn main() {
     db.save_to_fs().unwrap();
 }
 
+#[derive(Default)]
 pub struct FilterSpec {
     has_tags: Vec<Uid>,
+    doesnt_have_tags: Vec<Uid>,
     filename_substring: String,
 }
 
@@ -44,6 +46,7 @@ impl FilterSpec {
     pub fn parse_and_resolve<'a>(string: &'a str, db: &Db) -> Result<Self, ParseResolveError<'a>> {
         let words = string.split_whitespace();
         let mut tags = Vec::new();
+        let mut neg_tags = Vec::new();
         let mut fstring = String::new();
         for word in words {
             match word.find(':') {
@@ -60,17 +63,31 @@ impl FilterSpec {
                     }
                 }
                 None => {
-                    let tag_id = match db.resolve_tag(word) {
+                    let tag_name;
+                    let neg;
+                    if word.bytes().next() == Some(b'!') {
+                        tag_name = &word[1..];
+                        neg = true;
+                    } else {
+                        tag_name = word;
+                        neg = false;
+                    }
+                    let tag_id = match db.resolve_tag(tag_name) {
                         Some(id) => id,
-                        None => return Err(ParseResolveError::NoSuchTag(word)),
+                        None => return Err(ParseResolveError::NoSuchTag(tag_name)),
                     };
-                    tags.push(tag_id);
+                    if !neg {
+                        tags.push(tag_id);
+                    } else {
+                        neg_tags.push(tag_id)
+                    }
                 }
             }
         }
         Ok(Self {
             has_tags: tags,
             filename_substring: fstring,
+            doesnt_have_tags: neg_tags,
         })
     }
 }

@@ -93,26 +93,7 @@ impl Db {
     pub fn filter<'a>(&'a self, spec: &'a crate::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
         self.entries
             .iter()
-            .enumerate()
-            .filter_map(move |(_uid, en)| {
-                if !en
-                    .1
-                    .path
-                    .file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_lowercase()
-                    .contains(&spec.filename_substring)
-                {
-                    return None;
-                }
-                for required_tag in &spec.has_tags {
-                    if !en.1.tags.contains(required_tag) {
-                        return None;
-                    }
-                }
-                Some(*en.0)
-            })
+            .filter_map(move |(&uid, en)| image_filter_map(uid, en, spec))
     }
     pub fn save_to_fs(&self) -> Result<(), Box<dyn Error>> {
         let mut f = File::create(DB_FILENAME)?;
@@ -141,6 +122,30 @@ impl Db {
         }
         None
     }
+}
+
+pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<u32> {
+    if !entry
+        .path
+        .file_name()
+        .unwrap()
+        .to_string_lossy()
+        .to_lowercase()
+        .contains(&spec.filename_substring)
+    {
+        return None;
+    }
+    for required_tag in &spec.has_tags {
+        if !entry.tags.contains(required_tag) {
+            return None;
+        }
+    }
+    for required_no_tag in &spec.doesnt_have_tags {
+        if entry.tags.contains(required_no_tag) {
+            return None;
+        }
+    }
+    Some(uid)
 }
 
 /// Rename the last component (filename) of a PathBuf, and rename it on the filesystem too.

@@ -45,22 +45,7 @@ impl EntriesView {
     ) -> impl Iterator<Item = Uid> + 'a {
         self.uids.iter().filter_map(move |uid| {
             let en = &db.entries[uid];
-            if !en
-                .path
-                .file_name()
-                .unwrap()
-                .to_string_lossy()
-                .to_lowercase()
-                .contains(&spec.filename_substring)
-            {
-                return None;
-            }
-            for required_tag in &spec.has_tags {
-                if !en.tags.contains(required_tag) {
-                    return None;
-                }
-            }
-            Some(*uid)
+            crate::db::image_filter_map(*uid, en, spec)
         })
     }
     /// Delete `uid` from the list.
@@ -463,10 +448,7 @@ impl State {
             thumbnails_per_row,
             y_offset: 0.0,
             thumbnail_size,
-            filter: FilterSpec {
-                has_tags: vec![],
-                filename_substring: String::new(),
-            },
+            filter: FilterSpec::default(),
             loading_texture,
             error_texture,
             thumbnail_cache: Default::default(),
