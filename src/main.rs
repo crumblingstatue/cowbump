@@ -32,8 +32,6 @@ pub struct FilterSpec {
 
 #[derive(Error, Debug)]
 pub enum ParseResolveError<'a> {
-    #[error("Unknown meta tag: {0}")]
-    UnknownMetaArg(&'a str),
     #[error("No such tag: {0}")]
     NoSuchTag(&'a str),
 }
@@ -49,38 +47,36 @@ impl FilterSpec {
         let mut neg_tags = Vec::new();
         let mut fstring = String::new();
         for word in words {
-            match word.find(':') {
-                Some(pos) => {
-                    let meta = &word[..pos];
-                    let arg = &word[pos + 1..];
-                    match meta {
-                        "f" | "fname" => {
-                            fstring = arg.to_owned();
-                        }
-                        _ => {
-                            return Err(ParseResolveError::UnknownMetaArg(meta));
-                        }
+            let mut is_meta = false;
+            if let Some(pos) = word.find(':') {
+                let meta = &word[..pos];
+                let arg = &word[pos + 1..];
+                match meta {
+                    "f" | "fname" => {
+                        fstring = arg.to_owned();
+                        is_meta = true;
                     }
+                    _ => {}
                 }
-                None => {
-                    let tag_name;
-                    let neg;
-                    if word.bytes().next() == Some(b'!') {
-                        tag_name = &word[1..];
-                        neg = true;
-                    } else {
-                        tag_name = word;
-                        neg = false;
-                    }
-                    let tag_id = match db.resolve_tag(tag_name) {
-                        Some(id) => id,
-                        None => return Err(ParseResolveError::NoSuchTag(tag_name)),
-                    };
-                    if !neg {
-                        tags.push(tag_id);
-                    } else {
-                        neg_tags.push(tag_id)
-                    }
+            }
+            if !is_meta {
+                let tag_name;
+                let neg;
+                if word.bytes().next() == Some(b'!') {
+                    tag_name = &word[1..];
+                    neg = true;
+                } else {
+                    tag_name = word;
+                    neg = false;
+                }
+                let tag_id = match db.resolve_tag(tag_name) {
+                    Some(id) => id,
+                    None => return Err(ParseResolveError::NoSuchTag(tag_name)),
+                };
+                if !neg {
+                    tags.push(tag_id);
+                } else {
+                    neg_tags.push(tag_id)
                 }
             }
         }
