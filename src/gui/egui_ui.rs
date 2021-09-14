@@ -234,7 +234,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 ui.memory().toggle_popup(popup_id);
                             }
                             egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
-                                ui.set_min_width(100.0);
+                                ui.set_min_width(200.0);
                                 let mut tag_add = None;
                                 for (&tag_uid, tag) in db.tags.iter() {
                                     if !propwin
