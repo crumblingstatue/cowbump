@@ -82,7 +82,8 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     egui_ctx.set_fonts(font_defs);
     let mut tex = egui_sfml::get_first_texture(&mut egui_ctx, &window);
     while window.is_open() {
-        if !egui_ctx.wants_keyboard_input() {
+        let egui_wants_kb = egui_ctx.wants_keyboard_input();
+        if !egui_wants_kb {
             let scroll_speed = 8.0;
             if Key::DOWN.is_pressed() {
                 state.y_offset += scroll_speed;
@@ -101,14 +102,18 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 Event::Closed => window.close(),
                 Event::KeyPressed { code, .. } => {
                     match code {
-                        Key::ESCAPE => selected_uids.clear(),
+                        Key::ESCAPE => {
+                            if !egui_wants_kb {
+                                selected_uids.clear()
+                            }
+                        }
                         Key::HOME => {
-                            if !egui_ctx.wants_keyboard_input() {
+                            if !egui_wants_kb {
                                 state.y_offset = 0.0;
                             }
                         }
                         Key::END => {
-                            if !egui_ctx.wants_keyboard_input() {
+                            if !egui_wants_kb {
                                 // Align the bottom edge of the view with the bottom edge of the last row.
                                 // To do align the camera with a bottom edge, we need to subtract the screen
                                 // height from it.
@@ -133,7 +138,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 &mut selected_uids,
                 &window,
                 egui_ctx.wants_pointer_input(),
-                egui_ctx.wants_keyboard_input(),
+                egui_wants_kb,
             );
         }
         egui_ctx.begin_frame(raw_input);
