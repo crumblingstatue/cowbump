@@ -92,8 +92,16 @@ impl Db {
     pub fn image_has_tag(&self, entry: Uid, tag: Uid) -> bool {
         self.entries[&entry].tags.contains(&tag)
     }
-    pub fn add_new_tag(&mut self, tag: Tag) {
-        self.tags.insert(self.tags.len() as Uid, tag);
+    pub fn add_new_tag(&mut self, tag: Tag) -> Uid {
+        let uid = self.tags.len() as Uid;
+        self.tags.insert(uid, tag);
+        uid
+    }
+    pub(crate) fn add_new_tag_from_text(&mut self, tag_text: String) -> Uid {
+        self.add_new_tag(Tag {
+            names: vec![tag_text],
+            implies: Vec::new(),
+        })
     }
     pub fn filter<'a>(&'a self, spec: &'a crate::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
         self.entries

@@ -5,7 +5,7 @@ use crate::{
 };
 use egui::{Align2, Button, Color32, Key, Label, Rgba, TextEdit, TextureId};
 use retain_mut::RetainMut;
-use std::{path::Path, process::Command};
+use std::{mem, path::Path, process::Command};
 
 #[derive(Default)]
 pub(super) struct EguiState {
@@ -13,6 +13,12 @@ pub(super) struct EguiState {
     delete_confirm_windows: Vec<DeleteConfirmWindow>,
     custom_command_windows: Vec<CustomCommandWindow>,
     image_prop_windows: Vec<ImagePropWindow>,
+    tag_add_question_windows: Vec<TagAddQuestionWindow>,
+}
+
+struct TagAddQuestionWindow {
+    tag_text: String,
+    image_uids: Vec<u32>,
 }
 
 /// Image properties window
@@ -159,6 +165,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     image_rename_windows_ui(state, db, egui_ctx);
     delete_confirm_windows_ui(state, db, egui_ctx);
     custom_command_windows_ui(state, db, egui_ctx);
+    tag_add_question_windows_ui(state, db, egui_ctx);
 }
 
 fn get_filename_from_path(path: &Path) -> String {
@@ -171,8 +178,7 @@ fn get_filename_from_path(path: &Path) -> String {
 }
 
 fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    let egui_state = &mut state.egui_state;
-    egui_state.image_prop_windows.retain_mut(|propwin| {
+    state.egui_state.image_prop_windows.retain_mut(|propwin| {
         let mut open = true;
         let n_images = propwin.image_uids.len();
         let title = {
@@ -236,11 +242,22 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             let re = ui.text_edit_singleline(&mut propwin.add_tag_buffer);
                             re.request_focus();
                             if re.ctx.input().key_pressed(Key::Enter) {
-                                add_tags_from_string(
-                                    &propwin.add_tag_buffer,
-                                    &propwin.image_uids,
-                                    db,
-                                );
+                                let add_tag_buffer: &str = &propwin.add_tag_buffer;
+                                let image_uids: &[Uid] = &propwin.image_uids;
+                                let tags = add_tag_buffer.split_whitespace();
+                                for tag in tags {
+                                    match db.resolve_tag(tag) {
+                                        Some(tag_uid) => {
+                                            db.add_tag_for_multi(image_uids, tag_uid);
+                                        }
+                                        None => state.egui_state.tag_add_question_windows.push(
+                                            TagAddQuestionWindow {
+                                                tag_text: tag.to_owned(),
+                                                image_uids: image_uids.to_owned(),
+                                            },
+                                        ),
+                                    }
+                                }
                                 propwin.add_tag_buffer.clear();
                                 propwin.add_tag_clicked = false;
                             }
@@ -254,15 +271,18 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 uid,
                                 name_buffer: get_filename_from_path(&db.entries[&uid].path),
                             };
-                            egui_state.image_rename_windows.push(win);
+                            state.egui_state.image_rename_windows.push(win);
                         }
                         if ui
                             .add(Button::new("Delete from disk").wrap(false))
                             .clicked()
                         {
-                            egui_state.delete_confirm_windows.push(DeleteConfirmWindow {
-                                uids: propwin.image_uids.clone(),
-                            });
+                            state
+                                .egui_state
+                                .delete_confirm_windows
+                                .push(DeleteConfirmWindow {
+                                    uids: propwin.image_uids.clone(),
+                                });
                         }
                         if ui
                             .add(Button::new("Run custom command").wrap(false))
@@ -275,7 +295,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 err_str: String::new(),
                                 just_opened: true,
                             };
-                            egui_state.custom_command_windows.push(win);
+                            state.egui_state.custom_command_windows.push(win);
                         }
                     });
                 });
@@ -284,13 +304,25 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
     });
 }
 
-fn add_tags_from_string(add_tag_buffer: &str, image_uids: &[Uid], db: &mut Db) {
-    let tags = add_tag_buffer.split_whitespace();
-    for tag in tags {
-        if let Some(tag_uid) = db.resolve_tag(tag) {
-            db.add_tag_for_multi(image_uids, tag_uid);
-        }
-    }
+fn tag_add_question_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+    state.egui_state.tag_add_question_windows.retain_mut(|win| {
+        let mut open = true;
+        egui::Window::new("Tag add").show(egui_ctx, |ui| {
+            ui.label(&format!(
+                "The tag '{}' doesn't exist. Create it?",
+                win.tag_text
+            ));
+            if ui.button("Yes").clicked() {
+                let tag_uid = db.add_new_tag_from_text(mem::take(&mut win.tag_text));
+                db.add_tag_for_multi(&win.image_uids, tag_uid);
+                open = false;
+            }
+            if ui.button("No").clicked() {
+                open = false;
+            }
+        });
+        open
+    })
 }
 
 struct CustomCommandWindow {
