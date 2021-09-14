@@ -95,6 +95,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
             }
         }
         let mut raw_input = egui_sfml::make_raw_input(&window);
+        let mut esc_pressed = false;
 
         while let Some(event) = window.poll_event() {
             egui_sfml::handle_event(&mut raw_input, &event);
@@ -102,11 +103,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 Event::Closed => window.close(),
                 Event::KeyPressed { code, .. } => {
                     match code {
-                        Key::ESCAPE => {
-                            if !egui_wants_kb {
-                                selected_uids.clear()
-                            }
-                        }
+                        Key::ESCAPE => esc_pressed = true,
                         Key::HOME => {
                             if !egui_wants_kb {
                                 state.y_offset = 0.0;
@@ -142,7 +139,11 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
             );
         }
         egui_ctx.begin_frame(raw_input);
+        state.just_closed_window_with_esc = false;
         egui_ui::do_ui(&mut state, &egui_ctx, db);
+        if esc_pressed && !egui_wants_kb && !state.just_closed_window_with_esc {
+            selected_uids.clear()
+        }
         recalc_on_screen_items(
             &mut on_screen_uids,
             db,
@@ -409,6 +410,8 @@ struct State {
     add_tag: Option<AddTag>,
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
+    // We just closed window with esc, ignore the esc press outside of egui
+    just_closed_window_with_esc: bool,
 }
 
 struct TexSrc<'state, 'db> {
@@ -471,6 +474,7 @@ impl State {
             add_tag: None,
             egui_state: Default::default(),
             entries_view: EntriesView::from_db(db),
+            just_closed_window_with_esc: false,
         }
     }
     fn draw_thumbnails(

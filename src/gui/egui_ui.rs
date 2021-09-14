@@ -180,6 +180,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
             }
         };
         if egui_ctx.input().key_pressed(Key::Escape) {
+            state.just_closed_window_with_esc = true;
             open = false;
         }
         egui::Window::new(title)
