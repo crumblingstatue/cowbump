@@ -84,6 +84,11 @@ impl Db {
             true
         }
     }
+    pub fn add_tag_for_multi(&mut self, images: &[Uid], tag: Uid) {
+        for img in images {
+            self.add_tag_for(*img, tag);
+        }
+    }
     pub fn image_has_tag(&self, entry: Uid, tag: Uid) -> bool {
         self.entries[&entry].tags.contains(&tag)
     }

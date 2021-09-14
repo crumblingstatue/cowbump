@@ -18,11 +18,17 @@ pub(super) struct EguiState {
 /// Image properties window
 struct ImagePropWindow {
     image_uids: Vec<Uid>,
+    add_tag_buffer: String,
+    add_tag_clicked: bool,
 }
 
 impl ImagePropWindow {
     fn new(image_uids: Vec<Uid>) -> Self {
-        Self { image_uids }
+        Self {
+            image_uids,
+            add_tag_buffer: String::default(),
+            add_tag_clicked: false,
+        }
     }
 }
 
@@ -222,43 +228,23 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 });
                             }
                         });
-                        ui.scope(|ui| {
-                            // Add tag button is enabled when there are tags in the database that
-                            // haven't been added to the image yet
-                            let enabled = db.tags.iter().any(|(&tag_uid, _)| {
-                                !propwin
-                                    .image_uids
-                                    .iter()
-                                    .all(|&image_uid| db.image_has_tag(image_uid, tag_uid))
-                            });
-                            ui.set_enabled(enabled);
-                            let plus_re = ui.button("Add tag");
-                            let popup_id = ui.make_persistent_id("popid");
-                            if plus_re.clicked() {
-                                ui.memory().toggle_popup(popup_id);
+                        let plus_re = ui.button("Add tags");
+                        if plus_re.clicked() {
+                            propwin.add_tag_clicked ^= true;
+                        }
+                        if propwin.add_tag_clicked {
+                            let re = ui.text_edit_singleline(&mut propwin.add_tag_buffer);
+                            re.request_focus();
+                            if re.ctx.input().key_pressed(Key::Enter) {
+                                add_tags_from_string(
+                                    &propwin.add_tag_buffer,
+                                    &propwin.image_uids,
+                                    db,
+                                );
+                                propwin.add_tag_buffer.clear();
+                                propwin.add_tag_clicked = false;
                             }
-                            egui::popup::popup_below_widget(ui, popup_id, &plus_re, |ui| {
-                                ui.set_min_width(200.0);
-                                let mut tag_add = None;
-                                for (&tag_uid, tag) in db.tags.iter() {
-                                    if !propwin
-                                        .image_uids
-                                        .iter()
-                                        .all(|&image_uid| db.image_has_tag(image_uid, tag_uid))
-                                    {
-                                        let name = tag.names[0].clone();
-                                        if ui.button(name).clicked() {
-                                            tag_add = Some(tag_uid);
-                                        }
-                                    }
-                                }
-                                if let Some(tag_id) = tag_add {
-                                    for &image_uid in &propwin.image_uids {
-                                        db.add_tag_for(image_uid, tag_id);
-                                    }
-                                }
-                            });
-                        });
+                        }
 
                         if propwin.image_uids.len() == 1
                             && ui.add(Button::new("Rename").wrap(false)).clicked()
@@ -296,6 +282,15 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
             });
         open
     });
+}
+
+fn add_tags_from_string(add_tag_buffer: &str, image_uids: &[Uid], db: &mut Db) {
+    let tags = add_tag_buffer.split_whitespace();
+    for tag in tags {
+        if let Some(tag_uid) = db.resolve_tag(tag) {
+            db.add_tag_for_multi(image_uids, tag_uid);
+        }
+    }
 }
 
 struct CustomCommandWindow {
