@@ -3,7 +3,7 @@ use crate::{
     gui::{common_tags, search_goto_cursor, AddTag, State},
     FilterSpec,
 };
-use egui::{Align2, Button, Color32, Label, Rgba, TextEdit, TextureId};
+use egui::{Align2, Button, Color32, Key, Label, Rgba, TextEdit, TextureId};
 use retain_mut::RetainMut;
 use std::{path::Path, process::Command};
 
@@ -179,6 +179,9 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                 format!("{} images", n_images)
             }
         };
+        if egui_ctx.input().key_pressed(Key::Escape) {
+            open = false;
+        }
         egui::Window::new(title)
             .open(&mut open)
             .show(egui_ctx, |ui| {
