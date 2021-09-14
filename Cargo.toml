@@ -2,7 +2,7 @@
 name = "cowbump"
 version = "0.1.0"
 authors = ["Mika Attila <radiantstatue@gmail.com>"]
-edition = "2021"
+edition = "2018"
 
 [dependencies]
 walkdir = "2.3.2"
