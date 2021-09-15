@@ -148,20 +148,28 @@ pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Op
     {
         return None;
     }
+    if tags_satisfied(spec, entry) {
+        Some(uid)
+    } else {
+        None
+    }
+}
+
+fn tags_satisfied(spec: &crate::FilterSpec, entry: &Entry) -> bool {
     for required_tag in &spec.has_tags {
         if !entry.tags.contains(required_tag) {
-            return None;
+            return false;
         }
     }
     for required_no_tag in &spec.doesnt_have_tags {
         if entry.tags.contains(required_no_tag) {
-            return None;
+            return false;
         }
     }
     if spec.doesnt_have_any_tags && !entry.tags.is_empty() {
-        return None;
+        return false;
     }
-    Some(uid)
+    true
 }
 
 /// Rename the last component (filename) of a PathBuf, and rename it on the filesystem too.
