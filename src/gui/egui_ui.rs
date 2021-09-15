@@ -135,7 +135,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                             } else {
                                 true
                             };
-                            ui.label(tag.names[0].clone());
+                            ui.label(&tag.names[0]);
                         });
                         keep
                     });
