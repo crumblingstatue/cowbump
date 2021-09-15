@@ -400,7 +400,6 @@ struct State {
     filter_string: String,
     clipboard_ctx: Clipboard,
     tag_window: bool,
-    add_tag: Option<AddTag>,
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
     // We just closed window with esc, ignore the esc press outside of egui
@@ -425,12 +424,6 @@ impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
         );
         (tex.size().x as f32, tex.size().y as f32, tex)
     }
-}
-
-/// Add tag state when adding a new tag
-#[derive(Default)]
-struct AddTag {
-    name: String,
 }
 
 impl State {
@@ -464,7 +457,6 @@ impl State {
             filter_string: String::new(),
             clipboard_ctx: Clipboard::new().unwrap(),
             tag_window: false,
-            add_tag: None,
             egui_state: Default::default(),
             entries_view: EntriesView::from_db(db),
             just_closed_window_with_esc: false,

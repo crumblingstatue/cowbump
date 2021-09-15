@@ -1,6 +1,6 @@
 use crate::{
     db::{Db, Uid},
-    gui::{common_tags, search_goto_cursor, AddTag, State},
+    gui::{common_tags, search_goto_cursor, State},
     FilterSpec,
 };
 use egui::{Align2, Button, Color32, Key, Label, Rgba, TextEdit, TextureId};
@@ -115,17 +115,16 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             });
     }
     if state.tag_window {
-        let add_tag = &mut state.add_tag;
         let tags = &mut db.tags;
         let entries = &mut db.entries;
-        egui::Window::new("Tag editor")
+        egui::Window::new("Tag list")
+            .scroll(true)
             .open(&mut state.tag_window)
             .show(egui_ctx, move |ui| {
                 ui.vertical(|ui| {
                     tags.retain(|tag_uid, tag| {
                         let mut keep = false;
                         ui.horizontal(|ui| {
-                            ui.label(tag.names[0].clone());
                             keep = if ui.button("x").clicked() {
                                 for (_uid, en) in entries.iter_mut() {
                                     en.tags.retain(|&uid| uid != *tag_uid);
@@ -134,38 +133,12 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                             } else {
                                 true
                             };
+                            ui.label(tag.names[0].clone());
                         });
                         keep
                     });
-                    if ui.button("Add tag").clicked() {
-                        *add_tag = Some(AddTag::default());
-                    }
                 });
             });
-    }
-    let mut close = false;
-    if let Some(add_tag) = &mut state.add_tag {
-        let mut rem = false;
-        egui::Window::new("Add new tag").show(egui_ctx, |ui| {
-            let re = ui.text_edit_singleline(&mut add_tag.name);
-            if re.ctx.input().key_down(egui::Key::Enter) {
-                rem = true;
-                db.add_new_tag(crate::tag::Tag {
-                    names: vec![add_tag.name.clone()],
-                    implies: vec![],
-                });
-            }
-            if re.lost_focus() {
-                close = true;
-            }
-            ui.memory().request_focus(re.id);
-        });
-        if rem {
-            state.add_tag = None;
-        }
-    }
-    if close {
-        state.add_tag = None;
     }
     image_windows_ui(state, db, egui_ctx);
     image_rename_windows_ui(state, db, egui_ctx);
