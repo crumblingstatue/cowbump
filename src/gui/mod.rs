@@ -326,20 +326,13 @@ fn handle_event_viewer(
 }
 
 fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
-    let string = state.search_string.to_lowercase();
     state
         .entries_view
         .filter(db, &state.filter)
         .enumerate()
         .filter(|(_, uid)| {
-            let entry = &db.entries[uid];
-            entry
-                .path
-                .file_name()
-                .unwrap()
-                .to_string_lossy()
-                .to_lowercase()
-                .contains(&string)
+            let en = &db.entries[uid];
+            db::spec_satisfied(&state.search_spec, en)
         })
         .map(|(i, _)| i as Uid)
         .nth(nth)
@@ -398,6 +391,7 @@ struct State {
     font: SfBox<Font>,
     search_edit: bool,
     search_string: String,
+    search_spec: FilterSpec,
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
@@ -474,6 +468,7 @@ impl State {
             egui_state: Default::default(),
             entries_view: EntriesView::from_db(db),
             just_closed_window_with_esc: false,
+            search_spec: FilterSpec::default(),
         }
     }
     fn draw_thumbnails(

@@ -61,6 +61,12 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
+                    match FilterSpec::parse_and_resolve(&state.search_string, db) {
+                        Ok(spec) => state.search_spec = spec,
+                        Err(e) => {
+                            ui.label(&format!("Error: {}", e));
+                        }
+                    }
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
                         state.search_edit = false;
                     }

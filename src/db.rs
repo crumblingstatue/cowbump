@@ -138,6 +138,14 @@ impl Db {
 }
 
 pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<Uid> {
+    if spec_satisfied(spec, entry) {
+        Some(uid)
+    } else {
+        None
+    }
+}
+
+pub fn spec_satisfied(spec: &crate::FilterSpec, entry: &Entry) -> bool {
     if !entry
         .path
         .file_name()
@@ -146,16 +154,8 @@ pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Op
         .to_lowercase()
         .contains(&spec.filename_substring)
     {
-        return None;
+        return false;
     }
-    if tags_satisfied(spec, entry) {
-        Some(uid)
-    } else {
-        None
-    }
-}
-
-fn tags_satisfied(spec: &crate::FilterSpec, entry: &Entry) -> bool {
     for required_tag in &spec.has_tags {
         if !entry.tags.contains(required_tag) {
             return false;
