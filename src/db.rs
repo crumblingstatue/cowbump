@@ -158,6 +158,9 @@ pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Op
             return None;
         }
     }
+    if spec.doesnt_have_any_tags && !entry.tags.is_empty() {
+        return None;
+    }
     Some(uid)
 }
 

@@ -28,6 +28,7 @@ pub struct FilterSpec {
     has_tags: Vec<Uid>,
     doesnt_have_tags: Vec<Uid>,
     filename_substring: String,
+    doesnt_have_any_tags: bool,
 }
 
 #[derive(Error, Debug)]
@@ -46,14 +47,19 @@ impl FilterSpec {
         let mut tags = Vec::new();
         let mut neg_tags = Vec::new();
         let mut fstring = String::new();
+        let mut doesnt_have_any_tags = false;
         for word in words {
             let mut is_meta = false;
             if let Some(pos) = word.find(':') {
                 let meta = &word[..pos];
                 let arg = &word[pos + 1..];
-                match meta {
-                    "f" | "fname" => {
+                match (meta, arg) {
+                    ("f" | "fname", _) => {
                         fstring = arg.to_owned();
+                        is_meta = true;
+                    }
+                    ("no-tag", _) | (_, "no-tag") => {
+                        doesnt_have_any_tags = true;
                         is_meta = true;
                     }
                     _ => {}
@@ -84,6 +90,7 @@ impl FilterSpec {
             has_tags: tags,
             filename_substring: fstring,
             doesnt_have_tags: neg_tags,
+            doesnt_have_any_tags,
         })
     }
 }
