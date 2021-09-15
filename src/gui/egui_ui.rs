@@ -145,6 +145,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 }
             });
         if close {
+            state.just_closed_window_with_esc = true;
             state.tag_window = false;
         }
     }
