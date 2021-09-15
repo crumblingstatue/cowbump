@@ -87,12 +87,13 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 let mut err = None;
                 ui.horizontal(|ui| {
                     ui.label("filter");
-                    let no_entries = db.filter(&state.filter).next().is_none();
+                    let count = db.filter(&state.filter).count();
                     let mut te = TextEdit::singleline(&mut state.filter_string);
-                    if no_entries {
+                    if count == 0 {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
+                    ui.label(&format!("{} results", count));
                     state.filter_string.make_ascii_lowercase();
                     match FilterSpec::parse_and_resolve(&state.filter_string, db) {
                         Ok(spec) => state.filter = spec,
