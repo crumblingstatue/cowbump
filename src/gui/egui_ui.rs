@@ -117,6 +117,8 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     if state.tag_window {
         let tags = &mut db.tags;
         let entries = &mut db.entries;
+        let mut close = false;
+        let close_ref = &mut close;
         egui::Window::new("Tag list")
             .scroll(true)
             .open(&mut state.tag_window)
@@ -138,7 +140,13 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                         keep
                     });
                 });
+                if egui_ctx.input().key_pressed(Key::Escape) {
+                    *close_ref = true;
+                }
             });
+        if close {
+            state.tag_window = false;
+        }
     }
     image_windows_ui(state, db, egui_ctx);
     image_rename_windows_ui(state, db, egui_ctx);
