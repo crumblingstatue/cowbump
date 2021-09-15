@@ -129,7 +129,10 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     .spacing((16.0, 8.0))
                     .striped(true)
                     .show(ui, |ui| {
-                        for (tag_uid, tag) in &*tags {
+                        let mut uids: Vec<Uid> = tags.keys().cloned().collect();
+                        uids.sort_by_key(|uid| &tags[uid].names[0]);
+                        for tag_uid in &uids {
+                            let tag = &tags[tag_uid];
                             let name = &tag.names[0];
                             let has_this_tag = filter_spec_ref.has_tags.contains(tag_uid);
                             let doesnt_have_this_tag =
