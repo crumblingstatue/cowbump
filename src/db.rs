@@ -137,7 +137,7 @@ impl Db {
     }
 }
 
-pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<u32> {
+pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<Uid> {
     if !entry
         .path
         .file_name()
