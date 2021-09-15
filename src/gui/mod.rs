@@ -3,7 +3,7 @@ mod egui_ui;
 mod thumbnail_loader;
 
 use crate::{
-    db::{Db, Uid},
+    db::{self, Db, Uid},
     FilterSpec,
 };
 use std::{collections::BTreeMap, error::Error};
@@ -43,10 +43,9 @@ impl EntriesView {
         db: &'a Db,
         spec: &'a crate::FilterSpec,
     ) -> impl Iterator<Item = Uid> + 'a {
-        self.uids.iter().filter_map(move |uid| {
-            let en = &db.entries[uid];
-            crate::db::image_filter_map(*uid, en, spec)
-        })
+        self.uids
+            .iter()
+            .filter_map(|uid| db::image_filter_map(*uid, &db.entries[uid], spec))
     }
     /// Delete `uid` from the list.
     pub fn delete(&mut self, uid: Uid) {
