@@ -6,7 +6,8 @@ mod gui;
 mod tag;
 
 use crate::db::{Db, Uid};
-use std::env;
+use std::{collections::HashMap, env};
+use tag::Tag;
 use thiserror::Error;
 
 fn main() {
@@ -92,5 +93,66 @@ impl FilterSpec {
             doesnt_have_tags: neg_tags,
             doesnt_have_any_tags,
         })
+    }
+    pub fn to_spec_string(&self, tags: &HashMap<Uid, Tag>) -> String {
+        if self.doesnt_have_any_tags {
+            ":notag".into()
+        } else {
+            let mut out = String::new();
+            for tag in &self.has_tags {
+                let name = &tags[tag].names[0];
+                out.push_str(name);
+                out.push(' ');
+            }
+            for tag in &self.doesnt_have_tags {
+                let name = &tags[tag].names[0];
+                out.push('!');
+                out.push_str(name);
+                out.push(' ');
+            }
+            out.push_str(&self.filename_substring);
+            out
+        }
+    }
+    pub fn toggle_has(&mut self, uid: Uid) {
+        toggle_vec_elem(&mut self.has_tags, uid);
+    }
+    pub fn set_has(&mut self, uid: Uid, set: bool) {
+        set_vec_elem(&mut self.has_tags, uid, set);
+    }
+    pub fn toggle_doesnt_have(&mut self, uid: Uid) {
+        toggle_vec_elem(&mut self.doesnt_have_tags, uid);
+    }
+    pub fn set_doesnt_have(&mut self, uid: Uid, set: bool) {
+        set_vec_elem(&mut self.doesnt_have_tags, uid, set);
+    }
+}
+
+fn toggle_vec_elem(vec: &mut Vec<Uid>, uid: Uid) {
+    if !remove_vec_elem(vec, uid) {
+        insert_vec_elem(vec, uid);
+    }
+}
+
+fn set_vec_elem(vec: &mut Vec<Uid>, uid: Uid, set: bool) {
+    if set {
+        insert_vec_elem(vec, uid);
+    } else {
+        remove_vec_elem(vec, uid);
+    }
+}
+
+fn remove_vec_elem(vec: &mut Vec<Uid>, uid: Uid) -> bool {
+    if let Some(pos) = vec.iter().position(|uid2| *uid2 == uid) {
+        vec.remove(pos);
+        true
+    } else {
+        false
+    }
+}
+
+fn insert_vec_elem(vec: &mut Vec<Uid>, uid: Uid) {
+    if !vec.contains(&uid) {
+        vec.push(uid);
     }
 }
