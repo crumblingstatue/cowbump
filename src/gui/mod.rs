@@ -12,6 +12,7 @@ use std::{collections::BTreeMap, error::Error};
 use self::{egui_ui::Action, thumbnail_loader::ThumbnailLoader};
 use arboard::Clipboard;
 use egui::{FontDefinitions, FontFamily, TextStyle};
+use egui_sfml::SfEgui;
 use sfml::{
     graphics::{
         Color, Font, IntRect, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow,
@@ -68,7 +69,8 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: Vec<Uid> = Default::default();
     let mut load_anim_rotation = 0.0;
-    let mut egui_ctx = egui::CtxRef::default();
+    let mut sf_egui = SfEgui::new(&window);
+    let egui_ctx = sf_egui.context();
     let font_defs = FontDefinitions {
         family_and_size: BTreeMap::from([
             (TextStyle::Small, (FontFamily::Proportional, 10.0)),
@@ -80,9 +82,8 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
         ..Default::default()
     };
     egui_ctx.set_fonts(font_defs);
-    egui_sfml::setup(&mut egui_ctx, &mut window);
     while window.is_open() {
-        let egui_wants_kb = egui_ctx.wants_keyboard_input();
+        let egui_wants_kb = sf_egui.context().wants_keyboard_input();
         if !egui_wants_kb {
             let scroll_speed = 8.0;
             if Key::DOWN.is_pressed() {
@@ -94,11 +95,10 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 }
             }
         }
-        let mut raw_input = egui_sfml::make_raw_input(&window);
         let mut esc_pressed = false;
 
         while let Some(event) = window.poll_event() {
-            egui_sfml::handle_event(&mut raw_input, &event);
+            sf_egui.add_event(&event);
             match event {
                 Event::Closed => window.close(),
                 Event::KeyPressed { code, .. } => {
@@ -135,13 +135,14 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 db,
                 &mut selected_uids,
                 &window,
-                egui_ctx.wants_pointer_input(),
+                sf_egui.context().wants_pointer_input(),
                 egui_wants_kb,
             );
         }
         state.begin_frame();
-        egui_ctx.begin_frame(raw_input);
-        egui_ui::do_ui(&mut state, &egui_ctx, db);
+        sf_egui.do_frame(|ctx| {
+            egui_ui::do_ui(&mut state, ctx, db);
+        });
         if esc_pressed && !egui_wants_kb && !state.just_closed_window_with_esc {
             selected_uids.clear()
         }
@@ -186,13 +187,11 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
             ));
             window.draw(&search_highlight);
         }
-        let (_output, shapes) = egui_ctx.end_frame();
         let mut tex_src = TexSrc {
             state: &mut state,
             db,
         };
-        let tex = egui_sfml::get_new_texture(&egui_ctx);
-        egui_sfml::draw(&mut window, &egui_ctx, &tex, shapes, &mut tex_src);
+        sf_egui.draw(&mut window, Some(&mut tex_src));
         debug::draw(&mut window, &state.font);
         window.display();
         load_anim_rotation += 2.0;
