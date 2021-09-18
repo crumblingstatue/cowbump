@@ -3,7 +3,7 @@ use crate::{
     gui::{common_tags, search_goto_cursor, State},
     FilterSpec,
 };
-use egui::{Align2, Button, Color32, Grid, Key, Label, Rgba, TextEdit, TextureId};
+use egui::{Align2, Button, Color32, Grid, Key, Label, Rgba, ScrollArea, TextEdit, TextureId};
 use retain_mut::RetainMut;
 use std::{mem, path::Path, process::Command};
 
@@ -14,6 +14,7 @@ pub(super) struct EguiState {
     custom_command_windows: Vec<CustomCommandWindow>,
     image_prop_windows: Vec<ImagePropWindow>,
     tag_add_question_windows: Vec<TagAddQuestionWindow>,
+    tag_window_filter_string: String,
 }
 
 struct TagAddQuestionWindow {
@@ -119,55 +120,68 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         let tags = &mut db.tags;
         let mut close = false;
         let close_ref = &mut close;
-        let filter_edit_ref = &mut state.filter_edit;
+        let tag_filter_string_ref = &mut state.egui_state.tag_window_filter_string;
         let filter_string_ref = &mut state.filter_string;
         let filter_spec_ref = &mut state.filter;
         egui::Window::new("Tag list")
-            .scroll(true)
             .open(&mut state.tag_window)
             .show(egui_ctx, move |ui| {
-                Grid::new("tag_window_grid")
-                    .spacing((16.0, 8.0))
-                    .striped(true)
-                    .show(ui, |ui| {
-                        let mut uids: Vec<Uid> = tags.keys().cloned().collect();
-                        uids.sort_by_key(|uid| &tags[uid].names[0]);
-                        for tag_uid in &uids {
-                            let tag = &tags[tag_uid];
-                            let name = &tag.names[0];
-                            let has_this_tag = filter_spec_ref.has_tags.contains(tag_uid);
-                            let doesnt_have_this_tag =
-                                filter_spec_ref.doesnt_have_tags.contains(tag_uid);
-                            let button = Button::new(name).fill(if has_this_tag {
-                                Color32::from_rgb(43, 109, 57)
-                            } else {
-                                Color32::from_rgb(45, 45, 45)
-                            });
-                            let mut clicked_any = false;
-                            if ui.add(button).clicked() {
-                                filter_spec_ref.toggle_has(*tag_uid);
-                                filter_spec_ref.set_doesnt_have(*tag_uid, false);
-                                clicked_any = true;
-                            }
-                            let neg_button = Button::new("!").text_color(Color32::RED).fill(
-                                if doesnt_have_this_tag {
-                                    Color32::from_rgb(109, 47, 43)
+                ui.horizontal(|ui| {
+                    ui.label("filter");
+                    ui.text_edit_singleline(tag_filter_string_ref);
+                    if ui.button("Clear tags").clicked() {
+                        filter_spec_ref.clear();
+                    }
+                });
+                ui.separator();
+                let scroll = ScrollArea::auto_sized();
+                scroll.show(ui, |ui| {
+                    Grid::new("tag_window_grid")
+                        .spacing((16.0, 8.0))
+                        .striped(true)
+                        .show(ui, |ui| {
+                            let mut uids: Vec<Uid> = tags.keys().cloned().collect();
+                            uids.sort_by_key(|uid| &tags[uid].names[0]);
+                            for tag_uid in &uids {
+                                let tag = &tags[tag_uid];
+                                let name = &tag.names[0];
+                                if !name.contains(&tag_filter_string_ref[..]) {
+                                    continue;
+                                }
+                                let has_this_tag = filter_spec_ref.has_tags.contains(tag_uid);
+                                let doesnt_have_this_tag =
+                                    filter_spec_ref.doesnt_have_tags.contains(tag_uid);
+                                let button = Button::new(name).fill(if has_this_tag {
+                                    Color32::from_rgb(43, 109, 57)
                                 } else {
                                     Color32::from_rgb(45, 45, 45)
-                                },
-                            );
-                            if ui.add(neg_button).clicked() {
-                                filter_spec_ref.toggle_doesnt_have(*tag_uid);
-                                filter_spec_ref.set_has(*tag_uid, false);
-                                clicked_any = true;
+                                });
+                                let mut clicked_any = false;
+                                if ui.add(button).clicked() {
+                                    filter_spec_ref.toggle_has(*tag_uid);
+                                    filter_spec_ref.set_doesnt_have(*tag_uid, false);
+                                    clicked_any = true;
+                                }
+                                let neg_button = Button::new("!").text_color(Color32::RED).fill(
+                                    if doesnt_have_this_tag {
+                                        Color32::from_rgb(109, 47, 43)
+                                    } else {
+                                        Color32::from_rgb(45, 45, 45)
+                                    },
+                                );
+                                if ui.add(neg_button).clicked() {
+                                    filter_spec_ref.toggle_doesnt_have(*tag_uid);
+                                    filter_spec_ref.set_has(*tag_uid, false);
+                                    clicked_any = true;
+                                }
+                                ui.end_row();
+                                if clicked_any {
+                                    *filter_string_ref = filter_spec_ref.to_spec_string(tags);
+                                }
                             }
-                            ui.end_row();
-                            if clicked_any {
-                                *filter_string_ref = filter_spec_ref.to_spec_string(tags);
-                                *filter_edit_ref = true;
-                            }
-                        }
-                    });
+                        });
+                });
+
                 if egui_ctx.input().key_pressed(Key::Escape) {
                     *close_ref = true;
                 }

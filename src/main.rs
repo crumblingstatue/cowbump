@@ -126,6 +126,9 @@ impl FilterSpec {
     pub fn set_doesnt_have(&mut self, uid: Uid, set: bool) {
         set_vec_elem(&mut self.doesnt_have_tags, uid, set);
     }
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
 }
 
 fn toggle_vec_elem(vec: &mut Vec<Uid>, uid: Uid) {
