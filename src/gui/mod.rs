@@ -14,9 +14,10 @@ use arboard::Clipboard;
 use egui::{FontDefinitions, FontFamily, TextStyle};
 use sfml::{
     graphics::{
-        Color, Font, IntRect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
-        Sprite, Text, Texture, Transformable,
+        Color, Font, IntRect, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow,
+        Shape, Sprite, Text, Texture, Transformable,
     },
+    system::Vector2f,
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
@@ -493,6 +494,7 @@ impl State {
         selected_uids: &[Uid],
         load_anim_rotation: f32,
     ) {
+        let mouse_pos = window.mouse_position();
         let thumb_size = self.thumbnail_size;
         self.thumbnail_loader
             .write_to_cache(&mut self.thumbnail_cache);
@@ -502,6 +504,9 @@ impl State {
             let row = (i as u32) / self.thumbnails_per_row;
             let x = (column * thumb_size) as f32;
             let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
+            let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
+            let mouse_over =
+                image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
             if selected_uids.contains(&uid) {
                 sprite.set_color(Color::GREEN);
             } else {
@@ -522,6 +527,13 @@ impl State {
                 &mut self.thumbnail_loader,
                 load_anim_rotation,
             );
+            if mouse_over {
+                let mut rs = RectangleShape::from_rect(image_rect);
+                rs.set_fill_color(Color::rgba(225, 225, 200, 48));
+                rs.set_outline_color(Color::rgb(200, 200, 0));
+                rs.set_outline_thickness(-2.0);
+                window.draw(&rs);
+            }
         }
     }
     fn wipe_search(&mut self) {
