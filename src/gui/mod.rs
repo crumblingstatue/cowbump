@@ -61,6 +61,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
         &Default::default(),
     );
     window.set_vertical_sync_enabled(true);
+    window.set_position((0, 0).into());
     let mut state = State::new(window.size().x, db);
     let mut on_screen_uids: Vec<Uid> = Vec::new();
     let mut selected_uids: Vec<Uid> = Default::default();
