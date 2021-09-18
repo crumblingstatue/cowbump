@@ -276,10 +276,7 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
         let n_images = propwin.image_uids.len();
         let title = {
             if propwin.image_uids.len() == 1 {
-                db.entries[&propwin.image_uids[0]]
-                    .path
-                    .display()
-                    .to_string()
+                get_filename_from_path(&db.entries[&propwin.image_uids[0]].path)
             } else {
                 format!("{} images", n_images)
             }
