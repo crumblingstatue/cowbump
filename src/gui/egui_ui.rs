@@ -177,8 +177,11 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             .open(&mut state.tag_window)
             .show(egui_ctx, move |ui| {
                 ui.horizontal(|ui| {
-                    ui.label("filter");
-                    ui.text_edit_singleline(tag_filter_string_ref);
+                    let te = TextEdit::singleline(tag_filter_string_ref).hint_text("Filter");
+                    ui.add(te);
+                    if ui.button("Clear filter").clicked() {
+                        tag_filter_string_ref.clear();
+                    }
                     if ui.button("Clear tags").clicked() {
                         filter_spec_ref.clear();
                     }
