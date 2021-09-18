@@ -67,15 +67,13 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     let mut load_anim_rotation = 0.0;
     let mut egui_ctx = egui::CtxRef::default();
     let font_defs = FontDefinitions {
-        family_and_size: {
-            let mut fam_size = BTreeMap::new();
-            fam_size.insert(TextStyle::Small, (FontFamily::Proportional, 10.0));
-            fam_size.insert(TextStyle::Body, (FontFamily::Proportional, 20.0));
-            fam_size.insert(TextStyle::Button, (FontFamily::Proportional, 20.0));
-            fam_size.insert(TextStyle::Heading, (FontFamily::Proportional, 20.0));
-            fam_size.insert(TextStyle::Monospace, (FontFamily::Monospace, 13.0));
-            fam_size
-        },
+        family_and_size: BTreeMap::from([
+            (TextStyle::Small, (FontFamily::Proportional, 10.0)),
+            (TextStyle::Body, (FontFamily::Proportional, 16.0)),
+            (TextStyle::Button, (FontFamily::Proportional, 16.0)),
+            (TextStyle::Heading, (FontFamily::Proportional, 20.0)),
+            (TextStyle::Monospace, (FontFamily::Monospace, 13.0)),
+        ]),
         ..Default::default()
     };
     egui_ctx.set_fonts(font_defs);
