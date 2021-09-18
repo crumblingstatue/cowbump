@@ -79,7 +79,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
         ..Default::default()
     };
     egui_ctx.set_fonts(font_defs);
-    let mut tex = egui_sfml::get_first_texture(&mut egui_ctx, &window);
+    egui_sfml::setup(&mut egui_ctx, &mut window);
     while window.is_open() {
         let egui_wants_kb = egui_ctx.wants_keyboard_input();
         if !egui_wants_kb {
@@ -180,9 +180,9 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
             state: &mut state,
             db,
         };
+        let tex = egui_sfml::get_new_texture(&egui_ctx);
         egui_sfml::draw(&mut window, &egui_ctx, &tex, shapes, &mut tex_src);
         debug::draw(&mut window, &state.font);
-        tex = egui_sfml::get_new_texture(&egui_ctx);
         window.display();
         load_anim_rotation += 2.0;
     }
