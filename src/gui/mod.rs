@@ -4,6 +4,7 @@ mod thumbnail_loader;
 
 use crate::{
     db::{self, Db, Uid},
+    gui::egui_ui::EguiState,
     FilterSpec,
 };
 use std::{collections::BTreeMap, error::Error};
@@ -119,6 +120,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                                 state.y_offset = bottom_align(bottom as f32);
                             }
                         }
+                        Key::F1 => state.egui_state.top_bar ^= true,
                         Key::F12 => debug::toggle(),
                         _ => {}
                     }
@@ -136,11 +138,20 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 egui_wants_kb,
             );
         }
+        state.begin_frame();
         egui_ctx.begin_frame(raw_input);
-        state.just_closed_window_with_esc = false;
         egui_ui::do_ui(&mut state, &egui_ctx, db);
         if esc_pressed && !egui_wants_kb && !state.just_closed_window_with_esc {
             selected_uids.clear()
+        }
+        if state.egui_state.quit {
+            window.close();
+        }
+        if state.egui_state.next_wanted {
+            search_next(&mut state, db);
+        }
+        if state.egui_state.prev_wanted {
+            search_prev(&mut state, db);
         }
         recalc_on_screen_items(
             &mut on_screen_uids,
@@ -276,17 +287,9 @@ fn handle_event_viewer(
             } else if code == Key::SLASH {
                 state.search_edit = true;
             } else if code == Key::N {
-                state.search_cursor += 1;
-                search_goto_cursor(state, db);
-                // Keep the last entry highlighted even if search fails
-                if !state.search_success {
-                    state.search_cursor -= 1;
-                }
+                search_next(state, db);
             } else if code == Key::P {
-                if state.search_cursor > 0 {
-                    state.search_cursor -= 1;
-                }
-                search_goto_cursor(state, db);
+                search_prev(state, db);
             } else if code == Key::F {
                 state.filter_edit = true;
             } else if code == Key::C {
@@ -321,6 +324,21 @@ fn handle_event_viewer(
             }
         }
         _ => {}
+    }
+}
+
+fn search_prev(state: &mut State, db: &mut Db) {
+    if state.search_cursor > 0 {
+        state.search_cursor -= 1;
+    }
+    search_goto_cursor(state, db);
+}
+
+fn search_next(state: &mut State, db: &mut Db) {
+    state.search_cursor += 1;
+    search_goto_cursor(state, db);
+    if !state.search_success {
+        state.search_cursor -= 1;
     }
 }
 
@@ -437,6 +455,8 @@ impl State {
         error_texture
             .load_from_memory(include_bytes!("../../error.png"), IntRect::default())
             .unwrap();
+        let mut egui_state = EguiState::default();
+        egui_state.top_bar = true;
         Self {
             thumbnails_per_row,
             y_offset: 0.0,
@@ -456,7 +476,7 @@ impl State {
             filter_string: String::new(),
             clipboard_ctx: Clipboard::new().unwrap(),
             tag_window: false,
-            egui_state: Default::default(),
+            egui_state,
             entries_view: EntriesView::from_db(db),
             just_closed_window_with_esc: false,
             search_spec: FilterSpec::default(),
@@ -506,6 +526,10 @@ impl State {
         self.search_edit = false;
         self.search_success = false;
         self.highlight = None;
+    }
+    fn begin_frame(&mut self) {
+        self.just_closed_window_with_esc = false;
+        self.egui_state.begin_frame();
     }
 }
 

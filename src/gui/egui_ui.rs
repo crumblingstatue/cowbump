@@ -3,18 +3,33 @@ use crate::{
     gui::{common_tags, search_goto_cursor, State},
     FilterSpec,
 };
-use egui::{Align2, Button, Color32, Grid, Key, Label, Rgba, ScrollArea, TextEdit, TextureId};
+use egui::{
+    Align2, Button, Color32, Grid, Key, Label, Rgba, ScrollArea, TextEdit, TextureId,
+    TopBottomPanel,
+};
 use retain_mut::RetainMut;
 use std::{mem, path::Path, process::Command};
 
 #[derive(Default)]
-pub(super) struct EguiState {
+pub(crate) struct EguiState {
     image_rename_windows: Vec<ImageRenameWindow>,
     delete_confirm_windows: Vec<DeleteConfirmWindow>,
     custom_command_windows: Vec<CustomCommandWindow>,
     image_prop_windows: Vec<ImagePropWindow>,
     tag_add_question_windows: Vec<TagAddQuestionWindow>,
     tag_window_filter_string: String,
+    pub(crate) quit: bool,
+    pub prev_wanted: bool,
+    pub next_wanted: bool,
+    pub top_bar: bool,
+}
+
+impl EguiState {
+    pub fn begin_frame(&mut self) {
+        self.quit = false;
+        self.prev_wanted = false;
+        self.next_wanted = false;
+    }
 }
 
 struct TagAddQuestionWindow {
@@ -49,6 +64,41 @@ struct DeleteConfirmWindow {
 }
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
+    if state.egui_state.top_bar {
+        TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                egui::menu::menu(ui, "File", |ui| {
+                    ui.separator();
+                    if ui.button("Quit").clicked() {
+                        state.egui_state.quit = true;
+                    }
+                });
+                egui::menu::menu(ui, "Actions", |ui| {
+                    ui.separator();
+                    if ui.button("Filter (F)").clicked() {
+                        state.filter_edit ^= true;
+                    }
+                    if ui.button("Search (/)").clicked() {
+                        state.search_edit ^= true;
+                    }
+                    if ui.button("Next result (N)").clicked() {
+                        state.egui_state.next_wanted = true;
+                    }
+                    if ui.button("Previous result (P)").clicked() {
+                        state.egui_state.prev_wanted = true;
+                    }
+                });
+                egui::menu::menu(ui, "Windows", |ui| {
+                    ui.separator();
+                    if ui.button("Tag list (T)").clicked() {
+                        state.tag_window ^= true;
+                    }
+                });
+                ui.separator();
+                ui.label("(F1 to toggle)");
+            });
+        });
+    }
     if state.search_edit {
         egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
