@@ -9,7 +9,7 @@ use crate::{
 };
 use std::{collections::BTreeMap, error::Error};
 
-use self::thumbnail_loader::ThumbnailLoader;
+use self::{egui_ui::Action, thumbnail_loader::ThumbnailLoader};
 use arboard::Clipboard;
 use egui::{FontDefinitions, FontFamily, TextStyle};
 use sfml::{
@@ -144,14 +144,14 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
         if esc_pressed && !egui_wants_kb && !state.just_closed_window_with_esc {
             selected_uids.clear()
         }
-        if state.egui_state.quit {
-            window.close();
-        }
-        if state.egui_state.next_wanted {
-            search_next(&mut state, db);
-        }
-        if state.egui_state.prev_wanted {
-            search_prev(&mut state, db);
+        if let Some(action) = &state.egui_state.action {
+            match action {
+                Action::Quit => window.close(),
+                Action::SearchNext => search_next(&mut state, db),
+                Action::SearchPrev => search_prev(&mut state, db),
+                Action::SelectAll => select_all(&mut selected_uids, &state, db),
+                Action::SelectNone => selected_uids.clear(),
+            }
         }
         recalc_on_screen_items(
             &mut on_screen_uids,
@@ -279,11 +279,7 @@ fn handle_event_viewer(
                 paths.sort();
                 open_with_external(&paths);
             } else if code == Key::A && ctrl {
-                // Select all (according to filter)
-                selected_uids.clear();
-                for uid in db.filter(&state.filter) {
-                    selected_uids.push(uid);
-                }
+                select_all(selected_uids, state, db);
             } else if code == Key::SLASH {
                 state.search_edit = true;
             } else if code == Key::N {
@@ -324,6 +320,13 @@ fn handle_event_viewer(
             }
         }
         _ => {}
+    }
+}
+
+fn select_all(selected_uids: &mut Vec<Uid>, state: &State, db: &Db) {
+    selected_uids.clear();
+    for uid in db.filter(&state.filter) {
+        selected_uids.push(uid);
     }
 }
 

@@ -18,17 +18,21 @@ pub(crate) struct EguiState {
     image_prop_windows: Vec<ImagePropWindow>,
     tag_add_question_windows: Vec<TagAddQuestionWindow>,
     tag_window_filter_string: String,
-    pub(crate) quit: bool,
-    pub prev_wanted: bool,
-    pub next_wanted: bool,
+    pub(crate) action: Option<Action>,
     pub top_bar: bool,
+}
+
+pub(crate) enum Action {
+    Quit,
+    SearchNext,
+    SearchPrev,
+    SelectAll,
+    SelectNone,
 }
 
 impl EguiState {
     pub fn begin_frame(&mut self) {
-        self.quit = false;
-        self.prev_wanted = false;
-        self.next_wanted = false;
+        self.action = None;
     }
 }
 
@@ -70,7 +74,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 egui::menu::menu(ui, "File", |ui| {
                     ui.separator();
                     if ui.button("Quit").clicked() {
-                        state.egui_state.quit = true;
+                        state.egui_state.action = Some(Action::Quit);
                     }
                 });
                 egui::menu::menu(ui, "Actions", |ui| {
@@ -82,10 +86,16 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                         state.search_edit ^= true;
                     }
                     if ui.button("Next result (N)").clicked() {
-                        state.egui_state.next_wanted = true;
+                        state.egui_state.action = Some(Action::SearchNext);
                     }
                     if ui.button("Previous result (P)").clicked() {
-                        state.egui_state.prev_wanted = true;
+                        state.egui_state.action = Some(Action::SearchPrev);
+                    }
+                    if ui.button("Select All (ctrl+A)").clicked() {
+                        state.egui_state.action = Some(Action::SelectAll);
+                    }
+                    if ui.button("Select None (Esc)").clicked() {
+                        state.egui_state.action = Some(Action::SelectNone);
                     }
                 });
                 egui::menu::menu(ui, "Windows", |ui| {
