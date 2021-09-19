@@ -12,7 +12,6 @@ use std::{mem, path::Path, process::Command};
 
 #[derive(Default)]
 pub(crate) struct EguiState {
-    delete_confirm_windows: Vec<DeleteConfirmWindow>,
     custom_command_windows: Vec<CustomCommandWindow>,
     image_prop_windows: Vec<ImagePropWindow>,
     tag_add_question_windows: Vec<TagAddQuestionWindow>,
@@ -48,6 +47,7 @@ struct ImagePropWindow {
     rename_buffer: String,
     adding_tag: bool,
     renaming: bool,
+    delete_confirm: bool,
 }
 
 impl ImagePropWindow {
@@ -58,12 +58,9 @@ impl ImagePropWindow {
             rename_buffer: String::default(),
             adding_tag: false,
             renaming: false,
+            delete_confirm: false,
         }
     }
-}
-
-struct DeleteConfirmWindow {
-    uids: Vec<Uid>,
 }
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
@@ -257,7 +254,6 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         }
     }
     image_windows_ui(state, db, egui_ctx);
-    delete_confirm_windows_ui(state, db, egui_ctx);
     custom_command_windows_ui(state, db, egui_ctx);
     tag_add_question_windows_ui(state, db, egui_ctx);
 }
@@ -383,16 +379,36 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             }
                             ui.memory().request_focus(re.id);
                         }
-                        if ui
-                            .add(Button::new("Delete from disk").wrap(false))
-                            .clicked()
-                        {
-                            state
-                                .egui_state
-                                .delete_confirm_windows
-                                .push(DeleteConfirmWindow {
-                                    uids: propwin.image_uids.clone(),
-                                });
+                        if !propwin.delete_confirm {
+                            if ui
+                                .add(Button::new("Delete from disk").wrap(false))
+                                .clicked()
+                            {
+                                propwin.delete_confirm ^= true;
+                            }
+                        } else {
+                            let del_uids = &mut propwin.image_uids;
+                            let del_len = del_uids.len();
+                            let label_string = if del_len == 1 {
+                                format!(
+                                    "About to delete {}",
+                                    db.entries[&del_uids[0]].path.display()
+                                )
+                            } else {
+                                format!("About to delete {} images", del_len)
+                            };
+                            ui.label(&label_string);
+                            ui.horizontal(|ui| {
+                                if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
+                                    remove_images(&mut state.entries_view, del_uids, db);
+                                    propwin.delete_confirm = false;
+                                    close = true;
+                                }
+                                if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
+                                    propwin.delete_confirm = false;
+                                    close = false;
+                                }
+                            });
                         }
                         if ui
                             .add(Button::new("Run custom command").wrap(false))
@@ -487,33 +503,8 @@ fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::Ct
     });
 }
 
-fn delete_confirm_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    let mut retain = true;
-    let entries_view = &mut state.entries_view;
-    let egui_state = &mut state.egui_state;
-    let mut i = 0;
-    let mut removes = Vec::new();
-    egui_state.delete_confirm_windows.retain(|win| {
-        egui::Window::new("Delete confirm request").show(egui_ctx, |ui| {
-            if ui.button("Yes").clicked() {
-                remove_images(entries_view, &win.uids, db);
-                removes.push(i);
-                retain = false;
-            }
-            if ui.button("No").clicked() {
-                retain = false;
-            }
-        });
-        i += 1;
-        retain
-    });
-    for i in removes {
-        state.egui_state.image_prop_windows.remove(i);
-    }
-}
-
-fn remove_images(view: &mut super::EntriesView, image_uids: &[Uid], db: &mut Db) {
-    for &uid in image_uids {
+fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &mut Db) {
+    for uid in image_uids.drain(..) {
         let path = &db.entries[&uid].path;
         if let Err(e) = std::fs::remove_file(path) {
             eprintln!("Remove error: {}", e);
