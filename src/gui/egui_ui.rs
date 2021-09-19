@@ -429,6 +429,10 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             propwin.custom_command_prompt ^= true;
                         }
                         if propwin.custom_command_prompt {
+                            if esc_pressed {
+                                propwin.custom_command_prompt = false;
+                                close = false;
+                            }
                             ui.label("Command");
                             let re = ui.text_edit_singleline(&mut propwin.cmd_buffer);
                             ui.label("Args (use {} for image path, or leave empty)");
