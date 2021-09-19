@@ -281,10 +281,8 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                 format!("{} images", n_images)
             }
         };
-        if egui_ctx.input().key_pressed(Key::Escape) {
-            state.just_closed_window_with_esc = true;
-            open = false;
-        }
+        let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
+        let mut close = esc_pressed;
         egui::Window::new(title)
             .open(&mut open)
             .show(egui_ctx, |ui| {
@@ -331,6 +329,11 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         if propwin.add_tag_clicked {
                             let re = ui.text_edit_singleline(&mut propwin.add_tag_buffer);
                             re.request_focus();
+                            if esc_pressed {
+                                propwin.add_tag_clicked = false;
+                                propwin.add_tag_buffer.clear();
+                                close = false;
+                            }
                             if re.ctx.input().key_pressed(Key::Enter) {
                                 let add_tag_buffer: &str = &propwin.add_tag_buffer;
                                 let image_uids: &[Uid] = &propwin.image_uids;
@@ -390,6 +393,10 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                     });
                 });
             });
+        if close {
+            state.just_closed_window_with_esc = true;
+            open = false;
+        }
         open
     });
 }
