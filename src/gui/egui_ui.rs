@@ -8,7 +8,11 @@ use egui::{
     TopBottomPanel,
 };
 use retain_mut::RetainMut;
-use std::{path::Path, process::Command};
+use std::{
+    io::Read,
+    path::Path,
+    process::{Child, Command, ExitStatus, Stdio},
+};
 
 #[derive(Default)]
 pub(crate) struct EguiState {
@@ -47,6 +51,27 @@ struct ImagePropWindow {
     args_buffer: String,
     err_str: String,
     new_tags: Vec<String>,
+    children: Vec<ChildWrapper>,
+}
+
+struct ChildWrapper {
+    child: Child,
+    exit_status: Option<ExitStatus>,
+    stdout: String,
+    stderr: String,
+    name: String,
+}
+
+impl ChildWrapper {
+    fn new(child: Child, name: String) -> Self {
+        Self {
+            child,
+            exit_status: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            name,
+        }
+    }
 }
 
 impl ImagePropWindow {
@@ -439,6 +464,9 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             ui.text_edit_singleline(&mut propwin.args_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
                                 let mut cmd = Command::new(&propwin.cmd_buffer);
+                                cmd.stderr(Stdio::piped());
+                                cmd.stdin(Stdio::piped());
+                                cmd.stdout(Stdio::piped());
                                 for uid in &propwin.image_uids {
                                     let en = &db.entries[uid];
                                     for arg in propwin.args_buffer.split_whitespace() {
@@ -453,9 +481,13 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                     }
                                 }
                                 match cmd.spawn() {
-                                    Ok(_) => {
+                                    Ok(child) => {
                                         propwin.err_str.clear();
                                         propwin.custom_command_prompt = false;
+                                        propwin.children.push(ChildWrapper::new(
+                                            child,
+                                            propwin.cmd_buffer.clone(),
+                                        ));
                                     }
                                     Err(e) => propwin.err_str = e.to_string(),
                                 }
@@ -467,6 +499,61 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                 );
                             }
                         }
+                        propwin.children.retain_mut(|c_wrap| {
+                            ui.separator();
+                            ui.heading(&c_wrap.name);
+                            let mut retain = true;
+                            if let Some(status) = c_wrap.exit_status {
+                                ui.label("stdout:");
+                                ui.code(&c_wrap.stdout);
+                                ui.label("stderr:");
+                                ui.code(&c_wrap.stderr);
+                                let exit_code_msg = match status.code() {
+                                    Some(code) => code.to_string(),
+                                    None => "<terminated>".to_string(),
+                                };
+                                ui.label(&format!(
+                                    "Exit code: {} ({})",
+                                    exit_code_msg,
+                                    status.success()
+                                ));
+                                return !ui.button("x").clicked();
+                            }
+                            let mut clicked = false;
+                            ui.horizontal(|ui| {
+                                clicked = ui.button("x").clicked();
+                                ui.label(&format!("[running] ({})", c_wrap.child.id()));
+                            });
+                            if clicked {
+                                let _ = c_wrap.child.kill();
+                                return false;
+                            }
+                            match c_wrap.child.try_wait() {
+                                Ok(opt_status) => {
+                                    c_wrap.exit_status = opt_status;
+                                    if let Some(status) = opt_status {
+                                        if !status.success() {
+                                            if let Some(stdout) = &mut c_wrap.child.stdout {
+                                                let mut buf = String::new();
+                                                let _ = stdout.read_to_string(&mut buf);
+                                                c_wrap.stdout = buf;
+                                            }
+                                            if let Some(stderr) = &mut c_wrap.child.stderr {
+                                                let mut buf = String::new();
+                                                let _ = stderr.read_to_string(&mut buf);
+                                                c_wrap.stderr = buf;
+                                            }
+                                        } else {
+                                            retain = false;
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    propwin.err_str = e.to_string();
+                                }
+                            }
+                            retain
+                        })
                     });
                 });
             });
