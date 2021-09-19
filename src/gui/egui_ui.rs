@@ -12,7 +12,6 @@ use std::{mem, path::Path, process::Command};
 
 #[derive(Default)]
 pub(crate) struct EguiState {
-    image_rename_windows: Vec<ImageRenameWindow>,
     delete_confirm_windows: Vec<DeleteConfirmWindow>,
     custom_command_windows: Vec<CustomCommandWindow>,
     image_prop_windows: Vec<ImagePropWindow>,
@@ -45,7 +44,9 @@ struct TagAddQuestionWindow {
 struct ImagePropWindow {
     image_uids: Vec<Uid>,
     add_tag_buffer: String,
-    add_tag_clicked: bool,
+    rename_buffer: String,
+    adding_tag: bool,
+    renaming: bool,
 }
 
 impl ImagePropWindow {
@@ -53,14 +54,11 @@ impl ImagePropWindow {
         Self {
             image_uids,
             add_tag_buffer: String::default(),
-            add_tag_clicked: false,
+            rename_buffer: String::default(),
+            adding_tag: false,
+            renaming: false,
         }
     }
-}
-
-struct ImageRenameWindow {
-    uid: Uid,
-    name_buffer: String,
 }
 
 struct DeleteConfirmWindow {
@@ -255,7 +253,6 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         }
     }
     image_windows_ui(state, db, egui_ctx);
-    image_rename_windows_ui(state, db, egui_ctx);
     delete_confirm_windows_ui(state, db, egui_ctx);
     custom_command_windows_ui(state, db, egui_ctx);
     tag_add_question_windows_ui(state, db, egui_ctx);
@@ -324,13 +321,13 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                         });
                         let plus_re = ui.button("Add tags");
                         if plus_re.clicked() {
-                            propwin.add_tag_clicked ^= true;
+                            propwin.adding_tag ^= true;
                         }
-                        if propwin.add_tag_clicked {
+                        if propwin.adding_tag {
                             let re = ui.text_edit_singleline(&mut propwin.add_tag_buffer);
                             re.request_focus();
                             if esc_pressed {
-                                propwin.add_tag_clicked = false;
+                                propwin.adding_tag = false;
                                 propwin.add_tag_buffer.clear();
                                 close = false;
                             }
@@ -352,19 +349,31 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                     }
                                 }
                                 propwin.add_tag_buffer.clear();
-                                propwin.add_tag_clicked = false;
+                                propwin.adding_tag = false;
                             }
                         }
 
-                        if propwin.image_uids.len() == 1
-                            && ui.add(Button::new("Rename").wrap(false)).clicked()
+                        if ui
+                            .add(
+                                Button::new("Rename")
+                                    .wrap(false)
+                                    .enabled(propwin.image_uids.len() == 1),
+                            )
+                            .clicked()
                         {
-                            let uid = propwin.image_uids[0];
-                            let win = ImageRenameWindow {
-                                uid,
-                                name_buffer: get_filename_from_path(&db.entries[&uid].path),
-                            };
-                            state.egui_state.image_rename_windows.push(win);
+                            propwin.renaming ^= true;
+                        }
+                        if propwin.renaming {
+                            let re = ui.text_edit_singleline(&mut propwin.rename_buffer);
+                            if re.ctx.input().key_pressed(egui::Key::Enter) {
+                                db.rename(propwin.image_uids[0], &propwin.rename_buffer);
+                                propwin.renaming = false;
+                            }
+                            if re.lost_focus() {
+                                propwin.renaming = false;
+                                close = false;
+                            }
+                            ui.memory().request_focus(re.id);
                         }
                         if ui
                             .add(Button::new("Delete from disk").wrap(false))
@@ -428,24 +437,6 @@ struct CustomCommandWindow {
     args_buffer: String,
     err_str: String,
     just_opened: bool,
-}
-
-fn image_rename_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    state.egui_state.image_rename_windows.retain_mut(|win| {
-        let mut open = true;
-        egui::Window::new("Rename").show(egui_ctx, |ui| {
-            let re = ui.text_edit_singleline(&mut win.name_buffer);
-            if re.ctx.input().key_pressed(egui::Key::Enter) {
-                db.rename(win.uid, &win.name_buffer);
-                open = false;
-            }
-            if re.lost_focus() {
-                open = false;
-            }
-            ui.memory().request_focus(re.id);
-        });
-        open
-    });
 }
 
 fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
