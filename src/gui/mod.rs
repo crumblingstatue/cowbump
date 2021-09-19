@@ -11,7 +11,7 @@ use std::{collections::BTreeMap, error::Error};
 
 use self::{egui_ui::Action, thumbnail_loader::ThumbnailLoader};
 use arboard::Clipboard;
-use egui::{FontDefinitions, FontFamily, TextStyle};
+use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
 use sfml::{
     graphics::{
@@ -83,8 +83,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
     };
     egui_ctx.set_fonts(font_defs);
     while window.is_open() {
-        let egui_wants_kb = sf_egui.context().wants_keyboard_input();
-        if !egui_wants_kb {
+        if !sf_egui.context().wants_keyboard_input() {
             let scroll_speed = 8.0;
             if Key::DOWN.is_pressed() {
                 state.y_offset += scroll_speed;
@@ -105,12 +104,12 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                     match code {
                         Key::ESCAPE => esc_pressed = true,
                         Key::HOME => {
-                            if !egui_wants_kb {
+                            if !sf_egui.context().wants_keyboard_input() {
                                 state.y_offset = 0.0;
                             }
                         }
                         Key::END => {
-                            if !egui_wants_kb {
+                            if !sf_egui.context().wants_keyboard_input() {
                                 // Align the bottom edge of the view with the bottom edge of the last row.
                                 // To do align the camera with a bottom edge, we need to subtract the screen
                                 // height from it.
@@ -135,15 +134,18 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 db,
                 &mut selected_uids,
                 &window,
-                sf_egui.context().wants_pointer_input(),
-                egui_wants_kb,
+                sf_egui.context(),
             );
         }
         state.begin_frame();
         sf_egui.do_frame(|ctx| {
             egui_ui::do_ui(&mut state, ctx, db);
         });
-        if esc_pressed && !egui_wants_kb && !state.just_closed_window_with_esc {
+        if esc_pressed
+            && !sf_egui.context().wants_keyboard_input()
+            && !sf_egui.context().wants_pointer_input()
+            && !state.just_closed_window_with_esc
+        {
             selected_uids.clear()
         }
         if let Some(action) = &state.egui_state.action {
@@ -226,12 +228,11 @@ fn handle_event_viewer(
     db: &mut Db,
     selected_uids: &mut Vec<Uid>,
     window: &RenderWindow,
-    egui_mouse: bool,
-    egui_kb: bool,
+    ctx: &CtxRef,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
-            if egui_mouse {
+            if ctx.wants_pointer_input() {
                 return;
             }
             let uid = match get_uid_xy(x, y, state, on_screen_uids) {
@@ -258,7 +259,7 @@ fn handle_event_viewer(
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
-            if egui_kb {
+            if ctx.wants_keyboard_input() {
                 return;
             }
             if code == Key::PAGEDOWN {
