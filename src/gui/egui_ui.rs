@@ -8,12 +8,11 @@ use egui::{
     TopBottomPanel,
 };
 use retain_mut::RetainMut;
-use std::{mem, path::Path, process::Command};
+use std::{path::Path, process::Command};
 
 #[derive(Default)]
 pub(crate) struct EguiState {
     image_prop_windows: Vec<ImagePropWindow>,
-    tag_add_question_windows: Vec<TagAddQuestionWindow>,
     tag_window_filter_string: String,
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
@@ -34,11 +33,6 @@ impl EguiState {
     }
 }
 
-struct TagAddQuestionWindow {
-    tag_text: String,
-    image_uids: Vec<u32>,
-}
-
 /// Image properties window
 #[derive(Default)]
 struct ImagePropWindow {
@@ -52,6 +46,7 @@ struct ImagePropWindow {
     cmd_buffer: String,
     args_buffer: String,
     err_str: String,
+    new_tags: Vec<String>,
 }
 
 impl ImagePropWindow {
@@ -254,7 +249,6 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         }
     }
     image_windows_ui(state, db, egui_ctx);
-    tag_add_question_windows_ui(state, db, egui_ctx);
 }
 
 fn get_filename_from_path(path: &Path) -> String {
@@ -343,18 +337,37 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                         Some(tag_uid) => {
                                             db.add_tag_for_multi(image_uids, tag_uid);
                                         }
-                                        None => state.egui_state.tag_add_question_windows.push(
-                                            TagAddQuestionWindow {
-                                                tag_text: tag.to_owned(),
-                                                image_uids: image_uids.to_owned(),
-                                            },
-                                        ),
+                                        None => {
+                                            propwin.new_tags.push(tag.to_owned());
+                                        }
                                     }
                                 }
                                 propwin.add_tag_buffer.clear();
                                 propwin.adding_tag = false;
                             }
                         }
+
+                        if !propwin.new_tags.is_empty() {
+                            ui.label(
+                                "You added the following tags to the image,\
+                                 but they aren't present in the database: ",
+                            );
+                        }
+                        propwin.new_tags.retain_mut(|tag| {
+                            let mut retain = true;
+                            ui.horizontal(|ui| {
+                                ui.label(&tag[..]);
+                                if ui.button("Add").clicked() {
+                                    let tag_uid = db.add_new_tag_from_text(tag.to_owned());
+                                    db.add_tag_for_multi(&propwin.image_uids, tag_uid);
+                                    retain = false;
+                                }
+                                if ui.button("Cancel").clicked() {
+                                    retain = false;
+                                }
+                            });
+                            retain
+                        });
 
                         if ui
                             .add(
@@ -456,27 +469,6 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
         }
         open
     });
-}
-
-fn tag_add_question_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    state.egui_state.tag_add_question_windows.retain_mut(|win| {
-        let mut open = true;
-        egui::Window::new("Tag add").show(egui_ctx, |ui| {
-            ui.label(&format!(
-                "The tag '{}' doesn't exist. Create it?",
-                win.tag_text
-            ));
-            if ui.button("Yes").clicked() {
-                let tag_uid = db.add_new_tag_from_text(mem::take(&mut win.tag_text));
-                db.add_tag_for_multi(&win.image_uids, tag_uid);
-                open = false;
-            }
-            if ui.button("No").clicked() {
-                open = false;
-            }
-        });
-        open
-    })
 }
 
 fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &mut Db) {
