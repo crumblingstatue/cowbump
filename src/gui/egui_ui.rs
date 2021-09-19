@@ -453,7 +453,10 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                     }
                                 }
                                 match cmd.spawn() {
-                                    Ok(_) => propwin.custom_command_prompt = false,
+                                    Ok(_) => {
+                                        propwin.err_str.clear();
+                                        propwin.custom_command_prompt = false;
+                                    }
                                     Err(e) => propwin.err_str = e.to_string(),
                                 }
                             }
