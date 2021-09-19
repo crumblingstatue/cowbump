@@ -169,6 +169,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
             &on_screen_uids,
             &selected_uids,
             load_anim_rotation,
+            !sf_egui.context().wants_pointer_input(),
         );
         if let Some(id) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
@@ -492,6 +493,7 @@ impl State {
         uids: &[Uid],
         selected_uids: &[Uid],
         load_anim_rotation: f32,
+        pointer_active: bool,
     ) {
         let mouse_pos = window.mouse_position();
         let thumb_size = self.thumbnail_size;
@@ -526,7 +528,7 @@ impl State {
                 &mut self.thumbnail_loader,
                 load_anim_rotation,
             );
-            if mouse_over {
+            if mouse_over && pointer_active {
                 let mut rs = RectangleShape::from_rect(image_rect);
                 rs.set_fill_color(Color::rgba(225, 225, 200, 48));
                 rs.set_outline_color(Color::rgb(200, 200, 0));
