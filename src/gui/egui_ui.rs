@@ -27,6 +27,7 @@ pub(crate) enum Action {
     SearchPrev,
     SelectAll,
     SelectNone,
+    SortImages,
 }
 
 impl EguiState {
@@ -94,6 +95,9 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     }
                     if ui.button("Select None (Esc)").clicked() {
                         state.egui_state.action = Some(Action::SelectNone);
+                    }
+                    if ui.button("Sort images by filename (S)").clicked() {
+                        state.egui_state.action = Some(Action::SortImages);
                     }
                 });
                 egui::menu::menu(ui, "Windows", |ui| {

@@ -153,6 +153,7 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
                 Action::SearchPrev => search_prev(&mut state, db),
                 Action::SelectAll => select_all(&mut selected_uids, &state, db),
                 Action::SelectNone => selected_uids.clear(),
+                Action::SortImages => state.entries_view.sort(db),
             }
         }
         recalc_on_screen_items(
