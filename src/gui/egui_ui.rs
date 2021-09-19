@@ -290,10 +290,14 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                 ui.horizontal(|ui| {
                     ui.horizontal_wrapped(|ui| {
                         ui.set_max_width(512.0);
-                        for &id in &propwin.image_uids {
+                        let n_visible_images = n_images.min(64);
+                        for &id in propwin.image_uids.iter().take(n_visible_images) {
                             ui.image(
                                 TextureId::User(id as u64),
-                                (512.0 / n_images as f32, 512.0 / n_images as f32),
+                                (
+                                    512.0 / n_visible_images as f32,
+                                    512.0 / n_visible_images as f32,
+                                ),
                             );
                         }
                     });
