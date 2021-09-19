@@ -12,7 +12,6 @@ use std::{mem, path::Path, process::Command};
 
 #[derive(Default)]
 pub(crate) struct EguiState {
-    custom_command_windows: Vec<CustomCommandWindow>,
     image_prop_windows: Vec<ImagePropWindow>,
     tag_add_question_windows: Vec<TagAddQuestionWindow>,
     tag_window_filter_string: String,
@@ -41,6 +40,7 @@ struct TagAddQuestionWindow {
 }
 
 /// Image properties window
+#[derive(Default)]
 struct ImagePropWindow {
     image_uids: Vec<Uid>,
     add_tag_buffer: String,
@@ -48,17 +48,17 @@ struct ImagePropWindow {
     adding_tag: bool,
     renaming: bool,
     delete_confirm: bool,
+    custom_command_prompt: bool,
+    cmd_buffer: String,
+    args_buffer: String,
+    err_str: String,
 }
 
 impl ImagePropWindow {
     fn new(image_uids: Vec<Uid>) -> Self {
         Self {
             image_uids,
-            add_tag_buffer: String::default(),
-            rename_buffer: String::default(),
-            adding_tag: false,
-            renaming: false,
-            delete_confirm: false,
+            ..Default::default()
         }
     }
 }
@@ -254,7 +254,6 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         }
     }
     image_windows_ui(state, db, egui_ctx);
-    custom_command_windows_ui(state, db, egui_ctx);
     tag_add_question_windows_ui(state, db, egui_ctx);
 }
 
@@ -414,14 +413,39 @@ fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                             .add(Button::new("Run custom command").wrap(false))
                             .clicked()
                         {
-                            let win = CustomCommandWindow {
-                                uids: propwin.image_uids.clone(),
-                                cmd_buffer: String::new(),
-                                args_buffer: String::new(),
-                                err_str: String::new(),
-                                just_opened: true,
-                            };
-                            state.egui_state.custom_command_windows.push(win);
+                            propwin.custom_command_prompt ^= true;
+                        }
+                        if propwin.custom_command_prompt {
+                            ui.label("Command");
+                            let re = ui.text_edit_singleline(&mut propwin.cmd_buffer);
+                            ui.label("Args (use {} for image path, or leave empty)");
+                            ui.text_edit_singleline(&mut propwin.args_buffer);
+                            if re.ctx.input().key_pressed(egui::Key::Enter) {
+                                let mut cmd = Command::new(&propwin.cmd_buffer);
+                                for uid in &propwin.image_uids {
+                                    let en = &db.entries[uid];
+                                    for arg in propwin.args_buffer.split_whitespace() {
+                                        if arg == "{}" {
+                                            cmd.arg(&en.path);
+                                        } else {
+                                            cmd.arg(arg);
+                                        }
+                                    }
+                                    if propwin.args_buffer.is_empty() {
+                                        cmd.arg(&en.path);
+                                    }
+                                }
+                                match cmd.spawn() {
+                                    Ok(_) => propwin.custom_command_prompt = false,
+                                    Err(e) => propwin.err_str = e.to_string(),
+                                }
+                            }
+                            if !propwin.err_str.is_empty() {
+                                ui.add(
+                                    Label::new(format!("Error: {}", propwin.err_str))
+                                        .text_color(Rgba::RED),
+                                );
+                            }
                         }
                     });
                 });
@@ -453,54 +477,6 @@ fn tag_add_question_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::
         });
         open
     })
-}
-
-struct CustomCommandWindow {
-    uids: Vec<u32>,
-    cmd_buffer: String,
-    args_buffer: String,
-    err_str: String,
-    just_opened: bool,
-}
-
-fn custom_command_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
-    state.egui_state.custom_command_windows.retain_mut(|win| {
-        let mut open = true;
-        egui::Window::new("Custom Command").show(egui_ctx, |ui| {
-            ui.label("Command");
-            let re = ui.text_edit_singleline(&mut win.cmd_buffer);
-            if win.just_opened {
-                re.request_focus();
-            }
-            ui.label("Args (use {} for image path, or leave empty)");
-            ui.text_edit_singleline(&mut win.args_buffer);
-            if re.ctx.input().key_pressed(egui::Key::Enter) {
-                let mut cmd = Command::new(&win.cmd_buffer);
-                for uid in &win.uids {
-                    let en = &db.entries[uid];
-                    for arg in win.args_buffer.split_whitespace() {
-                        if arg == "{}" {
-                            cmd.arg(&en.path);
-                        } else {
-                            cmd.arg(arg);
-                        }
-                    }
-                    if win.args_buffer.is_empty() {
-                        cmd.arg(&en.path);
-                    }
-                }
-                match cmd.spawn() {
-                    Ok(_) => open = false,
-                    Err(e) => win.err_str = e.to_string(),
-                }
-            }
-            if !win.err_str.is_empty() {
-                ui.add(Label::new(format!("Error: {}", win.err_str)).text_color(Rgba::RED));
-            }
-        });
-        win.just_opened = false;
-        open
-    });
 }
 
 fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &mut Db) {
