@@ -56,7 +56,7 @@ impl EntriesView {
     }
 }
 
-pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
+pub fn run(db: &mut Db, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     let mut window = RenderWindow::new(
         VideoMode::desktop_mode(),
         "Cowbump",
@@ -151,6 +151,10 @@ pub fn run(db: &mut Db) -> Result<(), Box<dyn Error>> {
         if let Some(action) = &state.egui_state.action {
             match action {
                 Action::Quit => window.close(),
+                Action::QuitNoSave => {
+                    *no_save = true;
+                    window.close();
+                }
                 Action::SearchNext => search_next(&mut state, db),
                 Action::SearchPrev => search_prev(&mut state, db),
                 Action::SelectAll => select_all(&mut selected_uids, &state, db),

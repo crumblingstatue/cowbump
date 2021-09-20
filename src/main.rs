@@ -20,8 +20,11 @@ fn main() {
         Db::default()
     });
     db.update_from_folder(&dir).unwrap();
-    gui::run(&mut db).unwrap();
-    db.save_to_fs().unwrap();
+    let mut no_save = false;
+    gui::run(&mut db, &mut no_save).unwrap();
+    if !no_save {
+        db.save_to_fs().unwrap();
+    }
 }
 
 #[derive(Default)]

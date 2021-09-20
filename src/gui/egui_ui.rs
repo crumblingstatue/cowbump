@@ -32,6 +32,7 @@ struct Prompt {
 
 enum PromptAction {
     RestoreBackup,
+    QuitNoSave,
 }
 
 fn ok_prompt(ctx: &CtxRef, title: &str, msg: &str) -> bool {
@@ -78,6 +79,7 @@ fn ok_cancel_prompt(ctx: &CtxRef, title: &str, msg: &str) -> Option<OkCancel> {
 
 pub(crate) enum Action {
     Quit,
+    QuitNoSave,
     SearchNext,
     SearchPrev,
     SelectAll,
@@ -188,6 +190,15 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                             "Restore Backup",
                             "Warning: This will overwrite the current contents of the database.",
                             PromptAction::RestoreBackup,
+                        )
+                    }
+                    ui.separator();
+                    if ui.button("Quit without saving").clicked() {
+                        prompt(
+                            &mut state.egui_state.prompts,
+                            "Quit without saving",
+                            "Warning: All changes made this session will be lost.",
+                            PromptAction::QuitNoSave,
                         )
                     }
                     ui.separator();
@@ -401,6 +412,10 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                             );
                         }
                     }
+                    false
+                }
+                PromptAction::QuitNoSave => {
+                    state.egui_state.action = Some(Action::QuitNoSave);
                     false
                 }
             },
