@@ -200,6 +200,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     if ui.button("Filter (F)").clicked() {
                         state.filter_edit ^= true;
                     }
+                    ui.separator();
                     if ui.button("Search (/)").clicked() {
                         state.search_edit ^= true;
                     }
@@ -209,12 +210,14 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                     if ui.button("Previous result (P)").clicked() {
                         state.egui_state.action = Some(Action::SearchPrev);
                     }
+                    ui.separator();
                     if ui.button("Select All (ctrl+A)").clicked() {
                         state.egui_state.action = Some(Action::SelectAll);
                     }
                     if ui.button("Select None (Esc)").clicked() {
                         state.egui_state.action = Some(Action::SelectNone);
                     }
+                    ui.separator();
                     if ui.button("Sort images by filename (S)").clicked() {
                         state.egui_state.action = Some(Action::SortImages);
                     }
