@@ -146,6 +146,23 @@ impl Db {
         }
         None
     }
+
+    pub fn remove_tags(&mut self, tags_to_del: &[Uid]) {
+        self.tags.retain(|uid, _| {
+            if tags_to_del.contains(uid) {
+                cleanse_tag_from_images(&mut self.entries, *uid);
+                false
+            } else {
+                true
+            }
+        });
+    }
+}
+
+fn cleanse_tag_from_images(entries: &mut HashMap<Uid, Entry>, tag_to_cleanse: Uid) {
+    for en in entries.values_mut() {
+        en.tags.retain(|&tag| tag != tag_to_cleanse)
+    }
 }
 
 pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<Uid> {
