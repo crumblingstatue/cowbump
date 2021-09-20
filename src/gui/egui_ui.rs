@@ -4,10 +4,11 @@ use crate::{
     FilterSpec,
 };
 use egui::{
-    Align2, Button, Color32, Grid, Key, Label, Rgba, ScrollArea, TextEdit, TextureId,
-    TopBottomPanel,
+    Align2, Button, Color32, CtxRef, Grid, Key, Label, Rgba, ScrollArea, TextEdit, TextureId,
+    TopBottomPanel, Window,
 };
 use retain_mut::RetainMut;
+
 use std::{
     io::Read,
     path::Path,
@@ -20,6 +21,59 @@ pub(crate) struct EguiState {
     tag_window_filter_string: String,
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
+    info_messages: Vec<InfoMessage>,
+    prompts: Vec<Prompt>,
+}
+
+struct Prompt {
+    msg: InfoMessage,
+    action: PromptAction,
+}
+
+enum PromptAction {
+    RestoreBackup,
+}
+
+fn ok_prompt(ctx: &CtxRef, title: &str, msg: &str) -> bool {
+    let mut clicked = false;
+    Window::new(title)
+        .collapsible(false)
+        .resizable(false)
+        .show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(msg);
+                if ui.button("Ok").clicked() {
+                    clicked = true;
+                }
+            })
+        });
+    clicked
+}
+
+enum OkCancel {
+    Ok,
+    Cancel,
+}
+
+fn ok_cancel_prompt(ctx: &CtxRef, title: &str, msg: &str) -> Option<OkCancel> {
+    let mut clicked = None;
+    Window::new(title)
+        .collapsible(false)
+        .resizable(false)
+        .show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(msg);
+                ui.horizontal(|ui| {
+                    if ui.button("Ok").clicked() {
+                        clicked = Some(OkCancel::Ok);
+                    }
+                    if ui.button("Cancel").clicked() {
+                        clicked = Some(OkCancel::Cancel);
+                    }
+                })
+            })
+        });
+    clicked
 }
 
 pub(crate) enum Action {
@@ -35,6 +89,27 @@ impl EguiState {
     pub fn begin_frame(&mut self) {
         self.action = None;
     }
+
+    fn do_info_messages(&mut self, ctx: &CtxRef) {
+        self.info_messages
+            .retain_mut(|msg| !ok_prompt(ctx, &msg.title, &msg.message));
+    }
+}
+
+fn info_message(
+    info_messages: &mut Vec<InfoMessage>,
+    title: impl Into<String>,
+    message: impl Into<String>,
+) {
+    info_messages.push(InfoMessage {
+        title: title.into(),
+        message: message.into(),
+    })
+}
+
+struct InfoMessage {
+    title: String,
+    message: String,
 }
 
 /// Image properties window
@@ -88,6 +163,33 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::menu::menu(ui, "File", |ui| {
+                    ui.separator();
+                    if ui.button("Create database backup").clicked() {
+                        match db.save_backup() {
+                            Ok(_) => {
+                                info_message(
+                                    &mut state.egui_state.info_messages,
+                                    "Success",
+                                    "Backup successfully created.",
+                                );
+                            }
+                            Err(e) => {
+                                info_message(
+                                    &mut state.egui_state.info_messages,
+                                    "Error",
+                                    &e.to_string(),
+                                );
+                            }
+                        }
+                    }
+                    if ui.button("Restore database backup").clicked() {
+                        prompt(
+                            &mut state.egui_state.prompts,
+                            "Restore Backup",
+                            "Warning: This will overwrite the current contents of the database.",
+                            PromptAction::RestoreBackup,
+                        )
+                    }
                     ui.separator();
                     if ui.button("Quit").clicked() {
                         state.egui_state.action = Some(Action::Quit);
@@ -274,6 +376,50 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         }
     }
     image_windows_ui(state, db, egui_ctx);
+    state.egui_state.do_info_messages(egui_ctx);
+    // Do prompts
+    state.egui_state.prompts.retain(|prompt| {
+        match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
+            Some(OkCancel::Ok) => match prompt.action {
+                PromptAction::RestoreBackup => {
+                    match db.load_backup() {
+                        Ok(_) => {
+                            info_message(
+                                &mut state.egui_state.info_messages,
+                                "Success",
+                                "Successfully restored backup.",
+                            );
+                        }
+                        Err(e) => {
+                            info_message(
+                                &mut state.egui_state.info_messages,
+                                "Error",
+                                &e.to_string(),
+                            );
+                        }
+                    }
+                    false
+                }
+            },
+            Some(OkCancel::Cancel) => false,
+            None => true,
+        }
+    });
+}
+
+fn prompt(
+    prompts: &mut Vec<Prompt>,
+    title: impl Into<String>,
+    message: impl Into<String>,
+    action: PromptAction,
+) {
+    prompts.push(Prompt {
+        msg: InfoMessage {
+            message: message.into(),
+            title: title.into(),
+        },
+        action,
+    })
 }
 
 fn get_filename_from_path(path: &Path) -> String {

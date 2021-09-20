@@ -113,9 +113,20 @@ impl Db {
         bincode::serialize_into(&mut f, self)?;
         Ok(())
     }
+    pub fn save_backup(&self) -> Result<(), Box<dyn Error>> {
+        let mut f = File::create(DB_BACKUP_FILENAME)?;
+        bincode::serialize_into(&mut f, self)?;
+        Ok(())
+    }
     pub fn load_from_fs() -> Result<Self, Box<dyn Error>> {
         let mut f = File::open(DB_FILENAME)?;
         Ok(bincode::deserialize_from(&mut f)?)
+    }
+    pub fn load_backup(&mut self) -> Result<(), Box<dyn Error>> {
+        let mut f = File::open(DB_BACKUP_FILENAME)?;
+        let new = bincode::deserialize_from(&mut f)?;
+        *self = new;
+        Ok(())
     }
     pub fn new_uid(&mut self) -> Uid {
         let uid = self.uid_counter;
@@ -184,3 +195,4 @@ fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) {
 }
 
 const DB_FILENAME: &str = "cowbump.db";
+const DB_BACKUP_FILENAME: &str = "cowbump.db.bak";
