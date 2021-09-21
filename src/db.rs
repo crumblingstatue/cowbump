@@ -26,9 +26,8 @@ pub struct Db {
 
 /// Unique identifier for entries/tags.
 ///
-/// 32-bit is chosen because it is more compact than 64 bits,
-/// but still large enough that we will not run out of new ids in practice.
-pub type Uid = u32;
+/// Use 64 bit so we can just keep indefinitely assigning new Uids without worry of running out.
+pub type Uid = u64;
 
 impl Db {
     pub fn update_from_folder(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
@@ -93,7 +92,7 @@ impl Db {
         self.entries[&entry].tags.contains(&tag)
     }
     pub fn add_new_tag(&mut self, tag: Tag) -> Uid {
-        let uid = self.tags.len() as Uid;
+        let uid = self.new_uid();
         self.tags.insert(uid, tag);
         uid
     }

@@ -796,7 +796,7 @@ fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &
     }
 }
 impl EguiState {
-    pub(crate) fn add_image_prop_window(&mut self, vec: Vec<u32>) {
+    pub(crate) fn add_image_prop_window(&mut self, vec: Vec<Uid>) {
         self.image_prop_windows.push(ImagePropWindow::new(vec));
     }
 }

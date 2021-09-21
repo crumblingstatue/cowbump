@@ -115,7 +115,7 @@ pub fn run(db: &mut Db, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
                                 // height from it.
                                 let bottom_align = |y: f32| y - window.size().y as f32;
                                 let n_pics = state.entries_view.filter(db, &state.filter).count();
-                                let rows = n_pics as u32 / state.thumbnails_per_row;
+                                let rows = n_pics as u32 / state.thumbnails_per_row as u32;
                                 let bottom = (rows + 1) * state.thumbnail_size;
                                 state.y_offset = bottom_align(bottom as f32);
                             }
@@ -185,10 +185,10 @@ pub fn run(db: &mut Db, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
             search_highlight.set_fill_color(Color::TRANSPARENT);
             search_highlight.set_outline_color(Color::RED);
             search_highlight.set_outline_thickness(-2.0);
-            let y_of_item = id as u32 / state.thumbnails_per_row;
+            let y_of_item = id as f32 / state.thumbnails_per_row as f32;
             let pixel_y = y_of_item as f32 * state.thumbnail_size as f32;
             let highlight_offset = pixel_y - state.y_offset;
-            let x_of_item = id as u32 % state.thumbnails_per_row;
+            let x_of_item = id as f32 % state.thumbnails_per_row as f32;
             search_highlight.set_position((
                 x_of_item as f32 * state.thumbnail_size as f32,
                 highlight_offset,
@@ -207,7 +207,7 @@ pub fn run(db: &mut Db, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn common_tags(ids: &[u32], db: &Db) -> BTreeSet<Uid> {
+fn common_tags(ids: &[Uid], db: &Db) -> BTreeSet<Uid> {
     let mut set = BTreeSet::new();
     for &id in ids {
         for &tagid in &db.entries[&id].tags {
@@ -221,7 +221,7 @@ fn get_uid_xy(x: i32, y: i32, state: &State, on_screen_uids: &[Uid]) -> Option<U
     let thumb_x = x as u32 / state.thumbnail_size;
     let rel_offset = state.y_offset as u32 % state.thumbnail_size;
     let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
-    let thumb_index = thumb_y * state.thumbnails_per_row + thumb_x;
+    let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
     on_screen_uids.get(thumb_index as usize).copied()
 }
 
@@ -369,8 +369,8 @@ fn search_goto_cursor(state: &mut State, db: &Db) {
     if let Some(uid) = find_nth(state, db, state.search_cursor) {
         state.highlight = Some(uid);
         state.search_success = true;
-        let y_of_item = uid / state.thumbnails_per_row;
-        let y: f32 = (y_of_item * state.thumbnail_size) as f32;
+        let y_of_item = uid as f32 / state.thumbnails_per_row as f32;
+        let y: f32 = (y_of_item * state.thumbnail_size as f32) as f32;
         state.y_offset = y;
     } else {
         state.search_success = false;
@@ -386,7 +386,7 @@ fn recalc_on_screen_items(
 ) {
     uids.clear();
     let thumb_size = state.thumbnail_size;
-    let mut thumbnails_per_column = window_height / thumb_size;
+    let mut thumbnails_per_column = (window_height / thumb_size) as u8;
     // Compensate for truncating division
     if window_height % thumb_size != 0 {
         thumbnails_per_column += 1;
@@ -395,7 +395,7 @@ fn recalc_on_screen_items(
     thumbnails_per_column += 1;
     let thumbnails_per_screen = (state.thumbnails_per_row * thumbnails_per_column) as usize;
     let row_offset = state.y_offset as u32 / thumb_size;
-    let skip = row_offset * state.thumbnails_per_row;
+    let skip = row_offset * state.thumbnails_per_row as u32;
     uids.extend(
         entries_view
             .filter(db, &state.filter)
@@ -407,7 +407,7 @@ fn recalc_on_screen_items(
 type ThumbnailCache = HashMap<Uid, Option<SfBox<Texture>>>;
 
 struct State {
-    thumbnails_per_row: u32,
+    thumbnails_per_row: u8,
     y_offset: f32,
     thumbnail_size: u32,
     filter: FilterSpec,
@@ -442,7 +442,7 @@ impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
     fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
         let (_has, tex) = get_tex_for_uid(
             &self.state.thumbnail_cache,
-            id as u32,
+            id as Uid,
             &self.state.error_texture,
             self.db,
             &mut self.state.thumbnail_loader,
@@ -456,7 +456,7 @@ impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
 impl State {
     fn new(window_width: u32, db: &Db) -> Self {
         let thumbnails_per_row = 5;
-        let thumbnail_size = window_width / thumbnails_per_row;
+        let thumbnail_size = window_width / thumbnails_per_row as u32;
         let mut loading_texture = Texture::new().unwrap();
         let mut error_texture = Texture::new().unwrap();
         loading_texture
@@ -507,8 +507,8 @@ impl State {
             .write_to_cache(&mut self.thumbnail_cache);
         let mut sprite = Sprite::new();
         for (i, &uid) in uids.iter().enumerate() {
-            let column = (i as u32) % self.thumbnails_per_row;
-            let row = (i as u32) / self.thumbnails_per_row;
+            let column = (i as u32) % self.thumbnails_per_row as u32;
+            let row = (i as u32) / self.thumbnails_per_row as u32;
             let x = (column * thumb_size) as f32;
             let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
             let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
@@ -611,8 +611,8 @@ fn draw_thumbnail<'a: 'b, 'b>(
 }
 
 fn get_tex_for_uid<'t>(
-    thumbnail_cache: &'t HashMap<u32, Option<SfBox<Texture>>>,
-    uid: u32,
+    thumbnail_cache: &'t HashMap<Uid, Option<SfBox<Texture>>>,
+    uid: Uid,
     error_texture: &'t Texture,
     db: &Db,
     thumbnail_loader: &mut ThumbnailLoader,
