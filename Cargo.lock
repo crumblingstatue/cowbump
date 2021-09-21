@@ -361,8 +361,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.14.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b403f29d592b5c2267279bfdf2cd3fe3ba0e7a8738d03203a6f1536e8e9d26bd"
+source = "git+https://github.com/emilk/egui.git#52e49bd4ae06afdf56a27f402e3f72666131198f"
 dependencies = [
  "epaint",
 ]
@@ -370,7 +369,7 @@ dependencies = [
 [[package]]
 name = "egui-sfml"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/egui-sfml.git#36d46368ebb22e8b928c876c776413db9f8c6991"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git#05fa90ed7732b81fc9dcd08dc091781edf4bd2a2"
 dependencies = [
  "egui",
  "glu-sys",
@@ -386,8 +385,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cca5179aa9d15128cebb79bb56dda73a79cc66b402056ff19a992e54b365e15c"
+source = "git+https://github.com/emilk/egui.git#52e49bd4ae06afdf56a27f402e3f72666131198f"
 
 [[package]]
 name = "env_logger"
@@ -405,14 +403,13 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "136e7d88da926182bcfdb8217137dd347dfe5dc03b8988eaba3ef8becf83394a"
+source = "git+https://github.com/emilk/egui.git#52e49bd4ae06afdf56a27f402e3f72666131198f"
 dependencies = [
  "ab_glyph",
  "ahash",
  "atomic_refcell",
  "emath",
- "ordered-float",
+ "nohash-hasher",
 ]
 
 [[package]]
@@ -656,6 +653,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nohash-hasher"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
+
+[[package]]
 name = "nom"
 version = "6.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -752,15 +755,6 @@ name = "once_cell"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
-
-[[package]]
-name = "ordered-float"
-version = "2.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97c9d06878b3a851e8026ef94bf7fef9ba93062cd412601da4d9cf369b1cc62d"
-dependencies = [
- "num-traits",
-]
 
 [[package]]
 name = "owned_ttf_parser"

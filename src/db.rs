@@ -1,4 +1,4 @@
-use crate::{entry::Entry, tag::Tag};
+use crate::{entry::Entry, sequence::Sequence, tag::Tag};
 use serde_derive::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -21,6 +21,7 @@ pub struct Db {
     pub entries: HashMap<Uid, Entry>,
     /// List of tags
     pub tags: HashMap<Uid, Tag>,
+    pub sequences: HashMap<Uid, Sequence>,
     uid_counter: Uid,
 }
 
@@ -155,6 +156,19 @@ impl Db {
                 true
             }
         });
+    }
+
+    pub(crate) fn add_new_sequence(&mut self, name: &str) {
+        let uid = self.new_uid();
+        self.sequences.insert(uid, Sequence::new_with_name(name));
+    }
+
+    pub(crate) fn add_images_to_sequence(&mut self, uid: u64, image_uids: &[u64]) {
+        self.sequences
+            .get_mut(&uid)
+            .unwrap()
+            .images
+            .extend(image_uids);
     }
 }
 

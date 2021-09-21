@@ -3,6 +3,7 @@
 mod db;
 mod entry;
 mod gui;
+mod sequence;
 mod tag;
 
 use crate::db::{Db, Uid};

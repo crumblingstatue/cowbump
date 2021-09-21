@@ -322,6 +322,8 @@ fn handle_event_viewer(
                 }
             } else if code == Key::T {
                 state.egui_state.toggle_tag_window();
+            } else if code == Key::Q {
+                state.egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
                 state.entries_view.sort(db);
             }

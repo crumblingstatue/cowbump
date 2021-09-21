@@ -1,11 +1,11 @@
 use crate::{
     db::{Db, Uid},
-    gui::{common_tags, search_goto_cursor, State},
+    gui::{common_tags, open_with_external, search_goto_cursor, State},
     FilterSpec,
 };
 use egui::{
-    Align2, Button, Color32, CtxRef, Grid, Key, Label, Rgba, ScrollArea, TextEdit, TextureId,
-    TopBottomPanel, Window,
+    Align2, Button, Color32, CtxRef, Grid, ImageButton, Key, Label, Rgba, ScrollArea, TextEdit,
+    TextureId, TopBottomPanel, Window,
 };
 use retain_mut::RetainMut;
 
@@ -19,11 +19,30 @@ use std::{
 #[derive(Default)]
 pub(crate) struct EguiState {
     image_prop_windows: Vec<ImagePropWindow>,
+    pub sequences_window: SequencesWindow,
+    sequence_windows: Vec<SequenceWindow>,
     tag_window: TagWindow,
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
     info_messages: Vec<InfoMessage>,
     prompts: Vec<Prompt>,
+}
+
+struct SequenceWindow {
+    uid: Uid,
+}
+
+impl SequenceWindow {
+    fn new(uid: Uid) -> Self {
+        Self { uid }
+    }
+}
+
+#[derive(Default)]
+pub struct SequencesWindow {
+    pub on: bool,
+    add_new: bool,
+    add_new_buffer: String,
 }
 
 #[derive(Default)]
@@ -131,6 +150,7 @@ struct ImagePropWindow {
     renaming: bool,
     delete_confirm: bool,
     custom_command_prompt: bool,
+    add_to_seq_prompt: bool,
     cmd_buffer: String,
     args_buffer: String,
     err_str: String,
@@ -172,9 +192,108 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     do_search_edit(state, egui_ctx, db);
     do_filter_edit(state, egui_ctx, db);
     do_tag_window(state, db, egui_ctx);
+    do_sequences_window(state, db, egui_ctx);
+    do_sequence_windows(state, db, egui_ctx);
     do_image_windows(state, db, egui_ctx);
     do_info_messages(state, egui_ctx);
     do_prompts(state, egui_ctx, db);
+}
+
+fn do_sequence_windows(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
+    state.egui_state.sequence_windows.retain_mut(|win| {
+        let mut open = true;
+        let seq = db.sequences.get_mut(&win.uid).unwrap();
+        let name = &seq.name;
+        enum Action {
+            SwapLeft,
+            SwapRight,
+            Remove,
+            Open,
+        }
+        let mut action = Action::SwapLeft;
+        let mut subject = None;
+        Window::new(&format!("Sequence: {}", name))
+            .hscroll(true)
+            .min_width(3. * 256.)
+            .open(&mut open)
+            .show(egui_ctx, |ui| {
+                ui.horizontal(|ui| {
+                    let seq_images_len = seq.images.len();
+                    for (i, &img_uid) in seq.images.iter().enumerate() {
+                        ui.vertical(|ui| {
+                            let img_butt = ImageButton::new(TextureId::User(img_uid), (256., 256.));
+                            if ui.add(img_butt).clicked() {
+                                action = Action::Open;
+                                subject = Some(img_uid);
+                            }
+                            ui.horizontal(|ui| {
+                                if i > 0 && ui.button("<").clicked() {
+                                    action = Action::SwapLeft;
+                                    subject = Some(img_uid);
+                                }
+                                if ui.button("-").clicked() {
+                                    action = Action::Remove;
+                                    subject = Some(img_uid);
+                                }
+                                if i < seq_images_len - 1 && ui.button(">").clicked() {
+                                    action = Action::SwapRight;
+                                    subject = Some(img_uid);
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+        if let Some(uid) = subject {
+            match action {
+                Action::SwapLeft => {
+                    seq.swap_image_left(uid);
+                }
+                Action::SwapRight => {
+                    seq.swap_image_right(uid);
+                }
+                Action::Remove => {
+                    seq.remove_image(uid);
+                }
+                Action::Open => {
+                    let mut paths = Vec::new();
+                    for img_uid in seq.iage_uids_wrapped_from(uid) {
+                        paths.push(db.entries[&img_uid].path.as_ref());
+                    }
+                    open_with_external(&paths);
+                }
+            }
+        }
+        open
+    });
+}
+
+fn do_sequences_window(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
+    let seq_win = &mut state.egui_state.sequences_window;
+    let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
+    if seq_win.on {
+        Window::new("Sequences").show(egui_ctx, |ui| {
+            if ui.button("+").clicked() {
+                seq_win.add_new ^= true;
+            }
+            if seq_win.add_new {
+                ui.text_edit_singleline(&mut seq_win.add_new_buffer);
+                if enter_pressed {
+                    db.add_new_sequence(&seq_win.add_new_buffer);
+                }
+            }
+            ui.separator();
+            db.sequences.retain(|&uid, seq| {
+                if ui.button(&seq.name).clicked() {
+                    state
+                        .egui_state
+                        .sequence_windows
+                        .push(SequenceWindow::new(uid));
+                }
+                true
+            });
+        });
+    }
 }
 
 fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {
@@ -248,7 +367,7 @@ fn do_tag_window(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
                     }
                 });
                 ui.separator();
-                let scroll = ScrollArea::from_max_height(600.0);
+                let scroll = ScrollArea::vertical().max_height(600.0);
                 scroll.show(ui, |ui| {
                     Grid::new("tag_window_grid")
                         .spacing((16.0, 8.0))
@@ -498,6 +617,9 @@ fn do_top_bar(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
                     if ui.button("Tag list (T)").clicked() {
                         state.egui_state.tag_window.on ^= true;
                     }
+                    if ui.button("Sequences (Q)").clicked() {
+                        state.egui_state.sequences_window.on ^= true;
+                    }
                 });
                 ui.separator();
                 ui.label("(F1 to toggle)");
@@ -691,6 +813,21 @@ fn do_image_windows(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
                                     close = false;
                                 }
                             });
+                        }
+                        if ui.button("Add to sequence").clicked() {
+                            propwin.add_to_seq_prompt ^= true;
+                        }
+                        if propwin.add_to_seq_prompt {
+                            let mut add = None;
+                            for (&uid, seq) in &db.sequences {
+                                if ui.button(&seq.name).clicked() {
+                                    add = Some(uid);
+                                    break;
+                                }
+                            }
+                            if let Some(uid) = add {
+                                db.add_images_to_sequence(uid, &propwin.image_uids);
+                            }
                         }
                         if ui
                             .add(Button::new("Run custom command").wrap(false))
