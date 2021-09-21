@@ -321,7 +321,7 @@ fn handle_event_viewer(
                     eprintln!("Error setting clipboard: {}", e);
                 }
             } else if code == Key::T {
-                state.tag_window = !state.tag_window;
+                state.egui_state.toggle_tag_window();
             } else if code == Key::S {
                 state.entries_view.sort(db);
             }
@@ -426,7 +426,6 @@ struct State {
     filter_edit: bool,
     filter_string: String,
     clipboard_ctx: Clipboard,
-    tag_window: bool,
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
     // We just closed window with esc, ignore the esc press outside of egui
@@ -485,7 +484,6 @@ impl State {
             filter_edit: false,
             filter_string: String::new(),
             clipboard_ctx: Clipboard::new().unwrap(),
-            tag_window: false,
             egui_state,
             entries_view: EntriesView::from_db(db),
             just_closed_window_with_esc: false,

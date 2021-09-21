@@ -28,6 +28,7 @@ pub(crate) struct EguiState {
 
 #[derive(Default)]
 struct TagWindow {
+    on: bool,
     filter_string: String,
     selected_uids: HashSet<Uid>,
 }
@@ -103,6 +104,9 @@ impl EguiState {
     fn do_info_messages(&mut self, ctx: &CtxRef) {
         self.info_messages
             .retain_mut(|msg| !ok_prompt(ctx, &msg.title, &msg.message));
+    }
+    pub fn toggle_tag_window(&mut self) {
+        self.tag_window.on ^= true;
     }
 }
 
@@ -244,7 +248,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 egui::menu::menu(ui, "Windows", |ui| {
                     ui.separator();
                     if ui.button("Tag list (T)").clicked() {
-                        state.tag_window ^= true;
+                        state.egui_state.tag_window.on ^= true;
                     }
                 });
                 ui.separator();
@@ -319,7 +323,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
                 }
             });
     }
-    if state.tag_window {
+    if state.egui_state.tag_window.on {
         let tags = &mut db.tags;
         let mut close = false;
         let close_ref = &mut close;
@@ -331,7 +335,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
         selected_uids.retain(|uid| tags.contains_key(uid));
         let prompts = &mut state.egui_state.prompts;
         egui::Window::new("Tag list")
-            .open(&mut state.tag_window)
+            .open(&mut state.egui_state.tag_window.on)
             .show(egui_ctx, move |ui| {
                 ui.horizontal(|ui| {
                     let te = TextEdit::singleline(tag_filter_string_ref).hint_text("Filter");
@@ -438,7 +442,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             });
         if close {
             state.just_closed_window_with_esc = true;
-            state.tag_window = false;
+            state.egui_state.tag_window.on = false;
         }
     }
     image_windows_ui(state, db, egui_ctx);
