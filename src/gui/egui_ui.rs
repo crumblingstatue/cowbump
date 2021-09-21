@@ -100,11 +100,6 @@ impl EguiState {
     pub fn begin_frame(&mut self) {
         self.action = None;
     }
-
-    fn do_info_messages(&mut self, ctx: &CtxRef) {
-        self.info_messages
-            .retain_mut(|msg| !ok_prompt(ctx, &msg.title, &msg.message));
-    }
     pub fn toggle_tag_window(&mut self) {
         self.tag_window.on ^= true;
     }
@@ -173,156 +168,61 @@ impl ImagePropWindow {
 }
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
-    if state.egui_state.top_bar {
-        TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                egui::menu::menu(ui, "File", |ui| {
-                    ui.separator();
-                    if ui.button("Create database backup").clicked() {
-                        match db.save_backup() {
-                            Ok(_) => {
-                                info_message(
-                                    &mut state.egui_state.info_messages,
-                                    "Success",
-                                    "Backup successfully created.",
-                                );
-                            }
-                            Err(e) => {
-                                info_message(
-                                    &mut state.egui_state.info_messages,
-                                    "Error",
-                                    &e.to_string(),
-                                );
-                            }
+    do_top_bar(state, egui_ctx, db);
+    do_search_edit(state, egui_ctx, db);
+    do_filter_edit(state, egui_ctx, db);
+    do_tag_window(state, db, egui_ctx);
+    image_windows_ui(state, db, egui_ctx);
+    do_info_messages(state, egui_ctx);
+    do_prompts(state, egui_ctx, db);
+}
+
+fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {
+    state
+        .egui_state
+        .info_messages
+        .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
+}
+
+fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+    state.egui_state.prompts.retain(|prompt| {
+        match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
+            Some(OkCancel::Ok) => match prompt.action {
+                PromptAction::RestoreBackup => {
+                    match db.load_backup() {
+                        Ok(_) => {
+                            info_message(
+                                &mut state.egui_state.info_messages,
+                                "Success",
+                                "Successfully restored backup.",
+                            );
                         }
-                    }
-                    if ui.button("Restore database backup").clicked() {
-                        prompt(
-                            &mut state.egui_state.prompts,
-                            "Restore Backup",
-                            "Warning: This will overwrite the current contents of the database.",
-                            PromptAction::RestoreBackup,
-                        )
-                    }
-                    ui.separator();
-                    if ui.button("Quit without saving").clicked() {
-                        prompt(
-                            &mut state.egui_state.prompts,
-                            "Quit without saving",
-                            "Warning: All changes made this session will be lost.",
-                            PromptAction::QuitNoSave,
-                        )
-                    }
-                    ui.separator();
-                    if ui.button("Quit").clicked() {
-                        state.egui_state.action = Some(Action::Quit);
-                    }
-                });
-                egui::menu::menu(ui, "Actions", |ui| {
-                    ui.separator();
-                    if ui.button("Filter (F)").clicked() {
-                        state.filter_edit ^= true;
-                    }
-                    ui.separator();
-                    if ui.button("Search (/)").clicked() {
-                        state.search_edit ^= true;
-                    }
-                    if ui.button("Next result (N)").clicked() {
-                        state.egui_state.action = Some(Action::SearchNext);
-                    }
-                    if ui.button("Previous result (P)").clicked() {
-                        state.egui_state.action = Some(Action::SearchPrev);
-                    }
-                    ui.separator();
-                    if ui.button("Select All (ctrl+A)").clicked() {
-                        state.egui_state.action = Some(Action::SelectAll);
-                    }
-                    if ui.button("Select None (Esc)").clicked() {
-                        state.egui_state.action = Some(Action::SelectNone);
-                    }
-                    ui.separator();
-                    if ui.button("Sort images by filename (S)").clicked() {
-                        state.egui_state.action = Some(Action::SortImages);
-                    }
-                });
-                egui::menu::menu(ui, "Windows", |ui| {
-                    ui.separator();
-                    if ui.button("Tag list (T)").clicked() {
-                        state.egui_state.tag_window.on ^= true;
-                    }
-                });
-                ui.separator();
-                ui.label("(F1 to toggle)");
-            });
-        });
-    }
-    if state.search_edit {
-        egui::Window::new("Search")
-            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
-            .title_bar(false)
-            .auto_sized()
-            .show(egui_ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("search");
-                    let mut te = TextEdit::singleline(&mut state.search_string);
-                    if !state.search_success {
-                        te = te.text_color(Color32::RED);
-                    }
-                    let re = ui.add(te);
-                    match FilterSpec::parse_and_resolve(&state.search_string, db) {
-                        Ok(spec) => state.search_spec = spec,
                         Err(e) => {
-                            ui.label(&format!("Error: {}", e));
+                            info_message(
+                                &mut state.egui_state.info_messages,
+                                "Error",
+                                &e.to_string(),
+                            );
                         }
                     }
-                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                        state.search_edit = false;
-                    }
-                    if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
-                        state.search_cursor = 0;
-                        search_goto_cursor(state, db);
-                    }
-                    ui.memory().request_focus(re.id);
-                });
-            });
-    }
-    if state.filter_edit {
-        egui::Window::new("Filter")
-            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
-            .title_bar(false)
-            .auto_sized()
-            .show(egui_ctx, |ui| {
-                let mut err = None;
-                ui.horizontal(|ui| {
-                    ui.label("filter");
-                    let count = db.filter(&state.filter).count();
-                    let mut te = TextEdit::singleline(&mut state.filter_string);
-                    if count == 0 {
-                        te = te.text_color(Color32::RED);
-                    }
-                    let re = ui.add(te);
-                    ui.label(&format!("{} results", count));
-                    state.filter_string.make_ascii_lowercase();
-                    match FilterSpec::parse_and_resolve(&state.filter_string, db) {
-                        Ok(spec) => state.filter = spec,
-                        Err(e) => {
-                            err = Some(format!("Error: {}", e));
-                        }
-                    };
-                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                        state.filter_edit = false;
-                    }
-                    if re.changed() {
-                        state.wipe_search();
-                        state.y_offset = 0.0;
-                    }
-                    ui.memory().request_focus(re.id);
-                });
-                if let Some(e) = err {
-                    ui.label(e);
+                    false
                 }
-            });
-    }
+                PromptAction::QuitNoSave => {
+                    state.egui_state.action = Some(Action::QuitNoSave);
+                    false
+                }
+                PromptAction::DeleteTags(ref uids) => {
+                    db.remove_tags(uids);
+                    false
+                }
+            },
+            Some(OkCancel::Cancel) => false,
+            None => true,
+        }
+    });
+}
+
+fn do_tag_window(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
     if state.egui_state.tag_window.on {
         let tags = &mut db.tags;
         let mut close = false;
@@ -445,44 +345,165 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
             state.egui_state.tag_window.on = false;
         }
     }
-    image_windows_ui(state, db, egui_ctx);
-    state.egui_state.do_info_messages(egui_ctx);
-    // Do prompts
-    state.egui_state.prompts.retain(|prompt| {
-        match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
-            Some(OkCancel::Ok) => match prompt.action {
-                PromptAction::RestoreBackup => {
-                    match db.load_backup() {
-                        Ok(_) => {
-                            info_message(
-                                &mut state.egui_state.info_messages,
-                                "Success",
-                                "Successfully restored backup.",
-                            );
-                        }
+}
+
+fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+    if state.filter_edit {
+        egui::Window::new("Filter")
+            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
+            .title_bar(false)
+            .auto_sized()
+            .show(egui_ctx, |ui| {
+                let mut err = None;
+                ui.horizontal(|ui| {
+                    ui.label("filter");
+                    let count = db.filter(&state.filter).count();
+                    let mut te = TextEdit::singleline(&mut state.filter_string);
+                    if count == 0 {
+                        te = te.text_color(Color32::RED);
+                    }
+                    let re = ui.add(te);
+                    ui.label(&format!("{} results", count));
+                    state.filter_string.make_ascii_lowercase();
+                    match FilterSpec::parse_and_resolve(&state.filter_string, db) {
+                        Ok(spec) => state.filter = spec,
                         Err(e) => {
-                            info_message(
-                                &mut state.egui_state.info_messages,
-                                "Error",
-                                &e.to_string(),
-                            );
+                            err = Some(format!("Error: {}", e));
+                        }
+                    };
+                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
+                        state.filter_edit = false;
+                    }
+                    if re.changed() {
+                        state.wipe_search();
+                        state.y_offset = 0.0;
+                    }
+                    ui.memory().request_focus(re.id);
+                });
+                if let Some(e) = err {
+                    ui.label(e);
+                }
+            });
+    }
+}
+
+fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+    if state.search_edit {
+        egui::Window::new("Search")
+            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
+            .title_bar(false)
+            .auto_sized()
+            .show(egui_ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("search");
+                    let mut te = TextEdit::singleline(&mut state.search_string);
+                    if !state.search_success {
+                        te = te.text_color(Color32::RED);
+                    }
+                    let re = ui.add(te);
+                    match FilterSpec::parse_and_resolve(&state.search_string, db) {
+                        Ok(spec) => state.search_spec = spec,
+                        Err(e) => {
+                            ui.label(&format!("Error: {}", e));
                         }
                     }
-                    false
-                }
-                PromptAction::QuitNoSave => {
-                    state.egui_state.action = Some(Action::QuitNoSave);
-                    false
-                }
-                PromptAction::DeleteTags(ref uids) => {
-                    db.remove_tags(uids);
-                    false
-                }
-            },
-            Some(OkCancel::Cancel) => false,
-            None => true,
-        }
-    });
+                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
+                        state.search_edit = false;
+                    }
+                    if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
+                        state.search_cursor = 0;
+                        search_goto_cursor(state, db);
+                    }
+                    ui.memory().request_focus(re.id);
+                });
+            });
+    }
+}
+
+fn do_top_bar(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+    if state.egui_state.top_bar {
+        TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                egui::menu::menu(ui, "File", |ui| {
+                    ui.separator();
+                    if ui.button("Create database backup").clicked() {
+                        match db.save_backup() {
+                            Ok(_) => {
+                                info_message(
+                                    &mut state.egui_state.info_messages,
+                                    "Success",
+                                    "Backup successfully created.",
+                                );
+                            }
+                            Err(e) => {
+                                info_message(
+                                    &mut state.egui_state.info_messages,
+                                    "Error",
+                                    &e.to_string(),
+                                );
+                            }
+                        }
+                    }
+                    if ui.button("Restore database backup").clicked() {
+                        prompt(
+                            &mut state.egui_state.prompts,
+                            "Restore Backup",
+                            "Warning: This will overwrite the current contents of the database.",
+                            PromptAction::RestoreBackup,
+                        )
+                    }
+                    ui.separator();
+                    if ui.button("Quit without saving").clicked() {
+                        prompt(
+                            &mut state.egui_state.prompts,
+                            "Quit without saving",
+                            "Warning: All changes made this session will be lost.",
+                            PromptAction::QuitNoSave,
+                        )
+                    }
+                    ui.separator();
+                    if ui.button("Quit").clicked() {
+                        state.egui_state.action = Some(Action::Quit);
+                    }
+                });
+                egui::menu::menu(ui, "Actions", |ui| {
+                    ui.separator();
+                    if ui.button("Filter (F)").clicked() {
+                        state.filter_edit ^= true;
+                    }
+                    ui.separator();
+                    if ui.button("Search (/)").clicked() {
+                        state.search_edit ^= true;
+                    }
+                    if ui.button("Next result (N)").clicked() {
+                        state.egui_state.action = Some(Action::SearchNext);
+                    }
+                    if ui.button("Previous result (P)").clicked() {
+                        state.egui_state.action = Some(Action::SearchPrev);
+                    }
+                    ui.separator();
+                    if ui.button("Select All (ctrl+A)").clicked() {
+                        state.egui_state.action = Some(Action::SelectAll);
+                    }
+                    if ui.button("Select None (Esc)").clicked() {
+                        state.egui_state.action = Some(Action::SelectNone);
+                    }
+                    ui.separator();
+                    if ui.button("Sort images by filename (S)").clicked() {
+                        state.egui_state.action = Some(Action::SortImages);
+                    }
+                });
+                egui::menu::menu(ui, "Windows", |ui| {
+                    ui.separator();
+                    if ui.button("Tag list (T)").clicked() {
+                        state.egui_state.tag_window.on ^= true;
+                    }
+                });
+                ui.separator();
+                ui.label("(F1 to toggle)");
+            });
+        });
+    }
 }
 
 fn prompt(
