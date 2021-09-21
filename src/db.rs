@@ -52,7 +52,7 @@ impl Db {
             }
             let mut should_add = !already_have;
             let file_name = dir_entry_path.file_name().unwrap();
-            if file_name == DB_FILENAME {
+            if file_name == DB_FILENAME || file_name == DB_BACKUP_FILENAME {
                 should_add = false;
             }
             if should_add {
