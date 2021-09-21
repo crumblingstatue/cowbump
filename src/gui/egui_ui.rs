@@ -172,7 +172,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     do_search_edit(state, egui_ctx, db);
     do_filter_edit(state, egui_ctx, db);
     do_tag_window(state, db, egui_ctx);
-    image_windows_ui(state, db, egui_ctx);
+    do_image_windows(state, db, egui_ctx);
     do_info_messages(state, egui_ctx);
     do_prompts(state, egui_ctx, db);
 }
@@ -530,7 +530,7 @@ fn get_filename_from_path(path: &Path) -> String {
         .to_string()
 }
 
-fn image_windows_ui(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+fn do_image_windows(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
     state.egui_state.image_prop_windows.retain_mut(|propwin| {
         let mut open = true;
         let n_images = propwin.image_uids.len();
