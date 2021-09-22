@@ -1,7 +1,7 @@
 use crate::{
     db::{local::LocalDb, Uid, UidSet},
+    filter_spec::FilterSpec,
     gui::{common_tags, open_with_external, search_goto_cursor, State},
-    FilterSpec,
 };
 use egui::{
     Align2, Button, Color32, CtxRef, Grid, ImageButton, Key, Label, Rgba, ScrollArea, TextEdit,

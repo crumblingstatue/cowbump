@@ -4,8 +4,8 @@ mod thumbnail_loader;
 
 use crate::{
     db::{local::LocalDb, Uid, UidMap, UidSet},
+    filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
-    FilterSpec,
 };
 use std::{collections::BTreeMap, error::Error};
 
@@ -41,7 +41,7 @@ impl EntriesView {
     pub fn filter<'a>(
         &'a self,
         db: &'a LocalDb,
-        spec: &'a crate::FilterSpec,
+        spec: &'a FilterSpec,
     ) -> impl Iterator<Item = Uid> + 'a {
         self.uids
             .iter()

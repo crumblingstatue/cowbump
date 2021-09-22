@@ -1,4 +1,4 @@
-use crate::db::Uid;
+use crate::{db::Uid, filter_spec::FilterSpec};
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -17,7 +17,7 @@ impl Entry {
             tags: Default::default(),
         }
     }
-    pub fn spec_satisfied(&self, spec: &crate::FilterSpec) -> bool {
+    pub fn spec_satisfied(&self, spec: &FilterSpec) -> bool {
         if !self
             .path
             .file_name()
@@ -45,7 +45,7 @@ impl Entry {
     }
 }
 
-pub fn filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<Uid> {
+pub fn filter_map(uid: Uid, entry: &Entry, spec: &FilterSpec) -> Option<Uid> {
     if entry.spec_satisfied(spec) {
         Some(uid)
     } else {

@@ -1,4 +1,4 @@
-use crate::{entry::Entry, sequence::Sequence, tag::Tag};
+use crate::{entry::Entry, filter_spec::FilterSpec, sequence::Sequence, tag::Tag};
 use serde_derive::{Deserialize, Serialize};
 use std::{
     fs::File,
@@ -88,9 +88,6 @@ impl LocalDb {
             self.add_tag_for(*img, tag);
         }
     }
-    pub fn image_has_tag(&self, entry: Uid, tag: Uid) -> bool {
-        self.entries[&entry].tags.contains(&tag)
-    }
     pub fn add_new_tag(&mut self, tag: Tag) -> Uid {
         let uid = self.new_uid();
         self.tags.insert(uid, tag);
@@ -102,7 +99,7 @@ impl LocalDb {
             implies: Vec::new(),
         })
     }
-    pub fn filter<'a>(&'a self, spec: &'a crate::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
+    pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = Uid> + 'a {
         self.entries
             .iter()
             .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
