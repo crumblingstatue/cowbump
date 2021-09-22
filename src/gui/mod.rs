@@ -3,7 +3,7 @@ mod egui_ui;
 mod thumbnail_loader;
 
 use crate::{
-    db::{local::LocalDb, Uid},
+    db::{local::LocalDb, Uid, UidMap},
     gui::egui_ui::EguiState,
     FilterSpec,
 };
@@ -22,10 +22,7 @@ use sfml::{
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
-use std::{
-    collections::{BTreeSet, HashMap},
-    path::Path,
-};
+use std::{collections::BTreeSet, path::Path};
 
 struct EntriesView {
     uids: Vec<Uid>,
@@ -406,7 +403,7 @@ fn recalc_on_screen_items(
     );
 }
 
-type ThumbnailCache = HashMap<Uid, Option<SfBox<Texture>>>;
+type ThumbnailCache = UidMap<Option<SfBox<Texture>>>;
 
 struct State {
     thumbnails_per_row: u8,
@@ -611,7 +608,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
 }
 
 fn get_tex_for_uid<'t>(
-    thumbnail_cache: &'t HashMap<Uid, Option<SfBox<Texture>>>,
+    thumbnail_cache: &'t ThumbnailCache,
     uid: Uid,
     error_texture: &'t Texture,
     db: &LocalDb,

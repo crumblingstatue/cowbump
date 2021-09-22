@@ -1,13 +1,16 @@
 use crate::{entry::Entry, sequence::Sequence, tag::Tag};
 use serde_derive::{Deserialize, Serialize};
 use std::{
-    collections::{HashMap, HashSet},
     fs::File,
     path::{Path, PathBuf},
 };
 use walkdir::WalkDir;
 
-use super::{serialization, Uid};
+use super::{serialization, Uid, UidMap, UidSet};
+
+pub type Entries = UidMap<Entry>;
+pub type Tags = UidMap<Tag>;
+pub type Sequences = UidMap<Sequence>;
 
 /// The database of all entries.
 ///
@@ -19,10 +22,10 @@ use super::{serialization, Uid};
 #[derive(Default, Serialize, Deserialize)]
 pub struct LocalDb {
     /// List of entries
-    pub entries: HashMap<Uid, Entry>,
+    pub entries: Entries,
     /// List of tags
-    pub tags: HashMap<Uid, Tag>,
-    pub sequences: HashMap<Uid, Sequence>,
+    pub tags: Tags,
+    pub sequences: Sequences,
     uid_counter: Uid,
 }
 
@@ -30,7 +33,7 @@ impl LocalDb {
     pub fn update_from_folder(&mut self, path: &Path) -> anyhow::Result<()> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid images that exist
-        let mut valid_uids = HashSet::new();
+        let mut valid_uids = UidSet::default();
 
         for dir_entry in wd {
             let dir_entry = dir_entry?;
@@ -168,7 +171,7 @@ impl LocalDb {
     }
 }
 
-fn cleanse_tag_from_images(entries: &mut HashMap<Uid, Entry>, tag_to_cleanse: Uid) {
+fn cleanse_tag_from_images(entries: &mut Entries, tag_to_cleanse: Uid) {
     for en in entries.values_mut() {
         en.tags.retain(|&tag| tag != tag_to_cleanse)
     }

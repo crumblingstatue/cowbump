@@ -7,8 +7,8 @@ mod sequence;
 mod tag;
 
 use crate::db::{local::LocalDb, Uid};
-use std::{collections::HashMap, env};
-use tag::Tag;
+use db::local::Tags;
+use std::env;
 use thiserror::Error;
 
 fn main() -> anyhow::Result<()> {
@@ -102,7 +102,7 @@ impl FilterSpec {
             doesnt_have_any_tags,
         })
     }
-    pub fn to_spec_string(&self, tags: &HashMap<Uid, Tag>) -> String {
+    pub fn to_spec_string(&self, tags: &Tags) -> String {
         if self.doesnt_have_any_tags {
             ":notag".into()
         } else {

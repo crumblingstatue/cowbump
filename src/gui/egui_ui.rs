@@ -1,5 +1,5 @@
 use crate::{
-    db::{local::LocalDb, Uid},
+    db::{local::LocalDb, Uid, UidSet},
     gui::{common_tags, open_with_external, search_goto_cursor, State},
     FilterSpec,
 };
@@ -10,7 +10,6 @@ use egui::{
 use retain_mut::RetainMut;
 
 use std::{
-    collections::HashSet,
     io::Read,
     path::Path,
     process::{Child, Command, ExitStatus, Stdio},
@@ -49,7 +48,7 @@ pub struct SequencesWindow {
 struct TagWindow {
     on: bool,
     filter_string: String,
-    selected_uids: HashSet<Uid>,
+    selected_uids: UidSet,
 }
 
 struct Prompt {
