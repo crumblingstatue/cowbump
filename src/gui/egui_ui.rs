@@ -27,6 +27,8 @@ pub(crate) struct EguiState {
     pub top_bar: bool,
     info_messages: Vec<InfoMessage>,
     prompts: Vec<Prompt>,
+    // We just closed window with esc, ignore the esc press outside of egui
+    pub just_closed_window_with_esc: bool,
 }
 
 struct SequenceWindow {
@@ -118,6 +120,7 @@ pub(crate) enum Action {
 
 impl EguiState {
     pub fn begin_frame(&mut self) {
+        self.just_closed_window_with_esc = false;
         self.action = None;
     }
     pub fn toggle_tag_window(&mut self) {
@@ -461,7 +464,7 @@ fn do_tag_window(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
                 }
             });
         if close {
-            state.just_closed_window_with_esc = true;
+            state.egui_state.just_closed_window_with_esc = true;
             state.egui_state.tag_window.on = false;
         }
     }
@@ -939,7 +942,7 @@ fn do_entries_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxR
                 });
             });
         if close {
-            state.just_closed_window_with_esc = true;
+            state.egui_state.just_closed_window_with_esc = true;
             open = false;
         }
         open

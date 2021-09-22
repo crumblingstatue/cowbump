@@ -111,7 +111,7 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
         if esc_pressed
             && !sf_egui.context().wants_keyboard_input()
             && !sf_egui.context().wants_pointer_input()
-            && !state.just_closed_window_with_esc
+            && !state.egui_state.just_closed_window_with_esc
         {
             selected_uids.clear()
         }
@@ -402,8 +402,6 @@ struct State {
     clipboard_ctx: Clipboard,
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
-    // We just closed window with esc, ignore the esc press outside of egui
-    just_closed_window_with_esc: bool,
 }
 
 struct TexSrc<'state, 'db> {
@@ -483,7 +481,6 @@ impl State {
             clipboard_ctx: Clipboard::new().unwrap(),
             egui_state,
             entries_view: EntriesView::from_db(db),
-            just_closed_window_with_esc: false,
             search_spec: FilterSpec::default(),
         }
     }
@@ -494,7 +491,6 @@ impl State {
         self.highlight = None;
     }
     fn begin_frame(&mut self) {
-        self.just_closed_window_with_esc = false;
         self.egui_state.begin_frame();
     }
 }
