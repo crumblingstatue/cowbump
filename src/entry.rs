@@ -1,5 +1,6 @@
 use crate::{
-    db::{Uid, UidSet},
+    db::{TagSet, Uid},
+    entry,
     filter_spec::FilterSpec,
 };
 use serde_derive::{Deserialize, Serialize};
@@ -10,8 +11,11 @@ use std::path::PathBuf;
 pub struct Entry {
     /// Absolute path
     pub path: PathBuf,
-    pub tags: UidSet,
+    pub tags: TagSet,
 }
+
+#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
+pub struct Id(pub Uid);
 
 impl Entry {
     pub fn new(path: PathBuf) -> Self {
@@ -48,7 +52,7 @@ impl Entry {
     }
 }
 
-pub fn filter_map(uid: Uid, entry: &Entry, spec: &FilterSpec) -> Option<Uid> {
+pub fn filter_map(uid: entry::Id, entry: &Entry, spec: &FilterSpec) -> Option<entry::Id> {
     if entry.spec_satisfied(spec) {
         Some(uid)
     } else {

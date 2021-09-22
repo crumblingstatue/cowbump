@@ -1,4 +1,10 @@
-use crate::{entry::Entry, filter_spec::FilterSpec, sequence::Sequence, tag::Tag};
+use crate::{
+    entry::{self, Entry},
+    filter_spec::FilterSpec,
+    sequence::{self, Sequence},
+    tag::{self, Tag},
+};
+use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
 use std::{
     fs::File,
@@ -6,11 +12,11 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use super::{serialization, Uid, UidMap, UidSet};
+use super::{serialization, EntryMap, EntrySet, Uid};
 
-pub type Entries = UidMap<Entry>;
-pub type Tags = UidMap<Tag>;
-pub type Sequences = UidMap<Sequence>;
+pub type Entries = EntryMap<Entry>;
+pub type Tags = FnvHashMap<tag::Id, Tag>;
+pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
 
 /// The database of all entries.
 ///
@@ -33,7 +39,7 @@ impl LocalDb {
     pub fn update_from_folder(&mut self, path: &Path) -> anyhow::Result<()> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid entries that exist
-        let mut valid_uids = UidSet::default();
+        let mut valid_uids = EntrySet::default();
 
         for dir_entry in wd {
             let dir_entry = dir_entry?;
@@ -56,7 +62,7 @@ impl LocalDb {
             }
             if should_add {
                 eprintln!("Adding {}", dir_entry_path.display());
-                let uid = self.new_uid();
+                let uid = entry::Id(self.new_uid());
                 valid_uids.insert(uid);
                 self.entries.insert(uid, Entry::new(dir_entry_path));
             }
@@ -71,27 +77,27 @@ impl LocalDb {
         });
         Ok(())
     }
-    pub fn add_tag_for(&mut self, entry: Uid, tag: Uid) {
+    pub fn add_tag_for(&mut self, entry: entry::Id, tag: tag::Id) {
         let tags = &mut self.entries.get_mut(&entry).unwrap().tags;
         tags.insert(tag);
     }
-    pub fn add_tag_for_multi(&mut self, entries: &[Uid], tag: Uid) {
+    pub fn add_tag_for_multi(&mut self, entries: &[entry::Id], tag: tag::Id) {
         for img in entries {
             self.add_tag_for(*img, tag);
         }
     }
-    pub fn add_new_tag(&mut self, tag: Tag) -> Uid {
-        let uid = self.new_uid();
+    pub fn add_new_tag(&mut self, tag: Tag) -> tag::Id {
+        let uid = tag::Id(self.new_uid());
         self.tags.insert(uid, tag);
         uid
     }
-    pub(crate) fn add_new_tag_from_text(&mut self, tag_text: String) -> Uid {
+    pub(crate) fn add_new_tag_from_text(&mut self, tag_text: String) -> tag::Id {
         self.add_new_tag(Tag {
             names: vec![tag_text],
             implies: Default::default(),
         })
     }
-    pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = Uid> + 'a {
+    pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries
             .iter()
             .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
@@ -121,12 +127,12 @@ impl LocalDb {
         self.uid_counter += 1;
         uid
     }
-    pub fn rename(&mut self, uid: Uid, new: &str) {
+    pub fn rename(&mut self, uid: entry::Id, new: &str) {
         let en = self.entries.get_mut(&uid).unwrap();
         pathbuf_rename_filename(&mut en.path, new);
     }
 
-    pub(crate) fn resolve_tag(&self, word: &str) -> Option<Uid> {
+    pub(crate) fn resolve_tag(&self, word: &str) -> Option<tag::Id> {
         for (k, v) in &self.tags {
             if v.names.iter().any(|name| name == word) {
                 return Some(*k);
@@ -135,7 +141,7 @@ impl LocalDb {
         None
     }
 
-    pub fn remove_tags(&mut self, tags_to_del: &[Uid]) {
+    pub fn remove_tags(&mut self, tags_to_del: &[tag::Id]) {
         self.tags.retain(|uid, _| {
             if tags_to_del.contains(uid) {
                 cleanse_tag_from_entries(&mut self.entries, *uid);
@@ -147,11 +153,11 @@ impl LocalDb {
     }
 
     pub(crate) fn add_new_sequence(&mut self, name: &str) {
-        let uid = self.new_uid();
+        let uid = sequence::Id(self.new_uid());
         self.sequences.insert(uid, Sequence::new_with_name(name));
     }
 
-    pub(crate) fn add_entries_to_sequence(&mut self, seq: u64, entries: &[u64]) {
+    pub(crate) fn add_entries_to_sequence(&mut self, seq: sequence::Id, entries: &[entry::Id]) {
         self.sequences
             .get_mut(&seq)
             .unwrap()
@@ -160,7 +166,7 @@ impl LocalDb {
     }
 }
 
-fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: Uid) {
+fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: tag::Id) {
     for en in entries.values_mut() {
         en.tags.retain(|&tag| tag != tag_to_cleanse)
     }

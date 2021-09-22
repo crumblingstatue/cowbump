@@ -1,10 +1,8 @@
-use crate::{
-    db::{Uid, UidMap, UidMapEntry},
-    gui::ThumbnailCache,
-};
+use crate::{db::EntryMap, entry, gui::ThumbnailCache};
 use image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba};
 use sfml::graphics::Texture;
 use std::{
+    collections::hash_map,
     path::Path,
     sync::{Arc, Mutex},
 };
@@ -15,13 +13,13 @@ type ImageSlot = Option<ImageResult<RgbaBuf>>;
 /// Loads images on a separate thread, one at a time.
 #[derive(Default)]
 pub struct ThumbnailLoader {
-    image_slots: Arc<Mutex<UidMap<ImageSlot>>>,
+    image_slots: Arc<Mutex<EntryMap<ImageSlot>>>,
 }
 
 impl ThumbnailLoader {
-    pub fn request(&mut self, name: &Path, size: u32, uid: Uid) {
+    pub fn request(&mut self, name: &Path, size: u32, uid: entry::Id) {
         let mut slots = self.image_slots.lock().unwrap();
-        if let UidMapEntry::Vacant(e) = slots.entry(uid) {
+        if let hash_map::Entry::Vacant(e) = slots.entry(uid) {
             e.insert(None);
             let slots_clone = Arc::clone(&self.image_slots);
             let name = name.to_owned();
@@ -69,7 +67,7 @@ impl ThumbnailLoader {
             }
         });
     }
-    pub fn busy_with(&self) -> Vec<Uid> {
+    pub fn busy_with(&self) -> Vec<entry::Id> {
         self.image_slots.lock().unwrap().keys().cloned().collect()
     }
 }

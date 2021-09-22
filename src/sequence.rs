@@ -1,12 +1,15 @@
-use crate::Uid;
+use crate::{db::Uid, entry};
 use serde_derive::{Deserialize, Serialize};
 
 /// An ordered sequence of entries
 #[derive(Default, Serialize, Deserialize)]
 pub struct Sequence {
     pub name: String,
-    pub entries: Vec<Uid>,
+    pub entries: Vec<entry::Id>,
 }
+
+#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
+pub struct Id(pub Uid);
 
 impl Sequence {
     pub fn new_with_name(name: &str) -> Self {
@@ -16,20 +19,20 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn swap_entry_left(&mut self, img_uid: u64) {
-        let pos = self.entries.iter().position(|&uid| uid == img_uid).unwrap();
+    pub(crate) fn swap_entry_left(&mut self, id: entry::Id) {
+        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
         self.entries.swap(pos - 1, pos);
     }
-    pub(crate) fn swap_entry_right(&mut self, img_uid: u64) {
-        let pos = self.entries.iter().position(|&uid| uid == img_uid).unwrap();
+    pub(crate) fn swap_entry_right(&mut self, id: entry::Id) {
+        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
         self.entries.swap(pos + 1, pos);
     }
-    pub(crate) fn remove_entry(&mut self, img_uid: u64) {
-        let pos = self.entries.iter().position(|&uid| uid == img_uid).unwrap();
+    pub(crate) fn remove_entry(&mut self, id: entry::Id) {
+        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
         self.entries.remove(pos);
     }
 
-    pub(crate) fn iage_uids_wrapped_from(&self, img_uid: u64) -> Vec<Uid> {
+    pub(crate) fn entry_uids_wrapped_from(&self, img_uid: entry::Id) -> Vec<entry::Id> {
         let pos = self.entries.iter().position(|&uid| uid == img_uid).unwrap();
         let mut uids = Vec::new();
         uids.extend_from_slice(&self.entries[pos..]);

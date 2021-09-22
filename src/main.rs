@@ -8,7 +8,7 @@ mod sequence;
 pub mod set_ext;
 mod tag;
 
-use crate::db::{local::LocalDb, Uid};
+use crate::db::local::LocalDb;
 use std::env;
 
 fn main() -> anyhow::Result<()> {

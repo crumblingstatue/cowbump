@@ -3,7 +3,8 @@ mod egui_ui;
 mod thumbnail_loader;
 
 use crate::{
-    db::{local::LocalDb, Uid, UidMap, UidSet},
+    db::{local::LocalDb, EntryMap, TagSet, Uid},
+    entry,
     filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
 };
@@ -25,12 +26,12 @@ use sfml::{
 use std::path::Path;
 
 struct EntriesView {
-    uids: Vec<Uid>,
+    uids: Vec<entry::Id>,
 }
 
 impl EntriesView {
     pub fn from_db(db: &LocalDb) -> Self {
-        let uids: Vec<Uid> = db.entries.keys().cloned().collect();
+        let uids: Vec<entry::Id> = db.entries.keys().cloned().collect();
         let mut this = Self { uids };
         this.sort(db);
         this
@@ -42,13 +43,13 @@ impl EntriesView {
         &'a self,
         db: &'a LocalDb,
         spec: &'a FilterSpec,
-    ) -> impl Iterator<Item = Uid> + 'a {
+    ) -> impl Iterator<Item = entry::Id> + 'a {
         self.uids
             .iter()
             .filter_map(|uid| crate::entry::filter_map(*uid, &db.entries[uid], spec))
     }
     /// Delete `uid` from the list.
-    pub fn delete(&mut self, uid: Uid) {
+    pub fn delete(&mut self, uid: entry::Id) {
         self.uids.retain(|&rhs| uid != rhs);
     }
 }
@@ -63,8 +64,8 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
     let mut state = State::new(window.size().x, db);
-    let mut on_screen_uids: Vec<Uid> = Vec::new();
-    let mut selected_uids: Vec<Uid> = Default::default();
+    let mut on_screen_uids: Vec<entry::Id> = Vec::new();
+    let mut selected_uids: Vec<entry::Id> = Default::default();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
     let egui_ctx = sf_egui.context();
@@ -204,8 +205,8 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn common_tags(ids: &[Uid], db: &LocalDb) -> UidSet {
-    let mut set = UidSet::default();
+fn common_tags(ids: &[entry::Id], db: &LocalDb) -> TagSet {
+    let mut set = TagSet::default();
     for &id in ids {
         for &tagid in &db.entries[&id].tags {
             set.insert(tagid);
@@ -214,20 +215,25 @@ fn common_tags(ids: &[Uid], db: &LocalDb) -> UidSet {
     set
 }
 
-fn get_uid_xy(x: i32, y: i32, state: &State, on_screen_uids: &[Uid]) -> Option<Uid> {
+fn entry_at_xy(
+    x: i32,
+    y: i32,
+    state: &State,
+    on_screen_entries: &[entry::Id],
+) -> Option<entry::Id> {
     let thumb_x = x as u32 / state.thumbnail_size;
     let rel_offset = state.y_offset as u32 % state.thumbnail_size;
     let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
     let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
-    on_screen_uids.get(thumb_index as usize).copied()
+    on_screen_entries.get(thumb_index as usize).copied()
 }
 
 fn handle_event_viewer(
     event: Event,
     state: &mut State,
-    on_screen_uids: &mut Vec<Uid>,
+    on_screen_entries: &mut Vec<entry::Id>,
     db: &mut LocalDb,
-    selected_uids: &mut Vec<Uid>,
+    selected_entries: &mut Vec<entry::Id>,
     window: &RenderWindow,
     ctx: &CtxRef,
 ) {
@@ -236,23 +242,23 @@ fn handle_event_viewer(
             if ctx.wants_pointer_input() {
                 return;
             }
-            let uid = match get_uid_xy(x, y, state, on_screen_uids) {
+            let uid = match entry_at_xy(x, y, state, on_screen_entries) {
                 Some(uid) => uid,
                 None => return,
             };
             if button == mouse::Button::LEFT {
                 if Key::LSHIFT.is_pressed() {
-                    if selected_uids.contains(&uid) {
-                        selected_uids.retain(|&rhs| rhs != uid);
+                    if selected_entries.contains(&uid) {
+                        selected_entries.retain(|&rhs| rhs != uid);
                     } else {
-                        selected_uids.push(uid);
+                        selected_entries.push(uid);
                     }
                 } else {
                     open_with_external(&[&db.entries[&uid].path]);
                 }
             } else if button == mouse::Button::RIGHT {
-                let vec = if selected_uids.contains(&uid) {
-                    selected_uids.clone()
+                let vec = if selected_entries.contains(&uid) {
+                    selected_entries.clone()
                 } else {
                     vec![uid]
                 };
@@ -272,7 +278,7 @@ fn handle_event_viewer(
                 }
             } else if code == Key::ENTER {
                 let mut paths: Vec<&Path> = Vec::new();
-                for &uid in selected_uids.iter() {
+                for &uid in selected_entries.iter() {
                     paths.push(&db.entries[&uid].path);
                 }
                 if paths.is_empty() && state.filter.active() {
@@ -283,7 +289,7 @@ fn handle_event_viewer(
                 paths.sort();
                 open_with_external(&paths);
             } else if code == Key::A && ctrl {
-                select_all(selected_uids, state, db);
+                select_all(selected_entries, state, db);
             } else if code == Key::SLASH {
                 state.search_edit = true;
             } else if code == Key::N {
@@ -295,7 +301,7 @@ fn handle_event_viewer(
             } else if code == Key::C {
                 use arboard::ImageData;
                 let mp = window.mouse_position();
-                let uid = match get_uid_xy(mp.x, mp.y, state, on_screen_uids) {
+                let uid = match entry_at_xy(mp.x, mp.y, state, on_screen_entries) {
                     Some(uid) => uid,
                     None => return,
                 };
@@ -329,7 +335,7 @@ fn handle_event_viewer(
     }
 }
 
-fn select_all(selected_uids: &mut Vec<Uid>, state: &State, db: &LocalDb) {
+fn select_all(selected_uids: &mut Vec<entry::Id>, state: &State, db: &LocalDb) {
     selected_uids.clear();
     for uid in db.filter(&state.filter) {
         selected_uids.push(uid);
@@ -377,7 +383,7 @@ fn search_goto_cursor(state: &mut State, db: &LocalDb) {
 }
 
 fn recalc_on_screen_items(
-    uids: &mut Vec<Uid>,
+    uids: &mut Vec<entry::Id>,
     db: &LocalDb,
     entries_view: &EntriesView,
     state: &State,
@@ -403,7 +409,7 @@ fn recalc_on_screen_items(
     );
 }
 
-type ThumbnailCache = UidMap<Option<SfBox<Texture>>>;
+type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;
 
 struct State {
     thumbnails_per_row: u8,
@@ -438,9 +444,9 @@ struct TexSrc<'state, 'db> {
 
 impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
     fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
-        let (_has, tex) = get_tex_for_uid(
+        let (_has, tex) = get_tex_for_entry(
             &self.state.thumbnail_cache,
-            id as Uid,
+            entry::Id(id),
             &self.state.error_texture,
             self.db,
             &mut self.state.thumbnail_loader,
@@ -493,8 +499,8 @@ impl State {
         &mut self,
         window: &mut RenderWindow,
         db: &LocalDb,
-        uids: &[Uid],
-        selected_uids: &[Uid],
+        uids: &[entry::Id],
+        selected_uids: &[entry::Id],
         load_anim_rotation: f32,
         pointer_active: bool,
     ) {
@@ -559,7 +565,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     window: &mut RenderWindow,
     x: f32,
     y: f32,
-    uid: Uid,
+    id: entry::Id,
     thumb_size: u32,
     sprite: &mut Sprite<'b>,
     font: &Font,
@@ -568,9 +574,9 @@ fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_loader: &mut ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
-    let (has_img, texture) = get_tex_for_uid(
+    let (has_img, texture) = get_tex_for_entry(
         thumbnail_cache,
-        uid,
+        id,
         error_texture,
         db,
         thumbnail_loader,
@@ -579,7 +585,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     );
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
-    if thumbnail_loader.busy_with().contains(&uid) {
+    if thumbnail_loader.busy_with().contains(&id) {
         sprite.set_origin((27.0, 6.0));
         sprite.move_((48.0, 48.0));
         sprite.set_rotation(load_anim_rotation);
@@ -599,7 +605,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw(&rect);
     }
     if show_filename {
-        if let Some(file_name) = db.entries[&uid].path.file_name().map(|e| e.to_str()) {
+        if let Some(file_name) = db.entries[&id].path.file_name().map(|e| e.to_str()) {
             let mut text = Text::new(file_name.unwrap(), font, 12);
             text.set_position(fname_pos);
             window.draw_text(&text, &RenderStates::DEFAULT);
@@ -607,23 +613,23 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
 }
 
-fn get_tex_for_uid<'t>(
+fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
-    uid: Uid,
+    id: entry::Id,
     error_texture: &'t Texture,
     db: &LocalDb,
     thumbnail_loader: &mut ThumbnailLoader,
     thumb_size: u32,
     loading_texture: &'t Texture,
 ) -> (bool, &'t Texture) {
-    let (has_img, texture) = match thumbnail_cache.get(&uid) {
+    let (has_img, texture) = match thumbnail_cache.get(&id) {
         Some(opt_texture) => match *opt_texture {
             Some(ref tex) => (true, tex as &Texture),
             None => (false, error_texture),
         },
         None => {
-            let entry = &db.entries[&uid];
-            thumbnail_loader.request(&entry.path, thumb_size, uid);
+            let entry = &db.entries[&id];
+            thumbnail_loader.request(&entry.path, thumb_size, id);
             (false, loading_texture)
         }
     };

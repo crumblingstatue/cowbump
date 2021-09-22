@@ -1,16 +1,17 @@
 use crate::{
     db::{
         local::{LocalDb, Tags},
-        Uid, UidSet,
+        TagSet,
     },
     set_ext::SetExt,
+    tag,
 };
 use thiserror::Error;
 
 #[derive(Default)]
 pub struct FilterSpec {
-    pub has_tags: UidSet,
-    pub doesnt_have_tags: UidSet,
+    pub has_tags: TagSet,
+    pub doesnt_have_tags: TagSet,
     pub filename_substring: String,
     pub doesnt_have_any_tags: bool,
 }
@@ -31,8 +32,8 @@ impl FilterSpec {
         db: &LocalDb,
     ) -> Result<Self, ParseResolveError<'a>> {
         let words = string.split_whitespace();
-        let mut tags = UidSet::default();
-        let mut neg_tags = UidSet::default();
+        let mut tags = TagSet::default();
+        let mut neg_tags = TagSet::default();
         let mut fstring = String::new();
         let mut doesnt_have_any_tags = false;
         for word in words {
@@ -100,16 +101,16 @@ impl FilterSpec {
             out
         }
     }
-    pub fn toggle_has(&mut self, uid: Uid) {
+    pub fn toggle_has(&mut self, uid: tag::Id) {
         self.has_tags.toggle(uid);
     }
-    pub fn set_has(&mut self, uid: Uid, set: bool) {
+    pub fn set_has(&mut self, uid: tag::Id, set: bool) {
         self.has_tags.toggle_by(uid, set);
     }
-    pub fn toggle_doesnt_have(&mut self, uid: Uid) {
+    pub fn toggle_doesnt_have(&mut self, uid: tag::Id) {
         self.doesnt_have_tags.toggle(uid);
     }
-    pub fn set_doesnt_have(&mut self, uid: Uid, set: bool) {
+    pub fn set_doesnt_have(&mut self, uid: tag::Id, set: bool) {
         self.doesnt_have_tags.toggle_by(uid, set);
     }
     pub fn clear(&mut self) {
