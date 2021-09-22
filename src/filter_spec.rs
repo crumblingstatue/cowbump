@@ -1,6 +1,9 @@
-use crate::db::{
-    local::{LocalDb, Tags},
-    SetExt, Uid, UidSet,
+use crate::{
+    db::{
+        local::{LocalDb, Tags},
+        Uid, UidSet,
+    },
+    set_ext::SetExt,
 };
 use thiserror::Error;
 

@@ -5,6 +5,7 @@ mod entry;
 mod filter_spec;
 mod gui;
 mod sequence;
+pub mod set_ext;
 mod tag;
 
 use crate::db::{local::LocalDb, Uid};
