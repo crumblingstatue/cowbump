@@ -6,7 +6,7 @@ mod gui;
 mod sequence;
 mod tag;
 
-use crate::db::{local::Db, Uid};
+use crate::db::{local::LocalDb, Uid};
 use std::{collections::HashMap, env};
 use tag::Tag;
 use thiserror::Error;
@@ -16,9 +16,9 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
     let dir = env::current_dir().unwrap();
-    let mut db = Db::load_from_fs().unwrap_or_else(|e| {
+    let mut db = LocalDb::load_from_fs().unwrap_or_else(|e| {
         eprintln!("Error loading db: {}, creating new default db.", e);
-        Db::default()
+        LocalDb::default()
     });
     db.update_from_folder(&dir).unwrap();
     let mut no_save = false;
@@ -48,7 +48,10 @@ impl FilterSpec {
     pub fn active(&self) -> bool {
         !self.has_tags.is_empty() || !self.filename_substring.is_empty()
     }
-    pub fn parse_and_resolve<'a>(string: &'a str, db: &Db) -> Result<Self, ParseResolveError<'a>> {
+    pub fn parse_and_resolve<'a>(
+        string: &'a str,
+        db: &LocalDb,
+    ) -> Result<Self, ParseResolveError<'a>> {
         let words = string.split_whitespace();
         let mut tags = Vec::new();
         let mut neg_tags = Vec::new();

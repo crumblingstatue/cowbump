@@ -17,7 +17,7 @@ use super::{serialization, Uid};
 /// That happens at the view level. This just maps Uids to entries.
 /// Nothing else.
 #[derive(Default, Serialize, Deserialize)]
-pub struct Db {
+pub struct LocalDb {
     /// List of entries
     pub entries: HashMap<Uid, Entry>,
     /// List of tags
@@ -26,7 +26,7 @@ pub struct Db {
     uid_counter: Uid,
 }
 
-impl Db {
+impl LocalDb {
     pub fn update_from_folder(&mut self, path: &Path) -> anyhow::Result<()> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid images that exist
@@ -102,7 +102,7 @@ impl Db {
     pub fn filter<'a>(&'a self, spec: &'a crate::FilterSpec) -> impl Iterator<Item = Uid> + 'a {
         self.entries
             .iter()
-            .filter_map(move |(&uid, en)| crate::entry::image_filter_map(uid, en, spec))
+            .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
     }
     pub fn save_to_fs(&self) -> anyhow::Result<()> {
         let mut f = File::create(DB_FILENAME)?;

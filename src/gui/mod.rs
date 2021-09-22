@@ -3,7 +3,7 @@ mod egui_ui;
 mod thumbnail_loader;
 
 use crate::{
-    db::{local::Db, Uid},
+    db::{local::LocalDb, Uid},
     gui::egui_ui::EguiState,
     FilterSpec,
 };
@@ -32,23 +32,23 @@ struct EntriesView {
 }
 
 impl EntriesView {
-    pub fn from_db(db: &Db) -> Self {
+    pub fn from_db(db: &LocalDb) -> Self {
         let uids: Vec<Uid> = db.entries.keys().cloned().collect();
         let mut this = Self { uids };
         this.sort(db);
         this
     }
-    pub fn sort(&mut self, db: &Db) {
+    pub fn sort(&mut self, db: &LocalDb) {
         self.uids.sort_by_key(|uid| &db.entries[uid].path);
     }
     pub fn filter<'a>(
         &'a self,
-        db: &'a Db,
+        db: &'a LocalDb,
         spec: &'a crate::FilterSpec,
     ) -> impl Iterator<Item = Uid> + 'a {
         self.uids
             .iter()
-            .filter_map(|uid| crate::entry::image_filter_map(*uid, &db.entries[uid], spec))
+            .filter_map(|uid| crate::entry::filter_map(*uid, &db.entries[uid], spec))
     }
     /// Delete `uid` from the list.
     pub fn delete(&mut self, uid: Uid) {
@@ -56,7 +56,7 @@ impl EntriesView {
     }
 }
 
-pub fn run(db: &mut Db, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
+pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     let mut window = RenderWindow::new(
         VideoMode::desktop_mode(),
         "Cowbump",
@@ -207,7 +207,7 @@ pub fn run(db: &mut Db, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn common_tags(ids: &[Uid], db: &Db) -> BTreeSet<Uid> {
+fn common_tags(ids: &[Uid], db: &LocalDb) -> BTreeSet<Uid> {
     let mut set = BTreeSet::new();
     for &id in ids {
         for &tagid in &db.entries[&id].tags {
@@ -229,7 +229,7 @@ fn handle_event_viewer(
     event: Event,
     state: &mut State,
     on_screen_uids: &mut Vec<Uid>,
-    db: &mut Db,
+    db: &mut LocalDb,
     selected_uids: &mut Vec<Uid>,
     window: &RenderWindow,
     ctx: &CtxRef,
@@ -332,21 +332,21 @@ fn handle_event_viewer(
     }
 }
 
-fn select_all(selected_uids: &mut Vec<Uid>, state: &State, db: &Db) {
+fn select_all(selected_uids: &mut Vec<Uid>, state: &State, db: &LocalDb) {
     selected_uids.clear();
     for uid in db.filter(&state.filter) {
         selected_uids.push(uid);
     }
 }
 
-fn search_prev(state: &mut State, db: &mut Db) {
+fn search_prev(state: &mut State, db: &mut LocalDb) {
     if state.search_cursor > 0 {
         state.search_cursor -= 1;
     }
     search_goto_cursor(state, db);
 }
 
-fn search_next(state: &mut State, db: &mut Db) {
+fn search_next(state: &mut State, db: &mut LocalDb) {
     state.search_cursor += 1;
     search_goto_cursor(state, db);
     if !state.search_success {
@@ -354,7 +354,7 @@ fn search_next(state: &mut State, db: &mut Db) {
     }
 }
 
-fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
+fn find_nth(state: &State, db: &LocalDb, nth: usize) -> Option<Uid> {
     state
         .entries_view
         .filter(db, &state.filter)
@@ -367,7 +367,7 @@ fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
         .nth(nth)
 }
 
-fn search_goto_cursor(state: &mut State, db: &Db) {
+fn search_goto_cursor(state: &mut State, db: &LocalDb) {
     if let Some(uid) = find_nth(state, db, state.search_cursor) {
         state.highlight = Some(uid);
         state.search_success = true;
@@ -381,7 +381,7 @@ fn search_goto_cursor(state: &mut State, db: &Db) {
 
 fn recalc_on_screen_items(
     uids: &mut Vec<Uid>,
-    db: &Db,
+    db: &LocalDb,
     entries_view: &EntriesView,
     state: &State,
     window_height: u32,
@@ -436,7 +436,7 @@ struct State {
 
 struct TexSrc<'state, 'db> {
     state: &'state mut State,
-    db: &'db Db,
+    db: &'db LocalDb,
 }
 
 impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
@@ -455,7 +455,7 @@ impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
 }
 
 impl State {
-    fn new(window_width: u32, db: &Db) -> Self {
+    fn new(window_width: u32, db: &LocalDb) -> Self {
         let thumbnails_per_row = 5;
         let thumbnail_size = window_width / thumbnails_per_row as u32;
         let mut loading_texture = Texture::new().unwrap();
@@ -495,7 +495,7 @@ impl State {
     fn draw_thumbnails(
         &mut self,
         window: &mut RenderWindow,
-        db: &Db,
+        db: &LocalDb,
         uids: &[Uid],
         selected_uids: &[Uid],
         load_anim_rotation: f32,
@@ -558,7 +558,7 @@ impl State {
 #[allow(clippy::too_many_arguments)]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
-    db: &Db,
+    db: &LocalDb,
     window: &mut RenderWindow,
     x: f32,
     y: f32,
@@ -614,7 +614,7 @@ fn get_tex_for_uid<'t>(
     thumbnail_cache: &'t HashMap<Uid, Option<SfBox<Texture>>>,
     uid: Uid,
     error_texture: &'t Texture,
-    db: &Db,
+    db: &LocalDb,
     thumbnail_loader: &mut ThumbnailLoader,
     thumb_size: u32,
     loading_texture: &'t Texture,

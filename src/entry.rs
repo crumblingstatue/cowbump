@@ -45,7 +45,7 @@ impl Entry {
     }
 }
 
-pub fn image_filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<Uid> {
+pub fn filter_map(uid: Uid, entry: &Entry, spec: &crate::FilterSpec) -> Option<Uid> {
     if entry.spec_satisfied(spec) {
         Some(uid)
     } else {

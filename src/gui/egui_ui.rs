@@ -1,5 +1,5 @@
 use crate::{
-    db::{local::Db, Uid},
+    db::{local::LocalDb, Uid},
     gui::{common_tags, open_with_external, search_goto_cursor, State},
     FilterSpec,
 };
@@ -187,7 +187,7 @@ impl ImagePropWindow {
     }
 }
 
-pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
+pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut LocalDb) {
     do_top_bar(state, egui_ctx, db);
     do_search_edit(state, egui_ctx, db);
     do_filter_edit(state, egui_ctx, db);
@@ -199,7 +199,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut Db) {
     do_prompts(state, egui_ctx, db);
 }
 
-fn do_sequence_windows(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
+fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
     state.egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
         let seq = db.sequences.get_mut(&win.uid).unwrap();
@@ -268,7 +268,7 @@ fn do_sequence_windows(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
     });
 }
 
-fn do_sequences_window(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
+fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
     let seq_win = &mut state.egui_state.sequences_window;
     let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
     if seq_win.on {
@@ -303,7 +303,7 @@ fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {
         .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
 }
 
-fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
     state.egui_state.prompts.retain(|prompt| {
         match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
             Some(OkCancel::Ok) => match prompt.action {
@@ -341,7 +341,7 @@ fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
     });
 }
 
-fn do_tag_window(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
+fn do_tag_window(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
     if state.egui_state.tag_window.on {
         let tags = &mut db.tags;
         let mut close = false;
@@ -466,7 +466,7 @@ fn do_tag_window(state: &mut State, db: &mut Db, egui_ctx: &CtxRef) {
     }
 }
 
-fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
     if state.filter_edit {
         egui::Window::new("Filter")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
@@ -506,7 +506,7 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
     }
 }
 
-fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
     if state.search_edit {
         egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
@@ -539,7 +539,7 @@ fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
     }
 }
 
-fn do_top_bar(state: &mut State, egui_ctx: &CtxRef, db: &mut Db) {
+fn do_top_bar(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
     if state.egui_state.top_bar {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -652,7 +652,7 @@ fn get_filename_from_path(path: &Path) -> String {
         .to_string()
 }
 
-fn do_image_windows(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
+fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef) {
     state.egui_state.image_prop_windows.retain_mut(|propwin| {
         let mut open = true;
         let n_images = propwin.image_uids.len();
@@ -947,7 +947,7 @@ fn do_image_windows(state: &mut State, db: &mut Db, egui_ctx: &egui::CtxRef) {
     });
 }
 
-fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &mut Db) {
+fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &mut LocalDb) {
     for uid in image_uids.drain(..) {
         let path = &db.entries[&uid].path;
         if let Err(e) = std::fs::remove_file(path) {
