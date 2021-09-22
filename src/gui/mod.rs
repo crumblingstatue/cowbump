@@ -156,7 +156,7 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
                 Action::SearchPrev => search_prev(&mut state, db),
                 Action::SelectAll => select_all(&mut selected_uids, &state, db),
                 Action::SelectNone => selected_uids.clear(),
-                Action::SortImages => state.entries_view.sort(db),
+                Action::SortEntries => state.entries_view.sort(db),
             }
         }
         recalc_on_screen_items(
@@ -256,7 +256,7 @@ fn handle_event_viewer(
                 } else {
                     vec![uid]
                 };
-                state.egui_state.add_image_prop_window(vec);
+                state.egui_state.add_entries_window(vec);
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {

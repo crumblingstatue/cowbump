@@ -32,7 +32,7 @@ pub struct LocalDb {
 impl LocalDb {
     pub fn update_from_folder(&mut self, path: &Path) -> anyhow::Result<()> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
-        // Indices in the entries vector that correspond to valid images that exist
+        // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = UidSet::default();
 
         for dir_entry in wd {
@@ -61,7 +61,7 @@ impl LocalDb {
                 self.entries.insert(uid, Entry::new(dir_entry_path));
             }
         }
-        // Remove indices that don't correspond to valid images
+        // Remove indices that don't correspond to valid entries
         self.entries.retain(|uid, en| {
             let keep = valid_uids.contains(uid);
             if !keep {
@@ -75,8 +75,8 @@ impl LocalDb {
         let tags = &mut self.entries.get_mut(&entry).unwrap().tags;
         tags.insert(tag);
     }
-    pub fn add_tag_for_multi(&mut self, images: &[Uid], tag: Uid) {
-        for img in images {
+    pub fn add_tag_for_multi(&mut self, entries: &[Uid], tag: Uid) {
+        for img in entries {
             self.add_tag_for(*img, tag);
         }
     }
@@ -138,7 +138,7 @@ impl LocalDb {
     pub fn remove_tags(&mut self, tags_to_del: &[Uid]) {
         self.tags.retain(|uid, _| {
             if tags_to_del.contains(uid) {
-                cleanse_tag_from_images(&mut self.entries, *uid);
+                cleanse_tag_from_entries(&mut self.entries, *uid);
                 false
             } else {
                 true
@@ -151,16 +151,16 @@ impl LocalDb {
         self.sequences.insert(uid, Sequence::new_with_name(name));
     }
 
-    pub(crate) fn add_images_to_sequence(&mut self, uid: u64, image_uids: &[u64]) {
+    pub(crate) fn add_entries_to_sequence(&mut self, seq: u64, entries: &[u64]) {
         self.sequences
-            .get_mut(&uid)
+            .get_mut(&seq)
             .unwrap()
-            .images
-            .extend(image_uids);
+            .entries
+            .extend(entries);
     }
 }
 
-fn cleanse_tag_from_images(entries: &mut Entries, tag_to_cleanse: Uid) {
+fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: Uid) {
     for en in entries.values_mut() {
         en.tags.retain(|&tag| tag != tag_to_cleanse)
     }

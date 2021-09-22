@@ -5,10 +5,10 @@ use crate::{
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// Path to an image, along with associated tags
+/// Path to an item we're interested in organizing, along with associated tags
 #[derive(Serialize, Deserialize)]
 pub struct Entry {
-    /// Absolute path of the image
+    /// Absolute path
     pub path: PathBuf,
     pub tags: UidSet,
 }

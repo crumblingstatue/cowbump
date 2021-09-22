@@ -17,7 +17,7 @@ use std::{
 
 #[derive(Default)]
 pub(crate) struct EguiState {
-    image_prop_windows: Vec<ImagePropWindow>,
+    entries_windows: Vec<EntriesWindow>,
     pub sequences_window: SequencesWindow,
     sequence_windows: Vec<SequenceWindow>,
     tag_window: TagWindow,
@@ -111,7 +111,7 @@ pub(crate) enum Action {
     SearchPrev,
     SelectAll,
     SelectNone,
-    SortImages,
+    SortEntries,
 }
 
 impl EguiState {
@@ -139,10 +139,9 @@ struct InfoMessage {
     message: String,
 }
 
-/// Image properties window
 #[derive(Default)]
-struct ImagePropWindow {
-    image_uids: Vec<Uid>,
+struct EntriesWindow {
+    entry_uids: Vec<Uid>,
     add_tag_buffer: String,
     rename_buffer: String,
     adding_tag: bool,
@@ -177,10 +176,10 @@ impl ChildWrapper {
     }
 }
 
-impl ImagePropWindow {
-    fn new(image_uids: Vec<Uid>) -> Self {
+impl EntriesWindow {
+    fn new(uids: Vec<Uid>) -> Self {
         Self {
-            image_uids,
+            entry_uids: uids,
             ..Default::default()
         }
     }
@@ -193,7 +192,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut LocalDb
     do_tag_window(state, db, egui_ctx);
     do_sequences_window(state, db, egui_ctx);
     do_sequence_windows(state, db, egui_ctx);
-    do_image_windows(state, db, egui_ctx);
+    do_entries_windows(state, db, egui_ctx);
     do_info_messages(state, egui_ctx);
     do_prompts(state, egui_ctx, db);
 }
@@ -217,8 +216,8 @@ fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
             .open(&mut open)
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
-                    let seq_images_len = seq.images.len();
-                    for (i, &img_uid) in seq.images.iter().enumerate() {
+                    let seq_entries_len = seq.entries.len();
+                    for (i, &img_uid) in seq.entries.iter().enumerate() {
                         ui.vertical(|ui| {
                             let img_butt = ImageButton::new(TextureId::User(img_uid), (256., 256.));
                             if ui.add(img_butt).clicked() {
@@ -234,7 +233,7 @@ fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
                                     action = Action::Remove;
                                     subject = Some(img_uid);
                                 }
-                                if i < seq_images_len - 1 && ui.button(">").clicked() {
+                                if i < seq_entries_len - 1 && ui.button(">").clicked() {
                                     action = Action::SwapRight;
                                     subject = Some(img_uid);
                                 }
@@ -246,13 +245,13 @@ fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
         if let Some(uid) = subject {
             match action {
                 Action::SwapLeft => {
-                    seq.swap_image_left(uid);
+                    seq.swap_entry_left(uid);
                 }
                 Action::SwapRight => {
-                    seq.swap_image_right(uid);
+                    seq.swap_entry_right(uid);
                 }
                 Action::Remove => {
-                    seq.remove_image(uid);
+                    seq.remove_entry(uid);
                 }
                 Action::Open => {
                     let mut paths = Vec::new();
@@ -607,8 +606,8 @@ fn do_top_bar(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
                         state.egui_state.action = Some(Action::SelectNone);
                     }
                     ui.separator();
-                    if ui.button("Sort images by filename (S)").clicked() {
-                        state.egui_state.action = Some(Action::SortImages);
+                    if ui.button("Sort entries by filename (S)").clicked() {
+                        state.egui_state.action = Some(Action::SortEntries);
                     }
                 });
                 egui::menu::menu(ui, "Windows", |ui| {
@@ -651,15 +650,15 @@ fn get_filename_from_path(path: &Path) -> String {
         .to_string()
 }
 
-fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef) {
-    state.egui_state.image_prop_windows.retain_mut(|propwin| {
+fn do_entries_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef) {
+    state.egui_state.entries_windows.retain_mut(|propwin| {
         let mut open = true;
-        let n_images = propwin.image_uids.len();
+        let n_entries = propwin.entry_uids.len();
         let title = {
-            if propwin.image_uids.len() == 1 {
-                get_filename_from_path(&db.entries[&propwin.image_uids[0]].path)
+            if propwin.entry_uids.len() == 1 {
+                get_filename_from_path(&db.entries[&propwin.entry_uids[0]].path)
             } else {
-                format!("{} images", n_images)
+                format!("{} entries", n_entries)
             }
         };
         let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
@@ -670,20 +669,20 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                 ui.horizontal(|ui| {
                     ui.horizontal_wrapped(|ui| {
                         ui.set_max_width(512.0);
-                        let n_visible_images = n_images.min(64);
-                        for &id in propwin.image_uids.iter().take(n_visible_images) {
+                        let n_visible_entries = n_entries.min(64);
+                        for &id in propwin.entry_uids.iter().take(n_visible_entries) {
                             ui.image(
                                 TextureId::User(id as u64),
                                 (
-                                    512.0 / n_visible_images as f32,
-                                    512.0 / n_visible_images as f32,
+                                    512.0 / n_visible_entries as f32,
+                                    512.0 / n_visible_entries as f32,
                                 ),
                             );
                         }
                     });
                     ui.vertical(|ui| {
                         ui.horizontal_wrapped(|ui| {
-                            for tagid in common_tags(&propwin.image_uids, db) {
+                            for tagid in common_tags(&propwin.entry_uids, db) {
                                 ui.group(|ui| {
                                     ui.horizontal(|ui| {
                                         let tag_name = match db.tags.get(&tagid) {
@@ -698,7 +697,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                                         if ui.button("x").clicked() {
                                             // TODO: This only works for 1 item windows
                                             db.entries
-                                                .get_mut(&propwin.image_uids[0])
+                                                .get_mut(&propwin.entry_uids[0])
                                                 .unwrap()
                                                 .tags
                                                 .retain(|&t| t != tagid);
@@ -721,12 +720,12 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                             }
                             if re.ctx.input().key_pressed(Key::Enter) {
                                 let add_tag_buffer: &str = &propwin.add_tag_buffer;
-                                let image_uids: &[Uid] = &propwin.image_uids;
+                                let entry_uids: &[Uid] = &propwin.entry_uids;
                                 let tags = add_tag_buffer.split_whitespace();
                                 for tag in tags {
                                     match db.resolve_tag(tag) {
                                         Some(tag_uid) => {
-                                            db.add_tag_for_multi(image_uids, tag_uid);
+                                            db.add_tag_for_multi(entry_uids, tag_uid);
                                         }
                                         None => {
                                             propwin.new_tags.push(tag.to_owned());
@@ -740,7 +739,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
 
                         if !propwin.new_tags.is_empty() {
                             ui.label(
-                                "You added the following tags to the image,\
+                                "You added the following tags to the entry,\
                                  but they aren't present in the database: ",
                             );
                         }
@@ -750,7 +749,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                                 ui.label(&tag[..]);
                                 if ui.button("Add").clicked() {
                                     let tag_uid = db.add_new_tag_from_text(tag.to_owned());
-                                    db.add_tag_for_multi(&propwin.image_uids, tag_uid);
+                                    db.add_tag_for_multi(&propwin.entry_uids, tag_uid);
                                     retain = false;
                                 }
                                 if ui.button("Cancel").clicked() {
@@ -764,7 +763,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                             .add(
                                 Button::new("Rename")
                                     .wrap(false)
-                                    .enabled(propwin.image_uids.len() == 1),
+                                    .enabled(propwin.entry_uids.len() == 1),
                             )
                             .clicked()
                         {
@@ -773,7 +772,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                         if propwin.renaming {
                             let re = ui.text_edit_singleline(&mut propwin.rename_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
-                                db.rename(propwin.image_uids[0], &propwin.rename_buffer);
+                                db.rename(propwin.entry_uids[0], &propwin.rename_buffer);
                                 propwin.renaming = false;
                             }
                             if re.lost_focus() {
@@ -790,7 +789,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                                 propwin.delete_confirm ^= true;
                             }
                         } else {
-                            let del_uids = &mut propwin.image_uids;
+                            let del_uids = &mut propwin.entry_uids;
                             let del_len = del_uids.len();
                             let label_string = if del_len == 1 {
                                 format!(
@@ -798,12 +797,12 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                                     db.entries[&del_uids[0]].path.display()
                                 )
                             } else {
-                                format!("About to delete {} images", del_len)
+                                format!("About to delete {} entries", del_len)
                             };
                             ui.label(&label_string);
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                                    remove_images(&mut state.entries_view, del_uids, db);
+                                    remove_entries(&mut state.entries_view, del_uids, db);
                                     propwin.delete_confirm = false;
                                     close = true;
                                 }
@@ -825,7 +824,7 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                                 }
                             }
                             if let Some(uid) = add {
-                                db.add_images_to_sequence(uid, &propwin.image_uids);
+                                db.add_entries_to_sequence(uid, &propwin.entry_uids);
                             }
                         }
                         if ui
@@ -841,14 +840,14 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
                             }
                             ui.label("Command");
                             let re = ui.text_edit_singleline(&mut propwin.cmd_buffer);
-                            ui.label("Args (use {} for image path, or leave empty)");
+                            ui.label("Args (use {} for entry path, or leave empty)");
                             ui.text_edit_singleline(&mut propwin.args_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
                                 let mut cmd = Command::new(&propwin.cmd_buffer);
                                 cmd.stderr(Stdio::piped());
                                 cmd.stdin(Stdio::piped());
                                 cmd.stdout(Stdio::piped());
-                                for uid in &propwin.image_uids {
+                                for uid in &propwin.entry_uids {
                                     let en = &db.entries[uid];
                                     for arg in propwin.args_buffer.split_whitespace() {
                                         if arg == "{}" {
@@ -946,8 +945,8 @@ fn do_image_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef
     });
 }
 
-fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &mut LocalDb) {
-    for uid in image_uids.drain(..) {
+fn remove_entries(view: &mut super::EntriesView, entries: &mut Vec<Uid>, db: &mut LocalDb) {
+    for uid in entries.drain(..) {
         let path = &db.entries[&uid].path;
         if let Err(e) = std::fs::remove_file(path) {
             eprintln!("Remove error: {}", e);
@@ -957,7 +956,7 @@ fn remove_images(view: &mut super::EntriesView, image_uids: &mut Vec<Uid>, db: &
     }
 }
 impl EguiState {
-    pub(crate) fn add_image_prop_window(&mut self, vec: Vec<Uid>) {
-        self.image_prop_windows.push(ImagePropWindow::new(vec));
+    pub(crate) fn add_entries_window(&mut self, vec: Vec<Uid>) {
+        self.entries_windows.push(EntriesWindow::new(vec));
     }
 }
