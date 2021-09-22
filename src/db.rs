@@ -1,8 +1,9 @@
+mod serialization;
+
 use crate::{entry::Entry, sequence::Sequence, tag::Tag};
 use serde_derive::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
-    error::Error,
     fs::File,
     path::{Path, PathBuf},
 };
@@ -31,7 +32,7 @@ pub struct Db {
 pub type Uid = u64;
 
 impl Db {
-    pub fn update_from_folder(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
+    pub fn update_from_folder(&mut self, path: &Path) -> anyhow::Result<()> {
         let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid images that exist
         let mut valid_uids = HashSet::new();
@@ -108,23 +109,23 @@ impl Db {
             .iter()
             .filter_map(move |(&uid, en)| image_filter_map(uid, en, spec))
     }
-    pub fn save_to_fs(&self) -> Result<(), Box<dyn Error>> {
+    pub fn save_to_fs(&self) -> anyhow::Result<()> {
         let mut f = File::create(DB_FILENAME)?;
-        bincode::serialize_into(&mut f, self)?;
+        serialization::write(self, &mut f)?;
         Ok(())
     }
-    pub fn save_backup(&self) -> Result<(), Box<dyn Error>> {
-        let mut f = File::create(DB_BACKUP_FILENAME)?;
-        bincode::serialize_into(&mut f, self)?;
+    pub fn save_backup(&self) -> anyhow::Result<()> {
+        let f = File::create(DB_BACKUP_FILENAME)?;
+        serialization::write(self, f)?;
         Ok(())
     }
-    pub fn load_from_fs() -> Result<Self, Box<dyn Error>> {
-        let mut f = File::open(DB_FILENAME)?;
-        Ok(bincode::deserialize_from(&mut f)?)
+    pub fn load_from_fs() -> anyhow::Result<Self> {
+        let f = File::open(DB_FILENAME)?;
+        serialization::read(f)
     }
-    pub fn load_backup(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut f = File::open(DB_BACKUP_FILENAME)?;
-        let new = bincode::deserialize_from(&mut f)?;
+    pub fn load_backup(&mut self) -> anyhow::Result<()> {
+        let f = File::open(DB_BACKUP_FILENAME)?;
+        let new = serialization::read(f)?;
         *self = new;
         Ok(())
     }

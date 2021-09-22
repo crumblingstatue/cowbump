@@ -11,9 +11,9 @@ use std::{collections::HashMap, env};
 use tag::Tag;
 use thiserror::Error;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     if !atty::is(atty::Stream::Stdout) {
-        return;
+        return Ok(());
     }
     let dir = env::current_dir().unwrap();
     let mut db = Db::load_from_fs().unwrap_or_else(|e| {
@@ -24,8 +24,9 @@ fn main() {
     let mut no_save = false;
     gui::run(&mut db, &mut no_save).unwrap();
     if !no_save {
-        db.save_to_fs().unwrap();
+        db.save_to_fs()?;
     }
+    Ok(())
 }
 
 #[derive(Default)]
