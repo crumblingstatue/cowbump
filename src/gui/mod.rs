@@ -3,7 +3,7 @@ mod egui_ui;
 mod thumbnail_loader;
 
 use crate::{
-    db::{self, Db, Uid},
+    db::{local::Db, Uid},
     gui::egui_ui::EguiState,
     FilterSpec,
 };
@@ -48,7 +48,7 @@ impl EntriesView {
     ) -> impl Iterator<Item = Uid> + 'a {
         self.uids
             .iter()
-            .filter_map(|uid| db::image_filter_map(*uid, &db.entries[uid], spec))
+            .filter_map(|uid| crate::entry::image_filter_map(*uid, &db.entries[uid], spec))
     }
     /// Delete `uid` from the list.
     pub fn delete(&mut self, uid: Uid) {
@@ -361,7 +361,7 @@ fn find_nth(state: &State, db: &Db, nth: usize) -> Option<Uid> {
         .enumerate()
         .filter(|(_, uid)| {
             let en = &db.entries[uid];
-            db::spec_satisfied(&state.search_spec, en)
+            en.spec_satisfied(&state.search_spec)
         })
         .map(|(i, _)| i as Uid)
         .nth(nth)

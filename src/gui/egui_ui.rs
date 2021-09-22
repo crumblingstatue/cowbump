@@ -1,5 +1,5 @@
 use crate::{
-    db::{Db, Uid},
+    db::{local::Db, Uid},
     gui::{common_tags, open_with_external, search_goto_cursor, State},
     FilterSpec,
 };

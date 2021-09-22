@@ -6,7 +6,7 @@ mod gui;
 mod sequence;
 mod tag;
 
-use crate::db::{Db, Uid};
+use crate::db::{local::Db, Uid};
 use std::{collections::HashMap, env};
 use tag::Tag;
 use thiserror::Error;
