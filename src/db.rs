@@ -2,7 +2,7 @@ pub mod global;
 pub mod local;
 mod serialization;
 use fnv::{FnvHashMap, FnvHashSet};
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, hash::Hash};
 
 /// Unique identifier for entries/tags.
 ///
@@ -12,20 +12,21 @@ pub type UidSet = FnvHashSet<Uid>;
 pub type UidMap<T> = FnvHashMap<Uid, T>;
 pub type UidMapEntry<'a, T> = Entry<'a, Uid, T>;
 
-pub trait UidSetExt {
-    fn toggle(&mut self, uid: Uid);
-    fn toggle_by(&mut self, uid: Uid, on: bool);
+pub trait SetExt<T> {
+    fn toggle(&mut self, item: T);
+    fn toggle_by(&mut self, uid: T, on: bool);
 }
 
-impl UidSetExt for UidSet {
-    fn toggle(&mut self, uid: Uid) {
-        self.toggle_by(uid, !self.contains(&uid))
+impl<T: Hash + Eq> SetExt<T> for FnvHashSet<T> {
+    fn toggle(&mut self, item: T) {
+        let on = !self.contains(&item);
+        self.toggle_by(item, on);
     }
-    fn toggle_by(&mut self, uid: Uid, on: bool) {
+    fn toggle_by(&mut self, item: T, on: bool) {
         if on {
-            self.insert(uid);
+            self.insert(item);
         } else {
-            self.remove(&uid);
+            self.remove(&item);
         }
     }
 }
