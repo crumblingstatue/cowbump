@@ -1,7 +1,7 @@
 use sfml::{
     graphics::{
-        Color, Font, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite,
-        Text, Texture, Transformable,
+        Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
+        Transformable,
     },
     system::Vector2f,
     window::Key,
@@ -9,7 +9,9 @@ use sfml::{
 
 use crate::{db::local::LocalDb, entry, filter_spec::FilterSpec};
 
-use super::{get_tex_for_entry, thumbnail_loader::ThumbnailLoader, State, ThumbnailCache};
+use super::{
+    get_tex_for_entry, thumbnail_loader::ThumbnailLoader, Resources, State, ThumbnailCache,
+};
 
 pub struct EntriesView {
     uids: Vec<entry::Id>,
@@ -42,6 +44,7 @@ impl EntriesView {
 
 pub(super) fn draw_thumbnails(
     state: &mut State,
+    res: &Resources,
     window: &mut RenderWindow,
     db: &LocalDb,
     uids: &[entry::Id],
@@ -76,9 +79,7 @@ pub(super) fn draw_thumbnails(
             uid,
             thumb_size,
             &mut sprite,
-            &state.font,
-            &state.error_texture,
-            &state.loading_texture,
+            res,
             &mut state.thumbnail_loader,
             load_anim_rotation,
         );
@@ -102,20 +103,18 @@ fn draw_thumbnail<'a: 'b, 'b>(
     id: entry::Id,
     thumb_size: u32,
     sprite: &mut Sprite<'b>,
-    font: &Font,
-    error_texture: &'a Texture,
-    loading_texture: &'a Texture,
+    res: &'a Resources,
     thumbnail_loader: &mut ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
     let (has_img, texture) = get_tex_for_entry(
         thumbnail_cache,
         id,
-        error_texture,
+        &res.error_texture,
         db,
         thumbnail_loader,
         thumb_size,
-        loading_texture,
+        &res.loading_texture,
     );
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
@@ -140,7 +139,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
     if show_filename {
         if let Some(file_name) = db.entries[&id].path.file_name().map(|e| e.to_str()) {
-            let mut text = Text::new(file_name.unwrap(), font, 12);
+            let mut text = Text::new(file_name.unwrap(), &res.font, 12);
             text.set_position(fname_pos);
             window.draw_text(&text, &RenderStates::DEFAULT);
         }

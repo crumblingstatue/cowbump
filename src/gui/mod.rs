@@ -8,9 +8,10 @@ use crate::{
     filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
 };
-use std::{collections::BTreeMap, error::Error};
+use std::collections::BTreeMap;
 
 use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
+use anyhow::Context;
 use arboard::Clipboard;
 use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
@@ -24,7 +25,7 @@ use sfml::{
 };
 use std::path::Path;
 
-pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
+pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
         VideoMode::desktop_mode(),
         "Cowbump",
@@ -33,6 +34,7 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     );
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
+    let res = Resources::load()?;
     let mut state = State::new(window.size().x, db);
     let mut on_screen_uids: Vec<entry::Id> = Vec::new();
     let mut selected_uids: Vec<entry::Id> = Default::default();
@@ -139,6 +141,7 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
         window.clear(Color::BLACK);
         entries_view::draw_thumbnails(
             &mut state,
+            &res,
             &mut window,
             db,
             &on_screen_uids,
@@ -165,6 +168,7 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
         }
         let mut tex_src = TexSrc {
             state: &mut state,
+            res: &res,
             db,
         };
         sf_egui.draw(&mut window, Some(&mut tex_src));
@@ -380,16 +384,36 @@ fn recalc_on_screen_items(
 
 type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;
 
+struct Resources {
+    loading_texture: SfBox<Texture>,
+    error_texture: SfBox<Texture>,
+    font: SfBox<Font>,
+}
+
+impl Resources {
+    pub fn load() -> anyhow::Result<Self> {
+        let mut loading_texture = Texture::new().context("failed to load loading texture")?;
+        let mut error_texture = Texture::new().context("failed to load error texture")?;
+        let font =
+            Font::from_memory(include_bytes!("../../Vera.ttf")).context("failed to load font")?;
+        loading_texture
+            .load_from_memory(include_bytes!("../../loading.png"), IntRect::default())?;
+        error_texture.load_from_memory(include_bytes!("../../error.png"), IntRect::default())?;
+        Ok(Self {
+            loading_texture,
+            error_texture,
+            font,
+        })
+    }
+}
+
 struct State {
     thumbnails_per_row: u8,
     y_offset: f32,
     thumbnail_size: u32,
     filter: FilterSpec,
-    loading_texture: SfBox<Texture>,
-    error_texture: SfBox<Texture>,
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
-    font: SfBox<Font>,
     search_edit: bool,
     search_string: String,
     search_spec: FilterSpec,
@@ -404,21 +428,22 @@ struct State {
     entries_view: EntriesView,
 }
 
-struct TexSrc<'state, 'db> {
+struct TexSrc<'state, 'res, 'db> {
     state: &'state mut State,
+    res: &'res Resources,
     db: &'db LocalDb,
 }
 
-impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
+impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
     fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
         let (_has, tex) = get_tex_for_entry(
             &self.state.thumbnail_cache,
             entry::Id(id),
-            &self.state.error_texture,
+            &self.res.error_texture,
             self.db,
             &mut self.state.thumbnail_loader,
             self.state.thumbnail_size,
-            &self.state.loading_texture,
+            &self.res.loading_texture,
         );
         (tex.size().x as f32, tex.size().y as f32, tex)
     }
@@ -451,14 +476,6 @@ impl State {
     fn new(window_width: u32, db: &LocalDb) -> Self {
         let thumbnails_per_row = 5;
         let thumbnail_size = window_width / thumbnails_per_row as u32;
-        let mut loading_texture = Texture::new().unwrap();
-        let mut error_texture = Texture::new().unwrap();
-        loading_texture
-            .load_from_memory(include_bytes!("../../loading.png"), IntRect::default())
-            .unwrap();
-        error_texture
-            .load_from_memory(include_bytes!("../../error.png"), IntRect::default())
-            .unwrap();
         let mut egui_state = EguiState::default();
         egui_state.top_bar = true;
         Self {
@@ -466,11 +483,8 @@ impl State {
             y_offset: 0.0,
             thumbnail_size,
             filter: FilterSpec::default(),
-            loading_texture,
-            error_texture,
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
-            font: Font::from_memory(include_bytes!("../../Vera.ttf")).unwrap(),
             search_edit: false,
             search_string: String::new(),
             search_cursor: 0,
