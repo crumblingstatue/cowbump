@@ -1,4 +1,3 @@
-mod debug;
 mod egui_ui;
 mod thumbnail_loader;
 
@@ -119,7 +118,6 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
                             }
                         }
                         Key::F1 => state.egui_state.top_bar ^= true,
-                        Key::F12 => debug::toggle(),
                         _ => {}
                     }
                 }
@@ -198,7 +196,6 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
             db,
         };
         sf_egui.draw(&mut window, Some(&mut tex_src));
-        debug::draw(&mut window, &state.font);
         window.display();
         load_anim_rotation += 2.0;
     }
