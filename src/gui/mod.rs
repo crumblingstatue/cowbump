@@ -1,4 +1,5 @@
 mod egui_ui;
+mod entries_view;
 mod thumbnail_loader;
 
 use crate::{
@@ -9,49 +10,19 @@ use crate::{
 };
 use std::{collections::BTreeMap, error::Error};
 
-use self::{egui_ui::Action, thumbnail_loader::ThumbnailLoader};
+use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
 use arboard::Clipboard;
 use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
 use sfml::{
     graphics::{
-        Color, Font, IntRect, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow,
-        Shape, Sprite, Text, Texture, Transformable,
+        Color, Font, IntRect, RectangleShape, RenderTarget, RenderWindow, Shape, Texture,
+        Transformable,
     },
-    system::Vector2f,
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
 use std::path::Path;
-
-struct EntriesView {
-    uids: Vec<entry::Id>,
-}
-
-impl EntriesView {
-    pub fn from_db(db: &LocalDb) -> Self {
-        let uids: Vec<entry::Id> = db.entries.keys().cloned().collect();
-        let mut this = Self { uids };
-        this.sort(db);
-        this
-    }
-    pub fn sort(&mut self, db: &LocalDb) {
-        self.uids.sort_by_key(|uid| &db.entries[uid].path);
-    }
-    pub fn filter<'a>(
-        &'a self,
-        db: &'a LocalDb,
-        spec: &'a FilterSpec,
-    ) -> impl Iterator<Item = entry::Id> + 'a {
-        self.uids
-            .iter()
-            .filter_map(|uid| crate::entry::filter_map(*uid, &db.entries[uid], spec))
-    }
-    /// Delete `uid` from the list.
-    pub fn delete(&mut self, uid: entry::Id) {
-        self.uids.retain(|&rhs| uid != rhs);
-    }
-}
 
 pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     let mut window = RenderWindow::new(
@@ -166,7 +137,8 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
             window.size().y,
         );
         window.clear(Color::BLACK);
-        state.draw_thumbnails(
+        entries_view::draw_thumbnails(
+            &mut state,
             &mut window,
             db,
             &on_screen_uids,
@@ -454,6 +426,29 @@ impl<'state, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'db> {
     }
 }
 
+fn get_tex_for_entry<'t>(
+    thumbnail_cache: &'t ThumbnailCache,
+    id: entry::Id,
+    error_texture: &'t Texture,
+    db: &LocalDb,
+    thumbnail_loader: &mut ThumbnailLoader,
+    thumb_size: u32,
+    loading_texture: &'t Texture,
+) -> (bool, &'t Texture) {
+    let (has_img, texture) = match thumbnail_cache.get(&id) {
+        Some(opt_texture) => match *opt_texture {
+            Some(ref tex) => (true, tex as &Texture),
+            None => (false, error_texture),
+        },
+        None => {
+            let entry = &db.entries[&id];
+            thumbnail_loader.request(&entry.path, thumb_size, id);
+            (false, loading_texture)
+        }
+    };
+    (has_img, texture)
+}
+
 impl State {
     fn new(window_width: u32, db: &LocalDb) -> Self {
         let thumbnails_per_row = 5;
@@ -492,57 +487,6 @@ impl State {
             search_spec: FilterSpec::default(),
         }
     }
-    fn draw_thumbnails(
-        &mut self,
-        window: &mut RenderWindow,
-        db: &LocalDb,
-        uids: &[entry::Id],
-        selected_uids: &[entry::Id],
-        load_anim_rotation: f32,
-        pointer_active: bool,
-    ) {
-        let mouse_pos = window.mouse_position();
-        let thumb_size = self.thumbnail_size;
-        self.thumbnail_loader
-            .write_to_cache(&mut self.thumbnail_cache);
-        let mut sprite = Sprite::new();
-        for (i, &uid) in uids.iter().enumerate() {
-            let column = (i as u32) % self.thumbnails_per_row as u32;
-            let row = (i as u32) / self.thumbnails_per_row as u32;
-            let x = (column * thumb_size) as f32;
-            let y = (row * thumb_size) as f32 - (self.y_offset % thumb_size as f32);
-            let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
-            let mouse_over =
-                image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
-            if selected_uids.contains(&uid) {
-                sprite.set_color(Color::GREEN);
-            } else {
-                sprite.set_color(Color::WHITE);
-            }
-            draw_thumbnail(
-                &self.thumbnail_cache,
-                db,
-                window,
-                x,
-                y,
-                uid,
-                thumb_size,
-                &mut sprite,
-                &self.font,
-                &self.error_texture,
-                &self.loading_texture,
-                &mut self.thumbnail_loader,
-                load_anim_rotation,
-            );
-            if mouse_over && pointer_active {
-                let mut rs = RectangleShape::from_rect(image_rect);
-                rs.set_fill_color(Color::rgba(225, 225, 200, 48));
-                rs.set_outline_color(Color::rgb(200, 200, 0));
-                rs.set_outline_thickness(-2.0);
-                window.draw(&rs);
-            }
-        }
-    }
     fn wipe_search(&mut self) {
         self.search_cursor = 0;
         self.search_edit = false;
@@ -553,84 +497,6 @@ impl State {
         self.just_closed_window_with_esc = false;
         self.egui_state.begin_frame();
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-fn draw_thumbnail<'a: 'b, 'b>(
-    thumbnail_cache: &'a ThumbnailCache,
-    db: &LocalDb,
-    window: &mut RenderWindow,
-    x: f32,
-    y: f32,
-    id: entry::Id,
-    thumb_size: u32,
-    sprite: &mut Sprite<'b>,
-    font: &Font,
-    error_texture: &'a Texture,
-    loading_texture: &'a Texture,
-    thumbnail_loader: &mut ThumbnailLoader,
-    load_anim_rotation: f32,
-) {
-    let (has_img, texture) = get_tex_for_entry(
-        thumbnail_cache,
-        id,
-        error_texture,
-        db,
-        thumbnail_loader,
-        thumb_size,
-        loading_texture,
-    );
-    sprite.set_texture(texture, true);
-    sprite.set_position((x, y));
-    if thumbnail_loader.busy_with().contains(&id) {
-        sprite.set_origin((27.0, 6.0));
-        sprite.move_((48.0, 48.0));
-        sprite.set_rotation(load_anim_rotation);
-    } else {
-        sprite.set_rotation(0.0);
-        sprite.set_origin((0.0, 0.0));
-    }
-    window.draw_sprite(sprite, &RenderStates::DEFAULT);
-    let mut show_filename = !has_img;
-    let fname_pos = (x, y + 64.0);
-    if Key::LALT.is_pressed() {
-        show_filename = true;
-        let mut rect = RectangleShape::new();
-        rect.set_fill_color(Color::rgba(0, 0, 0, 128));
-        rect.set_size((380., 24.));
-        rect.set_position(fname_pos);
-        window.draw(&rect);
-    }
-    if show_filename {
-        if let Some(file_name) = db.entries[&id].path.file_name().map(|e| e.to_str()) {
-            let mut text = Text::new(file_name.unwrap(), font, 12);
-            text.set_position(fname_pos);
-            window.draw_text(&text, &RenderStates::DEFAULT);
-        }
-    }
-}
-
-fn get_tex_for_entry<'t>(
-    thumbnail_cache: &'t ThumbnailCache,
-    id: entry::Id,
-    error_texture: &'t Texture,
-    db: &LocalDb,
-    thumbnail_loader: &mut ThumbnailLoader,
-    thumb_size: u32,
-    loading_texture: &'t Texture,
-) -> (bool, &'t Texture) {
-    let (has_img, texture) = match thumbnail_cache.get(&id) {
-        Some(opt_texture) => match *opt_texture {
-            Some(ref tex) => (true, tex as &Texture),
-            None => (false, error_texture),
-        },
-        None => {
-            let entry = &db.entries[&id];
-            thumbnail_loader.request(&entry.path, thumb_size, id);
-            (false, loading_texture)
-        }
-    };
-    (has_img, texture)
 }
 
 fn open_with_external(paths: &[&Path]) {
