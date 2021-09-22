@@ -71,17 +71,9 @@ impl LocalDb {
         });
         Ok(())
     }
-    /// Add a tag for an entry.
-    ///
-    /// Returns whether the entry already had the tag, so it didn't need to be added.
-    pub fn add_tag_for(&mut self, entry: Uid, tag: Uid) -> bool {
+    pub fn add_tag_for(&mut self, entry: Uid, tag: Uid) {
         let tags = &mut self.entries.get_mut(&entry).unwrap().tags;
-        if !tags.contains(&tag) {
-            tags.push(tag);
-            false
-        } else {
-            true
-        }
+        tags.insert(tag);
     }
     pub fn add_tag_for_multi(&mut self, images: &[Uid], tag: Uid) {
         for img in images {
@@ -96,7 +88,7 @@ impl LocalDb {
     pub(crate) fn add_new_tag_from_text(&mut self, tag_text: String) -> Uid {
         self.add_new_tag(Tag {
             names: vec![tag_text],
-            implies: Vec::new(),
+            implies: Default::default(),
         })
     }
     pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = Uid> + 'a {

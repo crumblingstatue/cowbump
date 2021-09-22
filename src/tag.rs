@@ -1,4 +1,4 @@
-use crate::db::Uid;
+use crate::db::UidSet;
 use serde_derive::{Deserialize, Serialize};
 
 /// An identifiable quality that entries can be tagged by.
@@ -12,5 +12,5 @@ pub struct Tag {
     /// Tags that this tag implies.
     ///
     /// For example, `elephant` might imply `pachyderm` and `animal`.
-    pub implies: Vec<Uid>,
+    pub implies: UidSet,
 }

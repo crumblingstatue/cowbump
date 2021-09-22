@@ -1,4 +1,7 @@
-use crate::{db::Uid, filter_spec::FilterSpec};
+use crate::{
+    db::{Uid, UidSet},
+    filter_spec::FilterSpec,
+};
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -7,7 +10,7 @@ use std::path::PathBuf;
 pub struct Entry {
     /// Absolute path of the image
     pub path: PathBuf,
-    pub tags: Vec<Uid>,
+    pub tags: UidSet,
 }
 
 impl Entry {

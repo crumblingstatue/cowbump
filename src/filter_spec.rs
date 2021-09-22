@@ -1,13 +1,13 @@
 use crate::db::{
     local::{LocalDb, Tags},
-    Uid,
+    Uid, UidSet, UidSetExt,
 };
 use thiserror::Error;
 
 #[derive(Default)]
 pub struct FilterSpec {
-    pub has_tags: Vec<Uid>,
-    pub doesnt_have_tags: Vec<Uid>,
+    pub has_tags: UidSet,
+    pub doesnt_have_tags: UidSet,
     pub filename_substring: String,
     pub doesnt_have_any_tags: bool,
 }
@@ -28,8 +28,8 @@ impl FilterSpec {
         db: &LocalDb,
     ) -> Result<Self, ParseResolveError<'a>> {
         let words = string.split_whitespace();
-        let mut tags = Vec::new();
-        let mut neg_tags = Vec::new();
+        let mut tags = UidSet::default();
+        let mut neg_tags = UidSet::default();
         let mut fstring = String::new();
         let mut doesnt_have_any_tags = false;
         for word in words {
@@ -64,9 +64,9 @@ impl FilterSpec {
                     None => return Err(ParseResolveError::NoSuchTag(tag_name)),
                 };
                 if !neg {
-                    tags.push(tag_id);
+                    tags.insert(tag_id);
                 } else {
-                    neg_tags.push(tag_id)
+                    neg_tags.insert(tag_id);
                 }
             }
         }
@@ -98,47 +98,18 @@ impl FilterSpec {
         }
     }
     pub fn toggle_has(&mut self, uid: Uid) {
-        toggle_vec_elem(&mut self.has_tags, uid);
+        self.has_tags.toggle(uid);
     }
     pub fn set_has(&mut self, uid: Uid, set: bool) {
-        set_vec_elem(&mut self.has_tags, uid, set);
+        self.has_tags.toggle_by(uid, set);
     }
     pub fn toggle_doesnt_have(&mut self, uid: Uid) {
-        toggle_vec_elem(&mut self.doesnt_have_tags, uid);
+        self.doesnt_have_tags.toggle(uid);
     }
     pub fn set_doesnt_have(&mut self, uid: Uid, set: bool) {
-        set_vec_elem(&mut self.doesnt_have_tags, uid, set);
+        self.doesnt_have_tags.toggle_by(uid, set);
     }
     pub fn clear(&mut self) {
         *self = Self::default();
-    }
-}
-
-fn toggle_vec_elem(vec: &mut Vec<Uid>, uid: Uid) {
-    if !remove_vec_elem(vec, uid) {
-        insert_vec_elem(vec, uid);
-    }
-}
-
-fn set_vec_elem(vec: &mut Vec<Uid>, uid: Uid, set: bool) {
-    if set {
-        insert_vec_elem(vec, uid);
-    } else {
-        remove_vec_elem(vec, uid);
-    }
-}
-
-fn remove_vec_elem(vec: &mut Vec<Uid>, uid: Uid) -> bool {
-    if let Some(pos) = vec.iter().position(|uid2| *uid2 == uid) {
-        vec.remove(pos);
-        true
-    } else {
-        false
-    }
-}
-
-fn insert_vec_elem(vec: &mut Vec<Uid>, uid: Uid) {
-    if !vec.contains(&uid) {
-        vec.push(uid);
     }
 }

@@ -11,3 +11,21 @@ pub type Uid = u64;
 pub type UidSet = FnvHashSet<Uid>;
 pub type UidMap<T> = FnvHashMap<Uid, T>;
 pub type UidMapEntry<'a, T> = Entry<'a, Uid, T>;
+
+pub trait UidSetExt {
+    fn toggle(&mut self, uid: Uid);
+    fn toggle_by(&mut self, uid: Uid, on: bool);
+}
+
+impl UidSetExt for UidSet {
+    fn toggle(&mut self, uid: Uid) {
+        self.toggle_by(uid, !self.contains(&uid))
+    }
+    fn toggle_by(&mut self, uid: Uid, on: bool) {
+        if on {
+            self.insert(uid);
+        } else {
+            self.remove(&uid);
+        }
+    }
+}
