@@ -3,7 +3,7 @@ mod egui_ui;
 mod thumbnail_loader;
 
 use crate::{
-    db::{local::LocalDb, Uid, UidMap},
+    db::{local::LocalDb, Uid, UidMap, UidSet},
     gui::egui_ui::EguiState,
     FilterSpec,
 };
@@ -22,7 +22,7 @@ use sfml::{
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
-use std::{collections::BTreeSet, path::Path};
+use std::path::Path;
 
 struct EntriesView {
     uids: Vec<Uid>,
@@ -204,8 +204,8 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn common_tags(ids: &[Uid], db: &LocalDb) -> BTreeSet<Uid> {
-    let mut set = BTreeSet::new();
+fn common_tags(ids: &[Uid], db: &LocalDb) -> UidSet {
+    let mut set = UidSet::default();
     for &id in ids {
         for &tagid in &db.entries[&id].tags {
             set.insert(tagid);
