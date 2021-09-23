@@ -79,8 +79,13 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
 
 pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
     let seq_win = &mut state.egui_state.sequences_window;
-    let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
     if seq_win.on {
+        let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
+        let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
+        if esc_pressed {
+            seq_win.on = false;
+            state.egui_state.just_closed_window_with_esc = true;
+        }
         Window::new("Sequences").show(egui_ctx, |ui| {
             if ui.button("+").clicked() {
                 seq_win.add_new ^= true;
