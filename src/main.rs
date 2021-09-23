@@ -1,5 +1,3 @@
-#![feature(decl_macro)]
-
 mod db;
 mod entry;
 mod filter_spec;
