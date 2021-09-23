@@ -80,7 +80,7 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
                 egui::menu::menu(ui, "Windows", |ui| {
                     ui.separator();
                     if ui.button("Tag list (T)").clicked() {
-                        state.egui_state.tag_window.on ^= true;
+                        state.egui_state.tag_window.toggle();
                     }
                     if ui.button("Sequences (Q)").clicked() {
                         state.egui_state.sequences_window.on ^= true;

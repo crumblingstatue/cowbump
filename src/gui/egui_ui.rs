@@ -4,7 +4,7 @@ mod tag_list;
 mod top_bar;
 
 use crate::{
-    db::{local::LocalDb, TagSet},
+    db::local::LocalDb,
     entry,
     filter_spec::FilterSpec,
     gui::{search_goto_cursor, State},
@@ -16,6 +16,7 @@ use retain_mut::RetainMut;
 use self::{
     entries_window::EntriesWindow,
     sequences::{SequenceWindow, SequencesWindow},
+    tag_list::TagWindow,
 };
 
 #[derive(Default)]
@@ -23,20 +24,13 @@ pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,
     pub sequences_window: SequencesWindow,
     sequence_windows: Vec<SequenceWindow>,
-    tag_window: TagWindow,
+    pub tag_window: TagWindow,
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
     info_messages: Vec<InfoMessage>,
     prompts: Vec<Prompt>,
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
-}
-
-#[derive(Default)]
-struct TagWindow {
-    on: bool,
-    filter_string: String,
-    selected_uids: TagSet,
 }
 
 struct Prompt {
@@ -106,9 +100,6 @@ impl EguiState {
     pub fn begin_frame(&mut self) {
         self.just_closed_window_with_esc = false;
         self.action = None;
-    }
-    pub fn toggle_tag_window(&mut self) {
-        self.tag_window.on ^= true;
     }
 }
 

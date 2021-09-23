@@ -1,13 +1,26 @@
 use egui::{Button, Color32, CtxRef, Grid, Key, ScrollArea, TextEdit};
 
 use crate::{
-    db::local::LocalDb,
+    db::{local::LocalDb, TagSet},
     gui::{
         egui_ui::{prompt, PromptAction},
         State,
     },
     tag,
 };
+
+#[derive(Default)]
+pub struct TagWindow {
+    on: bool,
+    filter_string: String,
+    selected_uids: TagSet,
+}
+
+impl TagWindow {
+    pub fn toggle(&mut self) {
+        self.on ^= true;
+    }
+}
 
 pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
     if state.egui_state.tag_window.on {

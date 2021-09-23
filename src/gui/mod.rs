@@ -297,7 +297,7 @@ fn handle_event_viewer(
                     eprintln!("Error setting clipboard: {}", e);
                 }
             } else if code == Key::T {
-                state.egui_state.toggle_tag_window();
+                state.egui_state.tag_window.toggle();
             } else if code == Key::Q {
                 state.egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
