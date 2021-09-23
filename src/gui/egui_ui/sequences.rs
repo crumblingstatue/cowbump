@@ -171,7 +171,9 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                     }
                 });
                 if seq_win.add_new {
-                    let re = ui.text_edit_singleline(&mut seq_win.add_new_buffer);
+                    let line_edit =
+                        TextEdit::singleline(&mut seq_win.add_new_buffer).hint_text("Name");
+                    let re = ui.add(line_edit);
                     if focus {
                         re.request_focus();
                     }
@@ -186,6 +188,7 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                 }
                 ui.separator();
                 ScrollArea::vertical().show(ui, |ui| {
+                    let mut retain = true;
                     db.sequences.retain(|&uid, seq| {
                         if !seq
                             .name
@@ -194,13 +197,17 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                         {
                             return true;
                         }
-                        if seq_win.pick_mode {
-                            if ui.button(&seq.name).clicked() {
+                        ui.horizontal(|ui| {
+                            ui.heading(&seq.name);
+                            if seq_win.pick_mode && ui.button("✚ Add to this").clicked() {
                                 seq_win.pick_result = Some(uid);
                             }
-                        } else {
-                            ui.heading(&seq.name);
-                        }
+                            let del_butt =
+                                Button::new("🗑 Delete").fill(Color32::from_rgb(130, 14, 14));
+                            if ui.add(del_butt).clicked() {
+                                retain = false;
+                            }
+                        });
                         // Display the first 7 images of the sequence
                         ui.horizontal(|ui| {
                             for en in seq.entries.iter().take(7) {
@@ -213,7 +220,7 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                                 }
                             }
                         });
-                        true
+                        retain
                     });
                 });
             });
