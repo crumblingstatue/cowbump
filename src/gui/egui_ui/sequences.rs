@@ -1,4 +1,9 @@
-use egui::{Align, CtxRef, ImageButton, Key, TextureId, Window};
+use std::borrow::Cow;
+
+use egui::{
+    Align, Button, Color32, CtxRef, DragValue, ImageButton, Key, ScrollArea, TextEdit, TextureId,
+    Window,
+};
 use retain_mut::RetainMut;
 
 use crate::{
@@ -16,6 +21,9 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
         enum Action {
             SwapLeft,
             SwapRight,
+            SwapFirst,
+            SwapLast,
+            SwapAt(usize),
             Remove,
             Open,
         }
@@ -30,8 +38,11 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
                     let seq_entries_len = seq.entries.len();
                     for (i, &img_uid) in seq.entries.iter().enumerate() {
                         ui.vertical(|ui| {
-                            let img_butt =
+                            let mut img_butt =
                                 ImageButton::new(TextureId::User(img_uid.0), (256., 256.));
+                            if win.focus_req == Some(img_uid) {
+                                img_butt = img_butt.tint(Color32::YELLOW);
+                            }
                             let re = ui.add(img_butt);
                             if win.focus_req == Some(img_uid) {
                                 re.scroll_to_me(Align::Center);
@@ -41,18 +52,56 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
                                 action = Action::Open;
                                 subject = Some(img_uid);
                             }
+                            ui.label(
+                                db.entries[&img_uid]
+                                    .path
+                                    .file_name()
+                                    .map(|f| f.to_string_lossy())
+                                    .unwrap_or(Cow::Borrowed("<filename>"))
+                                    .as_ref(),
+                            );
                             ui.horizontal(|ui| {
-                                if i > 0 && ui.button("<").clicked() {
+                                let mut pos = i;
+                                let dv =
+                                    DragValue::new(&mut pos).clamp_range(0..=seq.entries.len() - 1);
+                                if ui.add(dv).changed() && egui_ctx.input().key_pressed(Key::Enter)
+                                {
+                                    action = Action::SwapAt(pos);
+                                    subject = Some(img_uid);
+                                    win.focus_req = subject;
+                                }
+                                let button = Button::new("⏮").enabled(i > 0);
+                                if ui.add(button).clicked() {
+                                    action = Action::SwapFirst;
+                                    subject = Some(img_uid);
+                                    win.focus_req = subject;
+                                }
+                                let button = Button::new("⏴").enabled(i > 0);
+                                if ui.add(button).clicked() {
                                     action = Action::SwapLeft;
                                     subject = Some(img_uid);
+                                    win.focus_req = subject;
                                 }
-                                if ui.button("-").clicked() {
+                                if ui
+                                    .button("🗑")
+                                    .on_hover_text("remove from sequence")
+                                    .clicked()
+                                {
                                     action = Action::Remove;
                                     subject = Some(img_uid);
+                                    win.focus_req = subject;
                                 }
-                                if i < seq_entries_len - 1 && ui.button(">").clicked() {
+                                let button = Button::new("⏵").enabled(i < seq_entries_len - 1);
+                                if ui.add(button).clicked() {
                                     action = Action::SwapRight;
                                     subject = Some(img_uid);
+                                    win.focus_req = subject;
+                                }
+                                let button = Button::new("⏭").enabled(i < seq_entries_len - 1);
+                                if ui.add(button).clicked() {
+                                    action = Action::SwapLast;
+                                    subject = Some(img_uid);
+                                    win.focus_req = subject;
                                 }
                             });
                         });
@@ -66,6 +115,15 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
                 }
                 Action::SwapRight => {
                     seq.swap_entry_right(uid);
+                }
+                Action::SwapFirst => {
+                    seq.reinsert_first(uid);
+                }
+                Action::SwapLast => {
+                    seq.reinsert_last(uid);
+                }
+                Action::SwapAt(pos) => {
+                    seq.reinsert_at(uid, pos);
                 }
                 Action::Remove => {
                     seq.remove_entry(uid);
@@ -94,46 +152,69 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
         }
         Window::new("Sequences")
             .open(&mut seq_win.on)
-            .vscroll(true)
             .show(egui_ctx, |ui| {
                 let mut focus = false;
-                if ui.button("+").clicked() {
-                    seq_win.add_new ^= true;
-                    focus = true;
-                }
+                ui.horizontal(|ui| {
+                    let te = TextEdit::singleline(&mut seq_win.filter_string).hint_text("Filter");
+                    ui.add(te);
+                    if ui.button("🗙").clicked() {
+                        seq_win.filter_string.clear();
+                    }
+                    let txt = if seq_win.pick_mode {
+                        "✚ Add to new"
+                    } else {
+                        "✚ Add new"
+                    };
+                    if ui.button(txt).clicked() {
+                        seq_win.add_new ^= true;
+                        focus = true;
+                    }
+                });
                 if seq_win.add_new {
                     let re = ui.text_edit_singleline(&mut seq_win.add_new_buffer);
                     if focus {
                         re.request_focus();
                     }
                     if enter_pressed {
-                        db.add_new_sequence(&seq_win.add_new_buffer);
+                        let id = db.add_new_sequence(&seq_win.add_new_buffer);
+                        if seq_win.pick_mode {
+                            seq_win.pick_result = Some(id);
+                        }
                         seq_win.add_new_buffer.clear();
                         seq_win.add_new = false;
                     }
                 }
                 ui.separator();
-                db.sequences.retain(|&uid, seq| {
-                    if seq_win.pick_mode {
-                        if ui.button(&seq.name).clicked() {
-                            seq_win.pick_result = Some(uid);
+                ScrollArea::vertical().show(ui, |ui| {
+                    db.sequences.retain(|&uid, seq| {
+                        if !seq
+                            .name
+                            .to_lowercase()
+                            .contains(&seq_win.filter_string.to_lowercase())
+                        {
+                            return true;
                         }
-                    } else {
-                        ui.heading(&seq.name);
-                    }
-                    // Display the first 7 images of the sequence
-                    ui.horizontal(|ui| {
-                        for en in seq.entries.iter().take(7) {
-                            let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
-                            if ui.add(but).clicked() {
-                                state
-                                    .egui_state
-                                    .sequence_windows
-                                    .push(SequenceWindow::new(uid, *en));
+                        if seq_win.pick_mode {
+                            if ui.button(&seq.name).clicked() {
+                                seq_win.pick_result = Some(uid);
                             }
+                        } else {
+                            ui.heading(&seq.name);
                         }
+                        // Display the first 7 images of the sequence
+                        ui.horizontal(|ui| {
+                            for en in seq.entries.iter().take(7) {
+                                let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
+                                if ui.add(but).clicked() {
+                                    state
+                                        .egui_state
+                                        .sequence_windows
+                                        .push(SequenceWindow::new(uid, *en));
+                                }
+                            }
+                        });
+                        true
                     });
-                    true
                 });
             });
     }
@@ -161,4 +242,5 @@ pub struct SequencesWindow {
     /// When this is on, we can pick out a sequence and return its id
     pub pick_mode: bool,
     pub pick_result: Option<sequence::Id>,
+    filter_string: String,
 }

@@ -152,9 +152,10 @@ impl LocalDb {
         });
     }
 
-    pub(crate) fn add_new_sequence(&mut self, name: &str) {
+    pub(crate) fn add_new_sequence(&mut self, name: &str) -> sequence::Id {
         let uid = sequence::Id(self.new_uid());
         self.sequences.insert(uid, Sequence::new_with_name(name));
+        uid
     }
 
     pub(crate) fn add_entries_to_sequence(&mut self, seq: sequence::Id, entries: &[entry::Id]) {

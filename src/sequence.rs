@@ -18,7 +18,21 @@ impl Sequence {
             ..Default::default()
         }
     }
-
+    pub(crate) fn reinsert_first(&mut self, id: entry::Id) {
+        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
+        self.entries.remove(pos);
+        self.entries.insert(0, id);
+    }
+    pub(crate) fn reinsert_last(&mut self, id: entry::Id) {
+        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
+        self.entries.remove(pos);
+        self.entries.push(id);
+    }
+    pub(crate) fn reinsert_at(&mut self, id: entry::Id, at: usize) {
+        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
+        self.entries.remove(pos);
+        self.entries.insert(at, id);
+    }
     pub(crate) fn swap_entry_left(&mut self, id: entry::Id) {
         let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
         self.entries.swap(pos - 1, pos);

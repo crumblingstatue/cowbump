@@ -14,7 +14,7 @@ pub struct Entry {
     pub tags: TagSet,
 }
 
-#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct Id(pub Uid);
 
 impl Entry {
