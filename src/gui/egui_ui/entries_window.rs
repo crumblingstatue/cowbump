@@ -22,7 +22,6 @@ pub struct EntriesWindow {
     renaming: bool,
     delete_confirm: bool,
     custom_command_prompt: bool,
-    add_to_seq_prompt: bool,
     cmd_buffer: String,
     args_buffer: String,
     err_str: String,
@@ -231,19 +230,13 @@ pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::Ctx
                             });
                         }
                         if ui.button("Add to sequence").clicked() {
-                            win.add_to_seq_prompt ^= true;
+                            state.egui_state.sequences_window.on = true;
+                            state.egui_state.sequences_window.pick_mode = true;
                         }
-                        if win.add_to_seq_prompt {
-                            let mut add = None;
-                            for (&uid, seq) in &db.sequences {
-                                if ui.button(&seq.name).clicked() {
-                                    add = Some(uid);
-                                    break;
-                                }
-                            }
-                            if let Some(uid) = add {
-                                db.add_entries_to_sequence(uid, &win.ids);
-                            }
+                        if let Some(uid) = state.egui_state.sequences_window.pick_result {
+                            db.add_entries_to_sequence(uid, &win.ids);
+                            state.egui_state.sequences_window.pick_mode = false;
+                            state.egui_state.sequences_window.pick_result = None;
                         }
                         if ui
                             .add(Button::new("Run custom command").wrap(false))

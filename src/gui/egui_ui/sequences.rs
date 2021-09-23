@@ -114,7 +114,13 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                 }
                 ui.separator();
                 db.sequences.retain(|&uid, seq| {
-                    ui.heading(&seq.name);
+                    if seq_win.pick_mode {
+                        if ui.button(&seq.name).clicked() {
+                            seq_win.pick_result = Some(uid);
+                        }
+                    } else {
+                        ui.heading(&seq.name);
+                    }
                     // Display the first 7 images of the sequence
                     ui.horizontal(|ui| {
                         for en in seq.entries.iter().take(7) {
@@ -152,4 +158,7 @@ pub struct SequencesWindow {
     pub on: bool,
     add_new: bool,
     add_new_buffer: String,
+    /// When this is on, we can pick out a sequence and return its id
+    pub pick_mode: bool,
+    pub pick_result: Option<sequence::Id>,
 }
