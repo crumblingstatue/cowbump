@@ -169,6 +169,9 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                         seq_win.add_new ^= true;
                         focus = true;
                     }
+                    if seq_win.pick_mode && ui.button("🗙 Cancel").clicked() {
+                        seq_win.pick_mode = false;
+                    }
                 });
                 if seq_win.add_new {
                     let line_edit =
