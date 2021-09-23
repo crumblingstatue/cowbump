@@ -1,20 +1,21 @@
 mod entries_window;
+mod sequences;
 mod top_bar;
 
 use crate::{
     db::{local::LocalDb, TagSet},
     entry,
     filter_spec::FilterSpec,
-    gui::{open_with_external, search_goto_cursor, State},
-    sequence, tag,
+    gui::{search_goto_cursor, State},
+    tag,
 };
-use egui::{
-    Align2, Button, Color32, CtxRef, Grid, ImageButton, Key, ScrollArea, TextEdit, TextureId,
-    Window,
-};
+use egui::{Align2, Button, Color32, CtxRef, Grid, Key, ScrollArea, TextEdit, Window};
 use retain_mut::RetainMut;
 
-use self::entries_window::EntriesWindow;
+use self::{
+    entries_window::EntriesWindow,
+    sequences::{SequenceWindow, SequencesWindow},
+};
 
 #[derive(Default)]
 pub(crate) struct EguiState {
@@ -28,23 +29,6 @@ pub(crate) struct EguiState {
     prompts: Vec<Prompt>,
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
-}
-
-struct SequenceWindow {
-    uid: sequence::Id,
-}
-
-impl SequenceWindow {
-    fn new(uid: sequence::Id) -> Self {
-        Self { uid }
-    }
-}
-
-#[derive(Default)]
-pub struct SequencesWindow {
-    pub on: bool,
-    add_new: bool,
-    add_new_buffer: String,
 }
 
 #[derive(Default)]
@@ -148,109 +132,11 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut LocalDb
     do_search_edit(state, egui_ctx, db);
     do_filter_edit(state, egui_ctx, db);
     do_tag_window(state, db, egui_ctx);
-    do_sequences_window(state, db, egui_ctx);
-    do_sequence_windows(state, db, egui_ctx);
+    sequences::do_sequences_window(state, db, egui_ctx);
+    sequences::do_sequence_windows(state, db, egui_ctx);
     entries_window::do_frame(state, db, egui_ctx);
     do_info_messages(state, egui_ctx);
     do_prompts(state, egui_ctx, db);
-}
-
-fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
-    state.egui_state.sequence_windows.retain_mut(|win| {
-        let mut open = true;
-        let seq = db.sequences.get_mut(&win.uid).unwrap();
-        let name = &seq.name;
-        enum Action {
-            SwapLeft,
-            SwapRight,
-            Remove,
-            Open,
-        }
-        let mut action = Action::SwapLeft;
-        let mut subject = None;
-        Window::new(&format!("Sequence: {}", name))
-            .hscroll(true)
-            .min_width(3. * 256.)
-            .open(&mut open)
-            .show(egui_ctx, |ui| {
-                ui.horizontal(|ui| {
-                    let seq_entries_len = seq.entries.len();
-                    for (i, &img_uid) in seq.entries.iter().enumerate() {
-                        ui.vertical(|ui| {
-                            let img_butt =
-                                ImageButton::new(TextureId::User(img_uid.0), (256., 256.));
-                            if ui.add(img_butt).clicked() {
-                                action = Action::Open;
-                                subject = Some(img_uid);
-                            }
-                            ui.horizontal(|ui| {
-                                if i > 0 && ui.button("<").clicked() {
-                                    action = Action::SwapLeft;
-                                    subject = Some(img_uid);
-                                }
-                                if ui.button("-").clicked() {
-                                    action = Action::Remove;
-                                    subject = Some(img_uid);
-                                }
-                                if i < seq_entries_len - 1 && ui.button(">").clicked() {
-                                    action = Action::SwapRight;
-                                    subject = Some(img_uid);
-                                }
-                            });
-                        });
-                    }
-                });
-            });
-        if let Some(uid) = subject {
-            match action {
-                Action::SwapLeft => {
-                    seq.swap_entry_left(uid);
-                }
-                Action::SwapRight => {
-                    seq.swap_entry_right(uid);
-                }
-                Action::Remove => {
-                    seq.remove_entry(uid);
-                }
-                Action::Open => {
-                    let mut paths = Vec::new();
-                    for img_uid in seq.entry_uids_wrapped_from(uid) {
-                        paths.push(db.entries[&img_uid].path.as_ref());
-                    }
-                    open_with_external(&paths);
-                }
-            }
-        }
-        open
-    });
-}
-
-fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
-    let seq_win = &mut state.egui_state.sequences_window;
-    let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
-    if seq_win.on {
-        Window::new("Sequences").show(egui_ctx, |ui| {
-            if ui.button("+").clicked() {
-                seq_win.add_new ^= true;
-            }
-            if seq_win.add_new {
-                ui.text_edit_singleline(&mut seq_win.add_new_buffer);
-                if enter_pressed {
-                    db.add_new_sequence(&seq_win.add_new_buffer);
-                }
-            }
-            ui.separator();
-            db.sequences.retain(|&uid, seq| {
-                if ui.button(&seq.name).clicked() {
-                    state
-                        .egui_state
-                        .sequence_windows
-                        .push(SequenceWindow::new(uid));
-                }
-                true
-            });
-        });
-    }
 }
 
 fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {
