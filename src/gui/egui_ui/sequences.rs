@@ -86,27 +86,29 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
             seq_win.on = false;
             state.egui_state.just_closed_window_with_esc = true;
         }
-        Window::new("Sequences").show(egui_ctx, |ui| {
-            if ui.button("+").clicked() {
-                seq_win.add_new ^= true;
-            }
-            if seq_win.add_new {
-                ui.text_edit_singleline(&mut seq_win.add_new_buffer);
-                if enter_pressed {
-                    db.add_new_sequence(&seq_win.add_new_buffer);
+        Window::new("Sequences")
+            .open(&mut seq_win.on)
+            .show(egui_ctx, |ui| {
+                if ui.button("+").clicked() {
+                    seq_win.add_new ^= true;
                 }
-            }
-            ui.separator();
-            db.sequences.retain(|&uid, seq| {
-                if ui.button(&seq.name).clicked() {
-                    state
-                        .egui_state
-                        .sequence_windows
-                        .push(SequenceWindow::new(uid));
+                if seq_win.add_new {
+                    ui.text_edit_singleline(&mut seq_win.add_new_buffer);
+                    if enter_pressed {
+                        db.add_new_sequence(&seq_win.add_new_buffer);
+                    }
                 }
-                true
+                ui.separator();
+                db.sequences.retain(|&uid, seq| {
+                    if ui.button(&seq.name).clicked() {
+                        state
+                            .egui_state
+                            .sequence_windows
+                            .push(SequenceWindow::new(uid));
+                    }
+                    true
+                });
             });
-        });
     }
 }
 
