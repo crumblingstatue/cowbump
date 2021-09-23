@@ -164,6 +164,23 @@ impl LocalDb {
         sorted.sort_by_key(|id| &self.entries[id].path);
         self.sequences.get_mut(&seq).unwrap().entries.extend(sorted);
     }
+
+    pub(crate) fn find_related_sequences(&self, ids: &[entry::Id]) -> Vec<sequence::Id> {
+        self.sequences
+            .iter()
+            .filter_map(|(k, v)| {
+                if slice_contains_any_of(&v.entries, ids) {
+                    Some(*k)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
+fn slice_contains_any_of<T: PartialEq>(haystack: &[T], needles: &[T]) -> bool {
+    needles.iter().any(|needle| haystack.contains(needle))
 }
 
 fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: tag::Id) {

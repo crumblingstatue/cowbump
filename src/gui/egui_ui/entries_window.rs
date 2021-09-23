@@ -4,7 +4,7 @@ use std::{
     process::{Child, Command, ExitStatus, Stdio},
 };
 
-use egui::{Button, Color32, Key, Label, Rgba, TextureId};
+use egui::{Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
 use retain_mut::RetainMut;
 
 use crate::{
@@ -12,6 +12,8 @@ use crate::{
     entry,
     gui::{common_tags, entries_view::EntriesView, State},
 };
+
+use super::sequences::SequenceWindow;
 
 #[derive(Default)]
 pub struct EntriesWindow {
@@ -345,6 +347,30 @@ pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::Ctx
                         })
                     });
                 });
+                let seqs = db.find_related_sequences(&win.ids);
+                if !seqs.is_empty() {
+                    ui.separator();
+                    ui.heading("Related sequences");
+                    for seq_id in seqs {
+                        let seq = &db.sequences[&seq_id];
+                        ui.label(&seq.name);
+                        {}
+                        ui.horizontal(|ui| {
+                            ScrollArea::horizontal().show(ui, |ui| {
+                                for &img_id in seq.entries.iter() {
+                                    let img_but =
+                                        ImageButton::new(TextureId::User(img_id.0), (128., 128.));
+                                    if ui.add(img_but).clicked() {
+                                        state
+                                            .egui_state
+                                            .sequence_windows
+                                            .push(SequenceWindow::new(seq_id, Some(img_id)));
+                                    }
+                                }
+                            });
+                        });
+                    }
+                }
             });
         if close {
             state.egui_state.just_closed_window_with_esc = true;

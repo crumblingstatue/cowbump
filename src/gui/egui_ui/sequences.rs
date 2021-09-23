@@ -219,7 +219,7 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                                     state
                                         .egui_state
                                         .sequence_windows
-                                        .push(SequenceWindow::new(uid, *en));
+                                        .push(SequenceWindow::new(uid, Some(*en)));
                                 }
                             }
                         });
@@ -236,11 +236,8 @@ pub struct SequenceWindow {
 }
 
 impl SequenceWindow {
-    fn new(uid: sequence::Id, focus_req: entry::Id) -> Self {
-        Self {
-            uid,
-            focus_req: Some(focus_req),
-        }
+    pub fn new(uid: sequence::Id, focus_req: Option<entry::Id>) -> Self {
+        Self { uid, focus_req }
     }
 }
 
