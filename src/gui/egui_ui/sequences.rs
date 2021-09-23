@@ -89,13 +89,20 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
         Window::new("Sequences")
             .open(&mut seq_win.on)
             .show(egui_ctx, |ui| {
+                let mut focus = false;
                 if ui.button("+").clicked() {
                     seq_win.add_new ^= true;
+                    focus = true;
                 }
                 if seq_win.add_new {
-                    ui.text_edit_singleline(&mut seq_win.add_new_buffer);
+                    let re = ui.text_edit_singleline(&mut seq_win.add_new_buffer);
+                    if focus {
+                        re.request_focus();
+                    }
                     if enter_pressed {
                         db.add_new_sequence(&seq_win.add_new_buffer);
+                        seq_win.add_new_buffer.clear();
+                        seq_win.add_new = false;
                     }
                 }
                 ui.separator();
