@@ -159,11 +159,10 @@ impl LocalDb {
     }
 
     pub(crate) fn add_entries_to_sequence(&mut self, seq: sequence::Id, entries: &[entry::Id]) {
-        self.sequences
-            .get_mut(&seq)
-            .unwrap()
-            .entries
-            .extend(entries);
+        // Do a default filename based sorting before adding
+        let mut sorted = entries.to_owned();
+        sorted.sort_by_key(|id| &self.entries[id].path);
+        self.sequences.get_mut(&seq).unwrap().entries.extend(sorted);
     }
 }
 
