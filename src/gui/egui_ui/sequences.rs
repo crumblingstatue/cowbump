@@ -1,8 +1,9 @@
-use egui::{CtxRef, ImageButton, Key, TextureId, Window};
+use egui::{Align, CtxRef, ImageButton, Key, TextureId, Window};
 use retain_mut::RetainMut;
 
 use crate::{
     db::local::LocalDb,
+    entry,
     gui::{open_with_external, State},
     sequence,
 };
@@ -31,7 +32,12 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
                         ui.vertical(|ui| {
                             let img_butt =
                                 ImageButton::new(TextureId::User(img_uid.0), (256., 256.));
-                            if ui.add(img_butt).clicked() {
+                            let re = ui.add(img_butt);
+                            if win.focus_req == Some(img_uid) {
+                                re.scroll_to_me(Align::Center);
+                                win.focus_req = None;
+                            }
+                            if re.clicked() {
                                 action = Action::Open;
                                 subject = Some(img_uid);
                             }
@@ -88,6 +94,7 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
         }
         Window::new("Sequences")
             .open(&mut seq_win.on)
+            .vscroll(true)
             .show(egui_ctx, |ui| {
                 let mut focus = false;
                 if ui.button("+").clicked() {
@@ -107,12 +114,19 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                 }
                 ui.separator();
                 db.sequences.retain(|&uid, seq| {
-                    if ui.button(&seq.name).clicked() {
-                        state
-                            .egui_state
-                            .sequence_windows
-                            .push(SequenceWindow::new(uid));
-                    }
+                    ui.heading(&seq.name);
+                    // Display the first 7 images of the sequence
+                    ui.horizontal(|ui| {
+                        for en in seq.entries.iter().take(7) {
+                            let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
+                            if ui.add(but).clicked() {
+                                state
+                                    .egui_state
+                                    .sequence_windows
+                                    .push(SequenceWindow::new(uid, *en));
+                            }
+                        }
+                    });
                     true
                 });
             });
@@ -121,11 +135,15 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
 
 pub struct SequenceWindow {
     uid: sequence::Id,
+    focus_req: Option<entry::Id>,
 }
 
 impl SequenceWindow {
-    fn new(uid: sequence::Id) -> Self {
-        Self { uid }
+    fn new(uid: sequence::Id, focus_req: entry::Id) -> Self {
+        Self {
+            uid,
+            focus_req: Some(focus_req),
+        }
     }
 }
 
