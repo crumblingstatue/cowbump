@@ -138,8 +138,8 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw(&rect);
     }
     if show_filename {
-        if let Some(file_name) = db.entries[&id].path.file_name().map(|e| e.to_str()) {
-            let mut text = Text::new(file_name.unwrap(), &res.font, 12);
+        if let Some(path_string) = db.entries[&id].path.to_str() {
+            let mut text = Text::new(path_string, &res.font, 12);
             text.set_position(fname_pos);
             window.draw_text(&text, &RenderStates::DEFAULT);
         }

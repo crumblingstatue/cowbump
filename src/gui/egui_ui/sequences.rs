@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use egui::{
     Align, Button, Color32, CtxRef, DragValue, ImageButton, Key, ScrollArea, TextEdit, TextureId,
     Window,
@@ -52,14 +50,7 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
                                 action = Action::Open;
                                 subject = Some(img_uid);
                             }
-                            ui.label(
-                                db.entries[&img_uid]
-                                    .path
-                                    .file_name()
-                                    .map(|f| f.to_string_lossy())
-                                    .unwrap_or(Cow::Borrowed("<filename>"))
-                                    .as_ref(),
-                            );
+                            ui.label(db.entries[&img_uid].path.to_string_lossy().as_ref());
                             ui.horizontal(|ui| {
                                 let mut pos = i;
                                 let dv =

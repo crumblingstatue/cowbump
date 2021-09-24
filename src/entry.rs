@@ -27,8 +27,6 @@ impl Entry {
     pub fn spec_satisfied(&self, spec: &FilterSpec) -> bool {
         if !self
             .path
-            .file_name()
-            .unwrap()
             .to_string_lossy()
             .to_lowercase()
             .contains(&spec.filename_substring)

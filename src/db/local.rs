@@ -36,8 +36,8 @@ pub struct LocalDb {
 }
 
 impl LocalDb {
-    pub fn update_from_folder(&mut self, path: &Path) -> anyhow::Result<()> {
-        let wd = WalkDir::new(path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
+    pub fn update_from_folder(&mut self, folder: &Path) -> anyhow::Result<()> {
+        let wd = WalkDir::new(folder).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = EntrySet::default();
 
@@ -47,6 +47,13 @@ impl LocalDb {
                 continue;
             }
             let dir_entry_path = dir_entry.into_path();
+            let dir_entry_path = match dir_entry_path.strip_prefix(folder) {
+                Ok(stripped) => stripped,
+                Err(e) => {
+                    eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
+                    continue;
+                }
+            };
             let mut already_have = false;
             for (&uid, en) in &self.entries {
                 if en.path == dir_entry_path {
@@ -64,7 +71,8 @@ impl LocalDb {
                 eprintln!("Adding {}", dir_entry_path.display());
                 let uid = entry::Id(self.new_uid());
                 valid_uids.insert(uid);
-                self.entries.insert(uid, Entry::new(dir_entry_path));
+                self.entries
+                    .insert(uid, Entry::new(dir_entry_path.to_owned()));
             }
         }
         // Remove indices that don't correspond to valid entries

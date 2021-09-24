@@ -6,6 +6,8 @@ mod sequence;
 pub mod set_ext;
 mod tag;
 
+use anyhow::Context;
+
 use crate::db::local::LocalDb;
 use std::env;
 
@@ -18,7 +20,8 @@ fn main() -> anyhow::Result<()> {
         eprintln!("Error loading db: {}, creating new default db.", e);
         LocalDb::default()
     });
-    db.update_from_folder(&dir)?;
+    db.update_from_folder(&dir)
+        .with_context(|| format!("Failed to update database from folder '{}'", dir.display()))?;
     let mut no_save = false;
     gui::run(&mut db, &mut no_save)?;
     if !no_save {

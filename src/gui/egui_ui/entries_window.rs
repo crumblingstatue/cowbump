@@ -1,6 +1,5 @@
 use std::{
     io::Read,
-    path::Path,
     process::{Child, Command, ExitStatus, Stdio},
 };
 
@@ -60,22 +59,13 @@ impl EntriesWindow {
     }
 }
 
-fn get_filename_from_path(path: &Path) -> String {
-    path.components()
-        .last()
-        .unwrap()
-        .as_os_str()
-        .to_string_lossy()
-        .to_string()
-}
-
 pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef) {
     state.egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
         let title = {
             if win.ids.len() == 1 {
-                get_filename_from_path(&db.entries[&win.ids[0]].path)
+                db.entries[&win.ids[0]].path.to_string_lossy().into_owned()
             } else {
                 format!("{} entries", n_entries)
             }
