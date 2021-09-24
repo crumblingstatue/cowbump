@@ -13,6 +13,7 @@ use super::{
     get_tex_for_entry, thumbnail_loader::ThumbnailLoader, Resources, State, ThumbnailCache,
 };
 
+#[derive(Default)]
 pub struct EntriesView {
     uids: Vec<entry::Id>,
 }
@@ -111,7 +112,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         thumbnail_cache,
         id,
         &res.error_texture,
-        db,
+        Some(db),
         thumbnail_loader,
         thumb_size,
         &res.loading_texture,

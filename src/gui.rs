@@ -3,6 +3,7 @@ mod entries_view;
 mod thumbnail_loader;
 
 use crate::{
+    application::Application,
     db::{local::LocalDb, EntryMap, TagSet, Uid},
     entry,
     filter_spec::FilterSpec,
@@ -25,7 +26,7 @@ use sfml::{
 };
 use std::path::Path;
 
-pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
+pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
         VideoMode::desktop_mode(),
         "Cowbump",
@@ -35,7 +36,7 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
     let res = Resources::load()?;
-    let mut state = State::new(window.size().x, db);
+    let mut state = State::new(window.size().x);
     let mut on_screen_uids: Vec<entry::Id> = Vec::new();
     let mut selected_uids: Vec<entry::Id> = Default::default();
     let mut load_anim_rotation = 0.0;
@@ -79,15 +80,18 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
                             }
                         }
                         Key::END => {
-                            if !sf_egui.context().wants_keyboard_input() {
-                                // Align the bottom edge of the view with the bottom edge of the last row.
-                                // To do align the camera with a bottom edge, we need to subtract the screen
-                                // height from it.
-                                let bottom_align = |y: f32| y - window.size().y as f32;
-                                let n_pics = state.entries_view.filter(db, &state.filter).count();
-                                let rows = n_pics as u32 / state.thumbnails_per_row as u32;
-                                let bottom = (rows + 1) * state.thumbnail_size;
-                                state.y_offset = bottom_align(bottom as f32);
+                            if let Some(db) = &app.local_db {
+                                if !sf_egui.context().wants_keyboard_input() {
+                                    // Align the bottom edge of the view with the bottom edge of the last row.
+                                    // To do align the camera with a bottom edge, we need to subtract the screen
+                                    // height from it.
+                                    let bottom_align = |y: f32| y - window.size().y as f32;
+                                    let n_pics =
+                                        state.entries_view.filter(db, &state.filter).count();
+                                    let rows = n_pics as u32 / state.thumbnails_per_row as u32;
+                                    let bottom = (rows + 1) * state.thumbnail_size;
+                                    state.y_offset = bottom_align(bottom as f32);
+                                }
                             }
                         }
                         Key::F1 => state.egui_state.top_bar ^= true,
@@ -96,19 +100,21 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
                 }
                 _ => {}
             }
-            handle_event_viewer(
-                event,
-                &mut state,
-                &mut on_screen_uids,
-                db,
-                &mut selected_uids,
-                &window,
-                sf_egui.context(),
-            );
+            if let Some(db) = &mut app.local_db {
+                handle_event_viewer(
+                    event,
+                    &mut state,
+                    &mut on_screen_uids,
+                    db,
+                    &mut selected_uids,
+                    &window,
+                    sf_egui.context(),
+                );
+            }
         }
         state.begin_frame();
         sf_egui.do_frame(|ctx| {
-            egui_ui::do_ui(&mut state, ctx, db);
+            egui_ui::do_ui(&mut state, ctx, app);
         });
         if esc_pressed
             && !sf_egui.context().wants_keyboard_input()
@@ -121,34 +127,40 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
             match action {
                 Action::Quit => window.close(),
                 Action::QuitNoSave => {
-                    *no_save = true;
+                    app.no_save = true;
                     window.close();
                 }
-                Action::SearchNext => search_next(&mut state, db),
-                Action::SearchPrev => search_prev(&mut state, db),
-                Action::SelectAll => select_all(&mut selected_uids, &state, db),
+                Action::SearchNext => search_next(&mut state, app.local_db.as_mut().unwrap()),
+                Action::SearchPrev => search_prev(&mut state, app.local_db.as_mut().unwrap()),
+                Action::SelectAll => {
+                    select_all(&mut selected_uids, &state, app.local_db.as_mut().unwrap())
+                }
                 Action::SelectNone => selected_uids.clear(),
-                Action::SortEntries => state.entries_view.sort(db),
+                Action::SortEntries => state.entries_view.sort(app.local_db.as_mut().unwrap()),
             }
         }
-        recalc_on_screen_items(
-            &mut on_screen_uids,
-            db,
-            &state.entries_view,
-            &state,
-            window.size().y,
-        );
+        if let Some(db) = &app.local_db {
+            recalc_on_screen_items(
+                &mut on_screen_uids,
+                db,
+                &state.entries_view,
+                &state,
+                window.size().y,
+            );
+        }
         window.clear(Color::BLACK);
-        entries_view::draw_thumbnails(
-            &mut state,
-            &res,
-            &mut window,
-            db,
-            &on_screen_uids,
-            &selected_uids,
-            load_anim_rotation,
-            !sf_egui.context().wants_pointer_input(),
-        );
+        if let Some(db) = &app.local_db {
+            entries_view::draw_thumbnails(
+                &mut state,
+                &res,
+                &mut window,
+                db,
+                &on_screen_uids,
+                &selected_uids,
+                load_anim_rotation,
+                !sf_egui.context().wants_pointer_input(),
+            );
+        }
         if let Some(id) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
                 (state.thumbnail_size as f32, state.thumbnail_size as f32).into(),
@@ -169,11 +181,16 @@ pub fn run(db: &mut LocalDb, no_save: &mut bool) -> anyhow::Result<()> {
         let mut tex_src = TexSrc {
             state: &mut state,
             res: &res,
-            db,
+            db: app.local_db.as_ref(),
         };
         sf_egui.draw(&mut window, Some(&mut tex_src));
         window.display();
         load_anim_rotation += 2.0;
+    }
+    if !app.no_save {
+        if let Some(db) = &app.local_db {
+            db.save()?;
+        }
     }
     Ok(())
 }
@@ -430,7 +447,7 @@ struct State {
 struct TexSrc<'state, 'res, 'db> {
     state: &'state mut State,
     res: &'res Resources,
-    db: &'db LocalDb,
+    db: Option<&'db LocalDb>,
 }
 
 impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
@@ -452,7 +469,7 @@ fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
     error_texture: &'t Texture,
-    db: &LocalDb,
+    db: Option<&LocalDb>,
     thumbnail_loader: &mut ThumbnailLoader,
     thumb_size: u32,
     loading_texture: &'t Texture,
@@ -462,17 +479,20 @@ fn get_tex_for_entry<'t>(
             Some(ref tex) => (true, tex as &Texture),
             None => (false, error_texture),
         },
-        None => {
-            let entry = &db.entries[&id];
-            thumbnail_loader.request(&entry.path, thumb_size, id);
-            (false, loading_texture)
-        }
+        None => match db {
+            Some(db) => {
+                let entry = &db.entries[&id];
+                thumbnail_loader.request(&entry.path, thumb_size, id);
+                (false, loading_texture)
+            }
+            None => (false, error_texture),
+        },
     };
     (has_img, texture)
 }
 
 impl State {
-    fn new(window_width: u32, db: &LocalDb) -> Self {
+    fn new(window_width: u32) -> Self {
         let thumbnails_per_row = 5;
         let thumbnail_size = window_width / thumbnails_per_row as u32;
         let mut egui_state = EguiState::default();
@@ -493,7 +513,7 @@ impl State {
             filter_string: String::new(),
             clipboard_ctx: Clipboard::new().unwrap(),
             egui_state,
-            entries_view: EntriesView::from_db(db),
+            entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
         }
     }

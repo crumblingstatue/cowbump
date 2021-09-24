@@ -1,3 +1,4 @@
+mod application;
 mod db;
 mod entry;
 mod filter_spec;
@@ -6,26 +7,21 @@ mod sequence;
 pub mod set_ext;
 mod tag;
 
-use anyhow::Context;
+use rfd::MessageDialog;
 
-use crate::db::local::LocalDb;
-use std::env;
+use crate::application::Application;
 
-fn main() -> anyhow::Result<()> {
-    if !atty::is(atty::Stream::Stdout) {
-        return Ok(());
+fn try_main() -> anyhow::Result<()> {
+    let mut app = Application::new()?;
+    gui::run(&mut app)
+}
+
+fn main() {
+    if let Err(e) = try_main() {
+        MessageDialog::new()
+            .set_level(rfd::MessageLevel::Error)
+            .set_title("Error")
+            .set_description(&e.to_string())
+            .show();
     }
-    let dir = env::current_dir()?;
-    let mut db = LocalDb::load_from_fs().unwrap_or_else(|e| {
-        eprintln!("Error loading db: {}, creating new default db.", e);
-        LocalDb::default()
-    });
-    db.update_from_folder(&dir)
-        .with_context(|| format!("Failed to update database from folder '{}'", dir.display()))?;
-    let mut no_save = false;
-    gui::run(&mut db, &mut no_save)?;
-    if !no_save {
-        db.save_to_fs()?;
-    }
-    Ok(())
 }

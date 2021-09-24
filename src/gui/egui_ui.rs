@@ -4,6 +4,7 @@ mod tag_list;
 mod top_bar;
 
 use crate::{
+    application::Application,
     db::local::LocalDb,
     entry,
     filter_spec::FilterSpec,
@@ -119,16 +120,18 @@ struct InfoMessage {
     message: String,
 }
 
-pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, db: &mut LocalDb) {
-    top_bar::do_frame(state, egui_ctx, db);
-    do_search_edit(state, egui_ctx, db);
-    do_filter_edit(state, egui_ctx, db);
-    tag_list::do_frame(state, db, egui_ctx);
-    sequences::do_sequences_window(state, db, egui_ctx);
-    sequences::do_sequence_windows(state, db, egui_ctx);
-    entries_window::do_frame(state, db, egui_ctx);
-    do_info_messages(state, egui_ctx);
-    do_prompts(state, egui_ctx, db);
+pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, app: &mut Application) {
+    top_bar::do_frame(state, egui_ctx, app);
+    if let Some(db) = &mut app.local_db {
+        do_search_edit(state, egui_ctx, db);
+        do_filter_edit(state, egui_ctx, db);
+        tag_list::do_frame(state, db, egui_ctx);
+        sequences::do_sequences_window(state, db, egui_ctx);
+        sequences::do_sequence_windows(state, db, egui_ctx);
+        entries_window::do_frame(state, db, egui_ctx);
+        do_info_messages(state, egui_ctx);
+        do_prompts(state, egui_ctx, db);
+    }
 }
 
 fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {

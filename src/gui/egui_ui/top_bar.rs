@@ -1,30 +1,53 @@
 use egui::{CtxRef, TopBottomPanel};
+use rfd::{FileDialog, MessageDialog};
 
-use crate::{db::local::LocalDb, gui::State};
+use crate::{
+    application::Application,
+    gui::{entries_view::EntriesView, State},
+};
 
 use super::{info_message, prompt, Action, PromptAction};
 
-pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
+pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Application) {
     if state.egui_state.top_bar {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::menu::menu(ui, "File", |ui| {
                     ui.separator();
-                    if ui.button("Create database backup").clicked() {
-                        match db.save_backup() {
-                            Ok(_) => {
-                                info_message(
-                                    &mut state.egui_state.info_messages,
-                                    "Success",
-                                    "Backup successfully created.",
-                                );
+                    if ui.button("Load folder").clicked() {
+                        if let Some(dir_path) = FileDialog::new().pick_folder() {
+                            match app.load_folder(dir_path) {
+                                Ok(()) => {
+                                    state.entries_view =
+                                        EntriesView::from_db(app.local_db.as_ref().unwrap());
+                                }
+                                Err(e) => {
+                                    MessageDialog::new()
+                                        .set_title("Error")
+                                        .set_description(&e.to_string())
+                                        .show();
+                                }
                             }
-                            Err(e) => {
-                                info_message(
-                                    &mut state.egui_state.info_messages,
-                                    "Error",
-                                    &e.to_string(),
-                                );
+                        }
+                    }
+                    ui.separator();
+                    if let Some(db) = &app.local_db {
+                        if ui.button("Create database backup").clicked() {
+                            match db.save_backup() {
+                                Ok(_) => {
+                                    info_message(
+                                        &mut state.egui_state.info_messages,
+                                        "Success",
+                                        "Backup successfully created.",
+                                    );
+                                }
+                                Err(e) => {
+                                    info_message(
+                                        &mut state.egui_state.info_messages,
+                                        "Error",
+                                        &e.to_string(),
+                                    );
+                                }
                             }
                         }
                     }

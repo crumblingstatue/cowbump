@@ -6,10 +6,7 @@ use crate::{
 };
 use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use super::{serialization, EntryMap, EntrySet, Uid};
@@ -64,7 +61,7 @@ impl LocalDb {
             }
             let mut should_add = !already_have;
             let file_name = dir_entry_path.file_name().unwrap();
-            if file_name == DB_FILENAME || file_name == DB_BACKUP_FILENAME {
+            if file_name == FILENAME || file_name == BACKUP_FILENAME {
                 should_add = false;
             }
             if should_add {
@@ -110,23 +107,17 @@ impl LocalDb {
             .iter()
             .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
     }
-    pub fn save_to_fs(&self) -> anyhow::Result<()> {
-        let mut f = File::create(DB_FILENAME)?;
-        serialization::write_local(self, &mut f)?;
-        Ok(())
+    pub fn save(&self) -> anyhow::Result<()> {
+        serialization::write_to_file(self, FILENAME)
     }
     pub fn save_backup(&self) -> anyhow::Result<()> {
-        let f = File::create(DB_BACKUP_FILENAME)?;
-        serialization::write_local(self, f)?;
-        Ok(())
+        serialization::write_to_file(self, BACKUP_FILENAME)
     }
-    pub fn load_from_fs() -> anyhow::Result<Self> {
-        let f = File::open(DB_FILENAME)?;
-        serialization::read_local(f)
+    pub fn load() -> anyhow::Result<Self> {
+        serialization::read_from_file(FILENAME)
     }
     pub fn load_backup(&mut self) -> anyhow::Result<()> {
-        let f = File::open(DB_BACKUP_FILENAME)?;
-        let new = serialization::read_local(f)?;
+        let new = serialization::read_from_file(BACKUP_FILENAME)?;
         *self = new;
         Ok(())
     }
@@ -208,5 +199,5 @@ fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) {
     *buf = new_buf;
 }
 
-const DB_FILENAME: &str = "cowbump.db";
-const DB_BACKUP_FILENAME: &str = "cowbump.db.bak";
+const FILENAME: &str = "cowbump.db";
+const BACKUP_FILENAME: &str = "cowbump.db.bak";
