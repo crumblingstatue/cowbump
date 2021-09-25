@@ -186,7 +186,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 You can also pick from the recently used list, if you had opened something before\n\
                 If you don't see the top menu, you can toggle it with F1";
                 let mut text = Text::new(msg, &res.font, 24);
-                text.set_position((0., 64.));
+                text.set_position((16., 64.));
                 window.draw(&text);
             }
         }
