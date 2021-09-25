@@ -4,7 +4,8 @@ mod thumbnail_loader;
 
 use crate::{
     application::Application,
-    db::{local::LocalDb, EntryMap, TagSet, Uid},
+    collection::Collection,
+    db::{EntryMap, TagSet, Uid},
     entry,
     filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
@@ -80,14 +81,17 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             }
                         }
                         Key::END => {
-                            if let Some(db) = &app.local_db {
+                            if let Some(coll) = app
+                                .active_collection
+                                .map(|idx| &app.database.collections[&idx])
+                            {
                                 if !sf_egui.context().wants_keyboard_input() {
                                     // Align the bottom edge of the view with the bottom edge of the last row.
                                     // To do align the camera with a bottom edge, we need to subtract the screen
                                     // height from it.
                                     let bottom_align = |y: f32| y - window.size().y as f32;
                                     let n_pics =
-                                        state.entries_view.filter(db, &state.filter).count();
+                                        state.entries_view.filter(coll, &state.filter).count();
                                     let rows = n_pics as u32 / state.thumbnails_per_row as u32;
                                     let bottom = (rows + 1) * state.thumbnail_size;
                                     state.y_offset = bottom_align(bottom as f32);
@@ -100,12 +104,15 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 _ => {}
             }
-            if let Some(db) = &mut app.local_db {
+            if let Some(coll) = app
+                .active_collection
+                .map(|id| app.database.collections.get_mut(&id).unwrap())
+            {
                 handle_event_viewer(
                     event,
                     &mut state,
                     &mut on_screen_uids,
-                    db,
+                    coll,
                     &mut selected_uids,
                     &window,
                     sf_egui.context(),
@@ -123,6 +130,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         {
             selected_uids.clear()
         }
+        let mut coll = app
+            .active_collection
+            .map(|id| app.database.collections.get_mut(&id).unwrap());
         if let Some(action) = &state.egui_state.action {
             match action {
                 Action::Quit => window.close(),
@@ -130,26 +140,24 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     app.no_save = true;
                     window.close();
                 }
-                Action::SearchNext => search_next(&mut state, app.local_db.as_mut().unwrap()),
-                Action::SearchPrev => search_prev(&mut state, app.local_db.as_mut().unwrap()),
-                Action::SelectAll => {
-                    select_all(&mut selected_uids, &state, app.local_db.as_mut().unwrap())
-                }
                 Action::SelectNone => selected_uids.clear(),
-                Action::SortEntries => state.entries_view.sort(app.local_db.as_mut().unwrap()),
+                Action::SearchNext => search_next(&mut state, coll.as_mut().unwrap()),
+                Action::SearchPrev => search_prev(&mut state, coll.as_mut().unwrap()),
+                Action::SelectAll => select_all(&mut selected_uids, &state, coll.as_mut().unwrap()),
+                Action::SortEntries => state.entries_view.sort(coll.as_mut().unwrap()),
             }
         }
-        if let Some(db) = &app.local_db {
+        if let Some(coll) = &mut coll {
             recalc_on_screen_items(
                 &mut on_screen_uids,
-                db,
+                coll,
                 &state.entries_view,
                 &state,
                 window.size().y,
             );
         }
         window.clear(Color::BLACK);
-        if let Some(db) = &app.local_db {
+        if let Some(db) = &mut coll {
             entries_view::draw_thumbnails(
                 &mut state,
                 &res,
@@ -181,21 +189,21 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         let mut tex_src = TexSrc {
             state: &mut state,
             res: &res,
-            db: app.local_db.as_ref(),
+            coll: app
+                .active_collection
+                .map(|id| &app.database.collections[&id]),
         };
         sf_egui.draw(&mut window, Some(&mut tex_src));
         window.display();
         load_anim_rotation += 2.0;
     }
     if !app.no_save {
-        if let Some(db) = &app.local_db {
-            db.save()?;
-        }
+        app.database.save()?;
     }
     Ok(())
 }
 
-fn common_tags(ids: &[entry::Id], db: &LocalDb) -> TagSet {
+fn common_tags(ids: &[entry::Id], db: &Collection) -> TagSet {
     let mut set = TagSet::default();
     for &id in ids {
         for &tagid in &db.entries[&id].tags {
@@ -222,7 +230,7 @@ fn handle_event_viewer(
     event: Event,
     state: &mut State,
     on_screen_entries: &mut Vec<entry::Id>,
-    db: &mut LocalDb,
+    db: &mut Collection,
     selected_entries: &mut Vec<entry::Id>,
     window: &RenderWindow,
     ctx: &CtxRef,
@@ -325,21 +333,21 @@ fn handle_event_viewer(
     }
 }
 
-fn select_all(selected_uids: &mut Vec<entry::Id>, state: &State, db: &LocalDb) {
+fn select_all(selected_uids: &mut Vec<entry::Id>, state: &State, db: &Collection) {
     selected_uids.clear();
     for uid in db.filter(&state.filter) {
         selected_uids.push(uid);
     }
 }
 
-fn search_prev(state: &mut State, db: &mut LocalDb) {
+fn search_prev(state: &mut State, db: &mut Collection) {
     if state.search_cursor > 0 {
         state.search_cursor -= 1;
     }
     search_goto_cursor(state, db);
 }
 
-fn search_next(state: &mut State, db: &mut LocalDb) {
+fn search_next(state: &mut State, db: &mut Collection) {
     state.search_cursor += 1;
     search_goto_cursor(state, db);
     if !state.search_success {
@@ -347,7 +355,7 @@ fn search_next(state: &mut State, db: &mut LocalDb) {
     }
 }
 
-fn find_nth(state: &State, db: &LocalDb, nth: usize) -> Option<Uid> {
+fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<Uid> {
     state
         .entries_view
         .filter(db, &state.filter)
@@ -360,7 +368,7 @@ fn find_nth(state: &State, db: &LocalDb, nth: usize) -> Option<Uid> {
         .nth(nth)
 }
 
-fn search_goto_cursor(state: &mut State, db: &LocalDb) {
+fn search_goto_cursor(state: &mut State, db: &Collection) {
     if let Some(uid) = find_nth(state, db, state.search_cursor) {
         state.highlight = Some(uid);
         state.search_success = true;
@@ -374,7 +382,7 @@ fn search_goto_cursor(state: &mut State, db: &LocalDb) {
 
 fn recalc_on_screen_items(
     uids: &mut Vec<entry::Id>,
-    db: &LocalDb,
+    db: &Collection,
     entries_view: &EntriesView,
     state: &State,
     window_height: u32,
@@ -447,7 +455,7 @@ struct State {
 struct TexSrc<'state, 'res, 'db> {
     state: &'state mut State,
     res: &'res Resources,
-    db: Option<&'db LocalDb>,
+    coll: Option<&'db Collection>,
 }
 
 impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
@@ -456,7 +464,7 @@ impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
             &self.state.thumbnail_cache,
             entry::Id(id),
             &self.res.error_texture,
-            self.db,
+            self.coll,
             &mut self.state.thumbnail_loader,
             self.state.thumbnail_size,
             &self.res.loading_texture,
@@ -469,7 +477,7 @@ fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
     error_texture: &'t Texture,
-    db: Option<&LocalDb>,
+    db: Option<&Collection>,
     thumbnail_loader: &mut ThumbnailLoader,
     thumb_size: u32,
     loading_texture: &'t Texture,

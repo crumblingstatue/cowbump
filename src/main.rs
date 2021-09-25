@@ -1,9 +1,11 @@
 mod application;
+mod collection;
 mod db;
 mod entry;
 mod filter_spec;
 mod gui;
 mod sequence;
+mod serialization;
 pub mod set_ext;
 mod tag;
 

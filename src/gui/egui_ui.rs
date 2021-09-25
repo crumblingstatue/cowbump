@@ -5,7 +5,7 @@ mod top_bar;
 
 use crate::{
     application::Application,
-    db::local::LocalDb,
+    collection::Collection,
     entry,
     filter_spec::FilterSpec,
     gui::{search_goto_cursor, State},
@@ -122,15 +122,16 @@ struct InfoMessage {
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, app: &mut Application) {
     top_bar::do_frame(state, egui_ctx, app);
-    if let Some(db) = &mut app.local_db {
-        do_search_edit(state, egui_ctx, db);
-        do_filter_edit(state, egui_ctx, db);
-        tag_list::do_frame(state, db, egui_ctx);
-        sequences::do_sequences_window(state, db, &mut app.global_db.uid_counter, egui_ctx);
-        sequences::do_sequence_windows(state, db, egui_ctx);
-        entries_window::do_frame(state, db, &mut app.global_db.uid_counter, egui_ctx);
+    if let Some(coll_id) = app.active_collection {
+        let coll = app.database.collections.get_mut(&coll_id).unwrap();
+        do_search_edit(state, egui_ctx, coll);
+        do_filter_edit(state, egui_ctx, coll);
+        tag_list::do_frame(state, coll, egui_ctx);
+        sequences::do_sequences_window(state, coll, &mut app.database.uid_counter, egui_ctx);
+        sequences::do_sequence_windows(state, coll, egui_ctx);
+        entries_window::do_frame(state, coll, &mut app.database.uid_counter, egui_ctx);
         do_info_messages(state, egui_ctx);
-        do_prompts(state, egui_ctx, db);
+        do_prompts(state, egui_ctx, app);
     }
 }
 
@@ -141,12 +142,12 @@ fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {
         .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
 }
 
-fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
+fn do_prompts(state: &mut State, egui_ctx: &CtxRef, app: &mut Application) {
     state.egui_state.prompts.retain(|prompt| {
         match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
             Some(OkCancel::Ok) => match prompt.action {
                 PromptAction::RestoreBackup => {
-                    match db.load_backup() {
+                    match app.database.load_backup() {
                         Ok(_) => {
                             info_message(
                                 &mut state.egui_state.info_messages,
@@ -169,7 +170,11 @@ fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
                     false
                 }
                 PromptAction::DeleteTags(ref uids) => {
-                    db.remove_tags(uids);
+                    app.database
+                        .collections
+                        .get_mut(&app.active_collection.unwrap())
+                        .unwrap()
+                        .remove_tags(uids);
                     false
                 }
             },
@@ -179,7 +184,7 @@ fn do_prompts(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
     });
 }
 
-fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
+fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
     if state.filter_edit {
         egui::Window::new("Filter")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
@@ -219,7 +224,7 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
     }
 }
 
-fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut LocalDb) {
+fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
     if state.search_edit {
         egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])

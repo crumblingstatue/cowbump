@@ -5,13 +5,14 @@ use egui::{
 use retain_mut::RetainMut;
 
 use crate::{
-    db::{global::UidCounter, local::LocalDb},
+    collection::Collection,
+    db::UidCounter,
     entry,
     gui::{open_with_external, State},
     sequence,
 };
 
-pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
+pub(super) fn do_sequence_windows(state: &mut State, db: &mut Collection, egui_ctx: &CtxRef) {
     state.egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
         let seq = db.sequences.get_mut(&win.uid).unwrap();
@@ -134,7 +135,7 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
 
 pub(super) fn do_sequences_window(
     state: &mut State,
-    db: &mut LocalDb,
+    db: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &CtxRef,
 ) {

@@ -1,4 +1,5 @@
 use crate::{
+    db::{EntryMap, EntrySet, Uid, UidCounter},
     entry::{self, Entry},
     filter_spec::FilterSpec,
     sequence::{self, Sequence},
@@ -6,24 +7,20 @@ use crate::{
 };
 use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use walkdir::WalkDir;
-
-use super::{global::UidCounter, serialization, EntryMap, EntrySet};
 
 pub type Entries = EntryMap<Entry>;
 pub type Tags = FnvHashMap<tag::Id, Tag>;
 pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
 
-/// The database of all entries.
+/// A collection of entries.
 ///
-/// This is the data that is saved to disk between runs.
-///
-/// Note that this is not where any kind of sorting happens.
-/// That happens at the view level. This just maps Uids to entries.
-/// Nothing else.
-#[derive(Default, Serialize, Deserialize)]
-pub struct LocalDb {
+/// Each collection has a root that all the entries stem from.
+#[derive(Serialize, Deserialize)]
+pub struct Collection {
+    /// The root that all entries stem from
+    pub root_path: PathBuf,
     /// List of entries
     pub entries: Entries,
     /// List of tags
@@ -31,13 +28,22 @@ pub struct LocalDb {
     pub sequences: Sequences,
 }
 
-impl LocalDb {
-    pub fn update_from_folder(
-        &mut self,
-        folder: &Path,
-        uid_counter: &mut UidCounter,
-    ) -> anyhow::Result<()> {
-        let wd = WalkDir::new(folder).sort_by(|a, b| a.file_name().cmp(b.file_name()));
+#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
+pub struct Id(pub Uid);
+
+impl Collection {
+    pub fn from_root(root_path: PathBuf, uid_counter: &mut UidCounter) -> anyhow::Result<Self> {
+        let mut coll = Collection {
+            root_path,
+            entries: Entries::default(),
+            tags: Tags::default(),
+            sequences: Sequences::default(),
+        };
+        coll.update_from_fs(uid_counter)?;
+        Ok(coll)
+    }
+    pub fn update_from_fs(&mut self, uid_counter: &mut UidCounter) -> anyhow::Result<()> {
+        let wd = WalkDir::new(&self.root_path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = EntrySet::default();
 
@@ -47,7 +53,7 @@ impl LocalDb {
                 continue;
             }
             let dir_entry_path = dir_entry.into_path();
-            let dir_entry_path = match dir_entry_path.strip_prefix(folder) {
+            let dir_entry_path = match dir_entry_path.strip_prefix(&self.root_path) {
                 Ok(stripped) => stripped,
                 Err(e) => {
                     eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
@@ -62,11 +68,8 @@ impl LocalDb {
                     break;
                 }
             }
-            let mut should_add = !already_have;
-            let file_name = dir_entry_path.file_name().unwrap();
-            if file_name == FILENAME || file_name == BACKUP_FILENAME {
-                should_add = false;
-            }
+            let should_add = !already_have;
+            let _file_name = dir_entry_path.file_name().unwrap();
             if should_add {
                 eprintln!("Adding {}", dir_entry_path.display());
                 let uid = entry::Id(uid_counter.next());
@@ -116,24 +119,6 @@ impl LocalDb {
         self.entries
             .iter()
             .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
-    }
-    pub fn save(&self) -> anyhow::Result<()> {
-        serialization::write_to_file(self, FILENAME)
-    }
-    pub fn save_backup(&self) -> anyhow::Result<()> {
-        serialization::write_to_file(self, BACKUP_FILENAME)
-    }
-    pub fn load_or_default() -> anyhow::Result<Self> {
-        if Path::new(FILENAME).exists() {
-            serialization::read_from_file(FILENAME)
-        } else {
-            Ok(Default::default())
-        }
-    }
-    pub fn load_backup(&mut self) -> anyhow::Result<()> {
-        let new = serialization::read_from_file(BACKUP_FILENAME)?;
-        *self = new;
-        Ok(())
     }
     pub fn rename(&mut self, uid: entry::Id, new: &str) {
         let en = self.entries.get_mut(&uid).unwrap();
@@ -211,6 +196,3 @@ fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) {
     }
     *buf = new_buf;
 }
-
-const FILENAME: &str = "cowbump.db";
-const BACKUP_FILENAME: &str = "cowbump.db.bak";

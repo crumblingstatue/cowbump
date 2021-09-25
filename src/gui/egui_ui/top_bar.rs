@@ -17,8 +17,9 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
                             match app.load_folder(dir_path) {
                                 Ok(()) => {
-                                    state.entries_view =
-                                        EntriesView::from_db(app.local_db.as_ref().unwrap());
+                                    state.entries_view = EntriesView::from_collection(
+                                        &app.database.collections[&app.active_collection.unwrap()],
+                                    );
                                 }
                                 Err(e) => {
                                     MessageDialog::new()
@@ -29,28 +30,26 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
                             }
                         }
                     }
-                    let butt = Button::new("Close folder").enabled(app.local_db.is_some());
+                    let butt = Button::new("Close folder").enabled(app.active_collection.is_some());
                     if ui.add(butt).clicked() {
-                        app.local_db = None;
+                        app.active_collection = None;
                     }
                     ui.separator();
-                    if let Some(db) = &app.local_db {
-                        if ui.button("Create database backup").clicked() {
-                            match db.save_backup() {
-                                Ok(_) => {
-                                    info_message(
-                                        &mut state.egui_state.info_messages,
-                                        "Success",
-                                        "Backup successfully created.",
-                                    );
-                                }
-                                Err(e) => {
-                                    info_message(
-                                        &mut state.egui_state.info_messages,
-                                        "Error",
-                                        &e.to_string(),
-                                    );
-                                }
+                    if ui.button("Create database backup").clicked() {
+                        match app.database.save_backup() {
+                            Ok(_) => {
+                                info_message(
+                                    &mut state.egui_state.info_messages,
+                                    "Success",
+                                    "Backup successfully created.",
+                                );
+                            }
+                            Err(e) => {
+                                info_message(
+                                    &mut state.egui_state.info_messages,
+                                    "Error",
+                                    &e.to_string(),
+                                );
                             }
                         }
                     }
@@ -77,43 +76,49 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
                     }
                 });
                 egui::menu::menu(ui, "Actions", |ui| {
-                    let have_db = app.local_db.is_some();
+                    let active_coll = app.active_collection.is_some();
                     ui.separator();
-                    if ui.add(Button::new("Filter (F)").enabled(have_db)).clicked() {
+                    if ui
+                        .add(Button::new("Filter (F)").enabled(active_coll))
+                        .clicked()
+                    {
                         state.filter_edit ^= true;
                     }
                     ui.separator();
-                    if ui.add(Button::new("Search (/)").enabled(have_db)).clicked() {
+                    if ui
+                        .add(Button::new("Search (/)").enabled(active_coll))
+                        .clicked()
+                    {
                         state.search_edit ^= true;
                     }
                     if ui
-                        .add(Button::new("Next result (N)").enabled(have_db))
+                        .add(Button::new("Next result (N)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SearchNext);
                     }
                     if ui
-                        .add(Button::new("Previous result (P)").enabled(have_db))
+                        .add(Button::new("Previous result (P)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SearchPrev);
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("Select All (ctrl+A)").enabled(have_db))
+                        .add(Button::new("Select All (ctrl+A)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SelectAll);
                     }
                     if ui
-                        .add(Button::new("Select None (Esc)").enabled(have_db))
+                        .add(Button::new("Select None (Esc)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SelectNone);
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("Sort entries by filename (S)").enabled(have_db))
+                        .add(Button::new("Sort entries by filename (S)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SortEntries);

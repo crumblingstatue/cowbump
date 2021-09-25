@@ -2,34 +2,39 @@ use std::path::Path;
 
 use anyhow::Context;
 
-use crate::db::{global::GlobalDb, local::LocalDb};
+use crate::{
+    collection::{self, Collection},
+    db::Db,
+};
 
 pub struct Application {
-    pub global_db: GlobalDb,
-    pub local_db: Option<LocalDb>,
+    pub database: Db,
+    pub active_collection: Option<collection::Id>,
     pub no_save: bool,
 }
 
 impl Application {
     pub fn new() -> anyhow::Result<Self> {
-        let global_db = GlobalDb::load().context("Failed to load global database")?;
+        let global_db = Db::load().context("Failed to load global database")?;
         Ok(Self {
-            global_db,
-            local_db: None,
+            database: global_db,
+            active_collection: None,
             no_save: false,
         })
     }
     pub fn load_folder(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         std::env::set_current_dir(path.as_ref())?;
-        let mut db = LocalDb::load_or_default()?;
-        db.update_from_folder(path.as_ref(), &mut self.global_db.uid_counter)
-            .with_context(|| {
-                format!(
-                    "Failed to update database from folder '{}'",
-                    path.as_ref().display()
-                )
-            })?;
-        self.local_db = Some(db);
+        let id = match self.database.find_collection_by_path(path.as_ref()) {
+            Some(id) => id,
+            None => {
+                let collection = Collection::from_root(
+                    path.as_ref().to_owned(),
+                    &mut self.database.uid_counter,
+                )?;
+                self.database.insert_collection(collection)
+            }
+        };
+        self.active_collection = Some(id);
         Ok(())
     }
 }

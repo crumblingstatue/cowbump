@@ -7,7 +7,7 @@ use sfml::{
     window::Key,
 };
 
-use crate::{db::local::LocalDb, entry, filter_spec::FilterSpec};
+use crate::{collection::Collection, entry, filter_spec::FilterSpec};
 
 use super::{
     get_tex_for_entry, thumbnail_loader::ThumbnailLoader, Resources, State, ThumbnailCache,
@@ -19,18 +19,18 @@ pub struct EntriesView {
 }
 
 impl EntriesView {
-    pub fn from_db(db: &LocalDb) -> Self {
+    pub fn from_collection(db: &Collection) -> Self {
         let uids: Vec<entry::Id> = db.entries.keys().cloned().collect();
         let mut this = Self { uids };
         this.sort(db);
         this
     }
-    pub fn sort(&mut self, db: &LocalDb) {
+    pub fn sort(&mut self, db: &Collection) {
         self.uids.sort_by_key(|uid| &db.entries[uid].path);
     }
     pub fn filter<'a>(
         &'a self,
-        db: &'a LocalDb,
+        db: &'a Collection,
         spec: &'a FilterSpec,
     ) -> impl Iterator<Item = entry::Id> + 'a {
         self.uids
@@ -47,7 +47,7 @@ pub(super) fn draw_thumbnails(
     state: &mut State,
     res: &Resources,
     window: &mut RenderWindow,
-    db: &LocalDb,
+    db: &Collection,
     uids: &[entry::Id],
     selected_uids: &[entry::Id],
     load_anim_rotation: f32,
@@ -97,7 +97,7 @@ pub(super) fn draw_thumbnails(
 #[allow(clippy::too_many_arguments)]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
-    db: &LocalDb,
+    db: &Collection,
     window: &mut RenderWindow,
     x: f32,
     y: f32,

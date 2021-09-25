@@ -1,8 +1,6 @@
 use crate::{
-    db::{
-        local::{LocalDb, Tags},
-        TagSet,
-    },
+    collection::{Collection, Tags},
+    db::TagSet,
     set_ext::SetExt,
     tag,
 };
@@ -29,7 +27,7 @@ impl FilterSpec {
     }
     pub fn parse_and_resolve<'a>(
         string: &'a str,
-        db: &LocalDb,
+        db: &Collection,
     ) -> Result<Self, ParseResolveError<'a>> {
         let words = string.split_whitespace();
         let mut tags = TagSet::default();

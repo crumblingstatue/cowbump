@@ -1,7 +1,8 @@
 use egui::{Button, Color32, CtxRef, Grid, Key, ScrollArea, TextEdit};
 
 use crate::{
-    db::{local::LocalDb, TagSet},
+    collection::Collection,
+    db::TagSet,
     gui::{
         egui_ui::{prompt, PromptAction},
         State,
@@ -22,7 +23,7 @@ impl TagWindow {
     }
 }
 
-pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
+pub(super) fn do_frame(state: &mut State, db: &mut Collection, egui_ctx: &CtxRef) {
     if state.egui_state.tag_window.on {
         let tags = &mut db.tags;
         let mut close = false;

@@ -7,7 +7,8 @@ use egui::{Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId
 use retain_mut::RetainMut;
 
 use crate::{
-    db::{global::UidCounter, local::LocalDb},
+    collection::Collection,
+    db::UidCounter,
     entry,
     gui::{common_tags, entries_view::EntriesView, State},
 };
@@ -61,7 +62,7 @@ impl EntriesWindow {
 
 pub(super) fn do_frame(
     state: &mut State,
-    db: &mut LocalDb,
+    db: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &egui::CtxRef,
 ) {
@@ -376,7 +377,7 @@ pub(super) fn do_frame(
     });
 }
 
-fn remove_entries(view: &mut EntriesView, entries: &mut Vec<entry::Id>, db: &mut LocalDb) {
+fn remove_entries(view: &mut EntriesView, entries: &mut Vec<entry::Id>, db: &mut Collection) {
     for uid in entries.drain(..) {
         let path = &db.entries[&uid].path;
         if let Err(e) = std::fs::remove_file(path) {
