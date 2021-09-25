@@ -77,29 +77,45 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
                     }
                 });
                 egui::menu::menu(ui, "Actions", |ui| {
+                    let have_db = app.local_db.is_some();
                     ui.separator();
-                    if ui.button("Filter (F)").clicked() {
+                    if ui.add(Button::new("Filter (F)").enabled(have_db)).clicked() {
                         state.filter_edit ^= true;
                     }
                     ui.separator();
-                    if ui.button("Search (/)").clicked() {
+                    if ui.add(Button::new("Search (/)").enabled(have_db)).clicked() {
                         state.search_edit ^= true;
                     }
-                    if ui.button("Next result (N)").clicked() {
+                    if ui
+                        .add(Button::new("Next result (N)").enabled(have_db))
+                        .clicked()
+                    {
                         state.egui_state.action = Some(Action::SearchNext);
                     }
-                    if ui.button("Previous result (P)").clicked() {
+                    if ui
+                        .add(Button::new("Previous result (P)").enabled(have_db))
+                        .clicked()
+                    {
                         state.egui_state.action = Some(Action::SearchPrev);
                     }
                     ui.separator();
-                    if ui.button("Select All (ctrl+A)").clicked() {
+                    if ui
+                        .add(Button::new("Select All (ctrl+A)").enabled(have_db))
+                        .clicked()
+                    {
                         state.egui_state.action = Some(Action::SelectAll);
                     }
-                    if ui.button("Select None (Esc)").clicked() {
+                    if ui
+                        .add(Button::new("Select None (Esc)").enabled(have_db))
+                        .clicked()
+                    {
                         state.egui_state.action = Some(Action::SelectNone);
                     }
                     ui.separator();
-                    if ui.button("Sort entries by filename (S)").clicked() {
+                    if ui
+                        .add(Button::new("Sort entries by filename (S)").enabled(have_db))
+                        .clicked()
+                    {
                         state.egui_state.action = Some(Action::SortEntries);
                     }
                 });
