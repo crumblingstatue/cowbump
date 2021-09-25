@@ -30,7 +30,10 @@ pub(super) fn do_frame(
                         for &id in app.database.recent.iter() {
                             ui.horizontal(|ui| {
                                 if ui
-                                    .button(&app.database.collections[&id].root_path.display())
+                                    .button(&format!(
+                                        "🗁 {}",
+                                        &app.database.collections[&id].root_path.display()
+                                    ))
                                     .clicked()
                                 {
                                     action = Action::Open(id);
@@ -64,7 +67,7 @@ pub(super) fn do_frame(
                     });
                 }
                 egui::menu::menu(ui, "File", |ui| {
-                    if ui.button("Load folder").clicked() {
+                    if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
                             match app.load_folder(dir_path) {
                                 Ok(()) => {
@@ -81,12 +84,13 @@ pub(super) fn do_frame(
                             }
                         }
                     }
-                    let butt = Button::new("Close folder").enabled(app.active_collection.is_some());
+                    let butt =
+                        Button::new("🗀 Close folder").enabled(app.active_collection.is_some());
                     if ui.add(butt).clicked() {
                         app.active_collection = None;
                     }
                     ui.separator();
-                    if ui.button("Create database backup").clicked() {
+                    if ui.button("⛃⬉ Create backup").clicked() {
                         match app.database.save_backup() {
                             Ok(_) => {
                                 info_message(
@@ -104,7 +108,7 @@ pub(super) fn do_frame(
                             }
                         }
                     }
-                    if ui.button("Restore database backup").clicked() {
+                    if ui.button("⛃⬊ Restore backup").clicked() {
                         prompt(
                             &mut state.egui_state.prompts,
                             "Restore Backup",
@@ -113,11 +117,11 @@ pub(super) fn do_frame(
                         )
                     }
                     ui.separator();
-                    if ui.button("Preferences").clicked() {
+                    if ui.button("☰ Preferences").clicked() {
                         state.egui_state.preferences_window.toggle();
                     }
                     ui.separator();
-                    if ui.button("Quit without saving").clicked() {
+                    if ui.button("🗙 Quit without saving").clicked() {
                         prompt(
                             &mut state.egui_state.prompts,
                             "Quit without saving",
@@ -126,7 +130,7 @@ pub(super) fn do_frame(
                         )
                     }
                     ui.separator();
-                    if ui.button("Quit").clicked() {
+                    if ui.button("⎆ Quit").clicked() {
                         state.egui_state.action = Some(Action::Quit);
                     }
                 });
@@ -134,46 +138,46 @@ pub(super) fn do_frame(
                     let active_coll = app.active_collection.is_some();
                     ui.separator();
                     if ui
-                        .add(Button::new("Filter (F)").enabled(active_coll))
+                        .add(Button::new("🔍 Filter (F)").enabled(active_coll))
                         .clicked()
                     {
                         state.filter_edit ^= true;
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("Search (/)").enabled(active_coll))
+                        .add(Button::new("🔍 Search (/)").enabled(active_coll))
                         .clicked()
                     {
                         state.search_edit ^= true;
                     }
                     if ui
-                        .add(Button::new("Next result (N)").enabled(active_coll))
+                        .add(Button::new("⮫ Next result (N)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SearchNext);
                     }
                     if ui
-                        .add(Button::new("Previous result (P)").enabled(active_coll))
+                        .add(Button::new("⮪ Previous result (P)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SearchPrev);
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("Select All (ctrl+A)").enabled(active_coll))
+                        .add(Button::new("☑ Select All (ctrl+A)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SelectAll);
                     }
                     if ui
-                        .add(Button::new("Select None (Esc)").enabled(active_coll))
+                        .add(Button::new("☐ Select None (Esc)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SelectNone);
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("Sort entries by filename (S)").enabled(active_coll))
+                        .add(Button::new("♻ Sort by filename (S)").enabled(active_coll))
                         .clicked()
                     {
                         state.egui_state.action = Some(Action::SortEntries);
@@ -181,10 +185,10 @@ pub(super) fn do_frame(
                 });
                 egui::menu::menu(ui, "Windows", |ui| {
                     ui.separator();
-                    if ui.button("Tag list (T)").clicked() {
+                    if ui.button("＃ Tag list (T)").clicked() {
                         state.egui_state.tag_window.toggle();
                     }
-                    if ui.button("Sequences (Q)").clicked() {
+                    if ui.button("⬌ Sequences (Q)").clicked() {
                         state.egui_state.sequences_window.on ^= true;
                     }
                 });
