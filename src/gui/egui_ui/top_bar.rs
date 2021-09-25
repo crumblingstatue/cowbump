@@ -62,6 +62,10 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
                         )
                     }
                     ui.separator();
+                    if ui.button("Preferences").clicked() {
+                        state.egui_state.preferences_window.toggle();
+                    }
+                    ui.separator();
                     if ui.button("Quit without saving").clicked() {
                         prompt(
                             &mut state.egui_state.prompts,

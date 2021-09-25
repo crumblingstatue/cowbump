@@ -1,4 +1,5 @@
 mod entries_window;
+mod preferences_window;
 mod sequences;
 mod tag_list;
 mod top_bar;
@@ -16,6 +17,7 @@ use retain_mut::RetainMut;
 
 use self::{
     entries_window::EntriesWindow,
+    preferences_window::PreferencesWindow,
     sequences::{SequenceWindow, SequencesWindow},
     tag_list::TagWindow,
 };
@@ -25,6 +27,7 @@ pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,
     pub sequences_window: SequencesWindow,
     sequence_windows: Vec<SequenceWindow>,
+    pub preferences_window: PreferencesWindow,
     pub tag_window: TagWindow,
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
@@ -122,6 +125,7 @@ struct InfoMessage {
 
 pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, app: &mut Application) {
     top_bar::do_frame(state, egui_ctx, app);
+    preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
     if let Some(coll_id) = app.active_collection {
         let coll = app.database.collections.get_mut(&coll_id).unwrap();
         do_search_edit(state, egui_ctx, coll);

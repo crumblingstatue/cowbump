@@ -4,6 +4,7 @@ mod db;
 mod entry;
 mod filter_spec;
 mod gui;
+mod preferences;
 mod sequence;
 mod serialization;
 pub mod set_ext;

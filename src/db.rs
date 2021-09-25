@@ -5,7 +5,9 @@ use fnv::{FnvHashMap, FnvHashSet};
 
 use crate::{
     collection::{self, Collection},
-    entry, serialization, tag,
+    entry,
+    preferences::Preferences,
+    serialization, tag,
 };
 
 /// Unique identifier for entries/tags.
@@ -25,6 +27,7 @@ use serde_derive::{Deserialize, Serialize};
 pub struct Db {
     pub uid_counter: UidCounter,
     pub collections: CollMap<Collection>,
+    pub preferences: Preferences,
     #[serde(skip)]
     data_dir: PathBuf,
 }
