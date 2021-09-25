@@ -113,8 +113,12 @@ impl LocalDb {
     pub fn save_backup(&self) -> anyhow::Result<()> {
         serialization::write_to_file(self, BACKUP_FILENAME)
     }
-    pub fn load() -> anyhow::Result<Self> {
-        serialization::read_from_file(FILENAME)
+    pub fn load_or_default() -> anyhow::Result<Self> {
+        if Path::new(FILENAME).exists() {
+            serialization::read_from_file(FILENAME)
+        } else {
+            Ok(Default::default())
+        }
     }
     pub fn load_backup(&mut self) -> anyhow::Result<()> {
         let new = serialization::read_from_file(BACKUP_FILENAME)?;

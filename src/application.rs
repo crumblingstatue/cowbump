@@ -21,11 +21,7 @@ impl Application {
     }
     pub fn load_folder(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         std::env::set_current_dir(path.as_ref())?;
-        let mut db = if !path.as_ref().exists() {
-            LocalDb::default()
-        } else {
-            LocalDb::load()?
-        };
+        let mut db = LocalDb::load_or_default()?;
         db.update_from_folder(path.as_ref()).with_context(|| {
             format!(
                 "Failed to update database from folder '{}'",
