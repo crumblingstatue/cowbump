@@ -19,7 +19,7 @@ use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
 use sfml::{
     graphics::{
-        Color, Font, IntRect, RectangleShape, RenderTarget, RenderWindow, Shape, Texture,
+        Color, Font, IntRect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
         Transformable,
     },
     window::{mouse, Event, Key, Style, VideoMode},
@@ -167,17 +167,28 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             );
         }
         window.clear(Color::BLACK);
-        if let Some(db) = &mut coll {
-            entries_view::draw_thumbnails(
-                &mut state,
-                &res,
-                &mut window,
-                db,
-                &on_screen_uids,
-                &selected_uids,
-                load_anim_rotation,
-                !sf_egui.context().wants_pointer_input(),
-            );
+        match &mut coll {
+            Some(db) => {
+                entries_view::draw_thumbnails(
+                    &mut state,
+                    &res,
+                    &mut window,
+                    db,
+                    &on_screen_uids,
+                    &selected_uids,
+                    load_anim_rotation,
+                    !sf_egui.context().wants_pointer_input(),
+                );
+            }
+            None => {
+                let msg = "Welcome to cowbump!\n\
+                To start, load a folder with File->Load Folder\n\
+                You can also pick from the recently used list, if you had opened something before\n\
+                If you don't see the top menu, you can toggle it with F1";
+                let mut text = Text::new(msg, &res.font, 24);
+                text.set_position((0., 64.));
+                window.draw(&text);
+            }
         }
         if let Some(id) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
