@@ -45,9 +45,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let egui_ctx = sf_egui.context();
     let font_defs = FontDefinitions {
         family_and_size: BTreeMap::from([
-            (TextStyle::Small, (FontFamily::Proportional, 10.0)),
-            (TextStyle::Body, (FontFamily::Proportional, 16.0)),
-            (TextStyle::Button, (FontFamily::Proportional, 16.0)),
+            (TextStyle::Small, (FontFamily::Proportional, 12.0)),
+            (TextStyle::Body, (FontFamily::Proportional, 18.0)),
+            (TextStyle::Button, (FontFamily::Proportional, 18.0)),
             (TextStyle::Heading, (FontFamily::Proportional, 20.0)),
             (TextStyle::Monospace, (FontFamily::Monospace, 13.0)),
         ]),
