@@ -4,6 +4,7 @@ use rfd::{FileDialog, MessageDialog};
 
 use crate::{
     application::Application,
+    collection,
     gui::{entries_view::EntriesView, State},
 };
 
@@ -20,17 +21,27 @@ pub(super) fn do_frame(
             egui::menu::bar(ui, |ui| {
                 if app.database.recent.len() > 0 {
                     egui::menu::menu(ui, "Recent", |ui| {
-                        let mut load = None;
-                        for &id in app.database.recent.iter() {
-                            if ui
-                                .button(&app.database.collections[&id].root_path.display())
-                                .clicked()
-                            {
-                                load = Some(id);
-                            }
+                        enum Action {
+                            Open(collection::Id),
+                            Remove(collection::Id),
+                            None,
                         }
-                        if let Some(id) = load {
-                            match app.load_collection(id) {
+                        let mut action = Action::None;
+                        for &id in app.database.recent.iter() {
+                            ui.horizontal(|ui| {
+                                if ui
+                                    .button(&app.database.collections[&id].root_path.display())
+                                    .clicked()
+                                {
+                                    action = Action::Open(id);
+                                }
+                                if ui.button("🗑").clicked() {
+                                    action = Action::Remove(id);
+                                }
+                            });
+                        }
+                        match action {
+                            Action::Open(id) => match app.load_collection(id) {
                                 Ok(()) => {
                                     state.entries_view = EntriesView::from_collection(
                                         &app.database.collections[&app.active_collection.unwrap()],
@@ -46,7 +57,9 @@ pub(super) fn do_frame(
                                         .set_description(&e.to_string())
                                         .show();
                                 }
-                            }
+                            },
+                            Action::Remove(id) => app.database.recent.remove(id),
+                            Action::None => {}
                         }
                     });
                 }

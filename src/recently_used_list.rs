@@ -26,6 +26,13 @@ impl<T: PartialEq> RecentlyUsedList<T> {
             self.items.remove(0);
         }
     }
+
+    pub fn remove(&mut self, item: T) {
+        let pos = self.items.iter().position(|it| it == &item);
+        if let Some(pos) = pos {
+            self.items.remove(pos);
+        }
+    }
 }
 
 impl<T> RecentlyUsedList<T> {
