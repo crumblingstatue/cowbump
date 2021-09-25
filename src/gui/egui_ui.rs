@@ -123,8 +123,12 @@ struct InfoMessage {
     message: String,
 }
 
-pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, app: &mut Application) {
-    top_bar::do_frame(state, egui_ctx, app);
+pub(super) fn do_ui(
+    state: &mut State,
+    egui_ctx: &egui::CtxRef,
+    app: &mut Application,
+) -> anyhow::Result<()> {
+    top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
     if let Some(coll_id) = app.active_collection {
         let coll = app.database.collections.get_mut(&coll_id).unwrap();
@@ -137,6 +141,7 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, app: &mut Applic
         do_info_messages(state, egui_ctx);
         do_prompts(state, egui_ctx, app);
     }
+    Ok(())
 }
 
 fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {

@@ -7,6 +7,7 @@ use crate::{
     collection::{self, Collection},
     entry,
     preferences::Preferences,
+    recently_used_list::RecentlyUsedList,
     serialization, tag,
 };
 
@@ -28,6 +29,8 @@ pub struct Db {
     pub uid_counter: UidCounter,
     pub collections: CollMap<Collection>,
     pub preferences: Preferences,
+    /// History of last opened collections
+    pub recent: RecentlyUsedList<collection::Id>,
     #[serde(skip)]
     data_dir: PathBuf,
 }
@@ -82,6 +85,13 @@ impl Db {
             .iter()
             .find(|(_k, v)| v.root_path == path)
             .map(|(k, _v)| *k)
+    }
+
+    pub(crate) fn update_collection(&mut self, id: collection::Id) -> anyhow::Result<()> {
+        self.collections
+            .get_mut(&id)
+            .unwrap()
+            .update_from_fs(&mut self.uid_counter)
     }
 }
 

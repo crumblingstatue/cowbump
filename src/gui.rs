@@ -53,6 +53,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         ]),
         ..Default::default()
     };
+
+    if app.database.preferences.open_last_coll_at_start {
+        app.load_last()?;
+        let coll = &app.database.collections[&app.active_collection.unwrap()];
+        state.entries_view = EntriesView::from_collection(coll);
+        std::env::set_current_dir(&coll.root_path)?;
+    }
+
     egui_ctx.set_fonts(font_defs);
     while window.is_open() {
         if !sf_egui.context().wants_keyboard_input() {
@@ -120,9 +128,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             }
         }
         state.begin_frame();
+        let mut result = Ok(());
         sf_egui.do_frame(|ctx| {
-            egui_ui::do_ui(&mut state, ctx, app);
+            result = egui_ui::do_ui(&mut state, ctx, app);
         });
+        result?;
         if esc_pressed
             && !sf_egui.context().wants_keyboard_input()
             && !sf_egui.context().wants_pointer_input()
