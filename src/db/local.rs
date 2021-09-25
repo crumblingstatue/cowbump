@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use super::{serialization, EntryMap, EntrySet, Uid};
+use super::{global::UidCounter, serialization, EntryMap, EntrySet};
 
 pub type Entries = EntryMap<Entry>;
 pub type Tags = FnvHashMap<tag::Id, Tag>;
@@ -29,11 +29,14 @@ pub struct LocalDb {
     /// List of tags
     pub tags: Tags,
     pub sequences: Sequences,
-    uid_counter: Uid,
 }
 
 impl LocalDb {
-    pub fn update_from_folder(&mut self, folder: &Path) -> anyhow::Result<()> {
+    pub fn update_from_folder(
+        &mut self,
+        folder: &Path,
+        uid_counter: &mut UidCounter,
+    ) -> anyhow::Result<()> {
         let wd = WalkDir::new(folder).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = EntrySet::default();
@@ -66,7 +69,7 @@ impl LocalDb {
             }
             if should_add {
                 eprintln!("Adding {}", dir_entry_path.display());
-                let uid = entry::Id(self.new_uid());
+                let uid = entry::Id(uid_counter.next());
                 valid_uids.insert(uid);
                 self.entries
                     .insert(uid, Entry::new(dir_entry_path.to_owned()));
@@ -91,16 +94,23 @@ impl LocalDb {
             self.add_tag_for(*img, tag);
         }
     }
-    pub fn add_new_tag(&mut self, tag: Tag) -> tag::Id {
-        let uid = tag::Id(self.new_uid());
+    pub fn add_new_tag(&mut self, tag: Tag, uid_counter: &mut UidCounter) -> tag::Id {
+        let uid = tag::Id(uid_counter.next());
         self.tags.insert(uid, tag);
         uid
     }
-    pub(crate) fn add_new_tag_from_text(&mut self, tag_text: String) -> tag::Id {
-        self.add_new_tag(Tag {
-            names: vec![tag_text],
-            implies: Default::default(),
-        })
+    pub(crate) fn add_new_tag_from_text(
+        &mut self,
+        tag_text: String,
+        uid_counter: &mut UidCounter,
+    ) -> tag::Id {
+        self.add_new_tag(
+            Tag {
+                names: vec![tag_text],
+                implies: Default::default(),
+            },
+            uid_counter,
+        )
     }
     pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries
@@ -124,11 +134,6 @@ impl LocalDb {
         let new = serialization::read_from_file(BACKUP_FILENAME)?;
         *self = new;
         Ok(())
-    }
-    pub fn new_uid(&mut self) -> Uid {
-        let uid = self.uid_counter;
-        self.uid_counter += 1;
-        uid
     }
     pub fn rename(&mut self, uid: entry::Id, new: &str) {
         let en = self.entries.get_mut(&uid).unwrap();
@@ -155,8 +160,12 @@ impl LocalDb {
         });
     }
 
-    pub(crate) fn add_new_sequence(&mut self, name: &str) -> sequence::Id {
-        let uid = sequence::Id(self.new_uid());
+    pub(crate) fn add_new_sequence(
+        &mut self,
+        name: &str,
+        uid_counter: &mut UidCounter,
+    ) -> sequence::Id {
+        let uid = sequence::Id(uid_counter.next());
         self.sequences.insert(uid, Sequence::new_with_name(name));
         uid
     }

@@ -22,12 +22,13 @@ impl Application {
     pub fn load_folder(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         std::env::set_current_dir(path.as_ref())?;
         let mut db = LocalDb::load_or_default()?;
-        db.update_from_folder(path.as_ref()).with_context(|| {
-            format!(
-                "Failed to update database from folder '{}'",
-                path.as_ref().display()
-            )
-        })?;
+        db.update_from_folder(path.as_ref(), &mut self.global_db.uid_counter)
+            .with_context(|| {
+                format!(
+                    "Failed to update database from folder '{}'",
+                    path.as_ref().display()
+                )
+            })?;
         self.local_db = Some(db);
         Ok(())
     }

@@ -2,8 +2,23 @@ use anyhow::Context;
 use directories::ProjectDirs;
 use serde_derive::{Deserialize, Serialize};
 
+use super::Uid;
+
 #[derive(Default, Serialize, Deserialize)]
-pub struct GlobalDb {}
+pub struct GlobalDb {
+    pub uid_counter: UidCounter,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct UidCounter(Uid);
+
+impl UidCounter {
+    pub fn next(&mut self) -> Uid {
+        let uid = self.0;
+        self.0 += 1;
+        uid
+    }
+}
 
 impl GlobalDb {
     pub fn load() -> anyhow::Result<Self> {

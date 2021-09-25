@@ -126,9 +126,9 @@ pub(super) fn do_ui(state: &mut State, egui_ctx: &egui::CtxRef, app: &mut Applic
         do_search_edit(state, egui_ctx, db);
         do_filter_edit(state, egui_ctx, db);
         tag_list::do_frame(state, db, egui_ctx);
-        sequences::do_sequences_window(state, db, egui_ctx);
+        sequences::do_sequences_window(state, db, &mut app.global_db.uid_counter, egui_ctx);
         sequences::do_sequence_windows(state, db, egui_ctx);
-        entries_window::do_frame(state, db, egui_ctx);
+        entries_window::do_frame(state, db, &mut app.global_db.uid_counter, egui_ctx);
         do_info_messages(state, egui_ctx);
         do_prompts(state, egui_ctx, db);
     }

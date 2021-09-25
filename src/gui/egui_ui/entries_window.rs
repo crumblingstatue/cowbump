@@ -7,7 +7,7 @@ use egui::{Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId
 use retain_mut::RetainMut;
 
 use crate::{
-    db::local::LocalDb,
+    db::{global::UidCounter, local::LocalDb},
     entry,
     gui::{common_tags, entries_view::EntriesView, State},
 };
@@ -59,7 +59,12 @@ impl EntriesWindow {
     }
 }
 
-pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::CtxRef) {
+pub(super) fn do_frame(
+    state: &mut State,
+    db: &mut LocalDb,
+    uid_counter: &mut UidCounter,
+    egui_ctx: &egui::CtxRef,
+) {
     state.egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
@@ -157,7 +162,8 @@ pub(super) fn do_frame(state: &mut State, db: &mut LocalDb, egui_ctx: &egui::Ctx
                             ui.horizontal(|ui| {
                                 ui.label(&tag[..]);
                                 if ui.button("Add").clicked() {
-                                    let tag_uid = db.add_new_tag_from_text(tag.to_owned());
+                                    let tag_uid =
+                                        db.add_new_tag_from_text(tag.to_owned(), uid_counter);
                                     db.add_tag_for_multi(&win.ids, tag_uid);
                                     retain = false;
                                 }

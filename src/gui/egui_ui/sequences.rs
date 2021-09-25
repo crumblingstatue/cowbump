@@ -5,7 +5,7 @@ use egui::{
 use retain_mut::RetainMut;
 
 use crate::{
-    db::local::LocalDb,
+    db::{global::UidCounter, local::LocalDb},
     entry,
     gui::{open_with_external, State},
     sequence,
@@ -132,7 +132,12 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut LocalDb, egui_ctx:
     });
 }
 
-pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx: &CtxRef) {
+pub(super) fn do_sequences_window(
+    state: &mut State,
+    db: &mut LocalDb,
+    uid_counter: &mut UidCounter,
+    egui_ctx: &CtxRef,
+) {
     let seq_win = &mut state.egui_state.sequences_window;
     if seq_win.on {
         let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
@@ -172,7 +177,7 @@ pub(super) fn do_sequences_window(state: &mut State, db: &mut LocalDb, egui_ctx:
                         re.request_focus();
                     }
                     if enter_pressed {
-                        let id = db.add_new_sequence(&seq_win.add_new_buffer);
+                        let id = db.add_new_sequence(&seq_win.add_new_buffer, uid_counter);
                         if seq_win.pick_mode {
                             seq_win.pick_result = Some(id);
                         }
