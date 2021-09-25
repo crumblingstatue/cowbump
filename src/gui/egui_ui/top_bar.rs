@@ -1,4 +1,4 @@
-use egui::{CtxRef, TopBottomPanel};
+use egui::{Button, CtxRef, TopBottomPanel};
 use rfd::{FileDialog, MessageDialog};
 
 use crate::{
@@ -13,7 +13,6 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::menu::menu(ui, "File", |ui| {
-                    ui.separator();
                     if ui.button("Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
                             match app.load_folder(dir_path) {
@@ -29,6 +28,10 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, app: &mut Applicati
                                 }
                             }
                         }
+                    }
+                    let butt = Button::new("Close folder").enabled(app.local_db.is_some());
+                    if ui.add(butt).clicked() {
+                        app.local_db = None;
                     }
                     ui.separator();
                     if let Some(db) = &app.local_db {
