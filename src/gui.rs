@@ -182,8 +182,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             }
             None => {
                 let msg = "Welcome to cowbump!\n\
-                To start, load a folder with File->Load Folder\n\
+                \n\
+                To start, load a folder with File->Load folder\n\
                 You can also pick from the recently used list, if you had opened something before\n\
+                \n\
                 If you don't see the top menu, you can toggle it with F1";
                 let mut text = Text::new(msg, &res.font, 24);
                 text.set_position((16., 64.));
