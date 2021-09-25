@@ -18,36 +18,38 @@ pub(super) fn do_frame(
     if state.egui_state.top_bar {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                egui::menu::menu(ui, "Recent", |ui| {
-                    let mut load = None;
-                    for &id in app.database.recent.iter() {
-                        if ui
-                            .button(&app.database.collections[&id].root_path.display())
-                            .clicked()
-                        {
-                            load = Some(id);
-                        }
-                    }
-                    if let Some(id) = load {
-                        match app.load_collection(id) {
-                            Ok(()) => {
-                                state.entries_view = EntriesView::from_collection(
-                                    &app.database.collections[&app.active_collection.unwrap()],
-                                );
-                                result = std::env::set_current_dir(
-                                    &app.database.collections[&id].root_path,
-                                )
-                                .context("failed to set directory");
-                            }
-                            Err(e) => {
-                                MessageDialog::new()
-                                    .set_title("Error")
-                                    .set_description(&e.to_string())
-                                    .show();
+                if app.database.recent.len() > 0 {
+                    egui::menu::menu(ui, "Recent", |ui| {
+                        let mut load = None;
+                        for &id in app.database.recent.iter() {
+                            if ui
+                                .button(&app.database.collections[&id].root_path.display())
+                                .clicked()
+                            {
+                                load = Some(id);
                             }
                         }
-                    }
-                });
+                        if let Some(id) = load {
+                            match app.load_collection(id) {
+                                Ok(()) => {
+                                    state.entries_view = EntriesView::from_collection(
+                                        &app.database.collections[&app.active_collection.unwrap()],
+                                    );
+                                    result = std::env::set_current_dir(
+                                        &app.database.collections[&id].root_path,
+                                    )
+                                    .context("failed to set directory");
+                                }
+                                Err(e) => {
+                                    MessageDialog::new()
+                                        .set_title("Error")
+                                        .set_description(&e.to_string())
+                                        .show();
+                                }
+                            }
+                        }
+                    });
+                }
                 egui::menu::menu(ui, "File", |ui| {
                     if ui.button("Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {

@@ -32,7 +32,6 @@ impl<T> RecentlyUsedList<T> {
     pub fn most_recent(&self) -> Option<&T> {
         self.items.last()
     }
-    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.items.len()
     }

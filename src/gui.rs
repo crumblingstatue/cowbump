@@ -54,7 +54,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    if app.database.preferences.open_last_coll_at_start {
+    if app.database.preferences.open_last_coll_at_start && app.database.recent.len() > 0 {
         app.load_last()?;
         let coll = &app.database.collections[&app.active_collection.unwrap()];
         state.entries_view = EntriesView::from_collection(coll);
