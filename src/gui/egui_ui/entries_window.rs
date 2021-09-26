@@ -5,6 +5,7 @@ use std::{
 
 use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
 use retain_mut::RetainMut;
+use rfd::{MessageDialog, MessageLevel};
 
 use crate::{
     collection::Collection,
@@ -229,7 +230,14 @@ pub(super) fn do_frame(
                             ui.label(&label_string);
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                                    remove_entries(&mut state.entries_view, del_uids, db);
+                                    if let Err(e) =
+                                        remove_entries(&mut state.entries_view, del_uids, db)
+                                    {
+                                        MessageDialog::new()
+                                            .set_level(MessageLevel::Info)
+                                            .set_title("Error")
+                                            .set_description(&e.to_string());
+                                    }
                                     win.delete_confirm = false;
                                     close = true;
                                 }
@@ -388,13 +396,16 @@ pub(super) fn do_frame(
     });
 }
 
-fn remove_entries(view: &mut EntriesView, entries: &mut Vec<entry::Id>, db: &mut Collection) {
+fn remove_entries(
+    view: &mut EntriesView,
+    entries: &mut Vec<entry::Id>,
+    db: &mut Collection,
+) -> anyhow::Result<()> {
     for uid in entries.drain(..) {
         let path = &db.entries[&uid].path;
-        if let Err(e) = std::fs::remove_file(path) {
-            eprintln!("Remove error: {}", e);
-        }
+        std::fs::remove_file(path)?;
         view.delete(uid);
         db.entries.remove(&uid);
     }
+    Ok(())
 }
