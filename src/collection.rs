@@ -5,9 +5,10 @@ use crate::{
     sequence::{self, Sequence},
     tag::{self, Tag},
 };
+use anyhow::Context;
 use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
 use walkdir::WalkDir;
 
 pub type Entries = EntryMap<Entry>;
@@ -120,9 +121,10 @@ impl Collection {
             .iter()
             .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
     }
-    pub fn rename(&mut self, uid: entry::Id, new: &str) {
-        let en = self.entries.get_mut(&uid).unwrap();
-        pathbuf_rename_filename(&mut en.path, new);
+    pub fn rename(&mut self, uid: entry::Id, new: &str) -> anyhow::Result<()> {
+        let en = self.entries.get_mut(&uid).context("Couldn't get entry")?;
+        pathbuf_rename_filename(&mut en.path, new)?;
+        Ok(())
     }
 
     pub(crate) fn resolve_tag(&self, word: &str) -> Option<tag::Id> {
@@ -187,12 +189,11 @@ fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: tag::Id) {
 }
 
 /// Rename the last component (filename) of a PathBuf, and rename it on the filesystem too.
-fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) {
+fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) -> io::Result<()> {
     let mut new_buf = buf.clone();
     new_buf.pop();
     new_buf.push(new_name);
-    if let Err(e) = std::fs::rename(&buf, &new_buf) {
-        eprintln!("Rename error: {}", e);
-    }
+    std::fs::rename(&buf, &new_buf)?;
     *buf = new_buf;
+    Ok(())
 }

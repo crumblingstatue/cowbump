@@ -200,7 +200,13 @@ pub(super) fn do_frame(
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
-                                db.rename(win.ids[0], &win.rename_buffer);
+                                if let Err(e) = db.rename(win.ids[0], &win.rename_buffer) {
+                                    MessageDialog::new()
+                                        .set_level(MessageLevel::Error)
+                                        .set_title("Error")
+                                        .set_description(&e.to_string())
+                                        .show();
+                                }
                                 win.renaming = false;
                             }
                             if re.lost_focus() {
