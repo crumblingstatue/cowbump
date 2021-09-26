@@ -3,7 +3,7 @@ use std::{
     process::{Child, Command, ExitStatus, Stdio},
 };
 
-use egui::{Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
+use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
 use retain_mut::RetainMut;
 
 use crate::{
@@ -60,6 +60,22 @@ impl EntriesWindow {
     }
 }
 
+fn tag_ui(ui: &mut egui::Ui, name: &str, del: &mut bool) -> egui::Response {
+    ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
+        ui.group(|ui| {
+            ui.label(name);
+            if ui.button("x").clicked() {
+                *del = true;
+            }
+        });
+    })
+    .response
+}
+
+pub fn tag<'a>(name: &'a str, del: &'a mut bool) -> impl egui::Widget + 'a {
+    move |ui: &mut egui::Ui| tag_ui(ui, name, del)
+}
+
 pub(super) fn do_frame(
     state: &mut State,
     db: &mut Collection,
@@ -80,6 +96,7 @@ pub(super) fn do_frame(
         let mut close = esc_pressed;
         egui::Window::new(title)
             .open(&mut open)
+            .min_width(960.)
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.horizontal_wrapped(|ui| {
@@ -98,29 +115,23 @@ pub(super) fn do_frame(
                     ui.vertical(|ui| {
                         ui.horizontal_wrapped(|ui| {
                             for tagid in common_tags(&win.ids, db) {
-                                ui.group(|ui| {
-                                    ui.horizontal(|ui| {
-                                        let tag_name = match db.tags.get(&tagid) {
-                                            Some(tag) => &tag.names[0],
-                                            None => "<unknown tag>",
-                                        };
-                                        ui.add(
-                                            Label::new(tag_name)
-                                                .wrap(false)
-                                                .background_color(Color32::from_rgb(50, 40, 45)),
-                                        );
-                                        if ui.button("x").clicked() {
-                                            // TODO: This only works for 1 item windows
-                                            db.entries
-                                                .get_mut(&win.ids[0])
-                                                .unwrap()
-                                                .tags
-                                                .retain(|&t| t != tagid);
-                                        }
-                                    })
-                                });
+                                let tag_name = match db.tags.get(&tagid) {
+                                    Some(tag) => &tag.names[0],
+                                    None => "<unknown tag>",
+                                };
+                                let mut del = false;
+                                ui.add(tag(tag_name, &mut del));
+                                if del {
+                                    // TODO: This only works for 1 item windows
+                                    db.entries
+                                        .get_mut(&win.ids[0])
+                                        .unwrap()
+                                        .tags
+                                        .retain(|&t| t != tagid);
+                                }
                             }
                         });
+
                         let plus_re = ui.button("Add tags");
                         if plus_re.clicked() {
                             win.adding_tag ^= true;
