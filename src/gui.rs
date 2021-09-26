@@ -17,6 +17,7 @@ use anyhow::Context;
 use arboard::Clipboard;
 use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
+use rfd::{MessageDialog, MessageLevel};
 use sfml::{
     graphics::{
         Color, Font, IntRect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
@@ -320,29 +321,17 @@ fn handle_event_viewer(
             } else if code == Key::F {
                 state.filter_edit = true;
             } else if code == Key::C {
-                use arboard::ImageData;
                 let mp = window.mouse_position();
                 let uid = match entry_at_xy(mp.x, mp.y, state, on_screen_entries) {
                     Some(uid) => uid,
                     None => return,
                 };
-                let imgpath = &db.entries[&uid].path;
-                let buf = std::fs::read(imgpath).unwrap();
-                let img = match image::load_from_memory(&buf) {
-                    Ok(img) => img,
-                    Err(e) => {
-                        eprintln!("(clipboard) Image open error: {}", e);
-                        return;
-                    }
-                };
-                let rgba = img.to_rgba8();
-                let img_data = ImageData {
-                    width: rgba.width() as usize,
-                    height: rgba.height() as usize,
-                    bytes: rgba.into_raw().into(),
-                };
-                if let Err(e) = state.clipboard_ctx.set_image(img_data) {
-                    eprintln!("Error setting clipboard: {}", e);
+                if let Err(e) = copy_image_to_clipboard(state, &db, uid) {
+                    MessageDialog::new()
+                        .set_title("Error")
+                        .set_level(MessageLevel::Error)
+                        .set_description(&e.to_string())
+                        .show();
                 }
             } else if code == Key::T {
                 state.egui_state.tag_window.toggle();
@@ -354,6 +343,27 @@ fn handle_event_viewer(
         }
         _ => {}
     }
+}
+
+fn copy_image_to_clipboard(
+    state: &mut State,
+    db: &&mut Collection,
+    uid: entry::Id,
+) -> anyhow::Result<()> {
+    use arboard::ImageData;
+    let imgpath = &db.entries[&uid].path;
+    let buf = std::fs::read(imgpath).unwrap();
+    let img = image::load_from_memory(&buf).context("Failed to load image from memory")?;
+    let rgba = img.to_rgba8();
+    let img_data = ImageData {
+        width: rgba.width() as usize,
+        height: rgba.height() as usize,
+        bytes: rgba.into_raw().into(),
+    };
+    state
+        .clipboard_ctx
+        .set_image(img_data)
+        .context("Failed to copy to clipboard")
 }
 
 fn select_all(selected_uids: &mut Vec<entry::Id>, state: &State, db: &Collection) {
