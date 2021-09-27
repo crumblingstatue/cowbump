@@ -1,4 +1,5 @@
 mod entries_window;
+mod load_folder_window;
 mod preferences_window;
 mod sequences;
 mod tag_list;
@@ -17,6 +18,7 @@ use retain_mut::RetainMut;
 
 use self::{
     entries_window::EntriesWindow,
+    load_folder_window::LoadFolderWindow,
     preferences_window::PreferencesWindow,
     sequences::{SequenceWindow, SequencesWindow},
     tag_list::TagWindow,
@@ -31,6 +33,7 @@ pub(crate) struct EguiState {
     pub tag_window: TagWindow,
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
+    pub load_folder_window: LoadFolderWindow,
     info_messages: Vec<InfoMessage>,
     prompts: Vec<Prompt>,
     // We just closed window with esc, ignore the esc press outside of egui
@@ -130,6 +133,7 @@ pub(super) fn do_ui(
 ) -> anyhow::Result<()> {
     top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
+    load_folder_window::do_frame(state, egui_ctx);
     if let Some(coll_id) = app.active_collection {
         let coll = app.database.collections.get_mut(&coll_id).unwrap();
         do_search_edit(state, egui_ctx, coll);

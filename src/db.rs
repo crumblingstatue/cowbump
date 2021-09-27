@@ -87,12 +87,12 @@ impl Db {
             .map(|(k, _v)| *k)
     }
 
-    pub(crate) fn update_collection(&mut self, id: collection::Id) -> anyhow::Result<()> {
+    /*pub(crate) fn update_collection(&mut self, id: collection::Id) -> anyhow::Result<()> {
         self.collections
             .get_mut(&id)
             .unwrap()
-            .update_from_fs(&mut self.uid_counter)
-    }
+            .update_from_paths(&mut self.uid_counter)
+    }*/
 }
 
 const FILENAME: &str = "cowbump.db";

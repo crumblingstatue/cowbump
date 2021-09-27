@@ -8,7 +8,10 @@ use crate::{
 use anyhow::Context;
 use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
-use std::{io, path::PathBuf};
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
 use walkdir::WalkDir;
 
 pub type Entries = EntryMap<Entry>;
@@ -33,17 +36,25 @@ pub struct Collection {
 pub struct Id(pub Uid);
 
 impl Collection {
-    pub fn from_root(root_path: PathBuf, uid_counter: &mut UidCounter) -> anyhow::Result<Self> {
+    pub fn make_new(
+        root_path: PathBuf,
+        uid_counter: &mut UidCounter,
+        paths: &[impl AsRef<Path>],
+    ) -> anyhow::Result<Self> {
         let mut coll = Collection {
             root_path,
             entries: Entries::default(),
             tags: Tags::default(),
             sequences: Sequences::default(),
         };
-        coll.update_from_fs(uid_counter)?;
+        coll.update_from_paths(uid_counter, paths)?;
         Ok(coll)
     }
-    pub fn update_from_fs(&mut self, uid_counter: &mut UidCounter) -> anyhow::Result<()> {
+    pub fn update_from_paths(
+        &mut self,
+        uid_counter: &mut UidCounter,
+        paths: &[impl AsRef<Path>],
+    ) -> anyhow::Result<()> {
         let wd = WalkDir::new(&self.root_path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = EntrySet::default();

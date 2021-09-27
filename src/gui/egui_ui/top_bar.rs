@@ -8,7 +8,7 @@ use crate::{
     gui::{entries_view::EntriesView, State},
 };
 
-use super::{info_message, prompt, Action, PromptAction};
+use super::{info_message, load_folder_window, prompt, Action, PromptAction};
 
 pub(super) fn do_frame(
     state: &mut State,
@@ -69,19 +69,10 @@ pub(super) fn do_frame(
                 egui::menu::menu(ui, "File", |ui| {
                     if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
-                            match app.load_folder(dir_path) {
-                                Ok(()) => {
-                                    state.entries_view = EntriesView::from_collection(
-                                        &app.database.collections[&app.active_collection.unwrap()],
-                                    );
-                                }
-                                Err(e) => {
-                                    MessageDialog::new()
-                                        .set_title("Error")
-                                        .set_description(&e.to_string())
-                                        .show();
-                                }
-                            }
+                            load_folder_window::open(
+                                &mut state.egui_state.load_folder_window,
+                                dir_path,
+                            );
                         }
                     }
                     let butt =

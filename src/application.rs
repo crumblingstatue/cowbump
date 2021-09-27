@@ -22,7 +22,7 @@ impl Application {
             no_save: false,
         })
     }
-    pub fn load_folder(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
+    /*pub fn load_folder(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         std::env::set_current_dir(path.as_ref())?;
         let id = match self.database.find_collection_by_path(path.as_ref()) {
             Some(id) => {
@@ -30,7 +30,7 @@ impl Application {
                 id
             }
             None => {
-                let collection = Collection::from_root(
+                let collection = Collection::make_new(
                     path.as_ref().to_owned(),
                     &mut self.database.uid_counter,
                 )?;
@@ -40,7 +40,7 @@ impl Application {
         self.active_collection = Some(id);
         self.database.recent.use_(id);
         Ok(())
-    }
+    }*/
 
     pub(crate) fn load_last(&mut self) -> anyhow::Result<()> {
         if let Some(&id) = self.database.recent.most_recent() {
@@ -50,7 +50,7 @@ impl Application {
     }
 
     pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<()> {
-        self.database.update_collection(id)?;
+        //self.database.update_collection(id)?;
         self.active_collection = Some(id);
         self.database.recent.use_(id);
         Ok(())

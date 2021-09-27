@@ -9,7 +9,7 @@ use std::path::PathBuf;
 /// Path to an item we're interested in organizing, along with associated tags
 #[derive(Serialize, Deserialize)]
 pub struct Entry {
-    /// Absolute path
+    /// Image path relative to collection root. Assumed to be unique within the collection.
     pub path: PathBuf,
     pub tags: TagSet,
 }
