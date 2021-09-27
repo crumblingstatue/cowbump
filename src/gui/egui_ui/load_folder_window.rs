@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    io,
+    io, mem,
     path::{Path, PathBuf},
     sync::{
         mpsc::{self, channel, Receiver, Sender},
@@ -15,7 +15,11 @@ use egui::{
 use sfml::{graphics::Texture, SfBox};
 use walkdir::WalkDir;
 
-use crate::gui::{thumbnail_loader, Resources, State};
+use crate::{
+    application::Application,
+    collection::Collection,
+    gui::{thumbnail_loader, Resources, State},
+};
 
 #[derive(Default)]
 pub struct LoadFolderWindow {
@@ -61,7 +65,12 @@ pub(super) fn open(win: &mut LoadFolderWindow, path: PathBuf) {
     win.root = path_arc;
 }
 
-pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, resources: &Resources) {
+pub(super) fn do_frame(
+    state: &mut State,
+    egui_ctx: &CtxRef,
+    resources: &Resources,
+    app: &mut Application,
+) {
     let win = &mut state.egui_state.load_folder_window;
     let input = egui_ctx.input();
     let mut new_sel = None;
@@ -153,8 +162,31 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, resources: &Resourc
                 }
                 let button;
                 if win.state.is_some() {
-                    button = Button::new("Add").enabled(done);
-                    if ui.add(button).clicked() {}
+                    button = Button::new("Create new collection").enabled(done);
+                    if ui.add(button).clicked() {
+                        let paths = win
+                            .results
+                            .drain(..)
+                            .filter_map(|res| match res {
+                                Ok(mut path_add) => {
+                                    if path_add.add {
+                                        Some(mem::take(&mut path_add.path))
+                                    } else {
+                                        None
+                                    }
+                                }
+                                Err(_) => None,
+                            })
+                            .collect::<Vec<_>>();
+                        let coll = Collection::make_new(
+                            (*win.root).clone(),
+                            &mut app.database.uid_counter,
+                            &paths,
+                        )
+                        .unwrap();
+                        let id = app.add_collection(coll);
+                        crate::gui::set_active_collection(&mut state.entries_view, app, id);
+                    }
                     let pb = ProgressBar::new(0.0).animate(!done).desired_width(16.0);
                     ui.add(pb);
                     ui.label(&format!("{} results", win.results.len()));

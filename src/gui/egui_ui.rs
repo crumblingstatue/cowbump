@@ -136,7 +136,7 @@ pub(super) fn do_ui(
 ) -> anyhow::Result<()> {
     top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
-    load_folder_window::do_frame(state, egui_ctx, res);
+    load_folder_window::do_frame(state, egui_ctx, res, app);
     if let Some(coll_id) = app.active_collection {
         let coll = app.database.collections.get_mut(&coll_id).unwrap();
         do_search_edit(state, egui_ctx, coll);

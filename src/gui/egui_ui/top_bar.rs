@@ -1,12 +1,7 @@
-use anyhow::Context;
 use egui::{Button, CtxRef, TopBottomPanel};
 use rfd::{FileDialog, MessageDialog};
 
-use crate::{
-    application::Application,
-    collection,
-    gui::{entries_view::EntriesView, State},
-};
+use crate::{application::Application, collection, gui::State};
 
 use super::{info_message, load_folder_window, prompt, Action, PromptAction};
 
@@ -46,13 +41,11 @@ pub(super) fn do_frame(
                         match action {
                             Action::Open(id) => match app.load_collection(id) {
                                 Ok(()) => {
-                                    state.entries_view = EntriesView::from_collection(
-                                        &app.database.collections[&app.active_collection.unwrap()],
+                                    result = crate::gui::set_active_collection(
+                                        &mut state.entries_view,
+                                        app,
+                                        id,
                                     );
-                                    result = std::env::set_current_dir(
-                                        &app.database.collections[&id].root_path,
-                                    )
-                                    .context("failed to set directory");
                                 }
                                 Err(e) => {
                                     MessageDialog::new()

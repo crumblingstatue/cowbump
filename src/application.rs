@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use anyhow::Context;
 
 use crate::{
@@ -21,6 +19,12 @@ impl Application {
             active_collection: None,
             no_save: false,
         })
+    }
+    pub fn add_collection(&mut self, collection: Collection) -> collection::Id {
+        let id = self.database.insert_collection(collection);
+        self.active_collection = Some(id);
+        self.database.recent.use_(id);
+        id
     }
     /*pub fn load_folder(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         std::env::set_current_dir(path.as_ref())?;

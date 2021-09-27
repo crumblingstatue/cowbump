@@ -12,7 +12,6 @@ use std::{
     io,
     path::{Path, PathBuf},
 };
-use walkdir::WalkDir;
 
 pub type Entries = EntryMap<Entry>;
 pub type Tags = FnvHashMap<tag::Id, Tag>;
@@ -55,39 +54,24 @@ impl Collection {
         uid_counter: &mut UidCounter,
         paths: &[impl AsRef<Path>],
     ) -> anyhow::Result<()> {
-        let wd = WalkDir::new(&self.root_path).sort_by(|a, b| a.file_name().cmp(b.file_name()));
         // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = EntrySet::default();
 
-        for dir_entry in wd {
-            let dir_entry = dir_entry?;
-            if dir_entry.file_type().is_dir() {
-                continue;
-            }
-            let dir_entry_path = dir_entry.into_path();
-            let dir_entry_path = match dir_entry_path.strip_prefix(&self.root_path) {
-                Ok(stripped) => stripped,
-                Err(e) => {
-                    eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
-                    continue;
-                }
-            };
+        for path in paths {
+            let path = path.as_ref();
             let mut already_have = false;
             for (&uid, en) in &self.entries {
-                if en.path == dir_entry_path {
+                if en.path == path {
                     already_have = true;
                     valid_uids.insert(uid);
                     break;
                 }
             }
             let should_add = !already_have;
-            let _file_name = dir_entry_path.file_name().unwrap();
             if should_add {
-                eprintln!("Adding {}", dir_entry_path.display());
                 let uid = entry::Id(uid_counter.next());
                 valid_uids.insert(uid);
-                self.entries
-                    .insert(uid, Entry::new(dir_entry_path.to_owned()));
+                self.entries.insert(uid, Entry::new(path.to_owned()));
             }
         }
         // Remove indices that don't correspond to valid entries

@@ -4,7 +4,7 @@ mod thumbnail_loader;
 
 use crate::{
     application::Application,
-    collection::Collection,
+    collection::{self, Collection},
     db::{EntryMap, TagSet, Uid},
     entry,
     filter_spec::FilterSpec,
@@ -490,6 +490,17 @@ struct State {
     clipboard_ctx: Clipboard,
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
+}
+
+fn set_active_collection(
+    entries_view: &mut EntriesView,
+    app: &mut Application,
+    id: collection::Id,
+) -> anyhow::Result<()> {
+    *entries_view =
+        EntriesView::from_collection(&app.database.collections[&app.active_collection.unwrap()]);
+    std::env::set_current_dir(&app.database.collections[&id].root_path)
+        .context("failed to set directory")
 }
 
 struct TexSrc<'state, 'res, 'db> {
