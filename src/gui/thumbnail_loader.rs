@@ -47,14 +47,7 @@ impl ThumbnailLoader {
             if let Some(result) = slot.take() {
                 match result {
                     Ok(buf) => {
-                        let (w, h) = buf.dimensions();
-                        let mut tex = Texture::new().unwrap();
-                        if !tex.create(w, h) {
-                            panic!("Failed to create texture");
-                        }
-                        unsafe {
-                            tex.update_from_pixels(&buf.into_raw(), w, h, 0, 0);
-                        }
+                        let tex = imagebuf_to_sf_tex(buf);
                         cache.insert(uid, Some(tex));
                     }
                     Err(_) => {
@@ -70,4 +63,16 @@ impl ThumbnailLoader {
     pub fn busy_with(&self) -> Vec<entry::Id> {
         self.image_slots.lock().unwrap().keys().cloned().collect()
     }
+}
+
+pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> sfml::SfBox<Texture> {
+    let (w, h) = buf.dimensions();
+    let mut tex = Texture::new().unwrap();
+    if !tex.create(w, h) {
+        panic!("Failed to create texture");
+    }
+    unsafe {
+        tex.update_from_pixels(&buf.into_raw(), w, h, 0, 0);
+    }
+    tex
 }

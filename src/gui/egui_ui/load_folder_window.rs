@@ -10,11 +10,12 @@ use std::{
 };
 
 use egui::{
-    vec2, Button, Checkbox, Color32, CtxRef, Label, ProgressBar, ScrollArea, Sense, Window,
+    vec2, Align, Button, Color32, CtxRef, Key, Label, ProgressBar, ScrollArea, Sense, Window,
 };
+use sfml::{graphics::Texture, SfBox};
 use walkdir::WalkDir;
 
-use crate::gui::State;
+use crate::gui::{thumbnail_loader, Resources, State};
 
 #[derive(Default)]
 pub struct LoadFolderWindow {
@@ -25,6 +26,7 @@ pub struct LoadFolderWindow {
     /// Selection marker for items in result window
     res_select: Option<usize>,
     res_hover: Option<usize>,
+    pub texture: Option<SfBox<Texture>>,
 }
 
 struct PathAdd {
@@ -59,8 +61,24 @@ pub(super) fn open(win: &mut LoadFolderWindow, path: PathBuf) {
     win.root = path_arc;
 }
 
-pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef) {
+pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef, resources: &Resources) {
     let win = &mut state.egui_state.load_folder_window;
+    let input = egui_ctx.input();
+    let mut new_sel = None;
+    if input.key_pressed(Key::ArrowUp) {
+        if let Some(sel) = win.res_select.as_mut() {
+            if *sel > 0 {
+                *sel -= 1;
+                new_sel = Some(*sel);
+            }
+        }
+    }
+    if input.key_pressed(Key::ArrowDown) {
+        if let Some(sel) = win.res_select.as_mut() {
+            *sel += 1;
+            new_sel = Some(*sel);
+        }
+    }
     if !win.open {
         return;
     }
@@ -99,8 +117,23 @@ pub(super) fn do_frame(state: &mut State, egui_ctx: &CtxRef) {
                                     if re.hovered() {
                                         win.res_hover = Some(i);
                                     }
+                                    let mut did_select_new = false;
                                     if re.clicked() {
                                         win.res_select = Some(i);
+                                        did_select_new = true;
+                                    }
+                                    if new_sel == Some(i) {
+                                        re.scroll_to_me(Align::Center);
+                                        did_select_new = true;
+                                    }
+                                    if did_select_new {
+                                        if let Ok(image) = image::open(win.root.join(&path.path)) {
+                                            let buf = image.to_rgba8();
+                                            let tex = thumbnail_loader::imagebuf_to_sf_tex(buf);
+                                            win.texture = Some(tex);
+                                        } else {
+                                            win.texture = Some(resources.error_texture.clone());
+                                        }
                                     }
                                 });
                             }

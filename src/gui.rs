@@ -20,8 +20,8 @@ use egui_sfml::SfEgui;
 use rfd::{MessageDialog, MessageLevel};
 use sfml::{
     graphics::{
-        Color, Font, IntRect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
-        Transformable,
+        Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite,
+        Text, Texture, Transformable,
     },
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
@@ -131,7 +131,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         state.begin_frame();
         let mut result = Ok(());
         sf_egui.do_frame(|ctx| {
-            result = egui_ui::do_ui(&mut state, ctx, app);
+            result = egui_ui::do_ui(&mut state, ctx, app, &res);
         });
         result?;
         if esc_pressed
@@ -209,6 +209,13 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 highlight_offset,
             ));
             window.draw(&search_highlight);
+        }
+        if let Some(tex) = state.egui_state.load_folder_window.texture.as_ref() {
+            let mut rs = RectangleShape::from_rect(Rect::new(800., 64., 512., 512.));
+            rs.set_texture(tex, true);
+            rs.set_outline_color(Color::YELLOW);
+            rs.set_outline_thickness(4.0);
+            window.draw(&rs);
         }
         let mut tex_src = TexSrc {
             state: &mut state,

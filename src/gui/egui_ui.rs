@@ -24,6 +24,8 @@ use self::{
     tag_list::TagWindow,
 };
 
+use super::Resources;
+
 #[derive(Default)]
 pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,
@@ -130,10 +132,11 @@ pub(super) fn do_ui(
     state: &mut State,
     egui_ctx: &egui::CtxRef,
     app: &mut Application,
+    res: &Resources,
 ) -> anyhow::Result<()> {
     top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
-    load_folder_window::do_frame(state, egui_ctx);
+    load_folder_window::do_frame(state, egui_ctx, res);
     if let Some(coll_id) = app.active_collection {
         let coll = app.database.collections.get_mut(&coll_id).unwrap();
         do_search_edit(state, egui_ctx, coll);
