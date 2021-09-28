@@ -20,8 +20,8 @@ use egui_sfml::SfEgui;
 use rfd::{MessageDialog, MessageLevel};
 use sfml::{
     graphics::{
-        Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Sprite,
-        Text, Texture, Transformable,
+        Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
+        Texture, Transformable,
     },
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
@@ -497,10 +497,9 @@ fn set_active_collection(
     app: &mut Application,
     id: collection::Id,
 ) -> anyhow::Result<()> {
-    *entries_view =
-        EntriesView::from_collection(&app.database.collections[&app.active_collection.unwrap()]);
-    std::env::set_current_dir(&app.database.collections[&id].root_path)
-        .context("failed to set directory")
+    let coll = &app.database.collections[&id];
+    *entries_view = EntriesView::from_collection(coll);
+    std::env::set_current_dir(&coll.root_path).context("failed to set directory")
 }
 
 struct TexSrc<'state, 'res, 'db> {

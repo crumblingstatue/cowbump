@@ -62,10 +62,16 @@ pub(super) fn do_frame(
                 egui::menu::menu(ui, "File", |ui| {
                     if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
-                            load_folder_window::open(
-                                &mut state.egui_state.load_folder_window,
-                                dir_path,
-                            );
+                            if let Some(id) = app.database.find_collection_by_path(&dir_path) {
+                                app.load_collection(id).unwrap();
+                                crate::gui::set_active_collection(&mut state.entries_view, app, id)
+                                    .unwrap();
+                            } else {
+                                load_folder_window::open(
+                                    &mut state.egui_state.load_folder_window,
+                                    dir_path,
+                                );
+                            }
                         }
                     }
                     let butt =

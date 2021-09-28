@@ -1,5 +1,5 @@
 pub mod global;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use fnv::{FnvHashMap, FnvHashSet};
 
@@ -80,7 +80,7 @@ impl Db {
         Ok(())
     }
 
-    pub(crate) fn find_collection_by_path(&self, path: &std::path::Path) -> Option<collection::Id> {
+    pub(crate) fn find_collection_by_path(&self, path: &Path) -> Option<collection::Id> {
         self.collections
             .iter()
             .find(|(_k, v)| v.root_path == path)
