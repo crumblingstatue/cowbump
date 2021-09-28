@@ -63,6 +63,7 @@ pub(super) fn open(win: &mut LoadFolderWindow, path: PathBuf) {
     let path_arc = Arc::new(path);
     win.open = true;
     win.root = path_arc;
+    start_loading(win);
 }
 
 pub(super) fn do_frame(
@@ -97,7 +98,7 @@ pub(super) fn do_frame(
         .fixed_size(vec2(640., 640.))
         .show(egui_ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
-                ui.heading("Load folder ");
+                ui.heading("Folder ");
                 let label = Label::new(win.root.to_string_lossy().as_ref())
                     .heading()
                     .text_color(Color32::YELLOW);
@@ -190,8 +191,6 @@ pub(super) fn do_frame(
                     let pb = ProgressBar::new(0.0).animate(!done).desired_width(16.0);
                     ui.add(pb);
                     ui.label(&format!("{} results", win.results.len()));
-                } else if ui.button("Start").clicked() {
-                    start_loading(win);
                 }
             });
         });
