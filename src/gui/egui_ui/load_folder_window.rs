@@ -247,19 +247,3 @@ fn read_dir_entries(root: &Path, sender: Sender<PathResult>) {
         sender.send(Ok(dir_entry_path.to_owned())).unwrap();
     }
 }
-
-/*
-match app.load_folder(dir_path) {
-                                Ok(()) => {
-                                    state.entries_view = EntriesView::from_collection(
-                                        &app.database.collections[&app.active_collection.unwrap()],
-                                    );
-                                }
-                                Err(e) => {
-                                    MessageDialog::new()
-                                        .set_title("Error")
-                                        .set_description(&e.to_string())
-                                        .show();
-                                }
-                            }
- */
