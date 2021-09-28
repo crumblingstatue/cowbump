@@ -188,6 +188,7 @@ pub(super) fn do_frame(
                         let id = app.add_collection(coll);
                         crate::gui::set_active_collection(&mut state.entries_view, app, id)
                             .unwrap();
+                        *win = Default::default();
                     }
                     let pb = ProgressBar::new(0.0).animate(!done).desired_width(16.0);
                     ui.add(pb);
