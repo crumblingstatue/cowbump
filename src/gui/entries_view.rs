@@ -130,7 +130,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
     let mut show_filename = !has_img;
     let fname_pos = (x, y + 64.0);
-    if Key::LALT.is_pressed() {
+    if Key::LAlt.is_pressed() {
         show_filename = true;
         let mut rect = RectangleShape::new();
         rect.set_fill_color(Color::rgba(0, 0, 0, 128));

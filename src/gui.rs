@@ -66,9 +66,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     while window.is_open() {
         if !sf_egui.context().wants_keyboard_input() {
             let scroll_speed = 8.0;
-            if Key::DOWN.is_pressed() {
+            if Key::Down.is_pressed() {
                 state.y_offset += scroll_speed;
-            } else if Key::UP.is_pressed() {
+            } else if Key::Up.is_pressed() {
                 state.y_offset -= scroll_speed;
                 if state.y_offset < 0.0 {
                     state.y_offset = 0.0;
@@ -83,13 +83,13 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 Event::Closed => window.close(),
                 Event::KeyPressed { code, .. } => {
                     match code {
-                        Key::ESCAPE => esc_pressed = true,
-                        Key::HOME => {
+                        Key::Escape => esc_pressed = true,
+                        Key::Home => {
                             if !sf_egui.context().wants_keyboard_input() {
                                 state.y_offset = 0.0;
                             }
                         }
-                        Key::END => {
+                        Key::End => {
                             if let Some(coll) = app
                                 .active_collection
                                 .map(|idx| &app.database.collections[&idx])
@@ -275,8 +275,8 @@ fn handle_event_viewer(
                 Some(uid) => uid,
                 None => return,
             };
-            if button == mouse::Button::LEFT {
-                if Key::LSHIFT.is_pressed() {
+            if button == mouse::Button::Left {
+                if Key::LShift.is_pressed() {
                     if selected_entries.contains(&uid) {
                         selected_entries.retain(|&rhs| rhs != uid);
                     } else {
@@ -285,7 +285,7 @@ fn handle_event_viewer(
                 } else {
                     open_with_external(&[&db.entries[&uid].path]);
                 }
-            } else if button == mouse::Button::RIGHT {
+            } else if button == mouse::Button::Right {
                 let vec = if selected_entries.contains(&uid) {
                     selected_entries.clone()
                 } else {
@@ -298,14 +298,14 @@ fn handle_event_viewer(
             if ctx.wants_keyboard_input() {
                 return;
             }
-            if code == Key::PAGEDOWN {
+            if code == Key::PageDown {
                 state.y_offset += window.size().y as f32;
-            } else if code == Key::PAGEUP {
+            } else if code == Key::PageUp {
                 state.y_offset -= window.size().y as f32;
                 if state.y_offset < 0.0 {
                     state.y_offset = 0.0;
                 }
-            } else if code == Key::ENTER {
+            } else if code == Key::Enter {
                 let mut paths: Vec<&Path> = Vec::new();
                 for &uid in selected_entries.iter() {
                     paths.push(&db.entries[&uid].path);
@@ -319,7 +319,7 @@ fn handle_event_viewer(
                 open_with_external(&paths);
             } else if code == Key::A && ctrl {
                 select_all(selected_entries, state, db);
-            } else if code == Key::SLASH {
+            } else if code == Key::Slash {
                 state.search_edit = true;
             } else if code == Key::N {
                 search_next(state, db);
