@@ -86,7 +86,23 @@ impl Db {
             .find(|(_k, v)| v.root_path == path)
             .map(|(k, _v)| *k)
     }
+
+    pub(crate) fn scan_changes(&self, id: collection::Id) -> anyhow::Result<FolderChanges> {
+        self.collections[&id].scan_changes()
+    }
+}
+
+#[derive(Debug, Default)]
+#[must_use]
+pub(crate) struct FolderChanges {
+    pub(crate) add: Vec<PathBuf>,
+    pub(crate) remove: Vec<PathBuf>,
 }
 
 const FILENAME: &str = "cowbump.db";
 const BACKUP_FILENAME: &str = "cowbump.db.bak";
+impl FolderChanges {
+    pub(crate) fn empty(&self) -> bool {
+        self.add.is_empty() && self.remove.is_empty()
+    }
+}

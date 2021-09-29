@@ -1,7 +1,8 @@
 use crate::{
-    db::{EntryMap, EntrySet, Uid, UidCounter},
+    db::{EntryMap, EntrySet, FolderChanges, Uid, UidCounter},
     entry::{self, Entry},
     filter_spec::FilterSpec,
+    folder_scan::walkdir,
     sequence::{self, Sequence},
     tag::{self, Tag},
 };
@@ -170,6 +171,52 @@ impl Collection {
                 }
             })
             .collect()
+    }
+
+    pub(crate) fn scan_changes(&self) -> anyhow::Result<FolderChanges> {
+        let wd = walkdir(&self.root_path);
+        let self_paths: Vec<_> = self.entries.values().map(|en| &en.path).collect();
+        let mut add = Vec::new();
+        let mut remove = Vec::new();
+        // Scan for additions (paths we don't have)
+        for dir_entry in wd {
+            let dir_entry = dir_entry?;
+            if dir_entry.file_type().is_dir() {
+                continue;
+            }
+            let dir_entry_path = dir_entry.into_path();
+            let dir_entry_path = match dir_entry_path.strip_prefix(&self.root_path) {
+                Ok(stripped) => stripped,
+                Err(e) => {
+                    eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
+                    continue;
+                }
+            };
+            if !self_paths.iter().any(|&p| p == dir_entry_path) {
+                add.push(dir_entry_path.to_owned());
+            }
+        }
+        // Scan for removes (paths we have but fs doesn't have)
+        for path in self_paths {
+            if !self.root_path.join(path).exists() {
+                remove.push(path.to_owned());
+            }
+        }
+        Ok(FolderChanges { add, remove })
+    }
+
+    pub(crate) fn apply_changes(&mut self, changes: &FolderChanges, uid_counter: &mut UidCounter) {
+        for path in &changes.add {
+            self.add_new_entry(path.clone(), uid_counter);
+        }
+        self.entries
+            .retain(|_k, en| !changes.remove.contains(&en.path));
+    }
+
+    fn add_new_entry(&mut self, path: PathBuf, uid_counter: &mut UidCounter) -> entry::Id {
+        let uid = entry::Id(uid_counter.next());
+        self.entries.insert(uid, Entry::new(path));
+        uid
     }
 }
 

@@ -3,6 +3,7 @@ mod collection;
 mod db;
 mod entry;
 mod filter_spec;
+mod folder_scan;
 mod gui;
 mod preferences;
 mod recently_used_list;

@@ -56,7 +56,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     };
 
     if app.database.preferences.open_last_coll_at_start && app.database.recent.len() > 0 {
-        app.load_last()?;
+        let changes = app.load_last()?;
+        if !changes.empty() {
+            state.egui_state.changes_window.open(changes);
+        }
         let coll = &app.database.collections[&app.active_collection.unwrap()];
         state.entries_view = EntriesView::from_collection(coll);
         std::env::set_current_dir(&coll.root_path)?;

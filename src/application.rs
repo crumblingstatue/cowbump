@@ -2,7 +2,7 @@ use anyhow::Context;
 
 use crate::{
     collection::{self, Collection},
-    db::Db,
+    db::{Db, FolderChanges},
 };
 
 pub struct Application {
@@ -26,16 +26,31 @@ impl Application {
         self.database.recent.use_(id);
         id
     }
-    pub(crate) fn load_last(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn load_last(&mut self) -> anyhow::Result<FolderChanges> {
         if let Some(&id) = self.database.recent.most_recent() {
-            self.load_collection(id)?;
+            self.load_collection(id)
+        } else {
+            Ok(FolderChanges::default())
         }
-        Ok(())
     }
-    pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<()> {
-        //self.database.update_collection(id)?;
+    pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<FolderChanges> {
+        let changes = self.database.scan_changes(id)?;
         self.active_collection = Some(id);
         self.database.recent.use_(id);
-        Ok(())
+        Ok(changes)
+    }
+    pub(crate) fn active_collection(&mut self) -> Option<&mut Collection> {
+        self.active_collection
+            .map(|id| self.database.collections.get_mut(&id).unwrap())
+    }
+
+    pub(crate) fn apply_changes_to_active_collection(&mut self, changes: &FolderChanges) {
+        if let Some(id) = self.active_collection {
+            self.database
+                .collections
+                .get_mut(&id)
+                .unwrap()
+                .apply_changes(changes, &mut self.database.uid_counter)
+        }
     }
 }

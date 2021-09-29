@@ -1,3 +1,4 @@
+mod changes_window;
 mod entries_window;
 mod load_folder_window;
 mod preferences_window;
@@ -17,6 +18,7 @@ use egui::{Align2, Color32, CtxRef, TextEdit, Window};
 use retain_mut::RetainMut;
 
 use self::{
+    changes_window::ChangesWindow,
     entries_window::EntriesWindow,
     load_folder_window::LoadFolderWindow,
     preferences_window::PreferencesWindow,
@@ -36,6 +38,7 @@ pub(crate) struct EguiState {
     pub(crate) action: Option<Action>,
     pub top_bar: bool,
     pub load_folder_window: LoadFolderWindow,
+    pub(crate) changes_window: ChangesWindow,
     info_messages: Vec<InfoMessage>,
     prompts: Vec<Prompt>,
     // We just closed window with esc, ignore the esc press outside of egui
@@ -137,6 +140,7 @@ pub(super) fn do_ui(
     top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
     load_folder_window::do_frame(state, egui_ctx, res, app);
+    changes_window::do_frame(state, egui_ctx, app);
     if let Some(coll_id) = app.active_collection {
         let coll = app.database.collections.get_mut(&coll_id).unwrap();
         do_search_edit(state, egui_ctx, coll);

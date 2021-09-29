@@ -40,7 +40,10 @@ pub(super) fn do_frame(
                         }
                         match action {
                             Action::Open(id) => match app.load_collection(id) {
-                                Ok(()) => {
+                                Ok(changes) => {
+                                    if !changes.empty() {
+                                        state.egui_state.changes_window.open(changes);
+                                    }
                                     result = crate::gui::set_active_collection(
                                         &mut state.entries_view,
                                         app,
@@ -63,7 +66,10 @@ pub(super) fn do_frame(
                     if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
                             if let Some(id) = app.database.find_collection_by_path(&dir_path) {
-                                app.load_collection(id).unwrap();
+                                let changes = app.load_collection(id).unwrap();
+                                if !changes.empty() {
+                                    state.egui_state.changes_window.open(changes);
+                                }
                                 crate::gui::set_active_collection(&mut state.entries_view, app, id)
                                     .unwrap();
                             } else {

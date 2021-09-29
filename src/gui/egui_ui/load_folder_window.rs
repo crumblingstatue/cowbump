@@ -13,11 +13,11 @@ use egui::{
     vec2, Align, Button, Color32, CtxRef, Key, Label, ProgressBar, ScrollArea, Sense, Window,
 };
 use sfml::{graphics::Texture, SfBox};
-use walkdir::WalkDir;
 
 use crate::{
     application::Application,
     collection::Collection,
+    folder_scan::walkdir,
     gui::{thumbnail_loader, Resources, State},
 };
 
@@ -224,7 +224,7 @@ fn update(load_state: &mut LoadingState, result_vec: &mut Vec<Result<PathAdd, io
 }
 
 fn read_dir_entries(root: &Path, sender: Sender<PathResult>) {
-    let wd = WalkDir::new(root).sort_by(|a, b| a.file_name().cmp(b.file_name()));
+    let wd = walkdir(root);
     for dir_entry in wd {
         let dir_entry = match dir_entry {
             Ok(en) => en,
