@@ -2,6 +2,7 @@ mod egui_ui;
 mod entries_view;
 mod thumbnail_loader;
 
+use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
 use crate::{
     application::Application,
     collection::{self, Collection},
@@ -9,10 +10,8 @@ use crate::{
     entry,
     filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
+    preferences::{AppId, Preferences},
 };
-use std::collections::BTreeMap;
-
-use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
 use anyhow::Context;
 use arboard::Clipboard;
 use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
@@ -26,7 +25,7 @@ use sfml::{
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path, process::Command};
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
@@ -128,6 +127,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &mut selected_uids,
                     &window,
                     sf_egui.context(),
+                    &app.database.preferences,
                 );
             }
         }
@@ -268,6 +268,7 @@ fn handle_event_viewer(
     selected_entries: &mut Vec<entry::Id>,
     window: &RenderWindow,
     ctx: &CtxRef,
+    preferences: &Preferences,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
@@ -285,8 +286,11 @@ fn handle_event_viewer(
                     } else {
                         selected_entries.push(uid);
                     }
-                } else {
-                    open_with_external(&[&db.entries[&uid].path]);
+                } else if let Err(e) = open_with_external(&[&db.entries[&uid].path], preferences) {
+                    MessageDialog::new()
+                        .set_level(MessageLevel::Error)
+                        .set_description(&e.to_string())
+                        .show();
                 }
             } else if button == mouse::Button::Right {
                 let vec = if selected_entries.contains(&uid) {
@@ -319,7 +323,12 @@ fn handle_event_viewer(
                     }
                 }
                 paths.sort();
-                open_with_external(&paths);
+                if let Err(e) = open_with_external(&paths, preferences) {
+                    MessageDialog::new()
+                        .set_level(MessageLevel::Error)
+                        .set_description(&e.to_string())
+                        .show();
+                }
             } else if code == Key::A && ctrl {
                 select_all(selected_entries, state, db);
             } else if code == Key::Slash {
@@ -353,6 +362,59 @@ fn handle_event_viewer(
         }
         _ => {}
     }
+}
+
+fn open_with_external(paths: &[&Path], preferences: &Preferences) -> anyhow::Result<()> {
+    let tasks = build_tasks(paths, preferences)?;
+    for task in tasks {
+        let app = &preferences.applications[&task.app];
+        let mut cmd = Command::new(&app.path);
+        cmd.args(task.args);
+        cmd.spawn()?;
+    }
+    Ok(())
+}
+
+fn build_tasks<'a, 'p>(
+    paths: &[&'p Path],
+    preferences: &'a Preferences,
+) -> anyhow::Result<Vec<Task<'p>>> {
+    let mut tasks: Vec<Task> = Vec::new();
+    for path in paths {
+        let ext = path
+            .extension()
+            .map(|ext| ext.to_str().unwrap())
+            .unwrap_or("");
+        match preferences.associations.get(ext) {
+            Some(Some(app_id)) => {
+                if let Some(task) = tasks.iter_mut().find(|task| task.app == *app_id) {
+                    task.args.push(path);
+                } else {
+                    tasks.push(Task {
+                        app: *app_id,
+                        args: vec![path],
+                    });
+                }
+            }
+            _ => {
+                MessageDialog::new()
+                    .set_level(MessageLevel::Error)
+                    .set_description(&format!(
+                        "The extension {} has no application associated with it.\n\
+                         See File->Preferences->Associations",
+                        ext
+                    ))
+                    .show();
+            }
+        }
+    }
+    Ok(tasks)
+}
+
+#[derive(Debug)]
+struct Task<'p> {
+    app: AppId,
+    args: Vec<&'p Path>,
 }
 
 fn copy_image_to_clipboard(
@@ -586,61 +648,5 @@ impl State {
     }
     fn begin_frame(&mut self) {
         self.egui_state.begin_frame();
-    }
-}
-
-fn open_with_external(paths: &[&Path]) {
-    use std::process::Command;
-    struct Cmd {
-        command: Command,
-        have_args: bool,
-        exts: &'static [&'static str],
-    }
-    let mut general_cmd = Cmd {
-        command: {
-            let mut c = Command::new("feh");
-            c.arg("--auto-rotate");
-            c
-        },
-        exts: &[],
-        have_args: false,
-    };
-    let mut commands = vec![
-        Cmd {
-            command: {
-                let mut c = Command::new("mpv");
-                c.arg("--ab-loop-a=0");
-                c
-            },
-            exts: &["gif", "webm", "mov", "mp4", "m4v", "wmv", "avi"],
-            have_args: false,
-        },
-        Cmd {
-            command: Command::new("ruffle"),
-            exts: &["swf"],
-            have_args: false,
-        },
-    ];
-    for path in paths {
-        let mut cmd = &mut general_cmd;
-        if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
-            let lower = &ext.to_lowercase();
-            for c in &mut commands {
-                if c.exts.iter().any(|&e| e == lower) {
-                    cmd = c;
-                }
-            }
-        }
-        cmd.command.arg(path);
-        cmd.have_args = true;
-    }
-    if general_cmd.have_args {
-        general_cmd.command.spawn().unwrap();
-    }
-
-    for mut c in commands {
-        if c.have_args {
-            c.command.spawn().unwrap();
-        }
     }
 }

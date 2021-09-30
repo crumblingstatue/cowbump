@@ -3,16 +3,23 @@ use egui::{
     Window,
 };
 use retain_mut::RetainMut;
+use rfd::{MessageDialog, MessageLevel};
 
 use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
     gui::{open_with_external, State},
+    preferences::Preferences,
     sequence,
 };
 
-pub(super) fn do_sequence_windows(state: &mut State, db: &mut Collection, egui_ctx: &CtxRef) {
+pub(super) fn do_sequence_windows(
+    state: &mut State,
+    db: &mut Collection,
+    egui_ctx: &CtxRef,
+    prefs: &Preferences,
+) {
     state.egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
         let seq = db.sequences.get_mut(&win.uid).unwrap();
@@ -125,7 +132,12 @@ pub(super) fn do_sequence_windows(state: &mut State, db: &mut Collection, egui_c
                     for img_uid in seq.entry_uids_wrapped_from(uid) {
                         paths.push(db.entries[&img_uid].path.as_ref());
                     }
-                    open_with_external(&paths);
+                    if let Err(e) = open_with_external(&paths, prefs) {
+                        MessageDialog::new()
+                            .set_level(MessageLevel::Error)
+                            .set_description(&e.to_string())
+                            .show();
+                    }
                 }
             }
         }
