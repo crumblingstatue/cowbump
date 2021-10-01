@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use egui::{Button, ComboBox, CtxRef, Grid, ScrollArea, SidePanel, TextEdit, Window};
+use egui::{
+    Button, CollapsingHeader, ComboBox, CtxRef, Grid, ScrollArea, SidePanel, TextEdit, Window,
+};
 use rfd::FileDialog;
 
 use crate::preferences::{App, AppId};
@@ -79,13 +81,15 @@ pub(crate) fn do_frame(
                     ui.separator();
                     prefs.applications.retain(|k, app| {
                         let mut retain = true;
-                        ui.collapsing(&format!("{} ({})", app.name, k.0), |ui| {
-                            win.path_scratch_buffer = app.path.to_string_lossy().into_owned();
-                            app_edit_ui(app, &mut win.path_scratch_buffer, ui);
-                            if ui.button("Delete").clicked() {
-                                retain = false;
-                            }
-                        });
+                        CollapsingHeader::new(&app.name)
+                            .id_source(k.0)
+                            .show(ui, |ui| {
+                                win.path_scratch_buffer = app.path.to_string_lossy().into_owned();
+                                app_edit_ui(app, &mut win.path_scratch_buffer, ui);
+                                if ui.button("Delete").clicked() {
+                                    retain = false;
+                                }
+                            });
                         retain
                     });
                     ui.separator();
