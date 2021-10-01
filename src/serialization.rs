@@ -4,10 +4,17 @@ use std::{
     path::Path,
 };
 
+/// Dummy version value for future proofing.
+/// The space created by this can be used in the future
+/// for versioning the data formats and defining migrations.
+const DUMMY_VERSION: u8 = 0;
+
 use rmp_serde::{encode::write_named, from_read};
 use serde::{Deserialize, Serialize};
 
-pub fn read<T: for<'de> Deserialize<'de>>(source: impl Read) -> anyhow::Result<T> {
+pub fn read<T: for<'de> Deserialize<'de>>(mut source: impl Read) -> anyhow::Result<T> {
+    let mut ver = [0];
+    source.read_exact(&mut ver)?;
     Ok(from_read(source)?)
 }
 
@@ -20,5 +27,6 @@ pub fn write_to_file<T: Serialize>(obj: &T, path: impl AsRef<Path>) -> anyhow::R
 }
 
 pub fn write<T: Serialize>(obj: &T, mut sink: impl Write) -> anyhow::Result<()> {
+    sink.write_all(&[DUMMY_VERSION])?;
     Ok(write_named(&mut sink, obj)?)
 }
