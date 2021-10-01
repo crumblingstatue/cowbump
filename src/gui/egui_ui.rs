@@ -147,7 +147,7 @@ pub(super) fn do_ui(
         do_filter_edit(state, egui_ctx, coll);
         tag_list::do_frame(state, coll, egui_ctx);
         sequences::do_sequences_window(state, coll, &mut app.database.uid_counter, egui_ctx);
-        sequences::do_sequence_windows(state, coll, egui_ctx, &app.database.preferences);
+        sequences::do_sequence_windows(state, coll, egui_ctx, &mut app.database.preferences);
         entries_window::do_frame(state, coll, &mut app.database.uid_counter, egui_ctx);
         do_info_messages(state, egui_ctx);
         do_prompts(state, egui_ctx, app);

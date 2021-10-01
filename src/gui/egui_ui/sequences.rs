@@ -18,7 +18,7 @@ pub(super) fn do_sequence_windows(
     state: &mut State,
     db: &mut Collection,
     egui_ctx: &CtxRef,
-    prefs: &Preferences,
+    prefs: &mut Preferences,
 ) {
     state.egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;

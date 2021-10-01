@@ -127,7 +127,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &mut selected_uids,
                     &window,
                     sf_egui.context(),
-                    &app.database.preferences,
+                    &mut app.database.preferences,
                 );
             }
         }
@@ -268,7 +268,7 @@ fn handle_event_viewer(
     selected_entries: &mut Vec<entry::Id>,
     window: &RenderWindow,
     ctx: &CtxRef,
-    preferences: &Preferences,
+    preferences: &mut Preferences,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
@@ -364,7 +364,7 @@ fn handle_event_viewer(
     }
 }
 
-fn open_with_external(paths: &[&Path], preferences: &Preferences) -> anyhow::Result<()> {
+fn open_with_external(paths: &[&Path], preferences: &mut Preferences) -> anyhow::Result<()> {
     let tasks = build_tasks(paths, preferences)?;
     for task in tasks {
         let app = &preferences.applications[&task.app];
@@ -377,7 +377,7 @@ fn open_with_external(paths: &[&Path], preferences: &Preferences) -> anyhow::Res
 
 fn build_tasks<'a, 'p>(
     paths: &[&'p Path],
-    preferences: &'a Preferences,
+    preferences: &'a mut Preferences,
 ) -> anyhow::Result<Vec<Task<'p>>> {
     let mut tasks: Vec<Task> = Vec::new();
     for path in paths {
@@ -397,6 +397,9 @@ fn build_tasks<'a, 'p>(
                 }
             }
             _ => {
+                // Make sure extension preference exists, so the user doesn't
+                // have to add it manually to the list.
+                preferences.associations.insert(ext.to_owned(), None);
                 MessageDialog::new()
                     .set_level(MessageLevel::Error)
                     .set_description(&format!(
