@@ -16,6 +16,7 @@ use anyhow::Context;
 use arboard::Clipboard;
 use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
+use fnv::FnvHashSet;
 use rfd::{MessageDialog, MessageLevel};
 use sfml::{
     graphics::{
@@ -380,6 +381,7 @@ fn build_tasks<'a, 'p>(
     preferences: &'a mut Preferences,
 ) -> anyhow::Result<Vec<Task<'p>>> {
     let mut tasks: Vec<Task> = Vec::new();
+    let mut ignore_list = FnvHashSet::default();
     for path in paths {
         let ext = path
             .extension()
@@ -397,17 +399,20 @@ fn build_tasks<'a, 'p>(
                 }
             }
             _ => {
-                // Make sure extension preference exists, so the user doesn't
-                // have to add it manually to the list.
-                preferences.associations.insert(ext.to_owned(), None);
-                MessageDialog::new()
-                    .set_level(MessageLevel::Error)
-                    .set_description(&format!(
-                        "The extension {} has no application associated with it.\n\
+                if !ignore_list.contains(ext) {
+                    // Make sure extension preference exists, so the user doesn't
+                    // have to add it manually to the list.
+                    preferences.associations.insert(ext.to_owned(), None);
+                    MessageDialog::new()
+                        .set_level(MessageLevel::Error)
+                        .set_description(&format!(
+                            "The extension {} has no application associated with it.\n\
                          See File->Preferences->Associations",
-                        ext
-                    ))
-                    .show();
+                            ext
+                        ))
+                        .show();
+                    ignore_list.insert(ext);
+                }
             }
         }
     }
