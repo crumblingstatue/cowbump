@@ -141,8 +141,7 @@ pub(super) fn do_ui(
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
     load_folder_window::do_frame(state, egui_ctx, res, app);
     changes_window::do_frame(state, egui_ctx, app);
-    if let Some(coll_id) = app.active_collection {
-        let coll = app.database.collections.get_mut(&coll_id).unwrap();
+    if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_ctx, coll);
         do_filter_edit(state, egui_ctx, coll);
         tag_list::do_frame(state, coll, egui_ctx);
@@ -190,11 +189,7 @@ fn do_prompts(state: &mut State, egui_ctx: &CtxRef, app: &mut Application) {
                     false
                 }
                 PromptAction::DeleteTags(ref uids) => {
-                    app.database
-                        .collections
-                        .get_mut(&app.active_collection.unwrap())
-                        .unwrap()
-                        .remove_tags(uids);
+                    app.active_collection.as_mut().unwrap().1.remove_tags(uids);
                     false
                 }
             },

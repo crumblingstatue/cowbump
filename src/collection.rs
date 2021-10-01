@@ -23,8 +23,6 @@ pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
 /// Each collection has a root that all the entries stem from.
 #[derive(Serialize, Deserialize)]
 pub struct Collection {
-    /// The root that all entries stem from
-    pub root_path: PathBuf,
     /// List of entries
     pub entries: Entries,
     /// List of tags
@@ -37,12 +35,10 @@ pub struct Id(pub Uid);
 
 impl Collection {
     pub fn make_new(
-        root_path: PathBuf,
         uid_counter: &mut UidCounter,
         paths: &[impl AsRef<Path>],
     ) -> anyhow::Result<Self> {
         let mut coll = Collection {
-            root_path,
             entries: Entries::default(),
             tags: Tags::default(),
             sequences: Sequences::default(),
@@ -173,8 +169,8 @@ impl Collection {
             .collect()
     }
 
-    pub(crate) fn scan_changes(&self) -> anyhow::Result<FolderChanges> {
-        let wd = walkdir(&self.root_path);
+    pub(crate) fn scan_changes(&self, root: &Path) -> anyhow::Result<FolderChanges> {
+        let wd = walkdir(root);
         let self_paths: Vec<_> = self.entries.values().map(|en| &en.path).collect();
         let mut add = Vec::new();
         let mut remove = Vec::new();
@@ -185,7 +181,7 @@ impl Collection {
                 continue;
             }
             let dir_entry_path = dir_entry.into_path();
-            let dir_entry_path = match dir_entry_path.strip_prefix(&self.root_path) {
+            let dir_entry_path = match dir_entry_path.strip_prefix(root) {
                 Ok(stripped) => stripped,
                 Err(e) => {
                     eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
@@ -198,7 +194,7 @@ impl Collection {
         }
         // Scan for removes (paths we have but fs doesn't have)
         for path in self_paths {
-            if !self.root_path.join(path).exists() {
+            if !root.join(path).exists() {
                 remove.push(path.to_owned());
             }
         }

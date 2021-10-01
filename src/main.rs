@@ -26,7 +26,7 @@ fn main() {
         MessageDialog::new()
             .set_level(rfd::MessageLevel::Error)
             .set_title("Error")
-            .set_description(&e.to_string())
+            .set_description(&format!("{:?}", e))
             .show();
     }
 }

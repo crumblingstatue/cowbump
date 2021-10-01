@@ -40,7 +40,7 @@ pub(super) fn do_frame(
         }
         if ui.button("Apply").clicked() {
             app.apply_changes_to_active_collection(changes);
-            state.entries_view = EntriesView::from_collection(app.active_collection().unwrap());
+            state.entries_view = EntriesView::from_collection(app.active_collection().unwrap().1);
             win.open = false;
         }
         if ui.button("Ignore").clicked() {

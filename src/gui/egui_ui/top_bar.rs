@@ -1,7 +1,11 @@
 use egui::{Button, CtxRef, TopBottomPanel};
 use rfd::{FileDialog, MessageDialog};
 
-use crate::{application::Application, collection, gui::State};
+use crate::{
+    application::{self, Application},
+    collection,
+    gui::State,
+};
 
 use super::{info_message, load_folder_window, prompt, Action, PromptAction};
 
@@ -27,7 +31,7 @@ pub(super) fn do_frame(
                                 if ui
                                     .button(&format!(
                                         "🗁 {}",
-                                        &app.database.collections[&id].root_path.display()
+                                        &app.database.collections[&id].display()
                                     ))
                                     .clicked()
                                 {
@@ -66,7 +70,13 @@ pub(super) fn do_frame(
                     if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
                             if let Some(id) = app.database.find_collection_by_path(&dir_path) {
-                                let changes = app.load_collection(id).unwrap();
+                                let changes = match app.load_collection(id) {
+                                    Ok(changes) => changes,
+                                    Err(e) => {
+                                        result = Err(e);
+                                        return;
+                                    }
+                                };
                                 if !changes.empty() {
                                     state.egui_state.changes_window.open(changes);
                                 }
@@ -83,7 +93,13 @@ pub(super) fn do_frame(
                     let butt =
                         Button::new("🗀 Close folder").enabled(app.active_collection.is_some());
                     if ui.add(butt).clicked() {
-                        app.active_collection = None;
+                        if let Err(e) = application::switch_collection(
+                            &app.database.data_dir,
+                            &mut app.active_collection,
+                            None,
+                        ) {
+                            result = Err(e);
+                        }
                     }
                     ui.separator();
                     if ui.button("⛃⬉ Create backup").clicked() {

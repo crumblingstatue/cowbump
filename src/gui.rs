@@ -60,9 +60,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         if !changes.empty() {
             state.egui_state.changes_window.open(changes);
         }
-        let coll = &app.database.collections[&app.active_collection.unwrap()];
-        state.entries_view = EntriesView::from_collection(coll);
-        std::env::set_current_dir(&coll.root_path)?;
+        let coll = app.active_collection.as_ref().unwrap();
+        state.entries_view = EntriesView::from_collection(&coll.1);
+        let root_path = &app.database.collections[&coll.0];
+        std::env::set_current_dir(root_path)?;
     }
 
     egui_ctx.set_fonts(font_defs);
@@ -93,10 +94,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             }
                         }
                         Key::End => {
-                            if let Some(coll) = app
-                                .active_collection
-                                .map(|idx| &app.database.collections[&idx])
-                            {
+                            if let Some((_id, coll)) = &mut app.active_collection {
                                 if !sf_egui.context().wants_keyboard_input() {
                                     // Align the bottom edge of the view with the bottom edge of the last row.
                                     // To do align the camera with a bottom edge, we need to subtract the screen
@@ -116,10 +114,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 _ => {}
             }
-            if let Some(coll) = app
-                .active_collection
-                .map(|id| app.database.collections.get_mut(&id).unwrap())
-            {
+            if let Some((_id, coll)) = &mut app.active_collection {
                 handle_event_viewer(
                     event,
                     &mut state,
@@ -145,9 +140,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         {
             selected_uids.clear()
         }
-        let mut coll = app
-            .active_collection
-            .map(|id| app.database.collections.get_mut(&id).unwrap());
+        let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &state.egui_state.action {
             match action {
                 Action::Quit => window.close(),
@@ -224,9 +217,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         let mut tex_src = TexSrc {
             state: &mut state,
             res: &res,
-            coll: app
-                .active_collection
-                .map(|id| &app.database.collections[&id]),
+            coll: app.active_collection.as_ref().map(|(_id, col)| col),
         };
         sf_egui.draw(&mut window, Some(&mut tex_src));
         window.display();
@@ -570,9 +561,9 @@ fn set_active_collection(
     app: &mut Application,
     id: collection::Id,
 ) -> anyhow::Result<()> {
-    let coll = &app.database.collections[&id];
-    *entries_view = EntriesView::from_collection(coll);
-    std::env::set_current_dir(&coll.root_path).context("failed to set directory")
+    *entries_view = EntriesView::from_collection(app.active_collection().as_ref().unwrap().1);
+    let root = &app.database.collections[&id];
+    std::env::set_current_dir(root).context("failed to set directory")
 }
 
 struct TexSrc<'state, 'res, 'db> {

@@ -4,10 +4,7 @@ use std::path::{Path, PathBuf};
 use fnv::{FnvHashMap, FnvHashSet};
 
 use crate::{
-    collection::{self, Collection},
-    entry,
-    preferences::Preferences,
-    recently_used_list::RecentlyUsedList,
+    collection, entry, preferences::Preferences, recently_used_list::RecentlyUsedList,
     serialization, tag,
 };
 
@@ -27,12 +24,12 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Default, Serialize, Deserialize)]
 pub struct Db {
     pub uid_counter: UidCounter,
-    pub collections: CollMap<Collection>,
+    pub collections: CollMap<PathBuf>,
     pub preferences: Preferences,
     /// History of last opened collections
     pub recent: RecentlyUsedList<collection::Id>,
     #[serde(skip)]
-    data_dir: PathBuf,
+    pub data_dir: PathBuf,
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -63,9 +60,9 @@ impl Db {
         db.data_dir = data_dir.to_owned();
         Ok(db)
     }
-    pub fn insert_collection(&mut self, collection: Collection) -> collection::Id {
+    pub fn insert_collection(&mut self, root: PathBuf) -> collection::Id {
         let key = collection::Id(self.uid_counter.next());
-        self.collections.insert(key, collection);
+        self.collections.insert(key, root);
         key
     }
     pub fn save(&self) -> anyhow::Result<()> {
@@ -83,12 +80,8 @@ impl Db {
     pub(crate) fn find_collection_by_path(&self, path: &Path) -> Option<collection::Id> {
         self.collections
             .iter()
-            .find(|(_k, v)| v.root_path == path)
+            .find(|(_k, v)| *v == path)
             .map(|(k, _v)| *k)
-    }
-
-    pub(crate) fn scan_changes(&self, id: collection::Id) -> anyhow::Result<FolderChanges> {
-        self.collections[&id].scan_changes()
     }
 }
 
