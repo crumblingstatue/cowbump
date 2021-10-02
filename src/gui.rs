@@ -76,7 +76,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     egui_ctx.set_fonts(font_defs);
     while window.is_open() {
         if !sf_egui.context().wants_keyboard_input() {
-            let scroll_speed = 8.0;
+            let scroll_speed = app.database.preferences.arrow_key_scroll_speed;
             if Key::Down.is_pressed() {
                 state.entries_view.y_offset += scroll_speed;
                 if let Some((_id, coll)) = &app.active_collection {

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{ops::RangeInclusive, path::PathBuf};
 
 use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
@@ -10,8 +10,10 @@ pub struct Preferences {
     pub open_last_coll_at_start: bool,
     pub applications: FnvHashMap<AppId, App>,
     pub associations: FnvHashMap<String, Option<AppId>>,
-    #[serde(default = "scroll_wheel_default")]
+    #[serde(default = "ScrollWheelMultiplier::default")]
     pub scroll_wheel_multiplier: f32,
+    #[serde(default = "UpDownArrowScrollSpeed::default")]
+    pub arrow_key_scroll_speed: f32,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
@@ -25,11 +27,28 @@ pub struct App {
 #[derive(Serialize, Deserialize, Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct AppId(pub Uid);
 
-pub const fn scroll_wheel_default() -> f32 {
-    64.0
+pub trait FloatPref {
+    const DEFAULT: f32;
+    const RANGE: RangeInclusive<f32>;
+    const NAME: &'static str;
+    fn default() -> f32 {
+        Self::DEFAULT
+    }
 }
-pub const SCROLL_WHEEL_MIN: f32 = 2.0;
-pub const SCROLL_WHEEL_MAX: f32 = 512.0;
+
+pub enum ScrollWheelMultiplier {}
+impl FloatPref for ScrollWheelMultiplier {
+    const DEFAULT: f32 = 64.0;
+    const RANGE: RangeInclusive<f32> = 2.0..=512.0;
+    const NAME: &'static str = "Mouse wheel scrolling multiplier";
+}
+
+pub enum UpDownArrowScrollSpeed {}
+impl FloatPref for UpDownArrowScrollSpeed {
+    const DEFAULT: f32 = 8.0;
+    const RANGE: RangeInclusive<f32> = 1.0..=64.0;
+    const NAME: &'static str = "Up/Down arrow key scroll speed";
+}
 
 impl Default for Preferences {
     fn default() -> Self {
@@ -37,7 +56,8 @@ impl Default for Preferences {
             open_last_coll_at_start: true,
             applications: Default::default(),
             associations: Default::default(),
-            scroll_wheel_multiplier: scroll_wheel_default(),
+            scroll_wheel_multiplier: ScrollWheelMultiplier::DEFAULT,
+            arrow_key_scroll_speed: UpDownArrowScrollSpeed::DEFAULT,
         }
     }
 }

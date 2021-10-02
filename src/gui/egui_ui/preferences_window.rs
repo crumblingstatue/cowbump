@@ -6,7 +6,7 @@ use egui::{
 };
 use rfd::FileDialog;
 
-use crate::preferences::{self, App, AppId, SCROLL_WHEEL_MAX, SCROLL_WHEEL_MIN};
+use crate::preferences::{App, AppId, FloatPref, ScrollWheelMultiplier, UpDownArrowScrollSpeed};
 
 use super::EguiState;
 
@@ -63,16 +63,14 @@ pub(crate) fn do_frame(
             });
             match win.category {
                 Category::Ui => {
-                    ui.label("Scroll wheel multiplier");
-                    ui.horizontal(|ui| {
-                        ui.add(Slider::new(
-                            &mut prefs.scroll_wheel_multiplier,
-                            SCROLL_WHEEL_MIN..=SCROLL_WHEEL_MAX,
-                        ));
-                        if ui.button("Restore default").clicked() {
-                            prefs.scroll_wheel_multiplier = preferences::scroll_wheel_default();
-                        }
-                    });
+                    slider_with_default::<ScrollWheelMultiplier>(
+                        ui,
+                        &mut prefs.scroll_wheel_multiplier,
+                    );
+                    slider_with_default::<UpDownArrowScrollSpeed>(
+                        ui,
+                        &mut prefs.arrow_key_scroll_speed,
+                    );
                 }
                 Category::Startup => {
                     ui.checkbox(&mut prefs.open_last_coll_at_start, "Open last collection");
@@ -144,6 +142,16 @@ pub(crate) fn do_frame(
                 }
             }
         });
+}
+
+fn slider_with_default<T: FloatPref>(ui: &mut egui::Ui, attribute: &mut f32) {
+    ui.label(T::NAME);
+    ui.horizontal(|ui| {
+        ui.add(Slider::new(attribute, T::RANGE));
+        if ui.button("Restore default").clicked() {
+            *attribute = T::DEFAULT;
+        }
+    });
 }
 
 fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut egui::Ui) {
