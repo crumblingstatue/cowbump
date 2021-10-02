@@ -1,10 +1,10 @@
 use egui::{Button, CtxRef, TopBottomPanel};
-use rfd::{FileDialog, MessageDialog};
+use rfd::FileDialog;
 
 use crate::{
     application::{self, Application},
     collection,
-    gui::State,
+    gui::{native_dialog, State},
 };
 
 use super::{info_message, load_folder_window, prompt, Action, PromptAction};
@@ -55,10 +55,7 @@ pub(super) fn do_frame(
                                     );
                                 }
                                 Err(e) => {
-                                    MessageDialog::new()
-                                        .set_title("Error")
-                                        .set_description(&e.to_string())
-                                        .show();
+                                    native_dialog::error(e);
                                 }
                             },
                             Action::Remove(id) => app.database.recent.remove(id),

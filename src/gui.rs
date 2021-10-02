@@ -1,5 +1,6 @@
 mod egui_ui;
 mod entries_view;
+pub mod native_dialog;
 mod thumbnail_loader;
 
 use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
@@ -56,14 +57,23 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     };
 
     if app.database.preferences.open_last_coll_at_start && app.database.recent.len() > 0 {
-        let changes = app.load_last()?;
-        if !changes.empty() {
-            state.egui_state.changes_window.open(changes);
+        match app
+            .load_last()
+            .context("Failed to load most recent collection")
+        {
+            Ok(changes) => {
+                if !changes.empty() {
+                    state.egui_state.changes_window.open(changes);
+                }
+                let coll = app.active_collection.as_ref().unwrap();
+                state.entries_view = EntriesView::from_collection(&coll.1);
+                let root_path = &app.database.collections[&coll.0];
+                std::env::set_current_dir(root_path)?;
+            }
+            Err(e) => {
+                native_dialog::error(e);
+            }
         }
-        let coll = app.active_collection.as_ref().unwrap();
-        state.entries_view = EntriesView::from_collection(&coll.1);
-        let root_path = &app.database.collections[&coll.0];
-        std::env::set_current_dir(root_path)?;
     }
 
     egui_ctx.set_fonts(font_defs);
@@ -279,10 +289,7 @@ fn handle_event_viewer(
                         selected_entries.push(uid);
                     }
                 } else if let Err(e) = open_with_external(&[&db.entries[&uid].path], preferences) {
-                    MessageDialog::new()
-                        .set_level(MessageLevel::Error)
-                        .set_description(&e.to_string())
-                        .show();
+                    native_dialog::error(e);
                 }
             } else if button == mouse::Button::Right {
                 let vec = if selected_entries.contains(&uid) {
@@ -316,10 +323,7 @@ fn handle_event_viewer(
                 }
                 paths.sort();
                 if let Err(e) = open_with_external(&paths, preferences) {
-                    MessageDialog::new()
-                        .set_level(MessageLevel::Error)
-                        .set_description(&e.to_string())
-                        .show();
+                    native_dialog::error(e);
                 }
             } else if code == Key::A && ctrl {
                 select_all(selected_entries, state, db);
@@ -338,11 +342,7 @@ fn handle_event_viewer(
                     None => return,
                 };
                 if let Err(e) = copy_image_to_clipboard(state, &db, uid) {
-                    MessageDialog::new()
-                        .set_title("Error")
-                        .set_level(MessageLevel::Error)
-                        .set_description(&e.to_string())
-                        .show();
+                    native_dialog::error(e);
                 }
             } else if code == Key::T {
                 state.egui_state.tag_window.toggle();
@@ -395,7 +395,7 @@ fn build_tasks<'a, 'p>(
                     // have to add it manually to the list.
                     preferences.associations.insert(ext.to_owned(), None);
                     MessageDialog::new()
-                        .set_level(MessageLevel::Error)
+                        .set_level(MessageLevel::Warning)
                         .set_description(&format!(
                             "The extension {} has no application associated with it.\n\
                          See File->Preferences->Associations",

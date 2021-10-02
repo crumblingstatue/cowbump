@@ -12,8 +12,6 @@ mod serialization;
 pub mod set_ext;
 mod tag;
 
-use rfd::MessageDialog;
-
 use crate::application::Application;
 
 fn try_main() -> anyhow::Result<()> {
@@ -23,10 +21,6 @@ fn try_main() -> anyhow::Result<()> {
 
 fn main() {
     if let Err(e) = try_main() {
-        MessageDialog::new()
-            .set_level(rfd::MessageLevel::Error)
-            .set_title("Error")
-            .set_description(&format!("{:?}", e))
-            .show();
+        gui::native_dialog::error(e)
     }
 }

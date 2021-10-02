@@ -3,13 +3,12 @@ use egui::{
     Window,
 };
 use retain_mut::RetainMut;
-use rfd::{MessageDialog, MessageLevel};
 
 use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::{open_with_external, State},
+    gui::{native_dialog, open_with_external, State},
     preferences::Preferences,
     sequence,
 };
@@ -133,10 +132,7 @@ pub(super) fn do_sequence_windows(
                         paths.push(db.entries[&img_uid].path.as_ref());
                     }
                     if let Err(e) = open_with_external(&paths, prefs) {
-                        MessageDialog::new()
-                            .set_level(MessageLevel::Error)
-                            .set_description(&e.to_string())
-                            .show();
+                        native_dialog::error(e);
                     }
                 }
             }

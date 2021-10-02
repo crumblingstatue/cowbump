@@ -5,13 +5,12 @@ use std::{
 
 use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
 use retain_mut::RetainMut;
-use rfd::{MessageDialog, MessageLevel};
 
 use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::{common_tags, entries_view::EntriesView, State},
+    gui::{common_tags, entries_view::EntriesView, native_dialog, State},
 };
 
 use super::sequences::SequenceWindow;
@@ -201,11 +200,7 @@ pub(super) fn do_frame(
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
                                 if let Err(e) = db.rename(win.ids[0], &win.rename_buffer) {
-                                    MessageDialog::new()
-                                        .set_level(MessageLevel::Error)
-                                        .set_title("Error")
-                                        .set_description(&e.to_string())
-                                        .show();
+                                    native_dialog::error(e);
                                 }
                                 win.renaming = false;
                             }
@@ -239,10 +234,7 @@ pub(super) fn do_frame(
                                     if let Err(e) =
                                         remove_entries(&mut state.entries_view, del_uids, db)
                                     {
-                                        MessageDialog::new()
-                                            .set_level(MessageLevel::Info)
-                                            .set_title("Error")
-                                            .set_description(&e.to_string());
+                                        native_dialog::error(e);
                                     }
                                     win.delete_confirm = false;
                                     close = true;
