@@ -205,6 +205,13 @@ pub(super) fn do_frame(
                             .set_description(&format!("Cowbump version {}", crate::VERSION))
                             .show();
                     }
+                    ui.separator();
+                    ui.vertical_centered(|ui| {
+                        ui.label("= Debug =");
+                    });
+                    if ui.button("Open data dir").clicked() {
+                        open::that_in_background(&app.database.data_dir);
+                    }
                 });
                 ui.separator();
                 ui.label("(F1 to toggle)");
