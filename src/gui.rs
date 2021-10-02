@@ -253,7 +253,10 @@ fn clamp_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) 
 
 fn find_bottom(state: &State, coll: &Collection, window: &RenderWindow) -> f32 {
     let n_pics = state.entries_view.filter(coll, &state.filter).count();
-    let rows = n_pics as u32 / state.thumbnails_per_row as u32;
+    let mut rows = n_pics as u32 / state.thumbnails_per_row as u32;
+    if n_pics as u32 % state.thumbnails_per_row as u32 != 0 {
+        rows += 1;
+    }
     let bottom = rows * state.thumbnail_size;
     let mut b = bottom as f32 - window.size().y as f32;
     if b < 0. {
