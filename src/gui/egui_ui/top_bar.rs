@@ -186,6 +186,16 @@ pub(super) fn do_frame(
                     }
                     ui.separator();
                     if ui
+                        .add(
+                            Button::new("Ｓ Open entries window for selected entries (F2)")
+                                .enabled(n_selected > 0),
+                        )
+                        .clicked()
+                    {
+                        state.egui_state.action = Some(Action::OpenEntriesWindow);
+                    }
+                    ui.separator();
+                    if ui
                         .add(Button::new("♻ Sort by filename (S)").enabled(active_coll))
                         .clicked()
                     {

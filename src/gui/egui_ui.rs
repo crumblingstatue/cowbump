@@ -110,6 +110,7 @@ pub(crate) enum Action {
     SelectAll,
     SelectNone,
     SortEntries,
+    OpenEntriesWindow,
 }
 
 impl EguiState {

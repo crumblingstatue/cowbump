@@ -115,6 +115,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             }
                         }
                         Key::F1 => state.egui_state.top_bar ^= true,
+                        Key::F2 => {
+                            if !selected_uids.is_empty() {
+                                state.egui_state.add_entries_window(selected_uids.clone())
+                            }
+                        }
                         Key::F12 => state.egui_state.debug_window.toggle(),
                         _ => {}
                     }
@@ -162,6 +167,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 Action::SearchPrev => search_prev(&mut state, coll.as_mut().unwrap()),
                 Action::SelectAll => select_all(&mut selected_uids, &state, coll.as_mut().unwrap()),
                 Action::SortEntries => state.entries_view.sort(coll.as_mut().unwrap()),
+                Action::OpenEntriesWindow => {
+                    state.egui_state.add_entries_window(selected_uids.clone())
+                }
             }
         }
         if let Some(coll) = &mut coll {
