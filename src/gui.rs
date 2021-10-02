@@ -142,7 +142,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         sf_egui.do_frame(|ctx| {
             result = egui_ui::do_ui(&mut state, ctx, app, &res);
         });
-        result?;
+        if let Err(e) = result {
+            native_dialog::error("Error", e);
+        }
         if esc_pressed
             && !sf_egui.context().wants_keyboard_input()
             && !sf_egui.context().wants_pointer_input()
