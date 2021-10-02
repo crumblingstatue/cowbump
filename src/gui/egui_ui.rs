@@ -17,6 +17,7 @@ use crate::{
 };
 use egui::{Align2, Color32, CtxRef, TextEdit, Window};
 use retain_mut::RetainMut;
+use sfml::graphics::RenderWindow;
 
 use self::{
     changes_window::ChangesWindow,
@@ -139,6 +140,7 @@ pub(super) fn do_ui(
     egui_ctx: &egui::CtxRef,
     app: &mut Application,
     res: &Resources,
+    win: &RenderWindow,
 ) -> anyhow::Result<()> {
     top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
@@ -147,7 +149,9 @@ pub(super) fn do_ui(
     debug_window::do_frame(state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_ctx, coll);
-        do_filter_edit(state, egui_ctx, coll);
+        if do_filter_edit(state, egui_ctx, coll) {
+            crate::gui::clamp_to_bottom(win, state, coll);
+        }
         tag_list::do_frame(state, coll, egui_ctx);
         sequences::do_sequences_window(state, coll, &mut app.database.uid_counter, egui_ctx);
         sequences::do_sequence_windows(state, coll, egui_ctx, &mut app.database.preferences);
@@ -203,7 +207,9 @@ fn do_prompts(state: &mut State, egui_ctx: &CtxRef, app: &mut Application) {
     });
 }
 
-fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
+/// Returns whether filter state changed
+fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) -> bool {
+    let mut filter_changed = false;
     if state.filter_edit {
         egui::Window::new("Filter")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
@@ -232,7 +238,7 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
                     }
                     if re.changed() {
                         state.wipe_search();
-                        state.y_offset = 0.0;
+                        filter_changed = true;
                     }
                     ui.memory().request_focus(re.id);
                 });
@@ -241,6 +247,7 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
                 }
             });
     }
+    filter_changed
 }
 
 fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
