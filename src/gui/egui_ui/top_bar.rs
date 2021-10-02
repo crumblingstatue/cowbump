@@ -13,8 +13,8 @@ pub(super) fn do_frame(
     state: &mut State,
     egui_ctx: &CtxRef,
     app: &mut Application,
-    n_selected: usize,
 ) -> anyhow::Result<()> {
+    let n_selected = state.selected_uids.len();
     let mut result = Ok(());
     if state.egui_state.top_bar {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {

@@ -39,7 +39,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let res = Resources::load()?;
     let mut state = State::new(window.size().x);
     let mut on_screen_uids: Vec<entry::Id> = Vec::new();
-    let mut selected_uids: Vec<entry::Id> = Default::default();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
     let egui_ctx = sf_egui.context();
@@ -116,8 +115,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         }
                         Key::F1 => state.egui_state.top_bar ^= true,
                         Key::F2 => {
-                            if !selected_uids.is_empty() {
-                                state.egui_state.add_entries_window(selected_uids.clone())
+                            if !state.selected_uids.is_empty() {
+                                state
+                                    .egui_state
+                                    .add_entries_window(state.selected_uids.clone())
                             }
                         }
                         Key::F12 => state.egui_state.debug_window.toggle(),
@@ -132,7 +133,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &mut state,
                     &mut on_screen_uids,
                     coll,
-                    &mut selected_uids,
                     &window,
                     sf_egui.context(),
                     &mut app.database.preferences,
@@ -142,7 +142,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         state.begin_frame();
         let mut result = Ok(());
         sf_egui.do_frame(|ctx| {
-            result = egui_ui::do_ui(&mut state, ctx, app, &res, &window, selected_uids.len());
+            result = egui_ui::do_ui(&mut state, ctx, app, &res, &window);
         });
         if let Err(e) = result {
             native_dialog::error("Error", e);
@@ -152,7 +152,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             && !sf_egui.context().wants_pointer_input()
             && !state.egui_state.just_closed_window_with_esc
         {
-            selected_uids.clear()
+            state.selected_uids.clear()
         }
         let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &state.egui_state.action {
@@ -162,18 +162,18 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     app.no_save = true;
                     window.close();
                 }
-                Action::SelectNone => selected_uids.clear(),
+                Action::SelectNone => state.selected_uids.clear(),
                 Action::SearchNext => {
                     search_next(&mut state, coll.as_mut().unwrap(), window.size().y)
                 }
                 Action::SearchPrev => {
                     search_prev(&mut state, coll.as_mut().unwrap(), window.size().y)
                 }
-                Action::SelectAll => select_all(&mut selected_uids, &state, coll.as_mut().unwrap()),
+                Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
                 Action::SortEntries => state.entries_view.sort(coll.as_mut().unwrap()),
-                Action::OpenEntriesWindow => {
-                    state.egui_state.add_entries_window(selected_uids.clone())
-                }
+                Action::OpenEntriesWindow => state
+                    .egui_state
+                    .add_entries_window(state.selected_uids.clone()),
             }
         }
         if let Some(coll) = &mut coll {
@@ -194,7 +194,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &mut window,
                     db,
                     &on_screen_uids,
-                    &selected_uids,
                     load_anim_rotation,
                     !sf_egui.context().wants_pointer_input(),
                 );
@@ -307,7 +306,6 @@ fn handle_event_viewer(
     state: &mut State,
     on_screen_entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
-    selected_entries: &mut Vec<entry::Id>,
     window: &RenderWindow,
     ctx: &CtxRef,
     preferences: &mut Preferences,
@@ -323,18 +321,18 @@ fn handle_event_viewer(
             };
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
-                    if selected_entries.contains(&uid) {
-                        selected_entries.retain(|&rhs| rhs != uid);
+                    if state.selected_uids.contains(&uid) {
+                        state.selected_uids.retain(|&rhs| rhs != uid);
                     } else {
-                        selected_entries.push(uid);
+                        state.selected_uids.push(uid);
                     }
                 } else if let Err(e) = open_with_external(&[&coll.entries[&uid].path], preferences)
                 {
                     native_dialog::error("Failed to open file", e);
                 }
             } else if button == mouse::Button::Right {
-                let vec = if selected_entries.contains(&uid) {
-                    selected_entries.clone()
+                let vec = if state.selected_uids.contains(&uid) {
+                    state.selected_uids.clone()
                 } else {
                     vec![uid]
                 };
@@ -353,7 +351,7 @@ fn handle_event_viewer(
                 clamp_top(state);
             } else if code == Key::Enter {
                 let mut paths: Vec<&Path> = Vec::new();
-                for &uid in selected_entries.iter() {
+                for &uid in state.selected_uids.iter() {
                     paths.push(&coll.entries[&uid].path);
                 }
                 if paths.is_empty() && state.filter.active() {
@@ -366,7 +364,7 @@ fn handle_event_viewer(
                     native_dialog::error("Failed to open file", e);
                 }
             } else if code == Key::A && ctrl {
-                select_all(selected_entries, state, coll);
+                select_all(state, coll);
             } else if code == Key::Slash {
                 state.search_edit = true;
             } else if code == Key::N {
@@ -495,35 +493,35 @@ fn copy_image_to_clipboard(
         .context("Failed to copy to clipboard")
 }
 
-fn select_all(selected_uids: &mut Vec<entry::Id>, state: &State, db: &Collection) {
-    selected_uids.clear();
-    for uid in db.filter(&state.filter) {
-        selected_uids.push(uid);
+fn select_all(state: &mut State, coll: &Collection) {
+    state.selected_uids.clear();
+    for uid in coll.filter(&state.filter) {
+        state.selected_uids.push(uid);
     }
 }
 
-fn search_prev(state: &mut State, db: &mut Collection, view_height: u32) {
+fn search_prev(state: &mut State, coll: &mut Collection, view_height: u32) {
     if state.search_cursor > 0 {
         state.search_cursor -= 1;
     }
-    search_goto_cursor(state, db, view_height);
+    search_goto_cursor(state, coll, view_height);
 }
 
-fn search_next(state: &mut State, db: &mut Collection, view_height: u32) {
+fn search_next(state: &mut State, coll: &mut Collection, view_height: u32) {
     state.search_cursor += 1;
-    search_goto_cursor(state, db, view_height);
+    search_goto_cursor(state, coll, view_height);
     if !state.search_success {
         state.search_cursor -= 1;
     }
 }
 
-fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<usize> {
+fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
     state
         .entries_view
-        .filter(db, &state.filter)
+        .filter(coll, &state.filter)
         .enumerate()
         .filter(|(_, uid)| {
-            let en = &db.entries[uid];
+            let en = &coll.entries[uid];
             en.spec_satisfied(&state.search_spec)
         })
         .map(|(i, _)| i)
@@ -624,6 +622,7 @@ struct State {
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
     debug_log: RefCell<Vec<String>>,
+    selected_uids: Vec<entry::Id>,
 }
 
 fn set_active_collection(
@@ -708,6 +707,7 @@ impl State {
             entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
             debug_log: Default::default(),
+            selected_uids: Default::default(),
         }
     }
     fn wipe_search(&mut self) {

@@ -53,7 +53,6 @@ pub(super) fn draw_thumbnails(
     window: &mut RenderWindow,
     db: &Collection,
     uids: &[entry::Id],
-    selected_uids: &[entry::Id],
     load_anim_rotation: f32,
     pointer_active: bool,
 ) {
@@ -70,7 +69,7 @@ pub(super) fn draw_thumbnails(
         let y = (row * thumb_size) as f32 - (state.entries_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
         let mouse_over = image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
-        if selected_uids.contains(&uid) {
+        if state.selected_uids.contains(&uid) {
             sprite.set_color(Color::GREEN);
         } else {
             sprite.set_color(Color::WHITE);

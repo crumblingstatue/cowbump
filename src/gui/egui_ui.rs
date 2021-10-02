@@ -142,9 +142,8 @@ pub(super) fn do_ui(
     app: &mut Application,
     res: &Resources,
     win: &RenderWindow,
-    n_selected: usize,
 ) -> anyhow::Result<()> {
-    top_bar::do_frame(state, egui_ctx, app, n_selected)?;
+    top_bar::do_frame(state, egui_ctx, app)?;
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
     load_folder_window::do_frame(state, egui_ctx, res, app);
     changes_window::do_frame(state, egui_ctx, app);
