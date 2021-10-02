@@ -57,6 +57,12 @@ impl Application {
             coll.apply_changes(changes, &mut self.database.uid_counter)
         }
     }
+    pub fn save_active_collection(&self) -> anyhow::Result<()> {
+        match self.active_collection.as_ref() {
+            Some((id, coll)) => save_collection(&self.database.data_dir, *id, coll),
+            None => Ok(()),
+        }
+    }
 }
 
 pub(crate) fn switch_collection(
@@ -71,7 +77,7 @@ pub(crate) fn switch_collection(
     Ok(())
 }
 
-fn save_collection(
+pub fn save_collection(
     data_dir: &Path,
     id: collection::Id,
     collection: &Collection,

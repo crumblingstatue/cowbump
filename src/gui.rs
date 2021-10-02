@@ -91,7 +91,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         while let Some(event) = window.poll_event() {
             sf_egui.add_event(&event);
             match event {
-                Event::Closed => window.close(),
+                Event::Closed => match app.save_active_collection() {
+                    Ok(()) => window.close(),
+                    Err(e) => native_dialog::error("Failed to save collection", e),
+                },
                 Event::KeyPressed { code, .. } => {
                     match code {
                         Key::Escape => esc_pressed = true,
