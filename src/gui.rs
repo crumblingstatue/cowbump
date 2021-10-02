@@ -7,7 +7,7 @@ use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::Thumbna
 use crate::{
     application::Application,
     collection::{self, Collection},
-    db::{EntryMap, TagSet, Uid},
+    db::{EntryMap, TagSet},
     entry,
     filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
@@ -509,7 +509,7 @@ fn search_next(state: &mut State, db: &mut Collection) {
     }
 }
 
-fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<Uid> {
+fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<usize> {
     state
         .entries_view
         .filter(db, &state.filter)
@@ -518,7 +518,7 @@ fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<Uid> {
             let en = &db.entries[uid];
             en.spec_satisfied(&state.search_spec)
         })
-        .map(|(i, _)| i as Uid)
+        .map(|(i, _)| i)
         .nth(nth)
 }
 
@@ -597,7 +597,7 @@ struct State {
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
-    highlight: Option<Uid>,
+    highlight: Option<usize>,
     filter_edit: bool,
     filter_string: String,
     clipboard_ctx: Clipboard,
