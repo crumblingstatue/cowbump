@@ -138,6 +138,7 @@ pub(super) fn do_frame(
                         }
                         if win.adding_tag {
                             let re = ui.text_edit_singleline(&mut win.add_tag_buffer);
+                            win.add_tag_buffer.make_ascii_lowercase();
                             re.request_focus();
                             if esc_pressed {
                                 win.adding_tag = false;
@@ -174,10 +175,16 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 ui.label(&tag[..]);
                                 if ui.button("Add").clicked() {
-                                    let tag_uid =
-                                        db.add_new_tag_from_text(tag.to_owned(), uid_counter);
-                                    db.add_tag_for_multi(&win.ids, tag_uid);
-                                    retain = false;
+                                    match db.add_new_tag_from_text(tag.to_owned(), uid_counter) {
+                                        Some(id) => {
+                                            db.add_tag_for_multi(&win.ids, id);
+                                            retain = false;
+                                        }
+                                        None => native_dialog::error(
+                                            "Error inserting tag",
+                                            anyhow::anyhow!("Already exists"),
+                                        ),
+                                    }
                                 }
                                 if ui.button("Cancel").clicked() {
                                     retain = false;

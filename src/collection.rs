@@ -90,23 +90,29 @@ impl Collection {
             self.add_tag_for(*img, tag);
         }
     }
-    pub fn add_new_tag(&mut self, tag: Tag, uid_counter: &mut UidCounter) -> tag::Id {
+    fn add_new_tag(&mut self, tag: Tag, uid_counter: &mut UidCounter) -> tag::Id {
         let uid = tag::Id(uid_counter.next());
         self.tags.insert(uid, tag);
         uid
     }
+    /// Returns `None` it said tag already exists
     pub(crate) fn add_new_tag_from_text(
         &mut self,
-        tag_text: String,
+        mut tag_text: String,
         uid_counter: &mut UidCounter,
-    ) -> tag::Id {
-        self.add_new_tag(
+    ) -> Option<tag::Id> {
+        // Ensure we can only insert lowercase tags
+        tag_text.make_ascii_lowercase();
+        if self.has_text_as_tag_name(&tag_text) {
+            return None;
+        }
+        Some(self.add_new_tag(
             Tag {
                 names: vec![tag_text],
                 implies: Default::default(),
             },
             uid_counter,
-        )
+        ))
     }
     pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries
@@ -213,6 +219,12 @@ impl Collection {
         let uid = entry::Id(uid_counter.next());
         self.entries.insert(uid, Entry::new(path));
         uid
+    }
+    /// Check if we have the specific text as a tag name in the tag database
+    fn has_text_as_tag_name(&self, tag_text: &str) -> bool {
+        self.tags
+            .values()
+            .any(|tag| tag.names.iter().any(|text| text == tag_text))
     }
 }
 
