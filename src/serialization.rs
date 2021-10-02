@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub fn read<T: for<'de> Deserialize<'de>>(mut source: impl Read) -> anyhow::Result<T> {
     let mut ver = [0];
     source.read_exact(&mut ver)?;
-    Ok(from_read(source)?)
+    Ok(from_read(zstd::Decoder::new(source)?)?)
 }
 
 pub fn read_from_file<T: for<'de> Deserialize<'de>>(path: impl AsRef<Path>) -> anyhow::Result<T> {
@@ -28,5 +28,8 @@ pub fn write_to_file<T: Serialize>(obj: &T, path: impl AsRef<Path>) -> anyhow::R
 
 pub fn write<T: Serialize>(obj: &T, mut sink: impl Write) -> anyhow::Result<()> {
     sink.write_all(&[DUMMY_VERSION])?;
-    Ok(write_named(&mut sink, obj)?)
+    let mut zstd = zstd::Encoder::new(sink, 0)?;
+    write_named(&mut zstd, obj)?;
+    zstd.finish()?;
+    Ok(())
 }
