@@ -1,5 +1,5 @@
 use egui::{Button, CtxRef, TopBottomPanel};
-use rfd::FileDialog;
+use rfd::{FileDialog, MessageDialog};
 
 use crate::{
     application::{self, Application},
@@ -145,7 +145,6 @@ pub(super) fn do_frame(
                 });
                 egui::menu::menu(ui, "Actions", |ui| {
                     let active_coll = app.active_collection.is_some();
-                    ui.separator();
                     if ui
                         .add(Button::new("🔍 Filter (F)").enabled(active_coll))
                         .clicked()
@@ -193,12 +192,18 @@ pub(super) fn do_frame(
                     }
                 });
                 egui::menu::menu(ui, "Windows", |ui| {
-                    ui.separator();
                     if ui.button("＃ Tag list (T)").clicked() {
                         state.egui_state.tag_window.toggle();
                     }
                     if ui.button("⬌ Sequences (Q)").clicked() {
                         state.egui_state.sequences_window.on ^= true;
+                    }
+                });
+                egui::menu::menu(ui, "Help", |ui| {
+                    if ui.button("About").clicked() {
+                        MessageDialog::new()
+                            .set_description(&format!("Cowbump version {}", crate::VERSION))
+                            .show();
                     }
                 });
                 ui.separator();

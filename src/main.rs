@@ -14,6 +14,8 @@ mod serialization;
 pub mod set_ext;
 mod tag;
 
+const VERSION: &str = include_str!("../version.txt");
+
 use crate::application::Application;
 
 fn try_main() -> anyhow::Result<()> {
