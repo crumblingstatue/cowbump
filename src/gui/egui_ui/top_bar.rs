@@ -1,4 +1,4 @@
-use egui::{Button, CtxRef, TopBottomPanel};
+use egui::{Button, Color32, CtxRef, Label, TopBottomPanel};
 use rfd::{FileDialog, MessageDialog};
 
 use crate::{
@@ -13,6 +13,7 @@ pub(super) fn do_frame(
     state: &mut State,
     egui_ctx: &CtxRef,
     app: &mut Application,
+    n_selected: usize,
 ) -> anyhow::Result<()> {
     let mut result = Ok(());
     if state.egui_state.top_bar {
@@ -216,8 +217,16 @@ pub(super) fn do_frame(
                         state.egui_state.debug_window.toggle();
                     }
                 });
+                if n_selected > 0 {
+                    ui.separator();
+                    ui.add(
+                        Label::new(format!("{} entries selected", n_selected))
+                            .text_color(Color32::GREEN),
+                    );
+                    ui.add(Label::new("(Esc to deselect)").text_color(Color32::YELLOW));
+                }
                 ui.separator();
-                ui.label("(F1 to toggle)");
+                ui.label("(F1 to toggle this panel)");
             });
         });
     }
