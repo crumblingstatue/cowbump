@@ -217,7 +217,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             search_highlight.set_fill_color(Color::TRANSPARENT);
             search_highlight.set_outline_color(Color::RED);
             search_highlight.set_outline_thickness(-4.0);
-            let (x, y) = item_position(index, &state);
+            let (x, y) = state.item_position(index);
             search_highlight.set_position((x as f32, y as f32 - state.entries_view.y_offset));
             window.draw(&search_highlight);
         }
@@ -241,16 +241,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         app.database.save()?;
     }
     Ok(())
-}
-
-/// Calculate absolute pixel position of an item at `index`
-fn item_position(index: u32, state: &State) -> (u32, u32) {
-    let thumbs_per_row: u32 = state.thumbnails_per_row.into();
-    let row = index / thumbs_per_row;
-    let pixel_y = row * state.thumbnail_size;
-    let col = index % thumbs_per_row;
-    let pixel_x = col * state.thumbnail_size;
-    (pixel_x, pixel_y)
 }
 
 fn go_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
@@ -532,23 +522,9 @@ fn search_goto_cursor(state: &mut State, db: &Collection, view_height: u32) {
     if let Some(index) = find_nth(state, db, state.search_cursor) {
         state.highlight = Some(index as u32);
         state.search_success = true;
-        seek_view_to_contain_index(index, state, view_height);
+        state.seek_view_to_contain_index(index, view_height);
     } else {
         state.search_success = false;
-    }
-}
-
-fn seek_view_to_contain_index(index: usize, state: &mut State, height: u32) {
-    let (_x, y) = item_position(index as u32, state);
-    let view_y = &mut state.entries_view.y_offset;
-    let thumb_size = state.thumbnail_size as u32;
-    if y < (*view_y as u32) {
-        let diff = (*view_y as u32) - y;
-        *view_y -= diff as f32;
-    }
-    if y + thumb_size > (*view_y as u32 + height) {
-        let diff = (y + thumb_size) - (*view_y as u32 + height);
-        *view_y += diff as f32;
     }
 }
 
@@ -718,5 +694,27 @@ impl State {
     }
     fn begin_frame(&mut self) {
         self.egui_state.begin_frame();
+    }
+    fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
+        let (_x, y) = self.item_position(index as u32);
+        let view_y = &mut self.entries_view.y_offset;
+        let thumb_size = self.thumbnail_size as u32;
+        if y < (*view_y as u32) {
+            let diff = (*view_y as u32) - y;
+            *view_y -= diff as f32;
+        }
+        if y + thumb_size > (*view_y as u32 + height) {
+            let diff = (y + thumb_size) - (*view_y as u32 + height);
+            *view_y += diff as f32;
+        }
+    }
+    /// Calculate absolute pixel position of an item at `index`
+    fn item_position(&self, index: u32) -> (u32, u32) {
+        let thumbs_per_row: u32 = self.thumbnails_per_row.into();
+        let row = index / thumbs_per_row;
+        let pixel_y = row * self.thumbnail_size;
+        let col = index % thumbs_per_row;
+        let pixel_x = col * self.thumbnail_size;
+        (pixel_x, pixel_y)
     }
 }
