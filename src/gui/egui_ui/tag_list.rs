@@ -10,6 +10,8 @@ use crate::{
     tag,
 };
 
+use super::EguiState;
+
 #[derive(Default)]
 pub struct TagWindow {
     on: bool,
@@ -23,20 +25,25 @@ impl TagWindow {
     }
 }
 
-pub(super) fn do_frame(state: &mut State, db: &mut Collection, egui_ctx: &CtxRef) {
-    if state.egui_state.tag_window.on {
+pub(super) fn do_frame(
+    state: &mut State,
+    egui_state: &mut EguiState,
+    db: &mut Collection,
+    egui_ctx: &CtxRef,
+) {
+    if egui_state.tag_window.on {
         let tags = &mut db.tags;
         let mut close = false;
         let close_ref = &mut close;
-        let tag_filter_string_ref = &mut state.egui_state.tag_window.filter_string;
+        let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
         let filter_string_ref = &mut state.filter_string;
         let filter_spec_ref = &mut state.filter;
-        let selected_uids = &mut state.egui_state.tag_window.selected_uids;
+        let selected_uids = &mut egui_state.tag_window.selected_uids;
         // Clear selected uids that have already been deleted
         selected_uids.retain(|uid| tags.contains_key(uid));
-        let prompts = &mut state.egui_state.prompts;
+        let prompts = &mut egui_state.prompts;
         egui::Window::new("Tag list")
-            .open(&mut state.egui_state.tag_window.on)
+            .open(&mut egui_state.tag_window.on)
             .show(egui_ctx, move |ui| {
                 ui.horizontal(|ui| {
                     let te = TextEdit::singleline(tag_filter_string_ref).hint_text("Filter");
@@ -142,8 +149,8 @@ pub(super) fn do_frame(state: &mut State, db: &mut Collection, egui_ctx: &CtxRef
                 }
             });
         if close {
-            state.egui_state.just_closed_window_with_esc = true;
-            state.egui_state.tag_window.on = false;
+            egui_state.just_closed_window_with_esc = true;
+            egui_state.tag_window.on = false;
         }
     }
 }

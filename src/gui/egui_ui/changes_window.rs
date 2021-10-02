@@ -2,6 +2,8 @@ use egui::{Color32, Label, ScrollArea, Window};
 
 use crate::{db::FolderChanges, gui::entries_view::EntriesView};
 
+use super::EguiState;
+
 #[derive(Default)]
 pub struct ChangesWindow {
     open: bool,
@@ -10,10 +12,11 @@ pub struct ChangesWindow {
 
 pub(super) fn do_frame(
     state: &mut crate::gui::State,
+    egui_state: &mut EguiState,
     egui_ctx: &egui::CtxRef,
     app: &mut crate::application::Application,
 ) {
-    let win = &mut state.egui_state.changes_window;
+    let win = &mut egui_state.changes_window;
     if !win.open {
         return;
     }

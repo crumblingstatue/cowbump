@@ -21,6 +21,8 @@ use crate::{
     gui::{thumbnail_loader, Resources, State},
 };
 
+use super::EguiState;
+
 #[derive(Default)]
 pub struct LoadFolderWindow {
     open: bool,
@@ -68,11 +70,12 @@ pub(super) fn open(win: &mut LoadFolderWindow, path: PathBuf) {
 
 pub(super) fn do_frame(
     state: &mut State,
+    egui_state: &mut EguiState,
     egui_ctx: &CtxRef,
     resources: &Resources,
     app: &mut Application,
 ) {
-    let win = &mut state.egui_state.load_folder_window;
+    let win = &mut egui_state.load_folder_window;
     let input = egui_ctx.input();
     let mut new_sel = None;
     if input.key_pressed(Key::ArrowUp) {

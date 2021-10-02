@@ -1,5 +1,7 @@
 use egui::{Align, Color32, Label, ScrollArea, Window};
 
+use super::EguiState;
+
 pub struct DebugWindow {
     open: bool,
     auto_scroll: bool,
@@ -20,8 +22,12 @@ impl DebugWindow {
     }
 }
 
-pub(super) fn do_frame(state: &mut crate::gui::State, egui_ctx: &egui::CtxRef) {
-    let win = &mut state.egui_state.debug_window;
+pub(super) fn do_frame(
+    state: &mut crate::gui::State,
+    egui_state: &mut EguiState,
+    egui_ctx: &egui::CtxRef,
+) {
+    let win = &mut egui_state.debug_window;
     if !win.open {
         return;
     }

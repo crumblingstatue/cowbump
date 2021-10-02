@@ -7,16 +7,17 @@ use crate::{
     gui::{native_dialog, State},
 };
 
-use super::{info_message, load_folder_window, prompt, Action, PromptAction};
+use super::{info_message, load_folder_window, prompt, Action, EguiState, PromptAction};
 
 pub(super) fn do_frame(
     state: &mut State,
+    egui_state: &mut EguiState,
     egui_ctx: &CtxRef,
     app: &mut Application,
 ) -> anyhow::Result<()> {
     let n_selected = state.selected_uids.len();
     let mut result = Ok(());
-    if state.egui_state.top_bar {
+    if egui_state.top_bar {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 if app.database.recent.len() > 0 {
@@ -47,7 +48,7 @@ pub(super) fn do_frame(
                             Action::Open(id) => match app.load_collection(id) {
                                 Ok(changes) => {
                                     if !changes.empty() {
-                                        state.egui_state.changes_window.open(changes);
+                                        egui_state.changes_window.open(changes);
                                     }
                                     result = crate::gui::set_active_collection(
                                         &mut state.entries_view,
@@ -76,13 +77,13 @@ pub(super) fn do_frame(
                                     }
                                 };
                                 if !changes.empty() {
-                                    state.egui_state.changes_window.open(changes);
+                                    egui_state.changes_window.open(changes);
                                 }
                                 crate::gui::set_active_collection(&mut state.entries_view, app, id)
                                     .unwrap();
                             } else {
                                 load_folder_window::open(
-                                    &mut state.egui_state.load_folder_window,
+                                    &mut egui_state.load_folder_window,
                                     dir_path,
                                 );
                             }
@@ -104,14 +105,14 @@ pub(super) fn do_frame(
                         match app.database.save_backup() {
                             Ok(_) => {
                                 info_message(
-                                    &mut state.egui_state.info_messages,
+                                    &mut egui_state.info_messages,
                                     "Success",
                                     "Backup successfully created.",
                                 );
                             }
                             Err(e) => {
                                 info_message(
-                                    &mut state.egui_state.info_messages,
+                                    &mut egui_state.info_messages,
                                     "Error",
                                     &e.to_string(),
                                 );
@@ -120,7 +121,7 @@ pub(super) fn do_frame(
                     }
                     if ui.button("⛃⬊ Restore backup").clicked() {
                         prompt(
-                            &mut state.egui_state.prompts,
+                            &mut egui_state.prompts,
                             "Restore Backup",
                             "Warning: This will overwrite the current contents of the database.",
                             PromptAction::RestoreBackup,
@@ -128,12 +129,12 @@ pub(super) fn do_frame(
                     }
                     ui.separator();
                     if ui.button("☰ Preferences").clicked() {
-                        state.egui_state.preferences_window.toggle();
+                        egui_state.preferences_window.toggle();
                     }
                     ui.separator();
                     if ui.button("🗙 Quit without saving").clicked() {
                         prompt(
-                            &mut state.egui_state.prompts,
+                            &mut egui_state.prompts,
                             "Quit without saving",
                             "Warning: All changes made this session will be lost.",
                             PromptAction::QuitNoSave,
@@ -141,7 +142,7 @@ pub(super) fn do_frame(
                     }
                     ui.separator();
                     if ui.button("⎆ Quit").clicked() {
-                        state.egui_state.action = Some(Action::Quit);
+                        egui_state.action = Some(Action::Quit);
                     }
                 });
                 egui::menu::menu(ui, "Actions", |ui| {
@@ -163,26 +164,26 @@ pub(super) fn do_frame(
                         .add(Button::new("⮫ Next result (N)").enabled(active_coll))
                         .clicked()
                     {
-                        state.egui_state.action = Some(Action::SearchNext);
+                        egui_state.action = Some(Action::SearchNext);
                     }
                     if ui
                         .add(Button::new("⮪ Previous result (P)").enabled(active_coll))
                         .clicked()
                     {
-                        state.egui_state.action = Some(Action::SearchPrev);
+                        egui_state.action = Some(Action::SearchPrev);
                     }
                     ui.separator();
                     if ui
                         .add(Button::new("☑ Select All (ctrl+A)").enabled(active_coll))
                         .clicked()
                     {
-                        state.egui_state.action = Some(Action::SelectAll);
+                        egui_state.action = Some(Action::SelectAll);
                     }
                     if ui
                         .add(Button::new("☐ Select None (Esc)").enabled(active_coll))
                         .clicked()
                     {
-                        state.egui_state.action = Some(Action::SelectNone);
+                        egui_state.action = Some(Action::SelectNone);
                     }
                     ui.separator();
                     if ui
@@ -192,22 +193,22 @@ pub(super) fn do_frame(
                         )
                         .clicked()
                     {
-                        state.egui_state.action = Some(Action::OpenEntriesWindow);
+                        egui_state.action = Some(Action::OpenEntriesWindow);
                     }
                     ui.separator();
                     if ui
                         .add(Button::new("♻ Sort by filename (S)").enabled(active_coll))
                         .clicked()
                     {
-                        state.egui_state.action = Some(Action::SortEntries);
+                        egui_state.action = Some(Action::SortEntries);
                     }
                 });
                 egui::menu::menu(ui, "Windows", |ui| {
                     if ui.button("＃ Tag list (T)").clicked() {
-                        state.egui_state.tag_window.toggle();
+                        egui_state.tag_window.toggle();
                     }
                     if ui.button("⬌ Sequences (Q)").clicked() {
-                        state.egui_state.sequences_window.on ^= true;
+                        egui_state.sequences_window.on ^= true;
                     }
                 });
                 egui::menu::menu(ui, "Help", |ui| {
@@ -224,7 +225,7 @@ pub(super) fn do_frame(
                         open::that_in_background(&app.database.data_dir);
                     }
                     if ui.button("Debug window").clicked() {
-                        state.egui_state.debug_window.toggle();
+                        egui_state.debug_window.toggle();
                     }
                 });
                 if n_selected > 0 {

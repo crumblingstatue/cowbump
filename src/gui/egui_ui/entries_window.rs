@@ -13,7 +13,7 @@ use crate::{
     gui::{common_tags, entries_view::EntriesView, native_dialog, State},
 };
 
-use super::sequences::SequenceWindow;
+use super::{sequences::SequenceWindow, EguiState};
 
 #[derive(Default)]
 pub struct EntriesWindow {
@@ -78,11 +78,12 @@ pub fn tag<'a>(name: &'a str, del: &'a mut bool) -> impl egui::Widget + 'a {
 
 pub(super) fn do_frame(
     state: &mut State,
+    egui_state: &mut EguiState,
     db: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &egui::CtxRef,
 ) {
-    state.egui_state.entries_windows.retain_mut(|win| {
+    egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
         let title = {
@@ -253,13 +254,13 @@ pub(super) fn do_frame(
                             });
                         }
                         if ui.button("Add to sequence").clicked() {
-                            state.egui_state.sequences_window.on = true;
-                            state.egui_state.sequences_window.pick_mode = true;
+                            egui_state.sequences_window.on = true;
+                            egui_state.sequences_window.pick_mode = true;
                         }
-                        if let Some(uid) = state.egui_state.sequences_window.pick_result {
+                        if let Some(uid) = egui_state.sequences_window.pick_result {
                             db.add_entries_to_sequence(uid, &win.ids);
-                            state.egui_state.sequences_window.pick_mode = false;
-                            state.egui_state.sequences_window.pick_result = None;
+                            egui_state.sequences_window.pick_mode = false;
+                            egui_state.sequences_window.pick_result = None;
                         }
                         if ui
                             .add(Button::new("Run custom command").wrap(false))
@@ -382,8 +383,7 @@ pub(super) fn do_frame(
                                     let img_but =
                                         ImageButton::new(TextureId::User(img_id.0), (128., 128.));
                                     if ui.add(img_but).clicked() {
-                                        state
-                                            .egui_state
+                                        egui_state
                                             .sequence_windows
                                             .push(SequenceWindow::new(seq_id, Some(img_id)));
                                     }
@@ -394,7 +394,7 @@ pub(super) fn do_frame(
                 }
             });
         if close {
-            state.egui_state.just_closed_window_with_esc = true;
+            egui_state.just_closed_window_with_esc = true;
             open = false;
         }
         open

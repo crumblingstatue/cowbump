@@ -8,18 +8,20 @@ use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::{native_dialog, open_with_external, State},
+    gui::{native_dialog, open_with_external},
     preferences::Preferences,
     sequence,
 };
 
+use super::EguiState;
+
 pub(super) fn do_sequence_windows(
-    state: &mut State,
+    egui_state: &mut EguiState,
     db: &mut Collection,
     egui_ctx: &CtxRef,
     prefs: &mut Preferences,
 ) {
-    state.egui_state.sequence_windows.retain_mut(|win| {
+    egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
         let seq = db.sequences.get_mut(&win.uid).unwrap();
         let name = &seq.name;
@@ -142,18 +144,18 @@ pub(super) fn do_sequence_windows(
 }
 
 pub(super) fn do_sequences_window(
-    state: &mut State,
+    egui_state: &mut EguiState,
     db: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &CtxRef,
 ) {
-    let seq_win = &mut state.egui_state.sequences_window;
+    let seq_win = &mut egui_state.sequences_window;
     if seq_win.on {
         let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
         let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
         if esc_pressed {
             seq_win.on = false;
-            state.egui_state.just_closed_window_with_esc = true;
+            egui_state.just_closed_window_with_esc = true;
         }
         Window::new("Sequences")
             .open(&mut seq_win.on)
@@ -221,8 +223,7 @@ pub(super) fn do_sequences_window(
                             for en in seq.entries.iter().take(7) {
                                 let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
                                 if ui.add(but).clicked() {
-                                    state
-                                        .egui_state
+                                    egui_state
                                         .sequence_windows
                                         .push(SequenceWindow::new(uid, Some(*en)));
                                 }

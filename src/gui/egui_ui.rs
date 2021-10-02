@@ -138,63 +138,65 @@ struct InfoMessage {
 
 pub(super) fn do_ui(
     state: &mut State,
+    egui_state: &mut EguiState,
     egui_ctx: &egui::CtxRef,
     app: &mut Application,
     res: &Resources,
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
-    top_bar::do_frame(state, egui_ctx, app)?;
-    preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
-    load_folder_window::do_frame(state, egui_ctx, res, app);
-    changes_window::do_frame(state, egui_ctx, app);
-    debug_window::do_frame(state, egui_ctx);
+    top_bar::do_frame(state, egui_state, egui_ctx, app)?;
+    preferences_window::do_frame(egui_state, app, egui_ctx);
+    load_folder_window::do_frame(state, egui_state, egui_ctx, res, app);
+    changes_window::do_frame(state, egui_state, egui_ctx, app);
+    debug_window::do_frame(state, egui_state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_ctx, coll, win);
         if do_filter_edit(state, egui_ctx, coll) {
             crate::gui::clamp_bottom(win, state, coll);
         }
-        tag_list::do_frame(state, coll, egui_ctx);
-        sequences::do_sequences_window(state, coll, &mut app.database.uid_counter, egui_ctx);
-        sequences::do_sequence_windows(state, coll, egui_ctx, &mut app.database.preferences);
-        entries_window::do_frame(state, coll, &mut app.database.uid_counter, egui_ctx);
-        do_info_messages(state, egui_ctx);
-        do_prompts(state, egui_ctx, app);
+        tag_list::do_frame(state, egui_state, coll, egui_ctx);
+        sequences::do_sequences_window(egui_state, coll, &mut app.database.uid_counter, egui_ctx);
+        sequences::do_sequence_windows(egui_state, coll, egui_ctx, &mut app.database.preferences);
+        entries_window::do_frame(
+            state,
+            egui_state,
+            coll,
+            &mut app.database.uid_counter,
+            egui_ctx,
+        );
+        do_info_messages(egui_state, egui_ctx);
+        do_prompts(egui_state, egui_ctx, app);
     }
     Ok(())
 }
 
-fn do_info_messages(state: &mut State, egui_ctx: &CtxRef) {
-    state
-        .egui_state
+fn do_info_messages(egui_state: &mut EguiState, egui_ctx: &CtxRef) {
+    egui_state
         .info_messages
         .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
 }
 
-fn do_prompts(state: &mut State, egui_ctx: &CtxRef, app: &mut Application) {
-    state.egui_state.prompts.retain(|prompt| {
+fn do_prompts(egui_state: &mut EguiState, egui_ctx: &CtxRef, app: &mut Application) {
+    egui_state.prompts.retain(|prompt| {
         match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
             Some(OkCancel::Ok) => match prompt.action {
                 PromptAction::RestoreBackup => {
                     match app.database.load_backup() {
                         Ok(_) => {
                             info_message(
-                                &mut state.egui_state.info_messages,
+                                &mut egui_state.info_messages,
                                 "Success",
                                 "Successfully restored backup.",
                             );
                         }
                         Err(e) => {
-                            info_message(
-                                &mut state.egui_state.info_messages,
-                                "Error",
-                                &e.to_string(),
-                            );
+                            info_message(&mut egui_state.info_messages, "Error", &e.to_string());
                         }
                     }
                     false
                 }
                 PromptAction::QuitNoSave => {
-                    state.egui_state.action = Some(Action::QuitNoSave);
+                    egui_state.action = Some(Action::QuitNoSave);
                     false
                 }
                 PromptAction::DeleteTags(ref uids) => {

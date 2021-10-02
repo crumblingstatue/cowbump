@@ -38,6 +38,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     window.set_position((0, 0).into());
     let res = Resources::load()?;
     let mut state = State::new(window.size().x);
+    let mut egui_state = EguiState::default();
     let mut on_screen_uids: Vec<entry::Id> = Vec::new();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
@@ -57,7 +58,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         match app.load_last() {
             Ok(changes) => {
                 if !changes.empty() {
-                    state.egui_state.changes_window.open(changes);
+                    egui_state.changes_window.open(changes);
                 }
                 let coll = app.active_collection.as_ref().unwrap();
                 state.entries_view = EntriesView::from_collection(&coll.1);
@@ -113,15 +114,13 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                                 }
                             }
                         }
-                        Key::F1 => state.egui_state.top_bar ^= true,
+                        Key::F1 => egui_state.top_bar ^= true,
                         Key::F2 => {
                             if !state.selected_uids.is_empty() {
-                                state
-                                    .egui_state
-                                    .add_entries_window(state.selected_uids.clone())
+                                egui_state.add_entries_window(state.selected_uids.clone())
                             }
                         }
-                        Key::F12 => state.egui_state.debug_window.toggle(),
+                        Key::F12 => egui_state.debug_window.toggle(),
                         _ => {}
                     }
                 }
@@ -131,6 +130,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 handle_event_viewer(
                     event,
                     &mut state,
+                    &mut egui_state,
                     &mut on_screen_uids,
                     coll,
                     &window,
@@ -139,10 +139,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 );
             }
         }
-        state.begin_frame();
+        egui_state.begin_frame();
         let mut result = Ok(());
         sf_egui.do_frame(|ctx| {
-            result = egui_ui::do_ui(&mut state, ctx, app, &res, &window);
+            result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, &window);
         });
         if let Err(e) = result {
             native_dialog::error("Error", e);
@@ -150,12 +150,12 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         if esc_pressed
             && !sf_egui.context().wants_keyboard_input()
             && !sf_egui.context().wants_pointer_input()
-            && !state.egui_state.just_closed_window_with_esc
+            && !egui_state.just_closed_window_with_esc
         {
             state.selected_uids.clear()
         }
         let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
-        if let Some(action) = &state.egui_state.action {
+        if let Some(action) = &egui_state.action {
             match action {
                 Action::Quit => window.close(),
                 Action::QuitNoSave => {
@@ -171,9 +171,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
                 Action::SortEntries => state.entries_view.sort(coll.as_mut().unwrap()),
-                Action::OpenEntriesWindow => state
-                    .egui_state
-                    .add_entries_window(state.selected_uids.clone()),
+                Action::OpenEntriesWindow => {
+                    egui_state.add_entries_window(state.selected_uids.clone())
+                }
             }
         }
         if let Some(coll) = &mut coll {
@@ -221,7 +221,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             search_highlight.set_position((x as f32, y as f32 - state.entries_view.y_offset));
             window.draw(&search_highlight);
         }
-        if let Some(tex) = state.egui_state.load_folder_window.texture.as_ref() {
+        if let Some(tex) = egui_state.load_folder_window.texture.as_ref() {
             let mut rs = RectangleShape::from_rect(Rect::new(800., 64., 512., 512.));
             rs.set_texture(tex, true);
             rs.set_outline_color(Color::YELLOW);
@@ -294,6 +294,7 @@ fn entry_at_xy(
 fn handle_event_viewer(
     event: Event,
     state: &mut State,
+    egui_state: &mut EguiState,
     on_screen_entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
     window: &RenderWindow,
@@ -326,7 +327,7 @@ fn handle_event_viewer(
                 } else {
                     vec![uid]
                 };
-                state.egui_state.add_entries_window(vec);
+                egui_state.add_entries_window(vec);
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
@@ -373,9 +374,9 @@ fn handle_event_viewer(
                     native_dialog::error("Clipboard copy failed", e);
                 }
             } else if code == Key::T {
-                state.egui_state.tag_window.toggle();
+                egui_state.tag_window.toggle();
             } else if code == Key::Q {
-                state.egui_state.sequences_window.on ^= true;
+                egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
                 state.entries_view.sort(coll);
             }
@@ -595,7 +596,6 @@ struct State {
     filter_edit: bool,
     filter_string: String,
     clipboard_ctx: Clipboard,
-    egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
     debug_log: RefCell<Vec<String>>,
     selected_uids: Vec<entry::Id>,
@@ -679,7 +679,6 @@ impl State {
             filter_edit: false,
             filter_string: String::new(),
             clipboard_ctx: Clipboard::new().unwrap(),
-            egui_state,
             entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
             debug_log: Default::default(),
@@ -691,9 +690,6 @@ impl State {
         self.search_edit = false;
         self.search_success = false;
         self.highlight = None;
-    }
-    fn begin_frame(&mut self) {
-        self.egui_state.begin_frame();
     }
     fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
         let (_x, y) = self.item_position(index as u32);
