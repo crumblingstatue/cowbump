@@ -20,30 +20,38 @@ pub struct EntriesView {
 }
 
 impl EntriesView {
-    pub fn from_collection(db: &Collection) -> Self {
-        let uids: Vec<entry::Id> = db.entries.keys().cloned().collect();
+    pub fn from_collection(coll: &Collection) -> Self {
+        let uids: Vec<entry::Id> = coll.entries.keys().cloned().collect();
         let mut this = Self {
             uids,
             y_offset: 0.0,
         };
-        this.sort(db);
+        this.sort(coll);
         this
     }
-    pub fn sort(&mut self, db: &Collection) {
-        self.uids.sort_by_key(|uid| &db.entries[uid].path);
+    pub fn sort(&mut self, coll: &Collection) {
+        self.uids.sort_by_key(|uid| &coll.entries[uid].path);
     }
     pub fn filter<'a>(
         &'a self,
-        db: &'a Collection,
+        coll: &'a Collection,
         spec: &'a FilterSpec,
     ) -> impl Iterator<Item = entry::Id> + 'a {
         self.uids
             .iter()
-            .filter_map(|uid| crate::entry::filter_map(*uid, &db.entries[uid], spec))
+            .filter_map(|uid| crate::entry::filter_map(*uid, &coll.entries[uid], spec))
     }
     /// Delete `uid` from the list.
     pub fn delete(&mut self, uid: entry::Id) {
         self.uids.retain(|&rhs| uid != rhs);
+    }
+    pub fn entry_position(
+        &self,
+        id: entry::Id,
+        coll: &Collection,
+        spec: &FilterSpec,
+    ) -> Option<usize> {
+        self.filter(coll, spec).position(|id2| id2 == id)
     }
 }
 

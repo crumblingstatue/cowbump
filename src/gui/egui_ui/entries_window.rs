@@ -5,12 +5,13 @@ use std::{
 
 use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
 use retain_mut::RetainMut;
+use sfml::graphics::{RenderTarget, RenderWindow};
 
 use crate::{
     collection::Collection,
-    db::UidCounter,
+    db::Db,
     entry,
-    gui::{common_tags, entries_view::EntriesView, native_dialog, State},
+    gui::{common_tags, entries_view::EntriesView, native_dialog, open_with_external, State},
 };
 
 use super::{sequences::SequenceWindow, EguiState};
@@ -79,16 +80,20 @@ pub fn tag<'a>(name: &'a str, del: &'a mut bool) -> impl egui::Widget + 'a {
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
-    db: &mut Collection,
-    uid_counter: &mut UidCounter,
+    coll: &mut Collection,
     egui_ctx: &egui::CtxRef,
+    rend_win: &RenderWindow,
+    db: &mut Db,
 ) {
     egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
         let title = {
             if win.ids.len() == 1 {
-                db.entries[&win.ids[0]].path.to_string_lossy().into_owned()
+                coll.entries[&win.ids[0]]
+                    .path
+                    .to_string_lossy()
+                    .into_owned()
             } else {
                 format!("{} entries", n_entries)
             }
@@ -104,19 +109,29 @@ pub(super) fn do_frame(
                         ui.set_max_width(512.0);
                         let n_visible_entries = n_entries.min(64);
                         for &id in win.ids.iter().take(n_visible_entries) {
-                            ui.image(
-                                TextureId::User(id.0),
-                                (
-                                    512.0 / n_visible_entries as f32,
-                                    512.0 / n_visible_entries as f32,
-                                ),
-                            );
+                            if ui
+                                .add(ImageButton::new(
+                                    TextureId::User(id.0),
+                                    (
+                                        512.0 / n_visible_entries as f32,
+                                        512.0 / n_visible_entries as f32,
+                                    ),
+                                ))
+                                .clicked()
+                                && !state.highlight_and_seek_to_entry(id, rend_win.size().y, coll)
+                            {
+                                // Can't find in view, open it in external instead
+                                let paths = [&*coll.entries[&id].path];
+                                if let Err(e) = open_with_external(&paths, &mut db.preferences) {
+                                    native_dialog::error("Error opening with external", e);
+                                }
+                            }
                         }
                     });
                     ui.vertical(|ui| {
                         ui.horizontal_wrapped(|ui| {
-                            for tagid in common_tags(&win.ids, db) {
-                                let tag_name = match db.tags.get(&tagid) {
+                            for tagid in common_tags(&win.ids, coll) {
+                                let tag_name = match coll.tags.get(&tagid) {
                                     Some(tag) => &tag.names[0],
                                     None => "<unknown tag>",
                                 };
@@ -124,7 +139,7 @@ pub(super) fn do_frame(
                                 ui.add(tag(tag_name, &mut del));
                                 if del {
                                     // TODO: This only works for 1 item windows
-                                    db.entries
+                                    coll.entries
                                         .get_mut(&win.ids[0])
                                         .unwrap()
                                         .tags
@@ -151,9 +166,9 @@ pub(super) fn do_frame(
                                 let entry_uids: &[entry::Id] = &win.ids;
                                 let tags = add_tag_buffer.split_whitespace();
                                 for tag in tags {
-                                    match db.resolve_tag(tag) {
+                                    match coll.resolve_tag(tag) {
                                         Some(tag_uid) => {
-                                            db.add_tag_for_multi(entry_uids, tag_uid);
+                                            coll.add_tag_for_multi(entry_uids, tag_uid);
                                         }
                                         None => {
                                             win.new_tags.push(tag.to_owned());
@@ -176,9 +191,11 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 ui.label(&tag[..]);
                                 if ui.button("Add").clicked() {
-                                    match db.add_new_tag_from_text(tag.to_owned(), uid_counter) {
+                                    match coll
+                                        .add_new_tag_from_text(tag.to_owned(), &mut db.uid_counter)
+                                    {
                                         Some(id) => {
-                                            db.add_tag_for_multi(&win.ids, id);
+                                            coll.add_tag_for_multi(&win.ids, id);
                                             retain = false;
                                         }
                                         None => native_dialog::error(
@@ -207,7 +224,7 @@ pub(super) fn do_frame(
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
-                                if let Err(e) = db.rename(win.ids[0], &win.rename_buffer) {
+                                if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
                                     native_dialog::error("File rename error", e);
                                 }
                                 win.renaming = false;
@@ -231,7 +248,7 @@ pub(super) fn do_frame(
                             let label_string = if del_len == 1 {
                                 format!(
                                     "About to delete {}",
-                                    db.entries[&del_uids[0]].path.display()
+                                    coll.entries[&del_uids[0]].path.display()
                                 )
                             } else {
                                 format!("About to delete {} entries", del_len)
@@ -240,7 +257,7 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
                                     if let Err(e) =
-                                        remove_entries(&mut state.entries_view, del_uids, db)
+                                        remove_entries(&mut state.entries_view, del_uids, coll)
                                     {
                                         native_dialog::error("Error deleting entries", e);
                                     }
@@ -258,7 +275,7 @@ pub(super) fn do_frame(
                             egui_state.sequences_window.pick_mode = true;
                         }
                         if let Some(uid) = egui_state.sequences_window.pick_result {
-                            db.add_entries_to_sequence(uid, &win.ids);
+                            coll.add_entries_to_sequence(uid, &win.ids);
                             egui_state.sequences_window.pick_mode = false;
                             egui_state.sequences_window.pick_result = None;
                         }
@@ -283,7 +300,7 @@ pub(super) fn do_frame(
                                 cmd.stdin(Stdio::piped());
                                 cmd.stdout(Stdio::piped());
                                 for uid in &win.ids {
-                                    let en = &db.entries[uid];
+                                    let en = &coll.entries[uid];
                                     for arg in win.args_buffer.split_whitespace() {
                                         if arg == "{}" {
                                             cmd.arg(&en.path);
@@ -369,12 +386,12 @@ pub(super) fn do_frame(
                         })
                     });
                 });
-                let seqs = db.find_related_sequences(&win.ids);
+                let seqs = coll.find_related_sequences(&win.ids);
                 if !seqs.is_empty() {
                     ui.separator();
                     ui.heading("Related sequences");
                     for seq_id in seqs {
-                        let seq = &db.sequences[&seq_id];
+                        let seq = &coll.sequences[&seq_id];
                         ui.label(&seq.name);
                         {}
                         ui.horizontal(|ui| {

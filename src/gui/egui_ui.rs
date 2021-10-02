@@ -157,13 +157,7 @@ pub(super) fn do_ui(
         tag_list::do_frame(state, egui_state, coll, egui_ctx);
         sequences::do_sequences_window(egui_state, coll, &mut app.database.uid_counter, egui_ctx);
         sequences::do_sequence_windows(egui_state, coll, egui_ctx, &mut app.database.preferences);
-        entries_window::do_frame(
-            state,
-            egui_state,
-            coll,
-            &mut app.database.uid_counter,
-            egui_ctx,
-        );
+        entries_window::do_frame(state, egui_state, coll, egui_ctx, win, &mut app.database);
         do_info_messages(egui_state, egui_ctx);
         do_prompts(egui_state, egui_ctx, app);
     }

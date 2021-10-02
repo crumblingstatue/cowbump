@@ -713,4 +713,19 @@ impl State {
         let pixel_x = col * self.thumbnail_size;
         (pixel_x, pixel_y)
     }
+    fn highlight_and_seek_to_entry(
+        &mut self,
+        id: entry::Id,
+        height: u32,
+        coll: &Collection,
+    ) -> bool {
+        match self.entries_view.entry_position(id, coll, &self.filter) {
+            Some(idx) => {
+                self.highlight = Some(idx as u32);
+                self.seek_view_to_contain_index(idx, height);
+                true
+            }
+            None => false,
+        }
+    }
 }
