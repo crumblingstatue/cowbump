@@ -21,6 +21,6 @@ fn try_main() -> anyhow::Result<()> {
 
 fn main() {
     if let Err(e) = try_main() {
-        gui::native_dialog::error(e)
+        gui::native_dialog::error("Fatal runtime error", e)
     }
 }

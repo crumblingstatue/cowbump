@@ -57,10 +57,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     };
 
     if app.database.preferences.open_last_coll_at_start && app.database.recent.len() > 0 {
-        match app
-            .load_last()
-            .context("Failed to load most recent collection")
-        {
+        match app.load_last() {
             Ok(changes) => {
                 if !changes.empty() {
                     state.egui_state.changes_window.open(changes);
@@ -71,7 +68,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 std::env::set_current_dir(root_path)?;
             }
             Err(e) => {
-                native_dialog::error(e);
+                native_dialog::error("Error loading most recent collection", e);
             }
         }
     }
@@ -289,7 +286,7 @@ fn handle_event_viewer(
                         selected_entries.push(uid);
                     }
                 } else if let Err(e) = open_with_external(&[&db.entries[&uid].path], preferences) {
-                    native_dialog::error(e);
+                    native_dialog::error("Failed to open file", e);
                 }
             } else if button == mouse::Button::Right {
                 let vec = if selected_entries.contains(&uid) {
@@ -323,7 +320,7 @@ fn handle_event_viewer(
                 }
                 paths.sort();
                 if let Err(e) = open_with_external(&paths, preferences) {
-                    native_dialog::error(e);
+                    native_dialog::error("Failed to open file", e);
                 }
             } else if code == Key::A && ctrl {
                 select_all(selected_entries, state, db);
@@ -342,7 +339,7 @@ fn handle_event_viewer(
                     None => return,
                 };
                 if let Err(e) = copy_image_to_clipboard(state, &db, uid) {
-                    native_dialog::error(e);
+                    native_dialog::error("Clipboard copy failed", e);
                 }
             } else if code == Key::T {
                 state.egui_state.tag_window.toggle();

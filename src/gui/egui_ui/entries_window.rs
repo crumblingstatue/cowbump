@@ -200,7 +200,7 @@ pub(super) fn do_frame(
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
                             if re.ctx.input().key_pressed(egui::Key::Enter) {
                                 if let Err(e) = db.rename(win.ids[0], &win.rename_buffer) {
-                                    native_dialog::error(e);
+                                    native_dialog::error("File rename error", e);
                                 }
                                 win.renaming = false;
                             }
@@ -234,7 +234,7 @@ pub(super) fn do_frame(
                                     if let Err(e) =
                                         remove_entries(&mut state.entries_view, del_uids, db)
                                     {
-                                        native_dialog::error(e);
+                                        native_dialog::error("Error deleting entries", e);
                                     }
                                     win.delete_confirm = false;
                                     close = true;

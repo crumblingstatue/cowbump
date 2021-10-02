@@ -132,7 +132,7 @@ pub(super) fn do_sequence_windows(
                         paths.push(db.entries[&img_uid].path.as_ref());
                     }
                     if let Err(e) = open_with_external(&paths, prefs) {
-                        native_dialog::error(e);
+                        native_dialog::error("Failed to open file", e);
                     }
                 }
             }

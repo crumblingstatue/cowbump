@@ -55,7 +55,7 @@ pub(super) fn do_frame(
                                     );
                                 }
                                 Err(e) => {
-                                    native_dialog::error(e);
+                                    native_dialog::error("Error loading recent collection", e);
                                 }
                             },
                             Action::Remove(id) => app.database.recent.remove(id),
