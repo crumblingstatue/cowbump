@@ -17,7 +17,7 @@ use crate::{
 };
 use egui::{Align2, Color32, CtxRef, TextEdit, Window};
 use retain_mut::RetainMut;
-use sfml::graphics::RenderWindow;
+use sfml::graphics::{RenderTarget, RenderWindow};
 
 use self::{
     changes_window::ChangesWindow,
@@ -150,7 +150,7 @@ pub(super) fn do_ui(
     changes_window::do_frame(state, egui_ctx, app);
     debug_window::do_frame(state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
-        do_search_edit(state, egui_ctx, coll);
+        do_search_edit(state, egui_ctx, coll, win);
         if do_filter_edit(state, egui_ctx, coll) {
             crate::gui::clamp_bottom(win, state, coll);
         }
@@ -252,7 +252,7 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) -> 
     filter_changed
 }
 
-fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
+fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection, win: &RenderWindow) {
     if state.search_edit {
         egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
@@ -277,7 +277,7 @@ fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) {
                     }
                     if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
                         state.search_cursor = 0;
-                        search_goto_cursor(state, db);
+                        search_goto_cursor(state, db, win.size().y);
                     }
                     ui.memory().request_focus(re.id);
                 });

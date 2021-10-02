@@ -163,8 +163,12 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     window.close();
                 }
                 Action::SelectNone => selected_uids.clear(),
-                Action::SearchNext => search_next(&mut state, coll.as_mut().unwrap()),
-                Action::SearchPrev => search_prev(&mut state, coll.as_mut().unwrap()),
+                Action::SearchNext => {
+                    search_next(&mut state, coll.as_mut().unwrap(), window.size().y)
+                }
+                Action::SearchPrev => {
+                    search_prev(&mut state, coll.as_mut().unwrap(), window.size().y)
+                }
                 Action::SelectAll => select_all(&mut selected_uids, &state, coll.as_mut().unwrap()),
                 Action::SortEntries => state.entries_view.sort(coll.as_mut().unwrap()),
                 Action::OpenEntriesWindow => {
@@ -207,21 +211,15 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 window.draw(&text);
             }
         }
-        if let Some(id) = state.highlight {
+        if let Some(index) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
                 (state.thumbnail_size as f32, state.thumbnail_size as f32).into(),
             );
             search_highlight.set_fill_color(Color::TRANSPARENT);
             search_highlight.set_outline_color(Color::RED);
             search_highlight.set_outline_thickness(-4.0);
-            let y_of_item = id / state.thumbnails_per_row as usize;
-            let pixel_y = y_of_item as f32 * state.thumbnail_size as f32;
-            let highlight_offset = pixel_y - state.entries_view.y_offset;
-            let x_of_item = id as f32 % state.thumbnails_per_row as f32;
-            search_highlight.set_position((
-                x_of_item as f32 * state.thumbnail_size as f32,
-                highlight_offset,
-            ));
+            let (x, y) = item_position(index, &state);
+            search_highlight.set_position((x as f32, y as f32 - state.entries_view.y_offset));
             window.draw(&search_highlight);
         }
         if let Some(tex) = state.egui_state.load_folder_window.texture.as_ref() {
@@ -244,6 +242,16 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         app.database.save()?;
     }
     Ok(())
+}
+
+/// Calculate absolute pixel position of an item at `index`
+fn item_position(index: u32, state: &State) -> (u32, u32) {
+    let thumbs_per_row: u32 = state.thumbnails_per_row.into();
+    let row = index / thumbs_per_row;
+    let pixel_y = row * state.thumbnail_size;
+    let col = index % thumbs_per_row;
+    let pixel_x = col * state.thumbnail_size;
+    (pixel_x, pixel_y)
 }
 
 fn go_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
@@ -362,9 +370,9 @@ fn handle_event_viewer(
             } else if code == Key::Slash {
                 state.search_edit = true;
             } else if code == Key::N {
-                search_next(state, coll);
+                search_next(state, coll, window.size().y);
             } else if code == Key::P {
-                search_prev(state, coll);
+                search_prev(state, coll, window.size().y);
             } else if code == Key::F {
                 state.filter_edit = true;
             } else if code == Key::C {
@@ -494,16 +502,16 @@ fn select_all(selected_uids: &mut Vec<entry::Id>, state: &State, db: &Collection
     }
 }
 
-fn search_prev(state: &mut State, db: &mut Collection) {
+fn search_prev(state: &mut State, db: &mut Collection, view_height: u32) {
     if state.search_cursor > 0 {
         state.search_cursor -= 1;
     }
-    search_goto_cursor(state, db);
+    search_goto_cursor(state, db, view_height);
 }
 
-fn search_next(state: &mut State, db: &mut Collection) {
+fn search_next(state: &mut State, db: &mut Collection, view_height: u32) {
     state.search_cursor += 1;
-    search_goto_cursor(state, db);
+    search_goto_cursor(state, db, view_height);
     if !state.search_success {
         state.search_cursor -= 1;
     }
@@ -522,15 +530,27 @@ fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<usize> {
         .nth(nth)
 }
 
-fn search_goto_cursor(state: &mut State, db: &Collection) {
+fn search_goto_cursor(state: &mut State, db: &Collection, view_height: u32) {
     if let Some(index) = find_nth(state, db, state.search_cursor) {
-        state.highlight = Some(index);
+        state.highlight = Some(index as u32);
         state.search_success = true;
-        let y_of_item = index / state.thumbnails_per_row as usize;
-        let y: f32 = (y_of_item as f32 * state.thumbnail_size as f32) as f32;
-        state.entries_view.y_offset = y;
+        seek_view_to_contain_index(index, state, view_height);
     } else {
         state.search_success = false;
+    }
+}
+
+fn seek_view_to_contain_index(index: usize, state: &mut State, height: u32) {
+    let (_x, y) = item_position(index as u32, state);
+    let view_y = &mut state.entries_view.y_offset;
+    let thumb_size = state.thumbnail_size as u32;
+    if y < (*view_y as u32) {
+        let diff = (*view_y as u32) - y;
+        *view_y -= diff as f32;
+    }
+    if y + thumb_size > (*view_y as u32 + height) {
+        let diff = (y + thumb_size) - (*view_y as u32 + height);
+        *view_y += diff as f32;
     }
 }
 
@@ -597,7 +617,7 @@ struct State {
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
-    highlight: Option<usize>,
+    highlight: Option<u32>,
     filter_edit: bool,
     filter_string: String,
     clipboard_ctx: Clipboard,
