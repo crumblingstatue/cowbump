@@ -213,8 +213,8 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             );
             search_highlight.set_fill_color(Color::TRANSPARENT);
             search_highlight.set_outline_color(Color::RED);
-            search_highlight.set_outline_thickness(-2.0);
-            let y_of_item = id as f32 / state.thumbnails_per_row as f32;
+            search_highlight.set_outline_thickness(-4.0);
+            let y_of_item = id / state.thumbnails_per_row as usize;
             let pixel_y = y_of_item as f32 * state.thumbnail_size as f32;
             let highlight_offset = pixel_y - state.entries_view.y_offset;
             let x_of_item = id as f32 % state.thumbnails_per_row as f32;
@@ -523,11 +523,11 @@ fn find_nth(state: &State, db: &Collection, nth: usize) -> Option<usize> {
 }
 
 fn search_goto_cursor(state: &mut State, db: &Collection) {
-    if let Some(uid) = find_nth(state, db, state.search_cursor) {
-        state.highlight = Some(uid);
+    if let Some(index) = find_nth(state, db, state.search_cursor) {
+        state.highlight = Some(index);
         state.search_success = true;
-        let y_of_item = uid as f32 / state.thumbnails_per_row as f32;
-        let y: f32 = (y_of_item * state.thumbnail_size as f32) as f32;
+        let y_of_item = index / state.thumbnails_per_row as usize;
+        let y: f32 = (y_of_item as f32 * state.thumbnail_size as f32) as f32;
         state.entries_view.y_offset = y;
     } else {
         state.search_success = false;
