@@ -15,13 +15,17 @@ use super::{
 
 #[derive(Default)]
 pub struct EntriesView {
+    pub y_offset: f32,
     uids: Vec<entry::Id>,
 }
 
 impl EntriesView {
     pub fn from_collection(db: &Collection) -> Self {
         let uids: Vec<entry::Id> = db.entries.keys().cloned().collect();
-        let mut this = Self { uids };
+        let mut this = Self {
+            uids,
+            y_offset: 0.0,
+        };
         this.sort(db);
         this
     }
@@ -63,7 +67,7 @@ pub(super) fn draw_thumbnails(
         let column = (i as u32) % state.thumbnails_per_row as u32;
         let row = (i as u32) / state.thumbnails_per_row as u32;
         let x = (column * thumb_size) as f32;
-        let y = (row * thumb_size) as f32 - (state.y_offset % thumb_size as f32);
+        let y = (row * thumb_size) as f32 - (state.entries_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
         let mouse_over = image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
         if selected_uids.contains(&uid) {

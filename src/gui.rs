@@ -78,14 +78,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         if !sf_egui.context().wants_keyboard_input() {
             let scroll_speed = 8.0;
             if Key::Down.is_pressed() {
-                state.y_offset += scroll_speed;
+                state.entries_view.y_offset += scroll_speed;
                 if let Some((_id, coll)) = &app.active_collection {
                     clamp_to_bottom(&window, &mut state, coll);
                 }
             } else if Key::Up.is_pressed() {
-                state.y_offset -= scroll_speed;
-                if state.y_offset < 0.0 {
-                    state.y_offset = 0.0;
+                state.entries_view.y_offset -= scroll_speed;
+                if state.entries_view.y_offset < 0.0 {
+                    state.entries_view.y_offset = 0.0;
                 }
             }
         }
@@ -103,7 +103,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         Key::Escape => esc_pressed = true,
                         Key::Home => {
                             if !sf_egui.context().wants_keyboard_input() {
-                                state.y_offset = 0.0;
+                                state.entries_view.y_offset = 0.0;
                             }
                         }
                         Key::End => {
@@ -210,7 +210,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             search_highlight.set_outline_thickness(-2.0);
             let y_of_item = id as f32 / state.thumbnails_per_row as f32;
             let pixel_y = y_of_item as f32 * state.thumbnail_size as f32;
-            let highlight_offset = pixel_y - state.y_offset;
+            let highlight_offset = pixel_y - state.entries_view.y_offset;
             let x_of_item = id as f32 % state.thumbnails_per_row as f32;
             search_highlight.set_position((
                 x_of_item as f32 * state.thumbnail_size as f32,
@@ -241,13 +241,13 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
 }
 
 fn go_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
-    state.y_offset = find_bottom(state, coll, window);
+    state.entries_view.y_offset = find_bottom(state, coll, window);
 }
 
 fn clamp_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
     let bottom = find_bottom(state, coll, window);
-    if state.y_offset > bottom {
-        state.y_offset = bottom;
+    if state.entries_view.y_offset > bottom {
+        state.entries_view.y_offset = bottom;
     }
 }
 
@@ -282,7 +282,7 @@ fn entry_at_xy(
     on_screen_entries: &[entry::Id],
 ) -> Option<entry::Id> {
     let thumb_x = x as u32 / state.thumbnail_size;
-    let rel_offset = state.y_offset as u32 % state.thumbnail_size;
+    let rel_offset = state.entries_view.y_offset as u32 % state.thumbnail_size;
     let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
     let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
     on_screen_entries.get(thumb_index as usize).copied()
@@ -332,12 +332,12 @@ fn handle_event_viewer(
                 return;
             }
             if code == Key::PageDown {
-                state.y_offset += window.size().y as f32;
+                state.entries_view.y_offset += window.size().y as f32;
                 clamp_to_bottom(window, state, coll);
             } else if code == Key::PageUp {
-                state.y_offset -= window.size().y as f32;
-                if state.y_offset < 0.0 {
-                    state.y_offset = 0.0;
+                state.entries_view.y_offset -= window.size().y as f32;
+                if state.entries_view.y_offset < 0.0 {
+                    state.entries_view.y_offset = 0.0;
                 }
             } else if code == Key::Enter {
                 let mut paths: Vec<&Path> = Vec::new();
@@ -506,7 +506,7 @@ fn search_goto_cursor(state: &mut State, db: &Collection) {
         state.search_success = true;
         let y_of_item = uid as f32 / state.thumbnails_per_row as f32;
         let y: f32 = (y_of_item * state.thumbnail_size as f32) as f32;
-        state.y_offset = y;
+        state.entries_view.y_offset = y;
     } else {
         state.search_success = false;
     }
@@ -529,7 +529,7 @@ fn recalc_on_screen_items(
     // Since we can scroll, we can have another partially drawn frame per screen
     thumbnails_per_column += 1;
     let thumbnails_per_screen = (state.thumbnails_per_row * thumbnails_per_column) as usize;
-    let row_offset = state.y_offset as u32 / thumb_size;
+    let row_offset = state.entries_view.y_offset as u32 / thumb_size;
     let skip = row_offset * state.thumbnails_per_row as u32;
     uids.extend(
         entries_view
@@ -565,7 +565,6 @@ impl Resources {
 
 struct State {
     thumbnails_per_row: u8,
-    y_offset: f32,
     thumbnail_size: u32,
     filter: FilterSpec,
     thumbnail_cache: ThumbnailCache,
@@ -651,7 +650,6 @@ impl State {
         egui_state.top_bar = true;
         Self {
             thumbnails_per_row,
-            y_offset: 0.0,
             thumbnail_size,
             filter: FilterSpec::default(),
             thumbnail_cache: Default::default(),
