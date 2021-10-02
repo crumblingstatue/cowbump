@@ -27,7 +27,7 @@ use sfml::{
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
-use std::{collections::BTreeMap, path::Path, process::Command};
+use std::{cell::RefCell, collections::BTreeMap, path::Path, process::Command};
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
@@ -79,6 +79,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             let scroll_speed = 8.0;
             if Key::Down.is_pressed() {
                 state.y_offset += scroll_speed;
+                if let Some((_id, coll)) = &app.active_collection {
+                    clamp_to_bottom(&window, &mut state, coll);
+                }
             } else if Key::Up.is_pressed() {
                 state.y_offset -= scroll_speed;
                 if state.y_offset < 0.0 {
@@ -109,16 +112,12 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                                     // Align the bottom edge of the view with the bottom edge of the last row.
                                     // To do align the camera with a bottom edge, we need to subtract the screen
                                     // height from it.
-                                    let bottom_align = |y: f32| y - window.size().y as f32;
-                                    let n_pics =
-                                        state.entries_view.filter(coll, &state.filter).count();
-                                    let rows = n_pics as u32 / state.thumbnails_per_row as u32;
-                                    let bottom = (rows + 1) * state.thumbnail_size;
-                                    state.y_offset = bottom_align(bottom as f32);
+                                    go_to_bottom(&window, &mut state, coll);
                                 }
                             }
                         }
                         Key::F1 => state.egui_state.top_bar ^= true,
+                        Key::F12 => state.egui_state.debug_window.toggle(),
                         _ => {}
                     }
                 }
@@ -241,6 +240,28 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn go_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
+    state.y_offset = find_bottom(state, coll, window);
+}
+
+fn clamp_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
+    let bottom = find_bottom(state, coll, window);
+    if state.y_offset > bottom {
+        state.y_offset = bottom;
+    }
+}
+
+fn find_bottom(state: &State, coll: &Collection, window: &RenderWindow) -> f32 {
+    let n_pics = state.entries_view.filter(coll, &state.filter).count();
+    let rows = n_pics as u32 / state.thumbnails_per_row as u32;
+    let bottom = rows * state.thumbnail_size;
+    let mut b = bottom as f32 - window.size().y as f32;
+    if b < 0. {
+        b = 0.;
+    }
+    b
+}
+
 fn common_tags(ids: &[entry::Id], db: &Collection) -> TagSet {
     let mut set = TagSet::default();
     for &id in ids {
@@ -268,7 +289,7 @@ fn handle_event_viewer(
     event: Event,
     state: &mut State,
     on_screen_entries: &mut Vec<entry::Id>,
-    db: &mut Collection,
+    coll: &mut Collection,
     selected_entries: &mut Vec<entry::Id>,
     window: &RenderWindow,
     ctx: &CtxRef,
@@ -290,7 +311,8 @@ fn handle_event_viewer(
                     } else {
                         selected_entries.push(uid);
                     }
-                } else if let Err(e) = open_with_external(&[&db.entries[&uid].path], preferences) {
+                } else if let Err(e) = open_with_external(&[&coll.entries[&uid].path], preferences)
+                {
                     native_dialog::error("Failed to open file", e);
                 }
             } else if button == mouse::Button::Right {
@@ -308,6 +330,7 @@ fn handle_event_viewer(
             }
             if code == Key::PageDown {
                 state.y_offset += window.size().y as f32;
+                clamp_to_bottom(window, state, coll);
             } else if code == Key::PageUp {
                 state.y_offset -= window.size().y as f32;
                 if state.y_offset < 0.0 {
@@ -316,11 +339,11 @@ fn handle_event_viewer(
             } else if code == Key::Enter {
                 let mut paths: Vec<&Path> = Vec::new();
                 for &uid in selected_entries.iter() {
-                    paths.push(&db.entries[&uid].path);
+                    paths.push(&coll.entries[&uid].path);
                 }
                 if paths.is_empty() && state.filter.active() {
-                    for uid in db.filter(&state.filter) {
-                        paths.push(&db.entries[&uid].path);
+                    for uid in coll.filter(&state.filter) {
+                        paths.push(&coll.entries[&uid].path);
                     }
                 }
                 paths.sort();
@@ -328,13 +351,13 @@ fn handle_event_viewer(
                     native_dialog::error("Failed to open file", e);
                 }
             } else if code == Key::A && ctrl {
-                select_all(selected_entries, state, db);
+                select_all(selected_entries, state, coll);
             } else if code == Key::Slash {
                 state.search_edit = true;
             } else if code == Key::N {
-                search_next(state, db);
+                search_next(state, coll);
             } else if code == Key::P {
-                search_prev(state, db);
+                search_prev(state, coll);
             } else if code == Key::F {
                 state.filter_edit = true;
             } else if code == Key::C {
@@ -343,7 +366,7 @@ fn handle_event_viewer(
                     Some(uid) => uid,
                     None => return,
                 };
-                if let Err(e) = copy_image_to_clipboard(state, &db, uid) {
+                if let Err(e) = copy_image_to_clipboard(state, &coll, uid) {
                     native_dialog::error("Clipboard copy failed", e);
                 }
             } else if code == Key::T {
@@ -351,7 +374,7 @@ fn handle_event_viewer(
             } else if code == Key::Q {
                 state.egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
-                state.entries_view.sort(db);
+                state.entries_view.sort(coll);
             }
         }
         _ => {}
@@ -556,6 +579,7 @@ struct State {
     clipboard_ctx: Clipboard,
     egui_state: egui_ui::EguiState,
     entries_view: EntriesView,
+    debug_log: RefCell<Vec<String>>,
 }
 
 fn set_active_collection(
@@ -640,6 +664,7 @@ impl State {
             egui_state,
             entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
+            debug_log: Default::default(),
         }
     }
     fn wipe_search(&mut self) {

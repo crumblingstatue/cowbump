@@ -212,6 +212,9 @@ pub(super) fn do_frame(
                     if ui.button("Open data dir").clicked() {
                         open::that_in_background(&app.database.data_dir);
                     }
+                    if ui.button("Debug window").clicked() {
+                        state.egui_state.debug_window.toggle();
+                    }
                 });
                 ui.separator();
                 ui.label("(F1 to toggle)");

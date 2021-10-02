@@ -1,4 +1,5 @@
 mod changes_window;
+mod debug_window;
 mod entries_window;
 mod load_folder_window;
 mod preferences_window;
@@ -19,6 +20,7 @@ use retain_mut::RetainMut;
 
 use self::{
     changes_window::ChangesWindow,
+    debug_window::DebugWindow,
     entries_window::EntriesWindow,
     load_folder_window::LoadFolderWindow,
     preferences_window::PreferencesWindow,
@@ -43,6 +45,7 @@ pub(crate) struct EguiState {
     prompts: Vec<Prompt>,
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
+    pub debug_window: DebugWindow,
 }
 
 struct Prompt {
@@ -141,6 +144,7 @@ pub(super) fn do_ui(
     preferences_window::do_frame(&mut state.egui_state, app, egui_ctx);
     load_folder_window::do_frame(state, egui_ctx, res, app);
     changes_window::do_frame(state, egui_ctx, app);
+    debug_window::do_frame(state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_ctx, coll);
         do_filter_edit(state, egui_ctx, coll);
