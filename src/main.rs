@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 mod application;
 mod collection;
 mod db;
