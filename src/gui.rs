@@ -80,7 +80,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             if Key::Down.is_pressed() {
                 state.entries_view.y_offset += scroll_speed;
                 if let Some((_id, coll)) = &app.active_collection {
-                    clamp_to_bottom(&window, &mut state, coll);
+                    clamp_bottom(&window, &mut state, coll);
                 }
             } else if Key::Up.is_pressed() {
                 state.entries_view.y_offset -= scroll_speed;
@@ -244,7 +244,7 @@ fn go_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
     state.entries_view.y_offset = find_bottom(state, coll, window);
 }
 
-fn clamp_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
+fn clamp_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
     let bottom = find_bottom(state, coll, window);
     if state.entries_view.y_offset > bottom {
         state.entries_view.y_offset = bottom;
@@ -333,12 +333,10 @@ fn handle_event_viewer(
             }
             if code == Key::PageDown {
                 state.entries_view.y_offset += window.size().y as f32;
-                clamp_to_bottom(window, state, coll);
+                clamp_bottom(window, state, coll);
             } else if code == Key::PageUp {
                 state.entries_view.y_offset -= window.size().y as f32;
-                if state.entries_view.y_offset < 0.0 {
-                    state.entries_view.y_offset = 0.0;
-                }
+                clamp_top(state);
             } else if code == Key::Enter {
                 let mut paths: Vec<&Path> = Vec::new();
                 for &uid in selected_entries.iter() {
@@ -380,7 +378,21 @@ fn handle_event_viewer(
                 state.entries_view.sort(coll);
             }
         }
+        Event::MouseWheelScrolled { delta, .. } => {
+            state.entries_view.y_offset -= delta * preferences.scroll_wheel_multiplier;
+            if delta > 0.0 {
+                clamp_top(state);
+            } else {
+                clamp_bottom(window, state, coll);
+            }
+        }
         _ => {}
+    }
+}
+
+fn clamp_top(state: &mut State) {
+    if state.entries_view.y_offset < 0.0 {
+        state.entries_view.y_offset = 0.0;
     }
 }
 

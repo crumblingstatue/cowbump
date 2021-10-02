@@ -1,11 +1,12 @@
 use std::path::PathBuf;
 
 use egui::{
-    Button, CollapsingHeader, ComboBox, CtxRef, Grid, ScrollArea, SidePanel, TextEdit, Window,
+    Button, CollapsingHeader, ComboBox, CtxRef, Grid, ScrollArea, SidePanel, Slider, TextEdit,
+    Window,
 };
 use rfd::FileDialog;
 
-use crate::preferences::{App, AppId};
+use crate::preferences::{self, App, AppId, SCROLL_WHEEL_MAX, SCROLL_WHEEL_MIN};
 
 use super::EguiState;
 
@@ -22,7 +23,7 @@ impl Default for PreferencesWindow {
     fn default() -> Self {
         Self {
             on: false,
-            category: Category::Startup,
+            category: Category::Ui,
             new_app: Default::default(),
             new_app_path_string: Default::default(),
             path_scratch_buffer: Default::default(),
@@ -39,6 +40,7 @@ impl PreferencesWindow {
 
 #[derive(Clone, Copy, PartialEq)]
 enum Category {
+    Ui,
     Startup,
     FileAssoc,
 }
@@ -55,10 +57,23 @@ pub(crate) fn do_frame(
         .collapsible(false)
         .show(egui_ctx, |ui| {
             SidePanel::left("prefs_left_panel").show_inside(ui, |ui| {
+                ui.selectable_value(&mut win.category, Category::Ui, "User Interface");
                 ui.selectable_value(&mut win.category, Category::Startup, "Startup");
                 ui.selectable_value(&mut win.category, Category::FileAssoc, "File associations");
             });
             match win.category {
+                Category::Ui => {
+                    ui.label("Scroll wheel multiplier");
+                    ui.horizontal(|ui| {
+                        ui.add(Slider::new(
+                            &mut prefs.scroll_wheel_multiplier,
+                            SCROLL_WHEEL_MIN..=SCROLL_WHEEL_MAX,
+                        ));
+                        if ui.button("Restore default").clicked() {
+                            prefs.scroll_wheel_multiplier = preferences::scroll_wheel_default();
+                        }
+                    });
+                }
                 Category::Startup => {
                     ui.checkbox(&mut prefs.open_last_coll_at_start, "Open last collection");
                 }

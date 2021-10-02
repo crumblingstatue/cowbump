@@ -150,7 +150,7 @@ pub(super) fn do_ui(
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_ctx, coll);
         if do_filter_edit(state, egui_ctx, coll) {
-            crate::gui::clamp_to_bottom(win, state, coll);
+            crate::gui::clamp_bottom(win, state, coll);
         }
         tag_list::do_frame(state, coll, egui_ctx);
         sequences::do_sequences_window(state, coll, &mut app.database.uid_counter, egui_ctx);
