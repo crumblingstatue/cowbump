@@ -563,6 +563,7 @@ fn set_active_collection(
     app: &mut Application,
     id: collection::Id,
 ) -> anyhow::Result<()> {
+    app.save_active_collection()?;
     *entries_view = EntriesView::from_collection(app.active_collection().as_ref().unwrap().1);
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
