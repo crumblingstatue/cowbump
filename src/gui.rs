@@ -13,12 +13,10 @@ use crate::{
     gui::egui_ui::EguiState,
     preferences::{AppId, Preferences},
 };
-use anyhow::Context;
+use anyhow::{bail, Context};
 use arboard::Clipboard;
 use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
 use egui_sfml::SfEgui;
-use fnv::FnvHashSet;
-use rfd::{MessageDialog, MessageLevel};
 use sfml::{
     graphics::{
         Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
@@ -397,22 +395,36 @@ fn clamp_top(state: &mut State) {
 }
 
 fn open_with_external(paths: &[&Path], preferences: &mut Preferences) -> anyhow::Result<()> {
-    let tasks = build_tasks(paths, preferences)?;
-    for task in tasks {
+    let built_tasks = build_tasks(paths, preferences)?;
+    for task in built_tasks.tasks {
         let app = &preferences.applications[&task.app];
         let mut cmd = Command::new(&app.path);
         cmd.args(task.args);
         cmd.spawn()?;
     }
+    if built_tasks.remainder.len() >= 5 {
+        let msg = "\
+        You are trying to open too many unassociated files. This is unsupported.\n\
+        See File->Preferences->Associations for app associations.";
+        bail!(msg);
+    }
+    for path in built_tasks.remainder {
+        open::that_in_background(path);
+    }
     Ok(())
+}
+
+struct BuiltTasks<'p> {
+    tasks: Vec<Task<'p>>,
+    remainder: Vec<&'p Path>,
 }
 
 fn build_tasks<'a, 'p>(
     paths: &[&'p Path],
     preferences: &'a mut Preferences,
-) -> anyhow::Result<Vec<Task<'p>>> {
+) -> anyhow::Result<BuiltTasks<'p>> {
     let mut tasks: Vec<Task> = Vec::new();
-    let mut ignore_list = FnvHashSet::default();
+    let mut remainder = Vec::new();
     for path in paths {
         let ext = path
             .extension()
@@ -430,24 +442,14 @@ fn build_tasks<'a, 'p>(
                 }
             }
             _ => {
-                if !ignore_list.contains(ext) {
-                    // Make sure extension preference exists, so the user doesn't
-                    // have to add it manually to the list.
-                    preferences.associations.insert(ext.to_owned(), None);
-                    MessageDialog::new()
-                        .set_level(MessageLevel::Warning)
-                        .set_description(&format!(
-                            "The extension {} has no application associated with it.\n\
-                         See File->Preferences->Associations",
-                            ext
-                        ))
-                        .show();
-                    ignore_list.insert(ext);
-                }
+                // Make sure extension preference exists, so the user doesn't
+                // have to add it manually to the list.
+                preferences.associations.insert(ext.to_owned(), None);
+                remainder.push(*path);
             }
         }
     }
-    Ok(tasks)
+    Ok(BuiltTasks { tasks, remainder })
 }
 
 #[derive(Debug)]
