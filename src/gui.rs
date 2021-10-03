@@ -625,11 +625,10 @@ impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
         let (_has, tex) = get_tex_for_entry(
             &self.state.thumbnail_cache,
             entry::Id(id),
-            &self.res.error_texture,
             self.coll,
             &mut self.state.thumbnail_loader,
             self.state.thumbnail_size,
-            &self.res.loading_texture,
+            self.res,
         );
         (tex.size().x as f32, tex.size().y as f32, tex)
     }
@@ -638,24 +637,23 @@ impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
 fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
-    error_texture: &'t Texture,
     db: Option<&Collection>,
     thumbnail_loader: &mut ThumbnailLoader,
     thumb_size: u32,
-    loading_texture: &'t Texture,
+    res: &'t Resources,
 ) -> (bool, &'t Texture) {
     let (has_img, texture) = match thumbnail_cache.get(&id) {
         Some(opt_texture) => match *opt_texture {
             Some(ref tex) => (true, tex as &Texture),
-            None => (false, error_texture),
+            None => (false, &*res.error_texture),
         },
         None => match db {
             Some(db) => {
                 let entry = &db.entries[&id];
                 thumbnail_loader.request(&entry.path, thumb_size, id);
-                (false, loading_texture)
+                (false, &*res.loading_texture)
             }
-            None => (false, error_texture),
+            None => (false, &*res.error_texture),
         },
     };
     (has_img, texture)

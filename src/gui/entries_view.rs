@@ -122,11 +122,10 @@ fn draw_thumbnail<'a: 'b, 'b>(
     let (has_img, texture) = get_tex_for_entry(
         thumbnail_cache,
         id,
-        &res.error_texture,
         Some(db),
         thumbnail_loader,
         thumb_size,
-        &res.loading_texture,
+        res,
     );
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
