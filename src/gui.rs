@@ -2,6 +2,7 @@ mod egui_ui;
 mod entries_view;
 pub mod native_dialog;
 mod thumbnail_loader;
+mod util;
 
 use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
 use crate::{
@@ -120,6 +121,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                                 egui_state.add_entries_window(state.selected_uids.clone())
                             }
                         }
+                        Key::F11 => util::take_and_save_screenshot(&window),
                         Key::F12 => egui_state.debug_window.toggle(),
                         _ => {}
                     }

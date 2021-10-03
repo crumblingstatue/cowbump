@@ -1,3 +1,4 @@
+#![feature(try_blocks, bool_to_option)]
 #![windows_subsystem = "windows"]
 
 mod application;

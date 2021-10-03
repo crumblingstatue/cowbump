@@ -1,5 +1,6 @@
 use egui::{Button, Color32, CtxRef, Label, TopBottomPanel};
 use rfd::{FileDialog, MessageDialog};
+use sfml::graphics::RenderWindow;
 
 use crate::{
     application::{self, Application},
@@ -14,6 +15,7 @@ pub(super) fn do_frame(
     egui_state: &mut EguiState,
     egui_ctx: &CtxRef,
     app: &mut Application,
+    win: &RenderWindow,
 ) -> anyhow::Result<()> {
     let n_selected = state.selected_uids.len();
     let mut result = Ok(());
@@ -221,6 +223,9 @@ pub(super) fn do_frame(
                     ui.vertical_centered(|ui| {
                         ui.label("= Debug =");
                     });
+                    if ui.button("Save screenshot (F11)").clicked() {
+                        crate::gui::util::take_and_save_screenshot(win);
+                    }
                     if ui.button("Open data dir").clicked() {
                         open::that_in_background(&app.database.data_dir);
                     }
