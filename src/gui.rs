@@ -637,7 +637,7 @@ impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
 fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
-    db: Option<&Collection>,
+    coll: Option<&Collection>,
     thumbnail_loader: &mut ThumbnailLoader,
     thumb_size: u32,
     res: &'t Resources,
@@ -647,9 +647,9 @@ fn get_tex_for_entry<'t>(
             Some(ref tex) => (true, tex as &Texture),
             None => (false, &*res.error_texture),
         },
-        None => match db {
-            Some(db) => {
-                let entry = &db.entries[&id];
+        None => match coll {
+            Some(coll) => {
+                let entry = &coll.entries[&id];
                 thumbnail_loader.request(&entry.path, thumb_size, id);
                 (false, &*res.loading_texture)
             }
