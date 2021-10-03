@@ -31,7 +31,6 @@ use self::{
 
 use super::Resources;
 
-#[derive(Default)]
 pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,
     pub sequences_window: SequencesWindow,
@@ -47,6 +46,26 @@ pub(crate) struct EguiState {
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
     pub debug_window: DebugWindow,
+}
+
+impl Default for EguiState {
+    fn default() -> Self {
+        Self {
+            entries_windows: Default::default(),
+            sequences_window: Default::default(),
+            sequence_windows: Default::default(),
+            preferences_window: Default::default(),
+            tag_window: Default::default(),
+            action: Default::default(),
+            top_bar: true,
+            load_folder_window: Default::default(),
+            changes_window: Default::default(),
+            info_messages: Default::default(),
+            prompts: Default::default(),
+            just_closed_window_with_esc: Default::default(),
+            debug_window: Default::default(),
+        }
+    }
 }
 
 struct Prompt {
