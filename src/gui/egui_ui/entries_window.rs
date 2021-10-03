@@ -11,7 +11,10 @@ use crate::{
     collection::Collection,
     db::Db,
     entry,
-    gui::{common_tags, entries_view::EntriesView, native_dialog, open_with_external, State},
+    gui::{
+        common_tags, entries_view::EntriesView, get_tex_for_entry, native_dialog,
+        open_with_external, Resources, State,
+    },
 };
 
 use super::{sequences::SequenceWindow, EguiState};
@@ -84,6 +87,7 @@ pub(super) fn do_frame(
     egui_ctx: &egui::CtxRef,
     rend_win: &RenderWindow,
     db: &mut Db,
+    res: &Resources,
 ) {
     egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
@@ -109,14 +113,30 @@ pub(super) fn do_frame(
                         ui.set_max_width(512.0);
                         let n_visible_entries = n_entries.min(64);
                         for &id in win.ids.iter().take(n_visible_entries) {
+                            let tex_size = get_tex_for_entry(
+                                &state.thumbnail_cache,
+                                id,
+                                Some(coll),
+                                &mut state.thumbnail_loader,
+                                state.thumbnail_size,
+                                res,
+                            )
+                            .1
+                            .size();
+                            let ratio = tex_size.x as f32 / tex_size.y as f32;
+                            let ts = state.thumbnail_size as f32;
+                            let h = match n_entries as u32 {
+                                0..=2 => ts,
+                                3..=6 => ts / 2.0,
+                                7..=15 => ts / 3.0,
+                                16..=26 => ts / 4.0,
+                                27..=36 => ts / 5.0,
+                                37..=56 => ts / 6.0,
+                                57.. => ts / 7.0,
+                            };
+                            let w = h * ratio;
                             if ui
-                                .add(ImageButton::new(
-                                    TextureId::User(id.0),
-                                    (
-                                        512.0 / n_visible_entries as f32,
-                                        512.0 / n_visible_entries as f32,
-                                    ),
-                                ))
+                                .add(ImageButton::new(TextureId::User(id.0), (w, h)))
                                 .clicked()
                                 && !state.highlight_and_seek_to_entry(id, rend_win.size().y, coll)
                             {
