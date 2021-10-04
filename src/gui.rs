@@ -300,12 +300,12 @@ fn handle_event_viewer(
     on_screen_entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
     window: &RenderWindow,
-    ctx: &CtxRef,
+    egui_ctx: &CtxRef,
     preferences: &mut Preferences,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
-            if ctx.wants_pointer_input() {
+            if egui_ctx.wants_pointer_input() {
                 return;
             }
             let uid = match entry_at_xy(x, y, state, on_screen_entries) {
@@ -333,7 +333,7 @@ fn handle_event_viewer(
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
-            if ctx.wants_keyboard_input() {
+            if egui_ctx.wants_keyboard_input() {
                 return;
             }
             if code == Key::PageDown {
