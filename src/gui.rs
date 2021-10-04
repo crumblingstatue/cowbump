@@ -359,13 +359,13 @@ fn handle_event_viewer(
             } else if code == Key::A && ctrl {
                 select_all(state, coll);
             } else if code == Key::Slash {
-                state.search_edit = true;
+                egui_state.search_edit = true;
             } else if code == Key::N {
                 search_next(state, coll, window.size().y);
             } else if code == Key::P {
                 search_prev(state, coll, window.size().y);
             } else if code == Key::F {
-                state.filter_edit = true;
+                egui_state.filter_edit = true;
             } else if code == Key::C {
                 let mp = window.mouse_position();
                 let uid = match entry_at_xy(mp.x, mp.y, state, on_screen_entries) {
@@ -588,15 +588,11 @@ struct State {
     filter: FilterSpec,
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
-    search_edit: bool,
-    search_string: String,
     search_spec: FilterSpec,
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
     highlight: Option<u32>,
-    filter_edit: bool,
-    filter_string: String,
     clipboard_ctx: Clipboard,
     entries_view: EntriesView,
     debug_log: RefCell<Vec<String>>,
@@ -671,13 +667,9 @@ impl State {
             filter: FilterSpec::default(),
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
-            search_edit: false,
-            search_string: String::new(),
             search_cursor: 0,
             search_success: false,
             highlight: None,
-            filter_edit: false,
-            filter_string: String::new(),
             clipboard_ctx: Clipboard::new().unwrap(),
             entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
@@ -687,7 +679,6 @@ impl State {
     }
     fn wipe_search(&mut self) {
         self.search_cursor = 0;
-        self.search_edit = false;
         self.search_success = false;
         self.highlight = None;
     }

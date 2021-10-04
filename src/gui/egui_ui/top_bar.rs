@@ -153,14 +153,14 @@ pub(super) fn do_frame(
                         .add(Button::new("🔍 Filter (F)").enabled(active_coll))
                         .clicked()
                     {
-                        state.filter_edit ^= true;
+                        egui_state.filter_edit ^= true;
                     }
                     ui.separator();
                     if ui
                         .add(Button::new("🔍 Search (/)").enabled(active_coll))
                         .clicked()
                     {
-                        state.search_edit ^= true;
+                        egui_state.search_edit ^= true;
                     }
                     if ui
                         .add(Button::new("⮫ Next result (N)").enabled(active_coll))

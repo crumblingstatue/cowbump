@@ -46,6 +46,10 @@ pub(crate) struct EguiState {
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
     pub debug_window: DebugWindow,
+    pub search_edit: bool,
+    search_string: String,
+    pub filter_edit: bool,
+    filter_string: String,
 }
 
 impl Default for EguiState {
@@ -64,6 +68,10 @@ impl Default for EguiState {
             prompts: Default::default(),
             just_closed_window_with_esc: Default::default(),
             debug_window: Default::default(),
+            search_edit: false,
+            search_string: Default::default(),
+            filter_edit: false,
+            filter_string: Default::default(),
         }
     }
 }
@@ -169,8 +177,8 @@ pub(super) fn do_ui(
     changes_window::do_frame(state, egui_state, egui_ctx, app);
     debug_window::do_frame(state, egui_state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
-        do_search_edit(state, egui_ctx, coll, win);
-        if do_filter_edit(state, egui_ctx, coll) {
+        do_search_edit(state, egui_state, egui_ctx, coll, win);
+        if do_filter_edit(state, egui_state, egui_ctx, coll) {
             crate::gui::clamp_bottom(win, state, coll);
         }
         tag_list::do_frame(state, egui_state, coll, egui_ctx);
@@ -232,9 +240,14 @@ fn do_prompts(egui_state: &mut EguiState, egui_ctx: &CtxRef, app: &mut Applicati
 }
 
 /// Returns whether filter state changed
-fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) -> bool {
+fn do_filter_edit(
+    state: &mut State,
+    egui_state: &mut EguiState,
+    egui_ctx: &CtxRef,
+    db: &mut Collection,
+) -> bool {
     let mut filter_changed = false;
-    if state.filter_edit {
+    if egui_state.filter_edit {
         egui::Window::new("Filter")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
             .title_bar(false)
@@ -244,21 +257,21 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) -> 
                 ui.horizontal(|ui| {
                     ui.label("filter");
                     let count = db.filter(&state.filter).count();
-                    let mut te = TextEdit::singleline(&mut state.filter_string);
+                    let mut te = TextEdit::singleline(&mut egui_state.filter_string);
                     if count == 0 {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
                     ui.label(&format!("{} results", count));
-                    state.filter_string.make_ascii_lowercase();
-                    match FilterSpec::parse_and_resolve(&state.filter_string, db) {
+                    egui_state.filter_string.make_ascii_lowercase();
+                    match FilterSpec::parse_and_resolve(&egui_state.filter_string, db) {
                         Ok(spec) => state.filter = spec,
                         Err(e) => {
                             err = Some(format!("Error: {}", e));
                         }
                     };
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                        state.filter_edit = false;
+                        egui_state.filter_edit = false;
                     }
                     if re.changed() {
                         state.wipe_search();
@@ -274,8 +287,14 @@ fn do_filter_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection) -> 
     filter_changed
 }
 
-fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection, win: &RenderWindow) {
-    if state.search_edit {
+fn do_search_edit(
+    state: &mut State,
+    egui_state: &mut EguiState,
+    egui_ctx: &CtxRef,
+    db: &mut Collection,
+    win: &RenderWindow,
+) {
+    if egui_state.search_edit {
         egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
             .title_bar(false)
@@ -283,19 +302,19 @@ fn do_search_edit(state: &mut State, egui_ctx: &CtxRef, db: &mut Collection, win
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("search");
-                    let mut te = TextEdit::singleline(&mut state.search_string);
+                    let mut te = TextEdit::singleline(&mut egui_state.search_string);
                     if !state.search_success {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
-                    match FilterSpec::parse_and_resolve(&state.search_string, db) {
+                    match FilterSpec::parse_and_resolve(&egui_state.search_string, db) {
                         Ok(spec) => state.search_spec = spec,
                         Err(e) => {
                             ui.label(&format!("Error: {}", e));
                         }
                     }
                     if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                        state.search_edit = false;
+                        egui_state.search_edit = false;
                     }
                     if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
                         state.search_cursor = 0;
