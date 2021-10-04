@@ -100,9 +100,9 @@ dependencies = [
 
 [[package]]
 name = "atomic_refcell"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "681b971236e0f76b20fcafca0236b8718c9186ee778d67cd78bd5f28fd85427f"
+checksum = "73b5e5f48b927f04e952dedc932f31995a65a0bf65ec971c74436e51bf6e970d"
 
 [[package]]
 name = "atty"
@@ -324,7 +324,6 @@ dependencies = [
  "egui-sfml",
  "fnv",
  "image",
- "lazy_static",
  "open",
  "retain_mut",
  "rfd",
@@ -429,7 +428,7 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 [[package]]
 name = "egui"
 version = "0.14.2"
-source = "git+https://github.com/emilk/egui.git#5539dbe620f3a184490010a706104de36ba80c3e"
+source = "git+https://github.com/emilk/egui.git#f0868c2f0744f49ade76c2b450ada01bda2c00c8"
 dependencies = [
  "epaint",
 ]
@@ -453,7 +452,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.14.0"
-source = "git+https://github.com/emilk/egui.git#5539dbe620f3a184490010a706104de36ba80c3e"
+source = "git+https://github.com/emilk/egui.git#f0868c2f0744f49ade76c2b450ada01bda2c00c8"
 
 [[package]]
 name = "env_logger"
@@ -471,7 +470,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.14.0"
-source = "git+https://github.com/emilk/egui.git#5539dbe620f3a184490010a706104de36ba80c3e"
+source = "git+https://github.com/emilk/egui.git#f0868c2f0744f49ade76c2b450ada01bda2c00c8"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -1278,9 +1277,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.77"
+version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5239bc68e0fef57495900cfea4e8dc75596d9a319d7e16b1e0a440d24e6fe0a0"
+checksum = "a4eac2e6c19f5c3abc0c229bea31ff0b9b091c7b14990e8924b92902a303a0c0"
 dependencies = [
  "proc-macro2",
  "quote",
