@@ -436,8 +436,9 @@ fn build_tasks<'a, 'p>(
         let ext = path
             .extension()
             .map(|ext| ext.to_str().unwrap())
-            .unwrap_or("");
-        match preferences.associations.get(ext) {
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        match preferences.associations.get(&ext) {
             Some(Some(app_id)) => {
                 if let Some(task) = tasks.iter_mut().find(|task| task.app == *app_id) {
                     task.args.push(path);
@@ -451,7 +452,7 @@ fn build_tasks<'a, 'p>(
             _ => {
                 // Make sure extension preference exists, so the user doesn't
                 // have to add it manually to the list.
-                preferences.associations.insert(ext.to_owned(), None);
+                preferences.associations.insert(ext, None);
                 remainder.push(*path);
             }
         }

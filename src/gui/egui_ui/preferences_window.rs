@@ -111,6 +111,7 @@ pub(crate) fn do_frame(
                         let te = TextEdit::singleline(&mut win.new_ext_buffer)
                             .hint_text("New extension");
                         ui.add(te);
+                        win.new_ext_buffer.make_ascii_lowercase();
                         if ui.button("Add").clicked() {
                             prefs.associations.insert(win.new_ext_buffer.clone(), None);
                         }
@@ -124,13 +125,15 @@ pub(crate) fn do_frame(
                                     None => "None",
                                     Some(id) => &prefs.applications[id].name,
                                 };
-                                ComboBox::from_label(k)
-                                    .selected_text(text)
-                                    .show_ui(ui, |ui| {
+                                let ext_name = if k.is_empty() { "<no extension>" } else { k };
+                                ComboBox::from_label(ext_name).selected_text(text).show_ui(
+                                    ui,
+                                    |ui| {
                                         for (&id, app) in &prefs.applications {
                                             ui.selectable_value(v, Some(id), &app.name);
                                         }
-                                    });
+                                    },
+                                );
                                 if ui.button("🗑").clicked() {
                                     retain = false;
                                 }
