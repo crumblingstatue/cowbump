@@ -568,8 +568,8 @@ struct Resources {
 
 impl Resources {
     pub fn load() -> anyhow::Result<Self> {
-        let mut loading_texture = Texture::new().context("failed to load loading texture")?;
-        let mut error_texture = Texture::new().context("failed to load error texture")?;
+        let mut loading_texture = Texture::new().context("texture create error")?;
+        let mut error_texture = Texture::new().context("texture create error")?;
         let font =
             Font::from_memory(include_bytes!("../Vera.ttf")).context("failed to load font")?;
         loading_texture.load_from_memory(include_bytes!("../loading.png"), IntRect::default())?;
