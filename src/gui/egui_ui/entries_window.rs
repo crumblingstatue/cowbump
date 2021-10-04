@@ -116,7 +116,7 @@ pub(super) fn do_frame(
                             let tex_size = get_tex_for_entry(
                                 &state.thumbnail_cache,
                                 id,
-                                Some(coll),
+                                coll,
                                 &mut state.thumbnail_loader,
                                 state.thumbnail_size,
                                 res,

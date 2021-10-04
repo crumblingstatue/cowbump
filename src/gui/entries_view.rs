@@ -119,14 +119,8 @@ fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_loader: &mut ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
-    let (has_img, texture) = get_tex_for_entry(
-        thumbnail_cache,
-        id,
-        Some(coll),
-        thumbnail_loader,
-        thumb_size,
-        res,
-    );
+    let (has_img, texture) =
+        get_tex_for_entry(thumbnail_cache, id, coll, thumbnail_loader, thumb_size, res);
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
     if thumbnail_loader.busy_with().contains(&id) {
