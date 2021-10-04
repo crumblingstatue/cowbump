@@ -1,5 +1,5 @@
 use egui::{Button, Color32, CtxRef, Label, TopBottomPanel};
-use rfd::{FileDialog, MessageDialog};
+use rfd::{FileDialog, MessageButtons, MessageDialog};
 use sfml::graphics::RenderWindow;
 
 use crate::{
@@ -67,7 +67,8 @@ pub(super) fn do_frame(
                         }
                     });
                 }
-                egui::menu::menu(ui, "File", |ui| {
+                egui::menu::menu(ui, "File", |ui| 
+                {
                     if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
                             if let Some(id) = app.database.find_collection_by_path(&dir_path) {
@@ -89,8 +90,7 @@ pub(super) fn do_frame(
                                     dir_path,
                                 );
                             }
-                        }
-                    }
+                        }}
                     let butt =
                         Button::new("🗀 Close folder").enabled(app.active_collection.is_some());
                     if ui.add(butt).clicked() {
@@ -104,30 +104,48 @@ pub(super) fn do_frame(
                     }
                     ui.separator();
                     if ui.button("⛃⬉ Create backup").clicked() {
-                        match app.database.save_backup() {
-                            Ok(_) => {
-                                info_message(
-                                    &mut egui_state.info_messages,
-                                    "Success",
-                                    "Backup successfully created.",
-                                );
-                            }
-                            Err(e) => {
-                                info_message(
-                                    &mut egui_state.info_messages,
-                                    "Error",
-                                    &e.to_string(),
-                                );
+                        if let Some(path) = FileDialog::new()
+                            .set_file_name("cowbump_backup.zip")
+                            .save_file()
+                        {
+                            let result: anyhow::Result<()> = try
+                            {
+                                app.save_active_collection()?;
+                                app.database.save_backups(&path)?;
+                            };
+                            match result {
+                                Ok(_) => {
+                                    info_message(
+                                        &mut egui_state.info_messages,
+                                        "Success",
+                                        "Backup successfully created.",
+                                    );
+                                }
+                                Err(e) => {
+                                    info_message(
+                                        &mut egui_state.info_messages,
+                                        "Error",
+                                        &e.to_string(),
+                                    );
+                                }
                             }
                         }
                     }
                     if ui.button("⛃⬊ Restore backup").clicked() {
-                        prompt(
-                            &mut egui_state.prompts,
-                            "Restore Backup",
-                            "Warning: This will overwrite the current contents of the database.",
-                            PromptAction::RestoreBackup,
-                        )
+                        let continue_ = MessageDialog::new()
+                        .set_buttons(MessageButtons::OkCancel).
+                        set_title("Restore backup").
+                        set_description("This will replace all your current data with the backup. Continue?").show();
+                        if continue_ {
+                            if let Some(path) = FileDialog::new().pick_file() {
+                                app.active_collection = None;
+                                if let Err(e) = app.database.restore_backups_from(&path) {
+                                    native_dialog::error("Failed to restore backup", e);
+                                } else {
+                                    MessageDialog::new().set_title("Backup restored!").show();
+                                }
+                            }
+                        }
                     }
                     ui.separator();
                     if ui.button("☰ Preferences").clicked() {

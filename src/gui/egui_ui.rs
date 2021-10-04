@@ -82,7 +82,6 @@ struct Prompt {
 }
 
 enum PromptAction {
-    RestoreBackup,
     QuitNoSave,
     DeleteTags(Vec<tag::Id>),
 }
@@ -209,21 +208,6 @@ fn do_prompts(egui_state: &mut EguiState, egui_ctx: &CtxRef, app: &mut Applicati
     egui_state.prompts.retain(|prompt| {
         match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
             Some(OkCancel::Ok) => match prompt.action {
-                PromptAction::RestoreBackup => {
-                    match app.database.load_backup() {
-                        Ok(_) => {
-                            info_message(
-                                &mut egui_state.info_messages,
-                                "Success",
-                                "Successfully restored backup.",
-                            );
-                        }
-                        Err(e) => {
-                            info_message(&mut egui_state.info_messages, "Error", &e.to_string());
-                        }
-                    }
-                    false
-                }
                 PromptAction::QuitNoSave => {
                     egui_state.action = Some(Action::QuitNoSave);
                     false

@@ -1,7 +1,11 @@
 pub mod global;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use fnv::{FnvHashMap, FnvHashSet};
+use zip::{write::FileOptions, ZipArchive, ZipWriter};
 
 use crate::{
     collection, entry, preferences::Preferences, recently_used_list::RecentlyUsedList,
@@ -68,12 +72,32 @@ impl Db {
     pub fn save(&self) -> anyhow::Result<()> {
         serialization::write_to_file(self, self.data_dir.join(FILENAME))
     }
-    pub fn save_backup(&self) -> anyhow::Result<()> {
-        serialization::write_to_file(self, self.data_dir.join(BACKUP_FILENAME))
+    /// Save backups of everything cowbump keeps track of.
+    ///
+    /// For the collections, it just copies files, so it's advised to save any open
+    /// collection before doing this.
+    pub fn save_backups(&self, path: &Path) -> anyhow::Result<()> {
+        let f = File::create(path)?;
+        let mut zip = ZipWriter::new(f);
+        zip.start_file("cowbump.db", FileOptions::default())?;
+        serialization::write(self, &mut zip)?;
+        zip.add_directory("collections", FileOptions::default())?;
+        for id in self.collections.keys() {
+            let mut f = File::open(
+                self.data_dir
+                    .join("collections")
+                    .join(format!("{}.db", id.0)),
+            )?;
+            zip.start_file(format!("collections/{}.db", id.0), FileOptions::default())?;
+            std::io::copy(&mut f, &mut zip)?;
+        }
+        zip.finish()?;
+        Ok(())
     }
-    pub fn load_backup(&mut self) -> anyhow::Result<()> {
-        let new = serialization::read_from_file(self.data_dir.join(BACKUP_FILENAME))?;
-        *self = new;
+    pub fn restore_backups_from(&mut self, path: &Path) -> anyhow::Result<()> {
+        let f = File::open(path)?;
+        ZipArchive::new(f)?.extract(&self.data_dir)?;
+        *self = Self::load()?;
         Ok(())
     }
 
@@ -93,7 +117,6 @@ pub(crate) struct FolderChanges {
 }
 
 const FILENAME: &str = "cowbump.db";
-const BACKUP_FILENAME: &str = "cowbump.db.bak";
 impl FolderChanges {
     pub(crate) fn empty(&self) -> bool {
         self.add.is_empty() && self.remove.is_empty()

@@ -333,6 +333,7 @@ dependencies = [
  "sfml",
  "thiserror",
  "walkdir",
+ "zip",
  "zstd",
 ]
 
@@ -1580,6 +1581,17 @@ dependencies = [
  "nix",
  "winapi",
  "winapi-wsapoll",
+]
+
+[[package]]
+name = "zip"
+version = "0.5.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93ab48844d61251bb3835145c521d88aa4031d7139e8485990f60ca911fa0815"
+dependencies = [
+ "byteorder",
+ "crc32fast",
+ "thiserror",
 ]
 
 [[package]]
