@@ -95,7 +95,7 @@ impl Collection {
         self.tags.insert(uid, tag);
         uid
     }
-    /// Returns `None` it said tag already exists
+    /// Returns `None` if said tag already exists
     pub(crate) fn add_new_tag_from_text(
         &mut self,
         mut tag_text: String,
