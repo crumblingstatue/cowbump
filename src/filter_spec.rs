@@ -27,7 +27,7 @@ impl FilterSpec {
     }
     pub fn parse_and_resolve<'a>(
         string: &'a str,
-        db: &Collection,
+        coll: &Collection,
     ) -> Result<Self, ParseResolveError<'a>> {
         let words = string.split_whitespace();
         let mut tags = TagSet::default();
@@ -61,7 +61,7 @@ impl FilterSpec {
                     tag_name = word;
                     neg = false;
                 }
-                let tag_id = match db.resolve_tag(tag_name) {
+                let tag_id = match coll.resolve_tag(tag_name) {
                     Some(id) => id,
                     None => return Err(ParseResolveError::NoSuchTag(tag_name)),
                 };

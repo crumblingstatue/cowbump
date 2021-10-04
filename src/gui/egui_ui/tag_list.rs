@@ -28,11 +28,11 @@ impl TagWindow {
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
-    db: &mut Collection,
+    coll: &mut Collection,
     egui_ctx: &CtxRef,
 ) {
     if egui_state.tag_window.on {
-        let tags = &mut db.tags;
+        let tags = &mut coll.tags;
         let mut close = false;
         let close_ref = &mut close;
         let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;

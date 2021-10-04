@@ -441,13 +441,13 @@ pub(super) fn do_frame(
 fn remove_entries(
     view: &mut EntriesView,
     entries: &mut Vec<entry::Id>,
-    db: &mut Collection,
+    coll: &mut Collection,
 ) -> anyhow::Result<()> {
     for uid in entries.drain(..) {
-        let path = &db.entries[&uid].path;
+        let path = &coll.entries[&uid].path;
         std::fs::remove_file(path)?;
         view.delete(uid);
-        db.entries.remove(&uid);
+        coll.entries.remove(&uid);
     }
     Ok(())
 }

@@ -17,13 +17,13 @@ use super::EguiState;
 
 pub(super) fn do_sequence_windows(
     egui_state: &mut EguiState,
-    db: &mut Collection,
+    coll: &mut Collection,
     egui_ctx: &CtxRef,
     prefs: &mut Preferences,
 ) {
     egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
-        let seq = db.sequences.get_mut(&win.uid).unwrap();
+        let seq = coll.sequences.get_mut(&win.uid).unwrap();
         let name = &seq.name;
         enum Action {
             SwapLeft,
@@ -59,7 +59,7 @@ pub(super) fn do_sequence_windows(
                                 action = Action::Open;
                                 subject = Some(img_uid);
                             }
-                            ui.label(db.entries[&img_uid].path.to_string_lossy().as_ref());
+                            ui.label(coll.entries[&img_uid].path.to_string_lossy().as_ref());
                             ui.horizontal(|ui| {
                                 let mut pos = i;
                                 let dv =
@@ -131,7 +131,7 @@ pub(super) fn do_sequence_windows(
                 Action::Open => {
                     let mut paths = Vec::new();
                     for img_uid in seq.entry_uids_wrapped_from(uid) {
-                        paths.push(db.entries[&img_uid].path.as_ref());
+                        paths.push(coll.entries[&img_uid].path.as_ref());
                     }
                     if let Err(e) = open_with_external(&paths, prefs) {
                         native_dialog::error("Failed to open file", e);
@@ -145,7 +145,7 @@ pub(super) fn do_sequence_windows(
 
 pub(super) fn do_sequences_window(
     egui_state: &mut EguiState,
-    db: &mut Collection,
+    coll: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &CtxRef,
 ) {
@@ -188,7 +188,7 @@ pub(super) fn do_sequences_window(
                         re.request_focus();
                     }
                     if enter_pressed {
-                        let id = db.add_new_sequence(&seq_win.add_new_buffer, uid_counter);
+                        let id = coll.add_new_sequence(&seq_win.add_new_buffer, uid_counter);
                         if seq_win.pick_mode {
                             seq_win.pick_result = Some(id);
                         }
@@ -199,7 +199,7 @@ pub(super) fn do_sequences_window(
                 ui.separator();
                 ScrollArea::vertical().show(ui, |ui| {
                     let mut retain = true;
-                    db.sequences.retain(|&uid, seq| {
+                    coll.sequences.retain(|&uid, seq| {
                         if !seq
                             .name
                             .to_lowercase()

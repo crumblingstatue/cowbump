@@ -244,7 +244,7 @@ fn do_filter_edit(
     state: &mut State,
     egui_state: &mut EguiState,
     egui_ctx: &CtxRef,
-    db: &mut Collection,
+    coll: &mut Collection,
 ) -> bool {
     let mut filter_changed = false;
     if egui_state.filter_edit {
@@ -256,7 +256,7 @@ fn do_filter_edit(
                 let mut err = None;
                 ui.horizontal(|ui| {
                     ui.label("filter");
-                    let count = db.filter(&state.filter).count();
+                    let count = coll.filter(&state.filter).count();
                     let mut te = TextEdit::singleline(&mut egui_state.filter_string);
                     if count == 0 {
                         te = te.text_color(Color32::RED);
@@ -264,7 +264,7 @@ fn do_filter_edit(
                     let re = ui.add(te);
                     ui.label(&format!("{} results", count));
                     egui_state.filter_string.make_ascii_lowercase();
-                    match FilterSpec::parse_and_resolve(&egui_state.filter_string, db) {
+                    match FilterSpec::parse_and_resolve(&egui_state.filter_string, coll) {
                         Ok(spec) => state.filter = spec,
                         Err(e) => {
                             err = Some(format!("Error: {}", e));
@@ -291,7 +291,7 @@ fn do_search_edit(
     state: &mut State,
     egui_state: &mut EguiState,
     egui_ctx: &CtxRef,
-    db: &mut Collection,
+    coll: &mut Collection,
     win: &RenderWindow,
 ) {
     if egui_state.search_edit {
@@ -307,7 +307,7 @@ fn do_search_edit(
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
-                    match FilterSpec::parse_and_resolve(&egui_state.search_string, db) {
+                    match FilterSpec::parse_and_resolve(&egui_state.search_string, coll) {
                         Ok(spec) => state.search_spec = spec,
                         Err(e) => {
                             ui.label(&format!("Error: {}", e));
@@ -318,7 +318,7 @@ fn do_search_edit(
                     }
                     if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
                         state.search_cursor = 0;
-                        search_goto_cursor(state, db, win.size().y);
+                        search_goto_cursor(state, coll, win.size().y);
                     }
                     ui.memory().request_focus(re.id);
                 });

@@ -59,7 +59,7 @@ pub(super) fn draw_thumbnails(
     state: &mut State,
     res: &Resources,
     window: &mut RenderWindow,
-    db: &Collection,
+    coll: &Collection,
     uids: &[entry::Id],
     load_anim_rotation: f32,
     pointer_active: bool,
@@ -84,7 +84,7 @@ pub(super) fn draw_thumbnails(
         }
         draw_thumbnail(
             &state.thumbnail_cache,
-            db,
+            coll,
             window,
             x,
             y,
@@ -108,7 +108,7 @@ pub(super) fn draw_thumbnails(
 #[allow(clippy::too_many_arguments)]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
-    db: &Collection,
+    coll: &Collection,
     window: &mut RenderWindow,
     x: f32,
     y: f32,
@@ -122,7 +122,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     let (has_img, texture) = get_tex_for_entry(
         thumbnail_cache,
         id,
-        Some(db),
+        Some(coll),
         thumbnail_loader,
         thumb_size,
         res,
@@ -149,7 +149,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw(&rect);
     }
     if show_filename {
-        if let Some(path_string) = db.entries[&id].path.to_str() {
+        if let Some(path_string) = coll.entries[&id].path.to_str() {
             let mut text = Text::new(path_string, &res.font, 12);
             text.set_position(fname_pos);
             window.draw_text(&text, &RenderStates::DEFAULT);

@@ -270,10 +270,10 @@ fn find_bottom(state: &State, coll: &Collection, window: &RenderWindow) -> f32 {
     b
 }
 
-fn common_tags(ids: &[entry::Id], db: &Collection) -> TagSet {
+fn common_tags(ids: &[entry::Id], coll: &Collection) -> TagSet {
     let mut set = TagSet::default();
     for &id in ids {
-        for &tagid in &db.entries[&id].tags {
+        for &tagid in &coll.entries[&id].tags {
             set.insert(tagid);
         }
     }
@@ -372,7 +372,7 @@ fn handle_event_viewer(
                     Some(uid) => uid,
                     None => return,
                 };
-                if let Err(e) = copy_image_to_clipboard(state, &coll, uid) {
+                if let Err(e) = copy_image_to_clipboard(state, coll, uid) {
                     native_dialog::error("Clipboard copy failed", e);
                 }
             } else if code == Key::T {
@@ -467,11 +467,11 @@ struct Task<'p> {
 
 fn copy_image_to_clipboard(
     state: &mut State,
-    db: &&mut Collection,
+    coll: &mut Collection,
     uid: entry::Id,
 ) -> anyhow::Result<()> {
     use arboard::ImageData;
-    let imgpath = &db.entries[&uid].path;
+    let imgpath = &coll.entries[&uid].path;
     let buf = std::fs::read(imgpath).unwrap();
     let img = image::load_from_memory(&buf).context("Failed to load image from memory")?;
     let rgba = img.to_rgba8();
@@ -521,8 +521,8 @@ fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
         .nth(nth)
 }
 
-fn search_goto_cursor(state: &mut State, db: &Collection, view_height: u32) {
-    if let Some(index) = find_nth(state, db, state.search_cursor) {
+fn search_goto_cursor(state: &mut State, coll: &Collection, view_height: u32) {
+    if let Some(index) = find_nth(state, coll, state.search_cursor) {
         state.highlight = Some(index as u32);
         state.search_success = true;
         state.seek_view_to_contain_index(index, view_height);
@@ -533,7 +533,7 @@ fn search_goto_cursor(state: &mut State, db: &Collection, view_height: u32) {
 
 fn recalc_on_screen_items(
     uids: &mut Vec<entry::Id>,
-    db: &Collection,
+    coll: &Collection,
     entries_view: &EntriesView,
     state: &State,
     window_height: u32,
@@ -552,7 +552,7 @@ fn recalc_on_screen_items(
     let skip = row_offset * state.thumbnails_per_row as u32;
     uids.extend(
         entries_view
-            .filter(db, &state.filter)
+            .filter(coll, &state.filter)
             .skip(skip as usize)
             .take(thumbnails_per_screen),
     );
