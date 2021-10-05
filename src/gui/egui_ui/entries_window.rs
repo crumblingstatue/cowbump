@@ -3,7 +3,10 @@ use std::{
     process::{Child, Command, ExitStatus, Stdio},
 };
 
-use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextEdit, TextureId};
+use egui::{
+    vec2, Button, Color32, ImageButton, Key, Label, PointerButton, Rgba, ScrollArea, Sense,
+    TextEdit, TextureId,
+};
 use retain_mut::RetainMut;
 use sfml::graphics::{RenderTarget, RenderWindow};
 
@@ -11,10 +14,12 @@ use crate::{
     collection::Collection,
     db::Db,
     entry,
+    filter_spec::FilterSpec,
     gui::{
         common_tags, entries_view::EntriesView, get_tex_for_entry, native_dialog,
         open_with_external, Resources, State,
     },
+    tag,
 };
 
 use super::{sequences::SequenceWindow, EguiState};
@@ -64,10 +69,30 @@ impl EntriesWindow {
     }
 }
 
-fn tag_ui(ui: &mut egui::Ui, name: &str, del: Option<&mut bool>) -> egui::Response {
+fn tag_ui(
+    ui: &mut egui::Ui,
+    name: &str,
+    id: tag::Id,
+    del: Option<&mut bool>,
+    filter: &mut FilterSpec,
+    coll: &Collection,
+) -> egui::Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
-            ui.label(name);
+            let mut label = Label::new(name).sense(Sense::click());
+            if filter.has_tag_by_name(name, coll) {
+                label = label.background_color(Color32::from_rgb(20, 100, 20));
+            } else if filter.doesnt_have_tag_by_name(name, coll) {
+                label = label.background_color(Color32::from_rgb(100, 20, 20))
+            }
+            let re = ui.add(label);
+            if re.clicked_by(PointerButton::Primary) {
+                filter.toggle_has(id);
+                filter.set_doesnt_have(id, false);
+            } else if re.clicked_by(PointerButton::Secondary) {
+                filter.toggle_doesnt_have(id);
+                filter.set_has(id, false);
+            }
             if let Some(del) = del {
                 if ui.button("x").clicked() {
                     *del = true;
@@ -78,8 +103,14 @@ fn tag_ui(ui: &mut egui::Ui, name: &str, del: Option<&mut bool>) -> egui::Respon
     .response
 }
 
-pub fn tag<'a>(name: &'a str, del: Option<&'a mut bool>) -> impl egui::Widget + 'a {
-    move |ui: &mut egui::Ui| tag_ui(ui, name, del)
+fn tag<'a>(
+    name: &'a str,
+    id: tag::Id,
+    del: Option<&'a mut bool>,
+    filter: &'a mut FilterSpec,
+    coll: &'a Collection,
+) -> impl egui::Widget + 'a {
+    move |ui: &mut egui::Ui| tag_ui(ui, name, id, del, filter, coll)
 }
 
 pub(super) fn do_frame(
@@ -160,7 +191,13 @@ pub(super) fn do_frame(
 
                                 if win.editing_tags {
                                     let mut del = false;
-                                    ui.add(tag(tag_name, Some(&mut del)));
+                                    ui.add(tag(
+                                        tag_name,
+                                        tagid,
+                                        Some(&mut del),
+                                        &mut state.filter,
+                                        coll,
+                                    ));
                                     if del {
                                         // TODO: This only works for 1 item windows
                                         coll.entries
@@ -170,7 +207,7 @@ pub(super) fn do_frame(
                                             .retain(|&t| t != tagid);
                                     }
                                 } else {
-                                    ui.add(tag(tag_name, None));
+                                    ui.add(tag(tag_name, tagid, None, &mut state.filter, coll));
                                 }
                             }
                         });

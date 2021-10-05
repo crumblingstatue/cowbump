@@ -114,4 +114,14 @@ impl FilterSpec {
     pub fn clear(&mut self) {
         *self = Self::default();
     }
+    pub fn has_tag_by_name(&self, name: &str, col: &Collection) -> bool {
+        self.has_tags
+            .iter()
+            .any(|tag| col.tags[tag].names[0] == name)
+    }
+    pub fn doesnt_have_tag_by_name(&self, name: &str, col: &Collection) -> bool {
+        self.doesnt_have_tags
+            .iter()
+            .any(|tag| col.tags[tag].names[0] == name)
+    }
 }
