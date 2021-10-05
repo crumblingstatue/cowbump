@@ -101,7 +101,7 @@ pub(super) fn do_frame(
                             err = Some(format!("Error: {}", e));
                         }
                     };
-                    if input.key_pressed(egui::Key::Enter) {
+                    if input.key_pressed(Key::Enter) || input.key_pressed(Key::Escape) {
                         popup.on = false;
                     }
                     if re.changed() {
