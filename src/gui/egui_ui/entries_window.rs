@@ -76,6 +76,7 @@ fn tag_ui(
     del: Option<&mut bool>,
     filter: &mut FilterSpec,
     coll: &Collection,
+    filter_string: &mut String,
 ) -> egui::Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
@@ -89,9 +90,11 @@ fn tag_ui(
             if re.clicked_by(PointerButton::Primary) {
                 filter.toggle_has(id);
                 filter.set_doesnt_have(id, false);
+                *filter_string = filter.to_spec_string(&coll.tags);
             } else if re.clicked_by(PointerButton::Secondary) {
                 filter.toggle_doesnt_have(id);
                 filter.set_has(id, false);
+                *filter_string = filter.to_spec_string(&coll.tags);
             }
             if let Some(del) = del {
                 if ui.button("x").clicked() {
@@ -109,8 +112,9 @@ fn tag<'a>(
     del: Option<&'a mut bool>,
     filter: &'a mut FilterSpec,
     coll: &'a Collection,
+    filter_string: &'a mut String,
 ) -> impl egui::Widget + 'a {
-    move |ui: &mut egui::Ui| tag_ui(ui, name, id, del, filter, coll)
+    move |ui: &mut egui::Ui| tag_ui(ui, name, id, del, filter, coll, filter_string)
 }
 
 pub(super) fn do_frame(
@@ -197,6 +201,7 @@ pub(super) fn do_frame(
                                         Some(&mut del),
                                         &mut state.filter,
                                         coll,
+                                        &mut egui_state.filter_popup.string,
                                     ));
                                     if del {
                                         // TODO: This only works for 1 item windows
@@ -207,7 +212,14 @@ pub(super) fn do_frame(
                                             .retain(|&t| t != tagid);
                                     }
                                 } else {
-                                    ui.add(tag(tag_name, tagid, None, &mut state.filter, coll));
+                                    ui.add(tag(
+                                        tag_name,
+                                        tagid,
+                                        None,
+                                        &mut state.filter,
+                                        coll,
+                                        &mut egui_state.filter_popup.string,
+                                    ));
                                 }
                             }
                         });
