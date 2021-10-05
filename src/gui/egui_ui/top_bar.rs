@@ -171,7 +171,7 @@ pub(super) fn do_frame(
                         .add(Button::new("🔍 Filter (F)").enabled(active_coll))
                         .clicked()
                     {
-                        egui_state.filter_edit ^= true;
+                        egui_state.filter_popup.on ^= true;
                     }
                     ui.separator();
                     if ui

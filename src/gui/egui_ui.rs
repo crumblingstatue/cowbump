@@ -1,6 +1,7 @@
 mod changes_window;
 mod debug_window;
 mod entries_window;
+mod filter_popup;
 mod load_folder_window;
 mod preferences_window;
 mod sequences;
@@ -23,6 +24,7 @@ use self::{
     changes_window::ChangesWindow,
     debug_window::DebugWindow,
     entries_window::EntriesWindow,
+    filter_popup::FilterPopup,
     load_folder_window::LoadFolderWindow,
     preferences_window::PreferencesWindow,
     sequences::{SequenceWindow, SequencesWindow},
@@ -48,8 +50,7 @@ pub(crate) struct EguiState {
     pub debug_window: DebugWindow,
     pub search_edit: bool,
     search_string: String,
-    pub filter_edit: bool,
-    filter_string: String,
+    pub filter_popup: FilterPopup,
 }
 
 impl Default for EguiState {
@@ -70,8 +71,7 @@ impl Default for EguiState {
             debug_window: Default::default(),
             search_edit: false,
             search_string: Default::default(),
-            filter_edit: false,
-            filter_string: Default::default(),
+            filter_popup: Default::default(),
         }
     }
 }
@@ -177,7 +177,7 @@ pub(super) fn do_ui(
     debug_window::do_frame(state, egui_state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_state, egui_ctx, coll, win);
-        if do_filter_edit(state, egui_state, egui_ctx, coll) {
+        if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
             crate::gui::clamp_bottom(win, state, coll);
         }
         tag_list::do_frame(state, egui_state, coll, egui_ctx);
@@ -221,54 +221,6 @@ fn do_prompts(egui_state: &mut EguiState, egui_ctx: &CtxRef, app: &mut Applicati
             None => true,
         }
     });
-}
-
-/// Returns whether filter state changed
-fn do_filter_edit(
-    state: &mut State,
-    egui_state: &mut EguiState,
-    egui_ctx: &CtxRef,
-    coll: &mut Collection,
-) -> bool {
-    let mut filter_changed = false;
-    if egui_state.filter_edit {
-        egui::Window::new("Filter")
-            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
-            .title_bar(false)
-            .auto_sized()
-            .show(egui_ctx, |ui| {
-                let mut err = None;
-                ui.horizontal(|ui| {
-                    ui.label("filter");
-                    let count = coll.filter(&state.filter).count();
-                    let mut te = TextEdit::singleline(&mut egui_state.filter_string);
-                    if count == 0 {
-                        te = te.text_color(Color32::RED);
-                    }
-                    let re = ui.add(te);
-                    ui.label(&format!("{} results", count));
-                    egui_state.filter_string.make_ascii_lowercase();
-                    match FilterSpec::parse_and_resolve(&egui_state.filter_string, coll) {
-                        Ok(spec) => state.filter = spec,
-                        Err(e) => {
-                            err = Some(format!("Error: {}", e));
-                        }
-                    };
-                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
-                        egui_state.filter_edit = false;
-                    }
-                    if re.changed() {
-                        state.wipe_search();
-                        filter_changed = true;
-                    }
-                    ui.memory().request_focus(re.id);
-                });
-                if let Some(e) = err {
-                    ui.label(e);
-                }
-            });
-    }
-    filter_changed
 }
 
 fn do_search_edit(

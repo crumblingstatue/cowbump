@@ -36,7 +36,7 @@ pub(super) fn do_frame(
         let mut close = false;
         let close_ref = &mut close;
         let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
-        let filter_string_ref = &mut egui_state.filter_string;
+        let filter_string_ref = &mut egui_state.filter_popup.string;
         let filter_spec_ref = &mut state.filter;
         let selected_uids = &mut egui_state.tag_window.selected_uids;
         // Clear selected uids that have already been deleted

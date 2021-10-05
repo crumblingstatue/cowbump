@@ -365,7 +365,7 @@ fn handle_event_viewer(
             } else if code == Key::P {
                 search_prev(state, coll, window.size().y);
             } else if code == Key::F {
-                egui_state.filter_edit = true;
+                egui_state.filter_popup.on = true;
             } else if code == Key::C {
                 let mp = window.mouse_position();
                 let uid = match entry_at_xy(mp.x, mp.y, state, on_screen_entries) {
