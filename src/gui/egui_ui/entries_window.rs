@@ -3,7 +3,7 @@ use std::{
     process::{Child, Command, ExitStatus, Stdio},
 };
 
-use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextureId};
+use egui::{vec2, Button, Color32, ImageButton, Key, Label, Rgba, ScrollArea, TextEdit, TextureId};
 use retain_mut::RetainMut;
 use sfml::graphics::{RenderTarget, RenderWindow};
 
@@ -24,7 +24,7 @@ pub struct EntriesWindow {
     ids: Vec<entry::Id>,
     add_tag_buffer: String,
     rename_buffer: String,
-    adding_tag: bool,
+    editing_tags: bool,
     renaming: bool,
     delete_confirm: bool,
     custom_command_prompt: bool,
@@ -64,19 +64,21 @@ impl EntriesWindow {
     }
 }
 
-fn tag_ui(ui: &mut egui::Ui, name: &str, del: &mut bool) -> egui::Response {
+fn tag_ui(ui: &mut egui::Ui, name: &str, del: Option<&mut bool>) -> egui::Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
             ui.label(name);
-            if ui.button("x").clicked() {
-                *del = true;
+            if let Some(del) = del {
+                if ui.button("x").clicked() {
+                    *del = true;
+                }
             }
         });
     })
     .response
 }
 
-pub fn tag<'a>(name: &'a str, del: &'a mut bool) -> impl egui::Widget + 'a {
+pub fn tag<'a>(name: &'a str, del: Option<&'a mut bool>) -> impl egui::Widget + 'a {
     move |ui: &mut egui::Ui| tag_ui(ui, name, del)
 }
 
@@ -155,29 +157,41 @@ pub(super) fn do_frame(
                                     Some(tag) => &tag.names[0],
                                     None => "<unknown tag>",
                                 };
-                                let mut del = false;
-                                ui.add(tag(tag_name, &mut del));
-                                if del {
-                                    // TODO: This only works for 1 item windows
-                                    coll.entries
-                                        .get_mut(&win.ids[0])
-                                        .unwrap()
-                                        .tags
-                                        .retain(|&t| t != tagid);
+
+                                if win.editing_tags {
+                                    let mut del = false;
+                                    ui.add(tag(tag_name, Some(&mut del)));
+                                    if del {
+                                        // TODO: This only works for 1 item windows
+                                        coll.entries
+                                            .get_mut(&win.ids[0])
+                                            .unwrap()
+                                            .tags
+                                            .retain(|&t| t != tagid);
+                                    }
+                                } else {
+                                    ui.add(tag(tag_name, None));
                                 }
                             }
                         });
 
-                        let plus_re = ui.button("Add tags");
+                        let txt = if win.editing_tags {
+                            "Stop editing"
+                        } else {
+                            "Edit tags"
+                        };
+                        let plus_re = ui.button(txt);
                         if plus_re.clicked() {
-                            win.adding_tag ^= true;
+                            win.editing_tags ^= true;
                         }
-                        if win.adding_tag {
-                            let re = ui.text_edit_singleline(&mut win.add_tag_buffer);
+                        if win.editing_tags {
+                            let te =
+                                TextEdit::singleline(&mut win.add_tag_buffer).hint_text("New tags");
+                            let re = ui.add(te);
                             win.add_tag_buffer.make_ascii_lowercase();
                             re.request_focus();
                             if esc_pressed {
-                                win.adding_tag = false;
+                                win.editing_tags = false;
                                 win.add_tag_buffer.clear();
                                 close = false;
                             }
@@ -196,7 +210,7 @@ pub(super) fn do_frame(
                                     }
                                 }
                                 win.add_tag_buffer.clear();
-                                win.adding_tag = false;
+                                win.editing_tags = false;
                             }
                         }
 
