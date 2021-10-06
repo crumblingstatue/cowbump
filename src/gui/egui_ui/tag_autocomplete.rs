@@ -16,7 +16,11 @@ pub(super) fn tag_autocomplete_popup(
     response: &egui::Response,
 ) -> bool {
     let popup_id = ui.make_persistent_id("tag_completion");
-    let last = string.split_ascii_whitespace().last().unwrap_or("");
+    let mut last = string.split_ascii_whitespace().last().unwrap_or("");
+    // Ignore '!' character
+    if last.bytes().next() == Some(b'!') {
+        last = &last[1..];
+    }
     if input.key_pressed(Key::ArrowDown) {
         *selection += 1;
     }
