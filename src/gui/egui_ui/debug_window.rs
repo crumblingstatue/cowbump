@@ -22,11 +22,7 @@ impl DebugWindow {
     }
 }
 
-pub(super) fn do_frame(
-    state: &mut crate::gui::State,
-    egui_state: &mut EguiState,
-    egui_ctx: &egui::CtxRef,
-) {
+pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &egui::CtxRef) {
     let win = &mut egui_state.debug_window;
     if !win.open {
         return;
@@ -35,28 +31,30 @@ pub(super) fn do_frame(
         .open(&mut win.open)
         .show(egui_ctx, |ui| {
             ui.heading("Debug log");
-            let mut debug_log = state.debug_log.borrow_mut();
-            ui.group(|ui| {
-                ScrollArea::vertical().max_height(500.).show(ui, |ui| {
-                    if debug_log.is_empty() {
-                        ui.label("<empty>");
-                    }
-                    for (i, entry) in debug_log.iter().enumerate() {
-                        ui.horizontal(|ui| {
-                            ui.add(Label::new(i.to_string()).text_color(Color32::DARK_GRAY));
-                            ui.label(entry);
-                        });
-                    }
-                    if win.auto_scroll {
-                        ui.scroll_to_cursor(Align::BOTTOM)
+            crate::gui::debug_log::LOG.with(|log| {
+                ui.group(|ui| {
+                    let log = log.borrow();
+                    ScrollArea::vertical().max_height(500.).show(ui, |ui| {
+                        if log.is_empty() {
+                            ui.label("<empty>");
+                        }
+                        for (i, entry) in log.iter().enumerate() {
+                            ui.horizontal(|ui| {
+                                ui.add(Label::new(i.to_string()).text_color(Color32::DARK_GRAY));
+                                ui.label(entry);
+                            });
+                        }
+                        if win.auto_scroll {
+                            ui.scroll_to_cursor(Align::BOTTOM)
+                        }
+                    });
+                });
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut win.auto_scroll, "Auto scroll");
+                    if ui.button("Clear").clicked() {
+                        log.borrow_mut().clear();
                     }
                 });
-            });
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut win.auto_scroll, "Auto scroll");
-                if ui.button("Clear").clicked() {
-                    debug_log.clear();
-                }
             });
         });
 }

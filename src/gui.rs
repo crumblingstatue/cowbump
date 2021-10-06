@@ -1,3 +1,4 @@
+mod debug_log;
 mod egui_ui;
 mod entries_view;
 pub mod native_dialog;
@@ -26,7 +27,7 @@ use sfml::{
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
-use std::{cell::RefCell, collections::BTreeMap, path::Path, process::Command};
+use std::{collections::BTreeMap, path::Path, process::Command};
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
@@ -596,7 +597,6 @@ struct State {
     highlight: Option<u32>,
     clipboard_ctx: Clipboard,
     entries_view: EntriesView,
-    debug_log: RefCell<Vec<String>>,
     selected_uids: Vec<entry::Id>,
 }
 
@@ -677,7 +677,6 @@ impl State {
             clipboard_ctx: Clipboard::new().unwrap(),
             entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
-            debug_log: Default::default(),
             selected_uids: Default::default(),
         }
     }
