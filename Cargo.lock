@@ -429,15 +429,17 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 [[package]]
 name = "egui"
 version = "0.14.2"
-source = "git+https://github.com/emilk/egui.git#f0868c2f0744f49ade76c2b450ada01bda2c00c8"
+source = "git+https://github.com/emilk/egui.git#a1bf5aff47a7f6f3d698e6ccfb7b62b65ef2de5b"
 dependencies = [
+ "ahash",
  "epaint",
+ "nohash-hasher",
 ]
 
 [[package]]
 name = "egui-sfml"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/egui-sfml.git#a9791c17570b13ab283ff3d6c6ef9a48b3602060"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git#c165d1b900f5ba14adbc941d12dc52051ad93226"
 dependencies = [
  "egui",
  "glu-sys",
@@ -453,7 +455,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.14.0"
-source = "git+https://github.com/emilk/egui.git#f0868c2f0744f49ade76c2b450ada01bda2c00c8"
+source = "git+https://github.com/emilk/egui.git#a1bf5aff47a7f6f3d698e6ccfb7b62b65ef2de5b"
 
 [[package]]
 name = "env_logger"
@@ -471,7 +473,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.14.0"
-source = "git+https://github.com/emilk/egui.git#f0868c2f0744f49ade76c2b450ada01bda2c00c8"
+source = "git+https://github.com/emilk/egui.git#a1bf5aff47a7f6f3d698e6ccfb7b62b65ef2de5b"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -1044,9 +1046,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d0b9745dc2debf507c8422de05d7226cc1f0644216dfdfead988f9b1ab32a7"
+checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
 dependencies = [
  "proc-macro2",
 ]
@@ -1278,9 +1280,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.78"
+version = "1.0.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4eac2e6c19f5c3abc0c229bea31ff0b9b091c7b14990e8924b92902a303a0c0"
+checksum = "d010a1623fbd906d51d650a9916aaefc05ffa0e4053ff7fe601167f3e715d194"
 dependencies = [
  "proc-macro2",
  "quote",
