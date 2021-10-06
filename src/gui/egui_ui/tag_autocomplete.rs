@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use egui::{popup_below_widget, InputState, Key};
 
-use crate::collection::Collection;
+use crate::{collection::Collection, tag};
 
 /// Popup for autocompleting tags.
 ///
@@ -38,26 +38,50 @@ pub(super) fn tag_autocomplete_popup(
             if *selection >= len {
                 *selection = len - 1;
             }
-            let mut complete = None;
+            enum C {
+                Id(tag::Id),
+                Special(&'static str),
+                Nothing,
+            }
+            let mut complete = C::Nothing;
             popup_below_widget(ui, popup_id, response, |ui| {
-                for (i, (id, tag)) in filt.enumerate() {
-                    if ui
-                        .selectable_label(*selection == i, &tag.names[0])
-                        .clicked()
-                    {
-                        complete = Some(id);
+                if last.bytes().next() == Some(b':') {
+                    if ui.selectable_label(*selection == 0, ":no-tag").clicked() {
+                        complete = C::Special(":no-tag");
                     }
-                    if *selection == i
+                    if *selection == 0
                         && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
                     {
-                        complete = Some(id);
+                        complete = C::Special(":no-tag");
+                    }
+                } else {
+                    for (i, (&id, tag)) in filt.enumerate() {
+                        if ui
+                            .selectable_label(*selection == i, &tag.names[0])
+                            .clicked()
+                        {
+                            complete = C::Id(id);
+                        }
+                        if *selection == i
+                            && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
+                        {
+                            complete = C::Id(id);
+                        }
                     }
                 }
             });
-            if let Some(id) = complete {
-                let range = str_range(string, last);
-                string.replace_range(range, &coll.tags[id].names[0]);
-                return true;
+            match complete {
+                C::Id(id) => {
+                    let range = str_range(string, last);
+                    string.replace_range(range, &coll.tags[&id].names[0]);
+                    return true;
+                }
+                C::Special(special) => {
+                    let range = str_range(string, last);
+                    string.replace_range(range, special);
+                    return true;
+                }
+                C::Nothing => {}
             }
             if !string.is_empty() {
                 ui.memory().open_popup(popup_id);
