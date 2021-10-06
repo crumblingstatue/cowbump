@@ -16,7 +16,7 @@ use crate::{
     entry,
     filter_spec::FilterSpec,
     gui::{
-        common_tags, entries_view::EntriesView, get_tex_for_entry, native_dialog,
+        clamp_bottom, common_tags, entries_view::EntriesView, get_tex_for_entry, native_dialog,
         open_with_external, Resources, State,
     },
     tag,
@@ -78,6 +78,7 @@ fn tag_ui(
     filter: &mut FilterSpec,
     coll: &Collection,
     filter_string: &mut String,
+    changed_filter: &mut bool,
 ) -> egui::Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
@@ -92,10 +93,12 @@ fn tag_ui(
                 filter.toggle_has(id);
                 filter.set_doesnt_have(id, false);
                 *filter_string = filter.to_spec_string(&coll.tags);
+                *changed_filter = true;
             } else if re.clicked_by(PointerButton::Secondary) {
                 filter.toggle_doesnt_have(id);
                 filter.set_has(id, false);
                 *filter_string = filter.to_spec_string(&coll.tags);
+                *changed_filter = true;
             }
             if let Some(del) = del {
                 if ui.button("x").clicked() {
@@ -114,8 +117,20 @@ fn tag<'a>(
     filter: &'a mut FilterSpec,
     coll: &'a Collection,
     filter_string: &'a mut String,
+    changed_filter: &'a mut bool,
 ) -> impl egui::Widget + 'a {
-    move |ui: &mut egui::Ui| tag_ui(ui, name, id, del, filter, coll, filter_string)
+    move |ui: &mut egui::Ui| {
+        tag_ui(
+            ui,
+            name,
+            id,
+            del,
+            filter,
+            coll,
+            filter_string,
+            changed_filter,
+        )
+    }
 }
 
 pub(super) fn do_frame(
@@ -187,12 +202,14 @@ pub(super) fn do_frame(
                         }
                     });
                     ui.vertical(|ui| {
+                        // region: Tags
                         ui.horizontal_wrapped(|ui| {
                             for tagid in common_tags(&win.ids, coll) {
                                 let tag_name = match coll.tags.get(&tagid) {
                                     Some(tag) => &tag.names[0],
                                     None => "<unknown tag>",
                                 };
+                                let mut changed_filter = false;
 
                                 if win.editing_tags {
                                     let mut del = false;
@@ -203,6 +220,7 @@ pub(super) fn do_frame(
                                         &mut state.filter,
                                         coll,
                                         &mut egui_state.filter_popup.string,
+                                        &mut changed_filter,
                                     ));
                                     if del {
                                         // TODO: This only works for 1 item windows
@@ -220,10 +238,15 @@ pub(super) fn do_frame(
                                         &mut state.filter,
                                         coll,
                                         &mut egui_state.filter_popup.string,
+                                        &mut changed_filter,
                                     ));
+                                }
+                                if changed_filter {
+                                    clamp_bottom(rend_win, state, coll);
                                 }
                             }
                         });
+                        // endregion
 
                         let txt = if win.editing_tags {
                             "Stop editing"
