@@ -1,8 +1,8 @@
-use std::ops::Range;
+use std::{cell::RefCell, ops::Range};
 
 use egui::{popup_below_widget, InputState, Key};
 
-use crate::{collection::Collection, tag};
+use crate::{collection::Collection, gui::debug_log::dlog, tag};
 
 /// Popup for autocompleting tags.
 ///
@@ -10,7 +10,7 @@ use crate::{collection::Collection, tag};
 pub(super) fn tag_autocomplete_popup(
     input: &InputState,
     string: &mut String,
-    selection: &mut usize,
+    selection: &mut Option<usize>,
     coll: &mut Collection,
     ui: &mut egui::Ui,
     response: &egui::Response,
@@ -22,21 +22,40 @@ pub(super) fn tag_autocomplete_popup(
         last = &last[1..];
     }
     if input.key_pressed(Key::ArrowDown) {
-        *selection += 1;
+        *selection.insert(0) += 1;
     }
-    if input.key_pressed(Key::ArrowUp) && *selection > 0 {
-        *selection -= 1;
+    if let Some(selection) = selection {
+        if input.key_pressed(Key::ArrowUp) && *selection > 0 {
+            *selection -= 1;
+        }
     }
 
     if !string.is_empty() {
+        let exact_match = RefCell::new(false);
         let filt = coll.tags.iter().filter(|(_id, tag)| {
             let name = &tag.names[0];
-            name.contains(last) && name != last
+            if name == last {
+                *exact_match.borrow_mut() = true;
+            }
+            name.contains(last)
         });
         let len = filt.clone().count();
+        match selection {
+            None if !*exact_match.borrow() => {
+                dlog!("Setting cursor to 0");
+                *selection = Some(0);
+            }
+            Some(_) if *exact_match.borrow() => {
+                dlog!("Exact match, clearing");
+                *selection = None;
+            }
+            _ => {}
+        }
         if len > 0 {
-            if *selection >= len {
-                *selection = len - 1;
+            if let Some(selection) = selection {
+                if *selection >= len {
+                    *selection = len - 1;
+                }
             }
             enum C {
                 Id(tag::Id),
@@ -46,10 +65,13 @@ pub(super) fn tag_autocomplete_popup(
             let mut complete = C::Nothing;
             popup_below_widget(ui, popup_id, response, |ui| {
                 if last.bytes().next() == Some(b':') {
-                    if ui.selectable_label(*selection == 0, ":no-tag").clicked() {
+                    if ui
+                        .selectable_label(*selection == Some(0), ":no-tag")
+                        .clicked()
+                    {
                         complete = C::Special(":no-tag");
                     }
-                    if *selection == 0
+                    if *selection == Some(0)
                         && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
                     {
                         complete = C::Special(":no-tag");
@@ -57,12 +79,12 @@ pub(super) fn tag_autocomplete_popup(
                 } else {
                     for (i, (&id, tag)) in filt.enumerate() {
                         if ui
-                            .selectable_label(*selection == i, &tag.names[0])
+                            .selectable_label(*selection == Some(i), &tag.names[0])
                             .clicked()
                         {
                             complete = C::Id(id);
                         }
-                        if *selection == i
+                        if *selection == Some(i)
                             && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
                         {
                             complete = C::Id(id);

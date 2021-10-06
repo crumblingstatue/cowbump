@@ -13,7 +13,7 @@ pub struct FilterPopup {
     pub on: bool,
     pub string: String,
     /// Autocomplete selection
-    ac_select: usize,
+    ac_select: Option<usize>,
 }
 
 /// Returns whether filter state changed

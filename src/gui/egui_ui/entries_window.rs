@@ -38,7 +38,7 @@ pub struct EntriesWindow {
     err_str: String,
     new_tags: Vec<String>,
     children: Vec<ChildWrapper>,
-    ac_selection: usize,
+    ac_selection: Option<usize>,
 }
 
 struct ChildWrapper {
