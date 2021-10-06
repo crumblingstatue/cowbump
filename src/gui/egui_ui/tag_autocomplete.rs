@@ -22,7 +22,7 @@ pub(super) fn tag_autocomplete_popup(
         last = &last[1..];
     }
     if input.key_pressed(Key::ArrowDown) {
-        *selection.insert(0) += 1;
+        *selection.get_or_insert(0) += 1;
     }
     if let Some(selection) = selection {
         if input.key_pressed(Key::ArrowUp) && *selection > 0 {
