@@ -293,66 +293,6 @@ pub(super) fn do_frame(
                             });
                             retain
                         });
-
-                        if ui
-                            .add(
-                                Button::new("Rename")
-                                    .wrap(false)
-                                    .enabled(win.ids.len() == 1),
-                            )
-                            .clicked()
-                        {
-                            win.renaming ^= true;
-                        }
-                        if win.renaming {
-                            let re = ui.text_edit_singleline(&mut win.rename_buffer);
-                            if re.ctx.input().key_pressed(egui::Key::Enter) {
-                                if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
-                                    native_dialog::error("File rename error", e);
-                                }
-                                win.renaming = false;
-                            }
-                            if re.lost_focus() {
-                                win.renaming = false;
-                                close = false;
-                            }
-                            ui.memory().request_focus(re.id);
-                        }
-                        if !win.delete_confirm {
-                            if ui
-                                .add(Button::new("Delete from disk").wrap(false))
-                                .clicked()
-                            {
-                                win.delete_confirm ^= true;
-                            }
-                        } else {
-                            let del_uids = &mut win.ids;
-                            let del_len = del_uids.len();
-                            let label_string = if del_len == 1 {
-                                format!(
-                                    "About to delete {}",
-                                    coll.entries[&del_uids[0]].path.display()
-                                )
-                            } else {
-                                format!("About to delete {} entries", del_len)
-                            };
-                            ui.label(&label_string);
-                            ui.horizontal(|ui| {
-                                if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                                    if let Err(e) =
-                                        remove_entries(&mut state.entries_view, del_uids, coll)
-                                    {
-                                        native_dialog::error("Error deleting entries", e);
-                                    }
-                                    win.delete_confirm = false;
-                                    close = true;
-                                }
-                                if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
-                                    win.delete_confirm = false;
-                                    close = false;
-                                }
-                            });
-                        }
                         if ui.button("Add to sequence").clicked() {
                             egui_state.sequences_window.on = true;
                             egui_state.sequences_window.pick_mode = true;
@@ -466,7 +406,71 @@ pub(super) fn do_frame(
                                 }
                             }
                             retain
-                        })
+                        });
+                        ui.separator();
+                        // region: Rename button
+                        if ui
+                            .add(
+                                Button::new("Rename file")
+                                    .wrap(false)
+                                    .enabled(win.ids.len() == 1),
+                            )
+                            .clicked()
+                        {
+                            win.renaming ^= true;
+                        }
+                        if win.renaming {
+                            let re = ui.text_edit_singleline(&mut win.rename_buffer);
+                            if re.ctx.input().key_pressed(egui::Key::Enter) {
+                                if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
+                                    native_dialog::error("File rename error", e);
+                                }
+                                win.renaming = false;
+                            }
+                            if re.lost_focus() {
+                                win.renaming = false;
+                                close = false;
+                            }
+                            ui.memory().request_focus(re.id);
+                        }
+                        // endregion
+                        // region: Delete button
+                        if !win.delete_confirm {
+                            if ui
+                                .add(Button::new("Delete from disk").wrap(false))
+                                .clicked()
+                            {
+                                win.delete_confirm ^= true;
+                            }
+                        } else {
+                            let del_uids = &mut win.ids;
+                            let del_len = del_uids.len();
+                            let label_string = if del_len == 1 {
+                                format!(
+                                    "About to delete {}",
+                                    coll.entries[&del_uids[0]].path.display()
+                                )
+                            } else {
+                                format!("About to delete {} entries", del_len)
+                            };
+                            ui.label(&label_string);
+                            ui.horizontal(|ui| {
+                                if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
+                                    if let Err(e) =
+                                        remove_entries(&mut state.entries_view, del_uids, coll)
+                                    {
+                                        native_dialog::error("Error deleting entries", e);
+                                    }
+                                    win.delete_confirm = false;
+                                    close = true;
+                                }
+                                if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
+                                    win.delete_confirm = false;
+                                    close = false;
+                                }
+                            });
+                        }
+                        // endregion
                     });
                 });
                 let seqs = coll.find_related_sequences(&win.ids);
