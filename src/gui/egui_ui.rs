@@ -5,6 +5,7 @@ mod filter_popup;
 mod load_folder_window;
 mod preferences_window;
 mod sequences;
+mod tag_autocomplete;
 mod tag_list;
 mod top_bar;
 

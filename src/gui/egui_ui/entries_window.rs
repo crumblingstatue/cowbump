@@ -22,7 +22,7 @@ use crate::{
     tag,
 };
 
-use super::{sequences::SequenceWindow, EguiState};
+use super::{sequences::SequenceWindow, tag_autocomplete::tag_autocomplete_popup, EguiState};
 
 #[derive(Default)]
 pub struct EntriesWindow {
@@ -38,6 +38,7 @@ pub struct EntriesWindow {
     err_str: String,
     new_tags: Vec<String>,
     children: Vec<ChildWrapper>,
+    ac_selection: usize,
 }
 
 struct ChildWrapper {
@@ -237,6 +238,15 @@ pub(super) fn do_frame(
                             let te =
                                 TextEdit::singleline(&mut win.add_tag_buffer).hint_text("New tags");
                             let re = ui.add(te);
+                            let input = egui_ctx.input();
+                            tag_autocomplete_popup(
+                                input,
+                                &mut win.add_tag_buffer,
+                                &mut win.ac_selection,
+                                coll,
+                                ui,
+                                &re,
+                            );
                             win.add_tag_buffer.make_ascii_lowercase();
                             re.request_focus();
                             if esc_pressed {

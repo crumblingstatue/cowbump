@@ -1,8 +1,10 @@
-use std::ops::Range;
+use egui::{Align2, Color32, CtxRef, Key, TextEdit};
 
-use egui::{popup_below_widget, Align2, Color32, CtxRef, Key, TextEdit};
-
-use crate::{collection::Collection, filter_spec::FilterSpec, gui::State};
+use crate::{
+    collection::Collection,
+    filter_spec::FilterSpec,
+    gui::{egui_ui::tag_autocomplete::tag_autocomplete_popup, State},
+};
 
 use super::EguiState;
 
@@ -12,12 +14,6 @@ pub struct FilterPopup {
     pub string: String,
     /// Autocomplete selection
     ac_select: usize,
-}
-
-fn str_range(parent: &str, sub: &str) -> Range<usize> {
-    let beg = sub.as_ptr() as usize - parent.as_ptr() as usize;
-    let end = beg + sub.len();
-    beg..end
 }
 
 /// Returns whether filter state changed
@@ -44,54 +40,17 @@ pub(super) fn do_frame(
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
-                    let popup_id = ui.make_persistent_id("tag_completion");
-                    let last = popup.string.split_ascii_whitespace().last().unwrap_or("");
                     let input = egui_ctx.input();
-                    if input.key_pressed(Key::ArrowDown) {
-                        popup.ac_select += 1;
-                    }
-                    if input.key_pressed(Key::ArrowUp) && popup.ac_select > 0 {
-                        popup.ac_select -= 1;
-                    }
-                    if !popup.string.is_empty() {
-                        let filt = coll.tags.iter().filter(|(_id, tag)| {
-                            let name = &tag.names[0];
-                            name.contains(last) && name != last
-                        });
-                        let len = filt.clone().count();
-                        if len > 0 {
-                            if popup.ac_select >= len {
-                                popup.ac_select = len - 1;
-                            }
-                            let mut complete = None;
-                            popup_below_widget(ui, popup_id, &re, |ui| {
-                                for (i, (id, tag)) in filt.enumerate() {
-                                    if ui
-                                        .selectable_label(popup.ac_select == i, &tag.names[0])
-                                        .clicked()
-                                    {
-                                        complete = Some(id);
-                                    }
-                                    if popup.ac_select == i
-                                        && (input.key_pressed(Key::Tab)
-                                            || input.key_pressed(Key::Enter))
-                                    {
-                                        complete = Some(id);
-                                    }
-                                }
-                            });
-                            if let Some(id) = complete {
-                                let range = str_range(&popup.string, last);
-                                popup.string.replace_range(range, &coll.tags[id].names[0]);
-                                state.wipe_search();
-                                filter_changed = true;
-                            }
-                            if !popup.string.is_empty() {
-                                ui.memory().open_popup(popup_id);
-                            } else {
-                                ui.memory().close_popup();
-                            }
-                        }
+                    if tag_autocomplete_popup(
+                        input,
+                        &mut popup.string,
+                        &mut popup.ac_select,
+                        coll,
+                        ui,
+                        &re,
+                    ) {
+                        state.wipe_search();
+                        filter_changed = true;
                     }
                     ui.label(&format!("{} results", count));
                     popup.string.make_ascii_lowercase();
