@@ -2,7 +2,23 @@ use std::ops::Range;
 
 use egui::{popup_below_widget, InputState, Key};
 
-use crate::{collection::Collection, gui::debug_log::dlog, tag};
+use crate::{collection::Collection, tag};
+
+pub struct AcState {
+    /// Selection index in the autocomplet list
+    select: Option<usize>,
+    /// Input changed this frame
+    pub input_changed: bool,
+}
+
+impl Default for AcState {
+    fn default() -> Self {
+        Self {
+            select: None,
+            input_changed: true,
+        }
+    }
+}
 
 /// Popup for autocompleting tags.
 ///
@@ -10,11 +26,15 @@ use crate::{collection::Collection, gui::debug_log::dlog, tag};
 pub(super) fn tag_autocomplete_popup(
     input: &InputState,
     string: &mut String,
-    selection: &mut Option<usize>,
+    state: &mut AcState,
     coll: &mut Collection,
     ui: &mut egui::Ui,
     response: &egui::Response,
 ) -> bool {
+    macro ret($x:expr) {
+        state.input_changed = false;
+        return $x;
+    }
     let popup_id = ui.make_persistent_id("tag_completion");
     let mut last = string.split_ascii_whitespace().last().unwrap_or("");
     // Ignore '!' character
@@ -22,42 +42,40 @@ pub(super) fn tag_autocomplete_popup(
         last = &last[1..];
     }
     if input.key_pressed(Key::ArrowDown) {
-        *selection.get_or_insert(0) += 1;
+        *state.select.get_or_insert(0) += 1;
     }
-    if let Some(selection) = selection {
+    if let Some(selection) = &mut state.select {
         if input.key_pressed(Key::ArrowUp) && *selection > 0 {
             *selection -= 1;
         }
     }
     if !string.is_empty() {
-        let mut exact_match = false;
+        let mut exact_match = None;
         macro filt_predicate($tag:expr) {
             $tag.names[0].contains(last)
         }
         // Get length of list and also whether there is an exact match
+        let mut i = 0;
         let len = coll
             .tags
             .iter()
             .filter(|(_id, tag)| {
                 if tag.names[0] == last {
-                    exact_match = true;
+                    exact_match = Some(i);
                 }
-                filt_predicate!(tag)
+                let predicate = filt_predicate!(tag);
+                if predicate {
+                    i += 1;
+                }
+                predicate
             })
             .count();
-        match selection {
-            None if !exact_match => {
-                dlog!("Setting cursor to 0");
-                *selection = Some(0);
-            }
-            Some(_) if exact_match => {
-                dlog!("Exact match, clearing");
-                *selection = None;
-            }
+        match exact_match {
+            Some(idx) if state.input_changed => state.select = Some(idx),
             _ => {}
         }
         if len > 0 {
-            if let Some(selection) = selection {
+            if let Some(selection) = &mut state.select {
                 if *selection >= len {
                     *selection = len - 1;
                 }
@@ -71,12 +89,12 @@ pub(super) fn tag_autocomplete_popup(
             popup_below_widget(ui, popup_id, response, |ui| {
                 if last.bytes().next() == Some(b':') {
                     if ui
-                        .selectable_label(*selection == Some(0), ":no-tag")
+                        .selectable_label(state.select == Some(0), ":no-tag")
                         .clicked()
                     {
                         complete = C::Special(":no-tag");
                     }
-                    if *selection == Some(0)
+                    if state.select == Some(0)
                         && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
                     {
                         complete = C::Special(":no-tag");
@@ -89,12 +107,12 @@ pub(super) fn tag_autocomplete_popup(
                         .enumerate()
                     {
                         if ui
-                            .selectable_label(*selection == Some(i), &tag.names[0])
+                            .selectable_label(state.select == Some(i), &tag.names[0])
                             .clicked()
                         {
                             complete = C::Id(id);
                         }
-                        if *selection == Some(i)
+                        if state.select == Some(i)
                             && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
                         {
                             complete = C::Id(id);
@@ -106,12 +124,12 @@ pub(super) fn tag_autocomplete_popup(
                 C::Id(id) => {
                     let range = str_range(string, last);
                     string.replace_range(range, &coll.tags[&id].names[0]);
-                    return true;
+                    ret!(true);
                 }
                 C::Special(special) => {
                     let range = str_range(string, last);
                     string.replace_range(range, special);
-                    return true;
+                    ret!(true);
                 }
                 C::Nothing => {}
             }
@@ -122,7 +140,7 @@ pub(super) fn tag_autocomplete_popup(
             }
         }
     }
-    false
+    ret!(false);
 }
 
 fn str_range(parent: &str, sub: &str) -> Range<usize> {

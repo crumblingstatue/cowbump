@@ -6,14 +6,13 @@ use crate::{
     gui::{egui_ui::tag_autocomplete::tag_autocomplete_popup, State},
 };
 
-use super::EguiState;
+use super::{tag_autocomplete::AcState, EguiState};
 
 #[derive(Default)]
 pub struct FilterPopup {
     pub on: bool,
     pub string: String,
-    /// Autocomplete selection
-    ac_select: Option<usize>,
+    ac_state: AcState,
 }
 
 /// Returns whether filter state changed
@@ -44,7 +43,7 @@ pub(super) fn do_frame(
                     if tag_autocomplete_popup(
                         input,
                         &mut popup.string,
-                        &mut popup.ac_select,
+                        &mut popup.ac_state,
                         coll,
                         ui,
                         &re,
@@ -64,6 +63,7 @@ pub(super) fn do_frame(
                         popup.on = false;
                     }
                     if re.changed() {
+                        popup.ac_state.input_changed = true;
                         state.wipe_search();
                         filter_changed = true;
                     }

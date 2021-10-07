@@ -22,7 +22,11 @@ use crate::{
     tag,
 };
 
-use super::{sequences::SequenceWindow, tag_autocomplete::tag_autocomplete_popup, EguiState};
+use super::{
+    sequences::SequenceWindow,
+    tag_autocomplete::{tag_autocomplete_popup, AcState},
+    EguiState,
+};
 
 #[derive(Default)]
 pub struct EntriesWindow {
@@ -38,7 +42,7 @@ pub struct EntriesWindow {
     err_str: String,
     new_tags: Vec<String>,
     children: Vec<ChildWrapper>,
-    ac_selection: Option<usize>,
+    ac_state: AcState,
 }
 
 struct ChildWrapper {
@@ -261,11 +265,14 @@ pub(super) fn do_frame(
                             let te =
                                 TextEdit::singleline(&mut win.add_tag_buffer).hint_text("New tags");
                             let re = ui.add(te);
+                            if re.changed() {
+                                win.ac_state.input_changed = true;
+                            }
                             let input = egui_ctx.input();
                             tag_autocomplete_popup(
                                 input,
                                 &mut win.add_tag_buffer,
-                                &mut win.ac_selection,
+                                &mut win.ac_state,
                                 coll,
                                 ui,
                                 &re,
