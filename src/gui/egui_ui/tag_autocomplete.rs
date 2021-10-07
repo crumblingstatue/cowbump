@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Range};
+use std::{cell::Cell, ops::Range};
 
 use egui::{popup_below_widget, InputState, Key};
 
@@ -31,21 +31,21 @@ pub(super) fn tag_autocomplete_popup(
     }
 
     if !string.is_empty() {
-        let exact_match = RefCell::new(false);
+        let exact_match = Cell::new(false);
         let filt = coll.tags.iter().filter(|(_id, tag)| {
             let name = &tag.names[0];
             if name == last {
-                *exact_match.borrow_mut() = true;
+                exact_match.set(true);
             }
             name.contains(last)
         });
         let len = filt.clone().count();
         match selection {
-            None if !*exact_match.borrow() => {
+            None if !exact_match.get() => {
                 dlog!("Setting cursor to 0");
                 *selection = Some(0);
             }
-            Some(_) if *exact_match.borrow() => {
+            Some(_) if exact_match.get() => {
                 dlog!("Exact match, clearing");
                 *selection = None;
             }
