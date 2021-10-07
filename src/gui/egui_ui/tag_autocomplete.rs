@@ -1,4 +1,4 @@
-use std::{cell::Cell, ops::Range};
+use std::ops::Range;
 
 use egui::{popup_below_widget, InputState, Key};
 
@@ -29,23 +29,28 @@ pub(super) fn tag_autocomplete_popup(
             *selection -= 1;
         }
     }
-
     if !string.is_empty() {
-        let exact_match = Cell::new(false);
-        let filt = coll.tags.iter().filter(|(_id, tag)| {
-            let name = &tag.names[0];
-            if name == last {
-                exact_match.set(true);
-            }
-            name.contains(last)
-        });
-        let len = filt.clone().count();
+        let mut exact_match = false;
+        macro filt_predicate($tag:expr) {
+            $tag.names[0].contains(last)
+        }
+        // Get length of list and also whether there is an exact match
+        let len = coll
+            .tags
+            .iter()
+            .filter(|(_id, tag)| {
+                if tag.names[0] == last {
+                    exact_match = true;
+                }
+                filt_predicate!(tag)
+            })
+            .count();
         match selection {
-            None if !exact_match.get() => {
+            None if !exact_match => {
                 dlog!("Setting cursor to 0");
                 *selection = Some(0);
             }
-            Some(_) if exact_match.get() => {
+            Some(_) if exact_match => {
                 dlog!("Exact match, clearing");
                 *selection = None;
             }
@@ -77,7 +82,12 @@ pub(super) fn tag_autocomplete_popup(
                         complete = C::Special(":no-tag");
                     }
                 } else {
-                    for (i, (&id, tag)) in filt.enumerate() {
+                    for (i, (&id, tag)) in coll
+                        .tags
+                        .iter()
+                        .filter(|(_id, tag)| filt_predicate!(tag))
+                        .enumerate()
+                    {
                         if ui
                             .selectable_label(*selection == Some(i), &tag.names[0])
                             .clicked()
