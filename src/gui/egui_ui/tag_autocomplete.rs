@@ -42,12 +42,23 @@ pub(super) fn tag_autocomplete_popup(
         last = &last[1..];
     }
     if input.key_pressed(Key::ArrowDown) {
-        *state.select.get_or_insert(0) += 1;
-    }
-    if let Some(selection) = &mut state.select {
-        if input.key_pressed(Key::ArrowUp) && *selection > 0 {
-            *selection -= 1;
+        match &mut state.select {
+            None => state.select = Some(0),
+            Some(sel) => *sel += 1,
         }
+    }
+    if let Some(sel) = &mut state.select {
+        if input.key_pressed(Key::ArrowUp) {
+            if *sel > 0 {
+                *sel -= 1;
+            } else {
+                // Allow selecting "Nothing" by going above first element
+                state.select = None;
+            }
+        }
+    } else if state.input_changed {
+        // Always select index 0 when input was changed for convenience
+        state.select = Some(0);
     }
     if !string.is_empty() {
         let mut exact_match = None;
