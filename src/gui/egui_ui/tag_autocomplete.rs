@@ -14,7 +14,7 @@ pub struct AcState {
 impl Default for AcState {
     fn default() -> Self {
         Self {
-            select: None,
+            select: Some(0),
             input_changed: true,
         }
     }
