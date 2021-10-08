@@ -34,9 +34,14 @@ pub(super) fn do_frame(
                 ui.horizontal(|ui| {
                     ui.label("filter");
                     let count = coll.filter(&state.filter).count();
-                    let mut te = TextEdit::singleline(&mut popup.string).lock_focus(true);
+                    let mut te = TextEdit::singleline(&mut popup.string)
+                        .lock_focus(true)
+                        .ignore_up_and_down_keys();
                     if count == 0 {
                         te = te.text_color(Color32::RED);
+                    }
+                    if popup.ac_state.applied {
+                        te = te.set_cursor_to_end();
                     }
                     let re = ui.add(te);
                     let input = egui_ctx.input();

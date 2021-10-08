@@ -198,9 +198,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.70"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d26a6ce4b6a484fa3edb70f7efa6fc430fd2b87285fe8b84304fd0936faa0dc0"
+checksum = "79c2681d6594606957bbb8631c4b90a7fcaaa72cdb714743a437b156d6a7eedd"
 dependencies = [
  "jobserver",
 ]
@@ -429,7 +429,7 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 [[package]]
 name = "egui"
 version = "0.14.2"
-source = "git+https://github.com/emilk/egui.git#a1bf5aff47a7f6f3d698e6ccfb7b62b65ef2de5b"
+source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#9da1ec68c330efdfc89c1eb8bd8a62009d07fa1a"
 dependencies = [
  "ahash",
  "epaint",
@@ -439,7 +439,7 @@ dependencies = [
 [[package]]
 name = "egui-sfml"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/egui-sfml.git#c165d1b900f5ba14adbc941d12dc52051ad93226"
+source = "git+https://github.com/crumblingstatue/egui-sfml.git?branch=egui-autocomplete#c7014386bb6e23d0cf116d34480a436c02616733"
 dependencies = [
  "egui",
  "glu-sys",
@@ -455,7 +455,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.14.0"
-source = "git+https://github.com/emilk/egui.git#a1bf5aff47a7f6f3d698e6ccfb7b62b65ef2de5b"
+source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#9da1ec68c330efdfc89c1eb8bd8a62009d07fa1a"
 
 [[package]]
 name = "env_logger"
@@ -473,7 +473,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.14.0"
-source = "git+https://github.com/emilk/egui.git#a1bf5aff47a7f6f3d698e6ccfb7b62b65ef2de5b"
+source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#9da1ec68c330efdfc89c1eb8bd8a62009d07fa1a"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -1137,9 +1137,9 @@ checksum = "448296241d034b96c11173591deaa1302f2c17b56092106c1f92c1bc0183a8c9"
 
 [[package]]
 name = "rfd"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84b4745feef3bc92e709042c78d205e9a566ec46e18c58d4fac458e6fc12627e"
+checksum = "2acac5884e3a23b02ebd6ce50fd2729732cdbdb16ea944fbbfbfa638a67992aa"
 dependencies = [
  "block",
  "dispatch",

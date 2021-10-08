@@ -9,6 +9,8 @@ pub struct AcState {
     select: Option<usize>,
     /// Input changed this frame
     pub input_changed: bool,
+    /// An autocomplete suggestion was applied
+    pub applied: bool,
 }
 
 impl Default for AcState {
@@ -16,6 +18,7 @@ impl Default for AcState {
         Self {
             select: Some(0),
             input_changed: true,
+            applied: false,
         }
     }
 }
@@ -35,6 +38,7 @@ pub(super) fn tag_autocomplete_popup(
         state.input_changed = false;
         return $x;
     }
+    state.applied = false;
     let popup_id = ui.make_persistent_id("tag_completion");
     let mut last = string.split_ascii_whitespace().last().unwrap_or("");
     // Ignore '!' character
@@ -135,11 +139,13 @@ pub(super) fn tag_autocomplete_popup(
                 C::Id(id) => {
                     let range = str_range(string, last);
                     string.replace_range(range, &coll.tags[&id].names[0]);
+                    state.applied = true;
                     ret!(true);
                 }
                 C::Special(special) => {
                     let range = str_range(string, last);
                     string.replace_range(range, special);
+                    state.applied = true;
                     ret!(true);
                 }
                 C::Nothing => {}

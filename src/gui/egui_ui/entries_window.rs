@@ -262,8 +262,12 @@ pub(super) fn do_frame(
                             win.editing_tags ^= true;
                         }
                         if win.editing_tags {
-                            let te =
-                                TextEdit::singleline(&mut win.add_tag_buffer).hint_text("New tags");
+                            let mut te = TextEdit::singleline(&mut win.add_tag_buffer)
+                                .hint_text("New tags")
+                                .ignore_up_and_down_keys();
+                            if win.ac_state.applied {
+                                te = te.set_cursor_to_end();
+                            }
                             let re = ui.add(te);
                             if re.changed() {
                                 win.ac_state.input_changed = true;
