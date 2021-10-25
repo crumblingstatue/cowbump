@@ -70,14 +70,12 @@ pub(super) fn do_sequence_windows(
                                     subject = Some(img_uid);
                                     win.focus_req = subject;
                                 }
-                                let button = Button::new("⏮").enabled(i > 0);
-                                if ui.add(button).clicked() {
+                                if ui.add_enabled(i > 0, Button::new("⏮")).clicked() {
                                     action = Action::SwapFirst;
                                     subject = Some(img_uid);
                                     win.focus_req = subject;
                                 }
-                                let button = Button::new("⏴").enabled(i > 0);
-                                if ui.add(button).clicked() {
+                                if ui.add_enabled(i > 0, Button::new("⏴")).clicked() {
                                     action = Action::SwapLeft;
                                     subject = Some(img_uid);
                                     win.focus_req = subject;
@@ -91,14 +89,18 @@ pub(super) fn do_sequence_windows(
                                     subject = Some(img_uid);
                                     win.focus_req = subject;
                                 }
-                                let button = Button::new("⏵").enabled(i < seq_entries_len - 1);
-                                if ui.add(button).clicked() {
+                                if ui
+                                    .add_enabled(i < seq_entries_len - 1, Button::new("⏵"))
+                                    .clicked()
+                                {
                                     action = Action::SwapRight;
                                     subject = Some(img_uid);
                                     win.focus_req = subject;
                                 }
-                                let button = Button::new("⏭").enabled(i < seq_entries_len - 1);
-                                if ui.add(button).clicked() {
+                                if ui
+                                    .add_enabled(i < seq_entries_len - 1, Button::new("⏭"))
+                                    .clicked()
+                                {
                                     action = Action::SwapLast;
                                     subject = Some(img_uid);
                                     win.focus_req = subject;

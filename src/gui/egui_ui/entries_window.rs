@@ -454,11 +454,7 @@ pub(super) fn do_frame(
                         ui.separator();
                         // region: Rename button
                         if ui
-                            .add(
-                                Button::new("Rename file")
-                                    .wrap(false)
-                                    .enabled(win.ids.len() == 1),
-                            )
+                            .add_enabled(win.ids.len() == 1, Button::new("Rename file").wrap(false))
                             .clicked()
                         {
                             win.renaming ^= true;

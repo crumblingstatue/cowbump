@@ -91,9 +91,7 @@ pub(super) fn do_frame(
                                 );
                             }
                         }}
-                    let butt =
-                        Button::new("🗀 Close folder").enabled(app.active_collection.is_some());
-                    if ui.add(butt).clicked() {
+                    if ui.add_enabled(app.active_collection.is_some(), Button::new("🗀 Close folder")).clicked() {
                         if let Err(e) = application::switch_collection(
                             &app.database.data_dir,
                             &mut app.active_collection,
@@ -168,48 +166,47 @@ pub(super) fn do_frame(
                 egui::menu::menu(ui, "Actions", |ui| {
                     let active_coll = app.active_collection.is_some();
                     if ui
-                        .add(Button::new("🔍 Filter (F)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("🔍 Filter (F)"))
                         .clicked()
                     {
                         egui_state.filter_popup.on ^= true;
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("🔍 Search (/)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("🔍 Search (/)"))
                         .clicked()
                     {
                         egui_state.search_edit ^= true;
                     }
                     if ui
-                        .add(Button::new("⮫ Next result (N)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("⮫ Next result (N)"))
                         .clicked()
                     {
                         egui_state.action = Some(Action::SearchNext);
                     }
                     if ui
-                        .add(Button::new("⮪ Previous result (P)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("⮪ Previous result (P)"))
                         .clicked()
                     {
                         egui_state.action = Some(Action::SearchPrev);
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("☑ Select All (ctrl+A)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("☑ Select All (ctrl+A)"))
                         .clicked()
                     {
                         egui_state.action = Some(Action::SelectAll);
                     }
                     if ui
-                        .add(Button::new("☐ Select None (Esc)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("☐ Select None (Esc)"))
                         .clicked()
                     {
                         egui_state.action = Some(Action::SelectNone);
                     }
                     ui.separator();
                     if ui
-                        .add(
+                        .add_enabled(n_selected > 0,
                             Button::new("Ｓ Open entries window for selected entries (F2)")
-                                .enabled(n_selected > 0),
                         )
                         .clicked()
                     {
@@ -217,7 +214,7 @@ pub(super) fn do_frame(
                     }
                     ui.separator();
                     if ui
-                        .add(Button::new("♻ Sort by filename (S)").enabled(active_coll))
+                        .add_enabled(active_coll, Button::new("♻ Sort by filename (S)"))
                         .clicked()
                     {
                         egui_state.action = Some(Action::SortEntries);

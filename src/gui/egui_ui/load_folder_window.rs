@@ -166,8 +166,8 @@ pub(super) fn do_frame(
                 }
                 let button;
                 if win.state.is_some() {
-                    button = Button::new("Create new collection").enabled(done);
-                    if ui.add(button).clicked() {
+                    button = Button::new("Create new collection");
+                    if ui.add_enabled(done, button).clicked() {
                         let paths = win
                             .results
                             .drain(..)
