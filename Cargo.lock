@@ -429,7 +429,7 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 [[package]]
 name = "egui"
 version = "0.15.0"
-source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#2b1aa5c5de024d1c6a440a44ceccf9e25b947366"
+source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#7c5ffdfdcbf684b4d74b1fcdc3ca02e7c44e4fbc"
 dependencies = [
  "ahash",
  "epaint",
@@ -455,7 +455,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.15.0"
-source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#2b1aa5c5de024d1c6a440a44ceccf9e25b947366"
+source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#7c5ffdfdcbf684b4d74b1fcdc3ca02e7c44e4fbc"
 
 [[package]]
 name = "env_logger"
@@ -473,7 +473,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.15.0"
-source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#2b1aa5c5de024d1c6a440a44ceccf9e25b947366"
+source = "git+https://github.com/crumblingstatue/egui.git?branch=autocomplete#7c5ffdfdcbf684b4d74b1fcdc3ca02e7c44e4fbc"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -1037,9 +1037,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.30"
+version = "1.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edc3358ebc67bc8b7fa0c007f945b0b18226f78437d61bec735a9eb96b61ee70"
+checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
 dependencies = [
  "unicode-xid",
 ]
@@ -1280,9 +1280,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.80"
+version = "1.0.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d010a1623fbd906d51d650a9916aaefc05ffa0e4053ff7fe601167f3e715d194"
+checksum = "f2afee18b8beb5a596ecb4a2dce128c719b4ba399d34126b9e4396e3f9860966"
 dependencies = [
  "proc-macro2",
  "quote",

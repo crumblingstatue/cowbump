@@ -4,6 +4,8 @@ use std::{
 };
 
 use egui::{
+    epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
+    text_edit::CursorRange,
     vec2, Button, Color32, ImageButton, Key, Label, PointerButton, Rgba, ScrollArea, Sense,
     TextEdit, TextureId,
 };
@@ -137,6 +139,23 @@ fn tag<'a>(
     }
 }
 
+pub fn text_edit_cursor_set_to_end(ui: &mut egui::Ui, te_id: egui::Id) {
+    let mut state = TextEdit::load_state(ui.ctx(), te_id).unwrap();
+    state.set_cursor_range(Some(CursorRange::one(Cursor {
+        ccursor: CCursor {
+            index: 0,
+            prefer_next_row: false,
+        },
+        rcursor: RCursor { row: 0, column: 0 },
+        pcursor: PCursor {
+            paragraph: 0,
+            offset: 10000,
+            prefer_next_row: false,
+        },
+    })));
+    TextEdit::store_state(ui.ctx(), te_id, state);
+}
+
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
@@ -262,11 +281,13 @@ pub(super) fn do_frame(
                             win.editing_tags ^= true;
                         }
                         if win.editing_tags {
-                            let mut te = TextEdit::singleline(&mut win.add_tag_buffer)
+                            let te_id = ui.make_persistent_id("text_edit_add_tag");
+                            let te = TextEdit::singleline(&mut win.add_tag_buffer)
                                 .hint_text("New tags")
-                                .ignore_up_and_down_keys();
+                                .ignore_up_and_down_keys()
+                                .id(te_id);
                             if win.ac_state.applied {
-                                te = te.set_cursor_to_end();
+                                text_edit_cursor_set_to_end(ui, te_id);
                             }
                             let re = ui.add(te);
                             if re.changed() {

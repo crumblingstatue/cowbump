@@ -23,7 +23,7 @@ pub(super) fn do_frame(
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 if app.database.recent.len() > 0 {
-                    egui::menu::menu(ui, "Recent", |ui| {
+                    ui.menu_button("Recent", |ui| {
                         enum Action {
                             Open(collection::Id),
                             Remove(collection::Id),
@@ -67,7 +67,7 @@ pub(super) fn do_frame(
                         }
                     });
                 }
-                egui::menu::menu(ui, "File", |ui| 
+                ui.menu_button("File", |ui| 
                 {
                     if ui.button("🗁 Load folder").clicked() {
                         if let Some(dir_path) = FileDialog::new().pick_folder() {
@@ -163,7 +163,7 @@ pub(super) fn do_frame(
                         egui_state.action = Some(Action::Quit);
                     }
                 });
-                egui::menu::menu(ui, "Actions", |ui| {
+                ui.menu_button("Actions", |ui| {
                     let active_coll = app.active_collection.is_some();
                     if ui
                         .add_enabled(active_coll, Button::new("🔍 Filter (F)"))
@@ -220,7 +220,7 @@ pub(super) fn do_frame(
                         egui_state.action = Some(Action::SortEntries);
                     }
                 });
-                egui::menu::menu(ui, "Windows", |ui| {
+                ui.menu_button("Windows", |ui| {
                     if ui.button("＃ Tag list (T)").clicked() {
                         egui_state.tag_window.toggle();
                     }
@@ -228,7 +228,7 @@ pub(super) fn do_frame(
                         egui_state.sequences_window.on ^= true;
                     }
                 });
-                egui::menu::menu(ui, "Help", |ui| {
+                ui.menu_button("Help", |ui| {
                     if ui.button("About").clicked() {
                         MessageDialog::new()
                             .set_description(&format!("Cowbump version {}", crate::VERSION))

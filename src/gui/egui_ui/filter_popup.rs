@@ -3,7 +3,12 @@ use egui::{Align2, Color32, CtxRef, Key, TextEdit};
 use crate::{
     collection::Collection,
     filter_spec::FilterSpec,
-    gui::{egui_ui::tag_autocomplete::tag_autocomplete_popup, State},
+    gui::{
+        egui_ui::{
+            entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
+        },
+        State,
+    },
 };
 
 use super::{tag_autocomplete::AcState, EguiState};
@@ -34,14 +39,16 @@ pub(super) fn do_frame(
                 ui.horizontal(|ui| {
                     ui.label("filter");
                     let count = coll.filter(&state.filter).count();
+                    let te_id = ui.make_persistent_id("text_edit_tag_popup");
                     let mut te = TextEdit::singleline(&mut popup.string)
                         .lock_focus(true)
-                        .ignore_up_and_down_keys();
+                        .ignore_up_and_down_keys()
+                        .id(te_id);
                     if count == 0 {
                         te = te.text_color(Color32::RED);
                     }
                     if popup.ac_state.applied {
-                        te = te.set_cursor_to_end();
+                        text_edit_cursor_set_to_end(ui, te_id);
                     }
                     let re = ui.add(te);
                     let input = egui_ctx.input();
