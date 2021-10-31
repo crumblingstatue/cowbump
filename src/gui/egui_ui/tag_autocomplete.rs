@@ -67,7 +67,7 @@ pub(super) fn tag_autocomplete_popup(
     if !string.is_empty() {
         let mut exact_match = None;
         macro filt_predicate($tag:expr) {
-            $tag.names[0].contains(last)
+            $tag.names.iter().any(|tag| tag.contains(last))
         }
         // Get length of list and also whether there is an exact match
         let mut i = 0;

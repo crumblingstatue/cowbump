@@ -15,5 +15,5 @@ pub struct Tag {
     pub implies: TagSet,
 }
 
-#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct Id(pub Uid);

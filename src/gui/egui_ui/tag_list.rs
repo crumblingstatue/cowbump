@@ -1,4 +1,7 @@
+use std::mem;
+
 use egui::{Button, Color32, CtxRef, Grid, Key, ScrollArea, TextEdit};
+use retain_mut::RetainMut;
 
 use crate::{
     collection::Collection,
@@ -17,6 +20,9 @@ pub struct TagWindow {
     on: bool,
     filter_string: String,
     selected_uids: TagSet,
+    prop_active: Option<tag::Id>,
+    new_name: String,
+    new_name_add: bool,
 }
 
 impl TagWindow {
@@ -31,126 +37,179 @@ pub(super) fn do_frame(
     coll: &mut Collection,
     egui_ctx: &CtxRef,
 ) {
-    if egui_state.tag_window.on {
-        let tags = &mut coll.tags;
-        let mut close = false;
-        let close_ref = &mut close;
-        let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
-        let filter_string_ref = &mut egui_state.filter_popup.string;
-        let filter_spec_ref = &mut state.filter;
-        let selected_uids = &mut egui_state.tag_window.selected_uids;
-        // Clear selected uids that have already been deleted
-        selected_uids.retain(|uid| tags.contains_key(uid));
-        let prompts = &mut egui_state.prompts;
-        egui::Window::new("Tag list")
-            .open(&mut egui_state.tag_window.on)
-            .show(egui_ctx, move |ui| {
-                ui.horizontal(|ui| {
-                    let te = TextEdit::singleline(tag_filter_string_ref).hint_text("Filter");
-                    ui.add(te);
-                    if ui.button("Clear filter").clicked() {
-                        tag_filter_string_ref.clear();
-                    }
-                    if ui.button("Clear tags").clicked() {
-                        filter_spec_ref.clear();
+    if !egui_state.tag_window.on {
+        return;
+    }
+    let tags = &mut coll.tags;
+    let mut close = false;
+    let close_ref = &mut close;
+    let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
+    let filter_string_ref = &mut egui_state.filter_popup.string;
+    let filter_spec_ref = &mut state.filter;
+    let selected_uids = &mut egui_state.tag_window.selected_uids;
+    let active_ref = &mut egui_state.tag_window.prop_active;
+    let new_name_ref = &mut egui_state.tag_window.new_name;
+    let new_name_add_ref = &mut egui_state.tag_window.new_name_add;
+    // Clear selected uids that have already been deleted
+    selected_uids.retain(|uid| tags.contains_key(uid));
+    let prompts = &mut egui_state.prompts;
+    egui::Window::new("Tag list")
+        .open(&mut egui_state.tag_window.on)
+        .show(egui_ctx, move |ui| {
+            ui.horizontal(|ui| {
+                let te = TextEdit::singleline(tag_filter_string_ref).hint_text("Filter");
+                ui.add(te);
+                if ui.button("Clear filter").clicked() {
+                    tag_filter_string_ref.clear();
+                }
+                if ui.button("Clear tags").clicked() {
+                    filter_spec_ref.clear();
+                }
+            });
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.set_min_height(600.);
+                    ui.set_width(400.0);
+                    let scroll = ScrollArea::vertical()
+                        .max_height(600.0)
+                        .auto_shrink([false, false]);
+                    scroll.show(ui, |ui| {
+                        Grid::new("tag_window_grid")
+                            .spacing((8.0, 8.0))
+                            .striped(true)
+                            .num_columns(4)
+                            .show(ui, |ui| {
+                                let mut uids: Vec<tag::Id> = tags.keys().cloned().collect();
+                                uids.sort_by_key(|uid| &tags[uid].names[0]);
+                                for tag_uid in &uids {
+                                    let tag = &tags[tag_uid];
+                                    let name = &tag.names[0];
+                                    if !name.contains(&tag_filter_string_ref[..]) {
+                                        continue;
+                                    }
+                                    let mut button = Button::new(name);
+                                    let mut checked = selected_uids.contains(tag_uid);
+                                    if active_ref == &Some(*tag_uid) {
+                                        button = button.fill(Color32::from_rgb(95, 69, 8));
+                                    } else if checked {
+                                        button = button.fill(Color32::from_rgb(189, 145, 85));
+                                    }
+                                    if ui.add(button).clicked() {
+                                        *active_ref = Some(*tag_uid);
+                                    }
+                                    let has_this_tag = filter_spec_ref.has_tags.contains(tag_uid);
+                                    let doesnt_have_this_tag =
+                                        filter_spec_ref.doesnt_have_tags.contains(tag_uid);
+                                    let button = Button::new("✔").fill(if has_this_tag {
+                                        Color32::from_rgb(43, 109, 57)
+                                    } else {
+                                        Color32::from_rgb(45, 45, 45)
+                                    });
+                                    let mut clicked_any = false;
+                                    if ui.add(button).clicked() {
+                                        filter_spec_ref.toggle_has(*tag_uid);
+                                        filter_spec_ref.set_doesnt_have(*tag_uid, false);
+                                        clicked_any = true;
+                                    }
+                                    let neg_button = Button::new("！")
+                                        .text_color(Color32::RED)
+                                        .fill(if doesnt_have_this_tag {
+                                            Color32::from_rgb(109, 47, 43)
+                                        } else {
+                                            Color32::from_rgb(45, 45, 45)
+                                        });
+                                    if ui.add(neg_button).clicked() {
+                                        filter_spec_ref.toggle_doesnt_have(*tag_uid);
+                                        filter_spec_ref.set_has(*tag_uid, false);
+                                        clicked_any = true;
+                                    }
+                                    ui.checkbox(&mut checked, "");
+                                    if checked {
+                                        selected_uids.insert(*tag_uid);
+                                    } else {
+                                        selected_uids.remove(tag_uid);
+                                    }
+                                    ui.end_row();
+                                    if clicked_any {
+                                        *filter_string_ref = filter_spec_ref.to_spec_string(tags);
+                                    }
+                                }
+                            });
+                    });
+                    if !selected_uids.is_empty() {
+                        ui.separator();
+                        ui.horizontal(|ui| {
+                            if ui.button("Delete").clicked() {
+                                let n = selected_uids.len();
+                                let fstring;
+                                let msg = format!(
+                                    "Delete the selected {}tag{}?",
+                                    if n == 1 {
+                                        ""
+                                    } else {
+                                        fstring = format!("{} ", n);
+                                        &fstring
+                                    },
+                                    if n == 1 { "" } else { "s" }
+                                );
+                                prompt(
+                                    prompts,
+                                    "Tag deletion",
+                                    msg,
+                                    PromptAction::DeleteTags(
+                                        selected_uids.iter().cloned().collect(),
+                                    ),
+                                )
+                            }
+                            if ui.button("Clear selection").clicked() {
+                                selected_uids.clear();
+                            }
+                        });
                     }
                 });
                 ui.separator();
-                let scroll = ScrollArea::vertical().max_height(600.0);
-                scroll.show(ui, |ui| {
-                    Grid::new("tag_window_grid")
-                        .spacing((16.0, 8.0))
-                        .striped(true)
-                        .show(ui, |ui| {
-                            let mut uids: Vec<tag::Id> = tags.keys().cloned().collect();
-                            uids.sort_by_key(|uid| &tags[uid].names[0]);
-                            for tag_uid in &uids {
-                                let tag = &tags[tag_uid];
-                                let name = &tag.names[0];
-                                if !name.contains(&tag_filter_string_ref[..]) {
-                                    continue;
+                ui.vertical(|ui| {
+                    ui.set_min_width(400.);
+                    match active_ref {
+                        None => {
+                            ui.heading("Click a tag to edit properties");
+                        }
+                        Some(id) => {
+                            ui.heading(format!("Tag {} (#{})", tags[id].names[0], id.0));
+                            ui.separator();
+                            ui.label("Names");
+                            ui.add_space(4.0);
+                            let tag = tags.get_mut(id).unwrap();
+                            tag.names.retain_mut(|name| {
+                                ui.label(name);
+                                true
+                            });
+                            ui.horizontal(|ui| {
+                                if ui.button("+").clicked() {
+                                    *new_name_add_ref = true;
                                 }
-                                let has_this_tag = filter_spec_ref.has_tags.contains(tag_uid);
-                                let doesnt_have_this_tag =
-                                    filter_spec_ref.doesnt_have_tags.contains(tag_uid);
-                                let mut checked = selected_uids.contains(tag_uid);
-                                let mut button = Button::new(name).fill(if has_this_tag {
-                                    Color32::from_rgb(43, 109, 57)
-                                } else {
-                                    Color32::from_rgb(45, 45, 45)
-                                });
-                                if checked {
-                                    button = button
-                                        .fill(Color32::from_rgb(246, 244, 41))
-                                        .text_color(Color32::BLACK);
+                                if *new_name_add_ref
+                                    && ui.text_edit_singleline(new_name_ref).lost_focus()
+                                    && ui.input().key_pressed(Key::Enter)
+                                {
+                                    tag.names.push(mem::take(new_name_ref));
                                 }
-                                let mut clicked_any = false;
-                                if ui.add(button).clicked() {
-                                    filter_spec_ref.toggle_has(*tag_uid);
-                                    filter_spec_ref.set_doesnt_have(*tag_uid, false);
-                                    clicked_any = true;
-                                }
-                                let neg_button = Button::new("!").text_color(Color32::RED).fill(
-                                    if doesnt_have_this_tag {
-                                        Color32::from_rgb(109, 47, 43)
-                                    } else {
-                                        Color32::from_rgb(45, 45, 45)
-                                    },
-                                );
-                                if ui.add(neg_button).clicked() {
-                                    filter_spec_ref.toggle_doesnt_have(*tag_uid);
-                                    filter_spec_ref.set_has(*tag_uid, false);
-                                    clicked_any = true;
-                                }
-                                ui.checkbox(&mut checked, "");
-                                if checked {
-                                    selected_uids.insert(*tag_uid);
-                                } else {
-                                    selected_uids.remove(tag_uid);
-                                }
-                                ui.end_row();
-                                if clicked_any {
-                                    *filter_string_ref = filter_spec_ref.to_spec_string(tags);
-                                }
-                            }
-                        });
+                            });
+                            ui.add_space(12.0);
+                            ui.label("Implies");
+                            ui.add_space(4.0);
+                        }
+                    }
                 });
-                if !selected_uids.is_empty() {
-                    ui.separator();
-                    ui.horizontal(|ui| {
-                        if ui.button("Delete").clicked() {
-                            let n = selected_uids.len();
-                            let fstring;
-                            let msg = format!(
-                                "Delete the selected {}tag{}?",
-                                if n == 1 {
-                                    ""
-                                } else {
-                                    fstring = format!("{} ", n);
-                                    &fstring
-                                },
-                                if n == 1 { "" } else { "s" }
-                            );
-                            prompt(
-                                prompts,
-                                "Tag deletion",
-                                msg,
-                                PromptAction::DeleteTags(selected_uids.iter().cloned().collect()),
-                            )
-                        }
-                        if ui.button("Clear selection").clicked() {
-                            selected_uids.clear();
-                        }
-                    });
-                }
-
-                if egui_ctx.input().key_pressed(Key::Escape) {
-                    *close_ref = true;
-                }
             });
-        if close {
-            egui_state.just_closed_window_with_esc = true;
-            egui_state.tag_window.on = false;
-        }
+
+            if egui_ctx.input().key_pressed(Key::Escape) {
+                *close_ref = true;
+            }
+        });
+    if close {
+        egui_state.just_closed_window_with_esc = true;
+        egui_state.tag_window.on = false;
     }
 }
