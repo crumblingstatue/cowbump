@@ -75,7 +75,7 @@ pub(super) fn tag_autocomplete_popup(
             .tags
             .iter()
             .filter(|(_id, tag)| {
-                if tag.names[0] == last {
+                if tag.names.iter().any(|tag| tag == last) {
                     exact_match = Some(i);
                 }
                 let predicate = filt_predicate!(tag);
