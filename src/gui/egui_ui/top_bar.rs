@@ -59,6 +59,7 @@ pub(super) fn do_frame(
                     ) {
                         result = Err(e);
                     }
+                    ui.close_menu();
                 }
                 ui.add_enabled_ui(app.database.recent.len() > 0, |ui| {
                     ui.menu_button("🕓 Recent", |ui| {
@@ -78,6 +79,7 @@ pub(super) fn do_frame(
                                     .clicked()
                                 {
                                     action = Action::Open(id);
+                                    ui.close_menu();
                                 }
                                 if ui.button("🗑").clicked() {
                                     action = Action::Remove(id);
@@ -107,6 +109,7 @@ pub(super) fn do_frame(
                 });
                 ui.separator();
                 if ui.button("⛃⬉ Create backup").clicked() {
+                    ui.close_menu();
                     if let Some(path) = FileDialog::new()
                         .set_file_name("cowbump_backup.zip")
                         .save_file()
@@ -134,6 +137,7 @@ pub(super) fn do_frame(
                     }
                 }
                 if ui.button("⛃⬊ Restore backup").clicked() {
+                    ui.close_menu();
                     let continue_ = MessageDialog::new()
                         .set_buttons(MessageButtons::OkCancel)
                         .set_title("Restore backup")
@@ -154,10 +158,12 @@ pub(super) fn do_frame(
                 }
                 ui.separator();
                 if ui.button("☰ Preferences").clicked() {
+                    ui.close_menu();
                     egui_state.preferences_window.toggle();
                 }
                 ui.separator();
                 if ui.button("🗙 Quit without saving").clicked() {
+                    ui.close_menu();
                     prompt(
                         &mut egui_state.prompts,
                         "Quit without saving",
@@ -176,6 +182,7 @@ pub(super) fn do_frame(
                     .add_enabled(active_coll, Button::new("🔍 Filter (F)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.filter_popup.on ^= true;
                 }
                 ui.separator();
@@ -183,18 +190,21 @@ pub(super) fn do_frame(
                     .add_enabled(active_coll, Button::new("🔍 Search (/)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.search_edit ^= true;
                 }
                 if ui
                     .add_enabled(active_coll, Button::new("⮫ Next result (N)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.action = Some(Action::SearchNext);
                 }
                 if ui
                     .add_enabled(active_coll, Button::new("⮪ Previous result (P)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.action = Some(Action::SearchPrev);
                 }
                 ui.separator();
@@ -202,12 +212,14 @@ pub(super) fn do_frame(
                     .add_enabled(active_coll, Button::new("☑ Select All (ctrl+A)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.action = Some(Action::SelectAll);
                 }
                 if ui
                     .add_enabled(active_coll, Button::new("☐ Select None (Esc)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.action = Some(Action::SelectNone);
                 }
                 ui.separator();
@@ -218,6 +230,7 @@ pub(super) fn do_frame(
                     )
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.action = Some(Action::OpenEntriesWindow);
                 }
                 ui.separator();
@@ -225,19 +238,23 @@ pub(super) fn do_frame(
                     .add_enabled(active_coll, Button::new("♻ Sort by filename (S)"))
                     .clicked()
                 {
+                    ui.close_menu();
                     egui_state.action = Some(Action::SortEntries);
                 }
             });
             ui.menu_button("Windows", |ui| {
                 if ui.button("＃ Tag list (T)").clicked() {
+                    ui.close_menu();
                     egui_state.tag_window.toggle();
                 }
                 if ui.button("⬌ Sequences (Q)").clicked() {
+                    ui.close_menu();
                     egui_state.sequences_window.on ^= true;
                 }
             });
             ui.menu_button("Help", |ui| {
                 if ui.button("About").clicked() {
+                    ui.close_menu();
                     MessageDialog::new()
                         .set_description(&format!("Cowbump version {}", crate::VERSION))
                         .show();
@@ -247,12 +264,15 @@ pub(super) fn do_frame(
                     ui.label("= Debug =");
                 });
                 if ui.button("Save screenshot (F11)").clicked() {
+                    ui.close_menu();
                     crate::gui::util::take_and_save_screenshot(win);
                 }
                 if ui.button("Open data dir").clicked() {
+                    ui.close_menu();
                     open::that_in_background(&app.database.data_dir);
                 }
                 if ui.button("Debug window").clicked() {
+                    ui.close_menu();
                     egui_state.debug_window.toggle();
                 }
             });
