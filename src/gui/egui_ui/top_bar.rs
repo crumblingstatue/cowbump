@@ -54,48 +54,50 @@ pub(super) fn do_frame(
                             result = Err(e);
                         }
                     }
-                    ui.menu_button("🕓 Recent", |ui| {
-                        enum Action {
-                            Open(collection::Id),
-                            Remove(collection::Id),
-                            None,
-                        }
-                        let mut action = Action::None;
-                        for &id in app.database.recent.iter() {
-                            ui.horizontal(|ui| {
-                                if ui
-                                    .button(&format!(
-                                        "🗁 {}",
-                                        &app.database.collections[&id].display()
-                                    ))
-                                    .clicked()
-                                {
-                                    action = Action::Open(id);
-                                }
-                                if ui.button("🗑").clicked() {
-                                    action = Action::Remove(id);
-                                }
-                            });
-                        }
-                        match action {
-                            Action::Open(id) => match app.load_collection(id) {
-                                Ok(changes) => {
-                                    if !changes.empty() {
-                                        egui_state.changes_window.open(changes);
+                    ui.add_enabled_ui(app.database.recent.len() > 0, |ui| {
+                        ui.menu_button("🕓 Recent", |ui| {
+                            enum Action {
+                                Open(collection::Id),
+                                Remove(collection::Id),
+                                None,
+                            }
+                            let mut action = Action::None;
+                            for &id in app.database.recent.iter() {
+                                ui.horizontal(|ui| {
+                                    if ui
+                                        .button(&format!(
+                                            "🗁 {}",
+                                            &app.database.collections[&id].display()
+                                        ))
+                                        .clicked()
+                                    {
+                                        action = Action::Open(id);
                                     }
-                                    result = crate::gui::set_active_collection(
-                                        &mut state.entries_view,
-                                        app,
-                                        id,
-                                    );
-                                }
-                                Err(e) => {
-                                    native_dialog::error("Error loading recent collection", e);
-                                }
-                            },
-                            Action::Remove(id) => app.database.recent.remove(id),
-                            Action::None => {}
-                        }
+                                    if ui.button("🗑").clicked() {
+                                        action = Action::Remove(id);
+                                    }
+                                });
+                            }
+                            match action {
+                                Action::Open(id) => match app.load_collection(id) {
+                                    Ok(changes) => {
+                                        if !changes.empty() {
+                                            egui_state.changes_window.open(changes);
+                                        }
+                                        result = crate::gui::set_active_collection(
+                                            &mut state.entries_view,
+                                            app,
+                                            id,
+                                        );
+                                    }
+                                    Err(e) => {
+                                        native_dialog::error("Error loading recent collection", e);
+                                    }
+                                },
+                                Action::Remove(id) => app.database.recent.remove(id),
+                                Action::None => {}
+                            }
+                        });
                     });
                     ui.separator();
                     if ui.button("⛃⬉ Create backup").clicked() {
