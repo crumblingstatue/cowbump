@@ -22,8 +22,39 @@ pub(super) fn do_frame(
     if egui_state.top_bar {
         TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                if app.database.recent.len() > 0 {
-                    ui.menu_button("Recent", |ui| {
+                ui.menu_button("File", |ui| {
+                    if ui.button("🗁 Load folder").clicked() {
+                        if let Some(dir_path) = FileDialog::new().pick_folder() {
+                            if let Some(id) = app.database.find_collection_by_path(&dir_path) {
+                                let changes = match app.load_collection(id) {
+                                    Ok(changes) => changes,
+                                    Err(e) => {
+                                        result = Err(e);
+                                        return;
+                                    }
+                                };
+                                if !changes.empty() {
+                                    egui_state.changes_window.open(changes);
+                                }
+                                crate::gui::set_active_collection(&mut state.entries_view, app, id)
+                                    .unwrap();
+                            } else {
+                                load_folder_window::open(
+                                    &mut egui_state.load_folder_window,
+                                    dir_path,
+                                );
+                            }
+                        }}
+                    if ui.add_enabled(app.active_collection.is_some(), Button::new("🗀 Close folder")).clicked() {
+                        if let Err(e) = application::switch_collection(
+                            &app.database.data_dir,
+                            &mut app.active_collection,
+                            None,
+                        ) {
+                            result = Err(e);
+                        }
+                    }
+                    ui.menu_button("🕓 Recent", |ui| {
                         enum Action {
                             Open(collection::Id),
                             Remove(collection::Id),
@@ -66,40 +97,6 @@ pub(super) fn do_frame(
                             Action::None => {}
                         }
                     });
-                }
-                ui.menu_button("File", |ui| 
-                {
-                    if ui.button("🗁 Load folder").clicked() {
-                        if let Some(dir_path) = FileDialog::new().pick_folder() {
-                            if let Some(id) = app.database.find_collection_by_path(&dir_path) {
-                                let changes = match app.load_collection(id) {
-                                    Ok(changes) => changes,
-                                    Err(e) => {
-                                        result = Err(e);
-                                        return;
-                                    }
-                                };
-                                if !changes.empty() {
-                                    egui_state.changes_window.open(changes);
-                                }
-                                crate::gui::set_active_collection(&mut state.entries_view, app, id)
-                                    .unwrap();
-                            } else {
-                                load_folder_window::open(
-                                    &mut egui_state.load_folder_window,
-                                    dir_path,
-                                );
-                            }
-                        }}
-                    if ui.add_enabled(app.active_collection.is_some(), Button::new("🗀 Close folder")).clicked() {
-                        if let Err(e) = application::switch_collection(
-                            &app.database.data_dir,
-                            &mut app.active_collection,
-                            None,
-                        ) {
-                            result = Err(e);
-                        }
-                    }
                     ui.separator();
                     if ui.button("⛃⬉ Create backup").clicked() {
                         if let Some(path) = FileDialog::new()
