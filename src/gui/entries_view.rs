@@ -39,7 +39,7 @@ impl EntriesView {
     ) -> impl Iterator<Item = entry::Id> + 'a {
         self.uids
             .iter()
-            .filter_map(|uid| crate::entry::filter_map(*uid, &coll.entries[uid], spec))
+            .filter_map(|uid| crate::entry::filter_map(*uid, &coll.entries[uid], spec, &coll.tags))
     }
     /// Delete `uid` from the list.
     pub fn delete(&mut self, uid: entry::Id) {

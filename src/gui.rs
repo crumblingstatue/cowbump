@@ -517,7 +517,7 @@ fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
         .enumerate()
         .filter(|(_, uid)| {
             let en = &coll.entries[uid];
-            en.spec_satisfied(&state.search_spec)
+            en.spec_satisfied(&state.search_spec, &coll.tags)
         })
         .map(|(i, _)| i)
         .nth(nth)

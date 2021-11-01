@@ -117,7 +117,7 @@ impl Collection {
     pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries
             .iter()
-            .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec))
+            .filter_map(move |(&uid, en)| crate::entry::filter_map(uid, en, spec, &self.tags))
     }
     pub fn rename(&mut self, uid: entry::Id, new: &str) -> anyhow::Result<()> {
         let en = self.entries.get_mut(&uid).context("Couldn't get entry")?;

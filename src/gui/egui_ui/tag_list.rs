@@ -7,6 +7,7 @@ use crate::{
     collection::Collection,
     db::TagSet,
     gui::{
+        debug_log::dlog,
         egui_ui::{prompt, PromptAction},
         State,
     },
@@ -23,6 +24,8 @@ pub struct TagWindow {
     prop_active: Option<tag::Id>,
     new_name: String,
     new_name_add: bool,
+    new_imply: String,
+    new_imply_add: bool,
 }
 
 impl TagWindow {
@@ -40,7 +43,6 @@ pub(super) fn do_frame(
     if !egui_state.tag_window.on {
         return;
     }
-    let tags = &mut coll.tags;
     let mut close = false;
     let close_ref = &mut close;
     let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
@@ -50,8 +52,10 @@ pub(super) fn do_frame(
     let active_ref = &mut egui_state.tag_window.prop_active;
     let new_name_ref = &mut egui_state.tag_window.new_name;
     let new_name_add_ref = &mut egui_state.tag_window.new_name_add;
+    let new_imply_ref = &mut egui_state.tag_window.new_imply;
+    let new_imply_add_ref = &mut egui_state.tag_window.new_imply_add;
     // Clear selected uids that have already been deleted
-    selected_uids.retain(|uid| tags.contains_key(uid));
+    selected_uids.retain(|uid| coll.tags.contains_key(uid));
     let prompts = &mut egui_state.prompts;
     egui::Window::new("Tag list")
         .open(&mut egui_state.tag_window.on)
@@ -80,6 +84,7 @@ pub(super) fn do_frame(
                             .striped(true)
                             .num_columns(4)
                             .show(ui, |ui| {
+                                let tags = &mut coll.tags;
                                 let mut uids: Vec<tag::Id> = tags.keys().cloned().collect();
                                 uids.sort_by_key(|uid| &tags[uid].names[0]);
                                 for tag_uid in &uids {
@@ -176,11 +181,11 @@ pub(super) fn do_frame(
                             ui.heading("Click a tag to edit properties");
                         }
                         Some(id) => {
-                            ui.heading(format!("Tag {} (#{})", tags[id].names[0], id.0));
+                            ui.heading(format!("Tag {} (#{})", coll.tags[id].names[0], id.0));
                             ui.separator();
                             ui.label("Names");
                             ui.add_space(4.0);
-                            let tag = tags.get_mut(id).unwrap();
+                            let tag = coll.tags.get_mut(id).unwrap();
                             tag.names.retain_mut(|name| {
                                 ui.label(name);
                                 true
@@ -199,6 +204,25 @@ pub(super) fn do_frame(
                             ui.add_space(12.0);
                             ui.label("Implies");
                             ui.add_space(4.0);
+                            for tag_id in &coll.tags[id].implies {
+                                ui.label(&coll.tags[tag_id].names[0]);
+                            }
+                            ui.horizontal(|ui| {
+                                if ui.button("+").clicked() {
+                                    *new_imply_add_ref = true;
+                                }
+                                if *new_imply_add_ref
+                                    && ui.text_edit_singleline(new_imply_ref).lost_focus()
+                                    && ui.input().key_pressed(Key::Enter)
+                                {
+                                    if let Some(resolved_id) = coll.resolve_tag(new_imply_ref) {
+                                        let tag = coll.tags.get_mut(id).unwrap();
+                                        tag.implies.insert(resolved_id);
+                                        dlog!("Success?");
+                                        dlog!("{:?}", tag);
+                                    }
+                                }
+                            });
                         }
                     }
                 });

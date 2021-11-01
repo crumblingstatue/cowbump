@@ -2,7 +2,7 @@ use crate::db::{TagSet, Uid};
 use serde_derive::{Deserialize, Serialize};
 
 /// An identifiable quality that entries can be tagged by.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Tag {
     /// Names that map to this tag.
     ///

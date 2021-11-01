@@ -1,4 +1,5 @@
 use crate::{
+    collection::Tags,
     db::{TagSet, Uid},
     entry,
     filter_spec::FilterSpec,
@@ -24,7 +25,7 @@ impl Entry {
             tags: Default::default(),
         }
     }
-    pub fn spec_satisfied(&self, spec: &FilterSpec) -> bool {
+    pub fn spec_satisfied(&self, spec: &FilterSpec, tags: &Tags) -> bool {
         if !self
             .path
             .to_string_lossy()
@@ -35,11 +36,32 @@ impl Entry {
         }
         for required_tag in &spec.has_tags {
             if !self.tags.contains(required_tag) {
-                return false;
+                // Let's say we searched for 'pachyderm'.
+                // This entry doesn't contain 'pachyderm', but it contains 'elephant',
+                // which implies 'pachyderm'.
+                // Therefore we need to check for each tag that the required tag implies
+                // and check if we contain any of them.
+                let contains_any_implied = self.tags.iter().any(|my_tag| {
+                    let tag = &tags[my_tag];
+                    tag.implies.contains(required_tag)
+                });
+                if !contains_any_implied {
+                    return false;
+                }
             }
         }
         for required_no_tag in &spec.doesnt_have_tags {
             if self.tags.contains(required_no_tag) {
+                return false;
+            }
+            // The same implies-relation must be done for excluded tags.
+            // The idea is that this entry must not contain any tags
+            // that implies this excluded-tag.
+            let contains_any_implied = self.tags.iter().any(|my_tag| {
+                let tag = &tags[my_tag];
+                tag.implies.contains(required_no_tag)
+            });
+            if contains_any_implied {
                 return false;
             }
         }
@@ -50,8 +72,13 @@ impl Entry {
     }
 }
 
-pub fn filter_map(uid: entry::Id, entry: &Entry, spec: &FilterSpec) -> Option<entry::Id> {
-    if entry.spec_satisfied(spec) {
+pub fn filter_map(
+    uid: entry::Id,
+    entry: &Entry,
+    spec: &FilterSpec,
+    tags: &Tags,
+) -> Option<entry::Id> {
+    if entry.spec_satisfied(spec, tags) {
         Some(uid)
     } else {
         None
