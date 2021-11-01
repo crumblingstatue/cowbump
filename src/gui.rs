@@ -1,4 +1,4 @@
-mod debug_log;
+pub mod debug_log;
 mod egui_ui;
 mod entries_view;
 pub mod native_dialog;

@@ -5,7 +5,7 @@ use retain_mut::RetainMut;
 
 use crate::{
     collection::Collection,
-    db::TagSet,
+    db::{TagSet, UidCounter},
     gui::{
         debug_log::dlog,
         egui_ui::{prompt, PromptAction},
@@ -26,6 +26,8 @@ pub struct TagWindow {
     new_name_add: bool,
     new_imply: String,
     new_imply_add: bool,
+    new_tag_buf: String,
+    new_tag_add: bool,
 }
 
 impl TagWindow {
@@ -39,6 +41,7 @@ pub(super) fn do_frame(
     egui_state: &mut EguiState,
     coll: &mut Collection,
     egui_ctx: &CtxRef,
+    uid_counter: &mut UidCounter,
 ) {
     if !egui_state.tag_window.on {
         return;
@@ -54,6 +57,8 @@ pub(super) fn do_frame(
     let new_name_add_ref = &mut egui_state.tag_window.new_name_add;
     let new_imply_ref = &mut egui_state.tag_window.new_imply;
     let new_imply_add_ref = &mut egui_state.tag_window.new_imply_add;
+    let new_tag_buf_ref = &mut egui_state.tag_window.new_tag_buf;
+    let new_tag_add_ref = &mut egui_state.tag_window.new_tag_add;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     let prompts = &mut egui_state.prompts;
@@ -69,7 +74,16 @@ pub(super) fn do_frame(
                 if ui.button("Clear tags").clicked() {
                     filter_spec_ref.clear();
                 }
+                if ui.button("Add new tag").clicked() {
+                    *new_tag_add_ref ^= true;
+                }
             });
+            if *new_tag_add_ref
+                && ui.text_edit_singleline(new_tag_buf_ref).lost_focus()
+                && ui.input().key_pressed(Key::Enter)
+            {
+                coll.add_new_tag_from_text(mem::take(new_tag_buf_ref), uid_counter);
+            }
             ui.separator();
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
@@ -181,6 +195,10 @@ pub(super) fn do_frame(
                             ui.heading("Click a tag to edit properties");
                         }
                         Some(id) => {
+                            if !coll.tags.contains_key(id) {
+                                // Prevent crashing if we just deleted this tag
+                                return;
+                            }
                             ui.heading(format!("Tag {} (#{})", coll.tags[id].names[0], id.0));
                             ui.separator();
                             ui.label("Names");
@@ -204,8 +222,17 @@ pub(super) fn do_frame(
                             ui.add_space(12.0);
                             ui.label("Implies");
                             ui.add_space(4.0);
-                            for tag_id in &coll.tags[id].implies {
-                                ui.label(&coll.tags[tag_id].names[0]);
+                            let mut remove = None;
+                            for imply_id in &coll.tags[id].implies {
+                                ui.horizontal(|ui| {
+                                    ui.label(&coll.tags[imply_id].names[0]);
+                                    if ui.button("🗑").clicked() {
+                                        remove = Some(*imply_id);
+                                    }
+                                });
+                            }
+                            if let Some(imply_id) = remove {
+                                coll.tags.get_mut(id).unwrap().implies.remove(&imply_id);
                             }
                             ui.horizontal(|ui| {
                                 if ui.button("+").clicked() {

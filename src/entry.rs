@@ -3,6 +3,8 @@ use crate::{
     db::{TagSet, Uid},
     entry,
     filter_spec::FilterSpec,
+    gui::debug_log::dlog,
+    tag,
 };
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -35,33 +37,12 @@ impl Entry {
             return false;
         }
         for required_tag in &spec.has_tags {
-            if !self.tags.contains(required_tag) {
-                // Let's say we searched for 'pachyderm'.
-                // This entry doesn't contain 'pachyderm', but it contains 'elephant',
-                // which implies 'pachyderm'.
-                // Therefore we need to check for each tag that the required tag implies
-                // and check if we contain any of them.
-                let contains_any_implied = self.tags.iter().any(|my_tag| {
-                    let tag = &tags[my_tag];
-                    tag.implies.contains(required_tag)
-                });
-                if !contains_any_implied {
-                    return false;
-                }
+            if !self.satisfies_required_tag(*required_tag, tags) {
+                return false;
             }
         }
         for required_no_tag in &spec.doesnt_have_tags {
-            if self.tags.contains(required_no_tag) {
-                return false;
-            }
-            // The same implies-relation must be done for excluded tags.
-            // The idea is that this entry must not contain any tags
-            // that implies this excluded-tag.
-            let contains_any_implied = self.tags.iter().any(|my_tag| {
-                let tag = &tags[my_tag];
-                tag.implies.contains(required_no_tag)
-            });
-            if contains_any_implied {
+            if self.satisfies_required_tag(*required_no_tag, tags) {
                 return false;
             }
         }
@@ -70,6 +51,36 @@ impl Entry {
         }
         true
     }
+    fn satisfies_required_tag(&self, required_tag_id: tag::Id, tags: &Tags) -> bool {
+        self.tags
+            .iter()
+            .any(|tag_id| tag_satisfies_required_tag(*tag_id, required_tag_id, tags, &mut 0))
+    }
+}
+
+fn tag_satisfies_required_tag(
+    tag_id: tag::Id,
+    required_tag_id: tag::Id,
+    tags: &Tags,
+    depth: &mut u32,
+) -> bool {
+    *depth += 1;
+    if *depth == 10 {
+        dlog!(
+            "Tag satisfies depth limit exceeded. Aborting [tag: {}, required: {}]",
+            tags[&tag_id].names[0],
+            tags[&required_tag_id].names[0]
+        );
+        return false;
+    }
+    if tag_id == required_tag_id {
+        return true;
+    }
+    // Check if any implied tags satisfy required
+    let tag = &tags[&tag_id];
+    tag.implies.iter().any(|implied_tag_id| {
+        tag_satisfies_required_tag(*implied_tag_id, required_tag_id, tags, depth)
+    })
 }
 
 pub fn filter_map(
