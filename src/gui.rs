@@ -8,12 +8,13 @@ mod util;
 use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
 use crate::{
     application::Application,
-    collection::{self, Collection},
+    collection::{self, Collection, Entries},
     db::{EntryMap, TagSet},
     entry,
     filter_spec::FilterSpec,
     gui::egui_ui::EguiState,
     preferences::{AppId, Preferences},
+    sequence::Sequence,
 };
 use anyhow::{bail, Context};
 use arboard::Clipboard;
@@ -507,6 +508,21 @@ fn search_next(state: &mut State, coll: &mut Collection, view_height: u32) {
     search_goto_cursor(state, coll, view_height);
     if !state.search_success {
         state.search_cursor -= 1;
+    }
+}
+
+pub(crate) fn open_sequence(
+    seq: &Sequence,
+    uid: entry::Id,
+    entries: &Entries,
+    prefs: &mut Preferences,
+) {
+    let mut paths = Vec::new();
+    for img_uid in seq.entry_uids_wrapped_from(uid) {
+        paths.push(entries[&img_uid].path.as_ref());
+    }
+    if let Err(e) = open_with_external(&paths, prefs) {
+        native_dialog::error("Failed to open file", e);
     }
 }
 

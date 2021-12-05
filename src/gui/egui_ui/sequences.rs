@@ -7,9 +7,9 @@ use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::{native_dialog, open_with_external},
+    gui::open_sequence,
     preferences::Preferences,
-    sequence,
+    sequence::{self},
 };
 
 use super::EguiState;
@@ -130,13 +130,7 @@ pub(super) fn do_sequence_windows(
                     seq.remove_entry(uid);
                 }
                 Action::Open => {
-                    let mut paths = Vec::new();
-                    for img_uid in seq.entry_uids_wrapped_from(uid) {
-                        paths.push(coll.entries[&img_uid].path.as_ref());
-                    }
-                    if let Err(e) = open_with_external(&paths, prefs) {
-                        native_dialog::error("Failed to open file", e);
-                    }
+                    open_sequence(seq, uid, &coll.entries, prefs);
                 }
             }
         }

@@ -18,7 +18,7 @@ use crate::{
     filter_spec::FilterSpec,
     gui::{
         clamp_bottom, common_tags, entries_view::EntriesView, get_tex_for_entry, native_dialog,
-        open_with_external, Resources, State,
+        open_sequence, open_with_external, Resources, State,
     },
     tag,
 };
@@ -541,6 +541,11 @@ pub(super) fn do_frame(
                         let seq = &coll.sequences[&seq_id];
                         ui.horizontal(|ui| {
                             ui.label(&seq.name);
+                            if ui.button("Edit").clicked() {
+                                egui_state
+                                    .sequence_windows
+                                    .push(SequenceWindow::new(seq_id, None));
+                            }
                             if ui.button("Select all").clicked() {
                                 state.selected_uids.clear();
                                 state.selected_uids.extend(&seq.entries);
@@ -552,9 +557,12 @@ pub(super) fn do_frame(
                                     let img_but =
                                         ImageButton::new(TextureId::User(img_id.0), (128., 128.));
                                     if ui.add(img_but).clicked() {
-                                        egui_state
-                                            .sequence_windows
-                                            .push(SequenceWindow::new(seq_id, Some(img_id)));
+                                        open_sequence(
+                                            seq,
+                                            img_id,
+                                            &coll.entries,
+                                            &mut db.preferences,
+                                        )
                                     }
                                 }
                             });
