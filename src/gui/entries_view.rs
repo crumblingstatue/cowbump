@@ -37,9 +37,9 @@ impl EntriesView {
         coll: &'a Collection,
         spec: &'a FilterSpec,
     ) -> impl Iterator<Item = entry::Id> + 'a {
-        self.uids
-            .iter()
-            .filter_map(|uid| crate::entry::filter_map(*uid, &coll.entries[uid], spec, &coll.tags))
+        self.uids.iter().filter_map(|uid| {
+            crate::entry::filter_map(*uid, &coll.entries[uid], spec, &coll.tags, &coll.sequences)
+        })
     }
     /// Delete `uid` from the list.
     pub fn delete(&mut self, uid: entry::Id) {

@@ -53,4 +53,7 @@ impl Sequence {
         uids.extend_from_slice(&self.entries[..pos]);
         uids
     }
+    pub(crate) fn contains_entry(&self, id: entry::Id) -> bool {
+        self.entries.contains(&id)
+    }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    collection::Tags,
+    collection::{Sequences, Tags},
     db::{TagSet, Uid},
     entry,
     filter_spec::FilterSpec,
@@ -27,7 +27,13 @@ impl Entry {
             tags: Default::default(),
         }
     }
-    pub fn spec_satisfied(&self, spec: &FilterSpec, tags: &Tags) -> bool {
+    pub fn spec_satisfied(
+        &self,
+        id: Id,
+        spec: &FilterSpec,
+        tags: &Tags,
+        sequences: &Sequences,
+    ) -> bool {
         if !self
             .path
             .to_string_lossy()
@@ -47,6 +53,10 @@ impl Entry {
             }
         }
         if spec.doesnt_have_any_tags && !self.tags.is_empty() {
+            return false;
+        }
+        let part_of_seq = sequences.values().any(|seq| seq.contains_entry(id));
+        if (spec.part_of_seq && !part_of_seq) || (spec.not_part_of_seq && part_of_seq) {
             return false;
         }
         true
@@ -88,8 +98,9 @@ pub fn filter_map(
     entry: &Entry,
     spec: &FilterSpec,
     tags: &Tags,
+    sequences: &Sequences,
 ) -> Option<entry::Id> {
-    if entry.spec_satisfied(spec, tags) {
+    if entry.spec_satisfied(uid, spec, tags, sequences) {
         Some(uid)
     } else {
         None

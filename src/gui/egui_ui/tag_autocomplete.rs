@@ -103,16 +103,18 @@ pub(super) fn tag_autocomplete_popup(
             let mut complete = C::Nothing;
             popup_below_widget(ui, popup_id, response, |ui| {
                 if last.bytes().next() == Some(b':') {
-                    if ui
-                        .selectable_label(state.select == Some(0), ":no-tag")
-                        .clicked()
-                    {
-                        complete = C::Special(":no-tag");
-                    }
-                    if state.select == Some(0)
-                        && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
-                    {
-                        complete = C::Special(":no-tag");
+                    for (i, special) in [":no-tag", ":seq", ":no-seq"].into_iter().enumerate() {
+                        if ui
+                            .selectable_label(state.select == Some(i), special)
+                            .clicked()
+                        {
+                            complete = C::Special(special);
+                        }
+                        if state.select == Some(i)
+                            && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
+                        {
+                            complete = C::Special(special);
+                        }
                     }
                 } else {
                     for (i, (&id, tag)) in coll

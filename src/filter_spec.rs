@@ -12,6 +12,8 @@ pub struct FilterSpec {
     pub doesnt_have_tags: TagSet,
     pub filename_substring: String,
     pub doesnt_have_any_tags: bool,
+    pub part_of_seq: bool,
+    pub not_part_of_seq: bool,
 }
 
 #[derive(Error, Debug)]
@@ -34,6 +36,8 @@ impl FilterSpec {
         let mut neg_tags = TagSet::default();
         let mut fstring = String::new();
         let mut doesnt_have_any_tags = false;
+        let mut part_of_seq = false;
+        let mut not_part_of_seq = false;
         for word in words {
             let mut is_meta = false;
             if let Some(pos) = word.find(':') {
@@ -46,6 +50,14 @@ impl FilterSpec {
                     }
                     ("no-tag", _) | (_, "no-tag") => {
                         doesnt_have_any_tags = true;
+                        is_meta = true;
+                    }
+                    ("seq", _) | (_, "seq") => {
+                        part_of_seq = true;
+                        is_meta = true;
+                    }
+                    ("no-seq", _) | (_, "no-seq") => {
+                        not_part_of_seq = true;
                         is_meta = true;
                     }
                     _ => {}
@@ -77,6 +89,8 @@ impl FilterSpec {
             filename_substring: fstring,
             doesnt_have_tags: neg_tags,
             doesnt_have_any_tags,
+            part_of_seq,
+            not_part_of_seq,
         })
     }
     pub fn to_spec_string(&self, tags: &Tags) -> String {
