@@ -539,8 +539,13 @@ pub(super) fn do_frame(
                     ui.heading("Related sequences");
                     for seq_id in seqs {
                         let seq = &coll.sequences[&seq_id];
-                        ui.label(&seq.name);
-                        {}
+                        ui.horizontal(|ui| {
+                            ui.label(&seq.name);
+                            if ui.button("Select all").clicked() {
+                                state.selected_uids.clear();
+                                state.selected_uids.extend(&seq.entries);
+                            }
+                        });
                         ui.horizontal(|ui| {
                             ScrollArea::horizontal().show(ui, |ui| {
                                 for &img_id in seq.entries.iter() {
