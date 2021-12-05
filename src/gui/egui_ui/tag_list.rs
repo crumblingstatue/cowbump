@@ -1,7 +1,6 @@
 use std::mem;
 
 use egui::{Button, Color32, CtxRef, Grid, Key, ScrollArea, TextEdit};
-use retain_mut::RetainMut;
 
 use crate::{
     collection::Collection,

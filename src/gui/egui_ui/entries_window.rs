@@ -9,7 +9,6 @@ use egui::{
     vec2, Button, Color32, ImageButton, Key, Label, PointerButton, Rgba, ScrollArea, Sense,
     TextEdit, TextureId,
 };
-use retain_mut::RetainMut;
 use sfml::graphics::{RenderTarget, RenderWindow};
 
 use crate::{

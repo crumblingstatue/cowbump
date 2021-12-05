@@ -2,7 +2,6 @@ use egui::{
     Align, Button, Color32, CtxRef, DragValue, ImageButton, Key, ScrollArea, TextEdit, TextureId,
     Window,
 };
-use retain_mut::RetainMut;
 
 use crate::{
     collection::Collection,

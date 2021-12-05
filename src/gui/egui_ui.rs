@@ -18,7 +18,6 @@ use crate::{
     tag,
 };
 use egui::{Align2, Color32, CtxRef, TextEdit, Window};
-use retain_mut::RetainMut;
 use sfml::graphics::{RenderTarget, RenderWindow};
 
 use self::{
