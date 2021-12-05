@@ -35,6 +35,10 @@ pub(super) fn do_sequence_windows(
         }
         let mut action = Action::SwapLeft;
         let mut subject = None;
+        if egui_ctx.input().key_pressed(Key::Escape) {
+            open = false;
+            egui_state.just_closed_window_with_esc = true;
+        }
         Window::new(&format!("Sequence: {}", name))
             .hscroll(true)
             .min_width(3. * 256.)
