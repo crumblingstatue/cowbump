@@ -26,6 +26,7 @@ pub(super) fn do_frame(
         egui::menu::bar(ui, |ui| {
             ui.menu_button("File", |ui| {
                 if ui.button("🗁 Load folder").clicked() {
+                    ui.close_menu();
                     if let Some(dir_path) = FileDialog::new().pick_folder() {
                         if let Some(id) = app.database.find_collection_by_path(&dir_path) {
                             let changes = match app.load_collection(id) {
@@ -46,6 +47,7 @@ pub(super) fn do_frame(
                     }
                 }
                 if ui.button("↺ Reload folder").clicked() {
+                    ui.close_menu();
                     let changes = match app.reload_active_collection() {
                         Ok(changes) => changes,
                         Err(e) => {
