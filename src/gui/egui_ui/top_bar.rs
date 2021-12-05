@@ -296,7 +296,15 @@ pub(super) fn do_frame(
                     Label::new(format!("{} entries selected", n_selected))
                         .text_color(Color32::GREEN),
                 );
-                ui.add(Label::new("(Esc to deselect)").text_color(Color32::YELLOW));
+                if ui
+                    .add(
+                        Button::new("(Click here (or Esc) to deselect)")
+                            .text_color(Color32::YELLOW),
+                    )
+                    .clicked()
+                {
+                    state.selected_uids.clear();
+                }
             }
             ui.separator();
             ui.label("(F1 to toggle this panel)");
