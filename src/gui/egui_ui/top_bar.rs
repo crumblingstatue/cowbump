@@ -45,6 +45,18 @@ pub(super) fn do_frame(
                         }
                     }
                 }
+                if ui.button("↺ Reload folder").clicked() {
+                    let changes = match app.reload_active_collection() {
+                        Ok(changes) => changes,
+                        Err(e) => {
+                            result = Err(e);
+                            return;
+                        }
+                    };
+                    if !changes.empty() {
+                        egui_state.changes_window.open(changes);
+                    }
+                }
                 if ui
                     .add_enabled(
                         app.active_collection.is_some(),

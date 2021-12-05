@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::Context;
+use anyhow::{bail, Context};
 
 use crate::{
     collection::{self, Collection},
@@ -35,6 +35,13 @@ impl Application {
                 .with_context(|| format!("Loading collection {:?}", id))
         } else {
             Ok(FolderChanges::default())
+        }
+    }
+    pub(crate) fn reload_active_collection(&mut self) -> anyhow::Result<FolderChanges> {
+        if let Some((id, _)) = self.active_collection {
+            self.load_collection(id)
+        } else {
+            bail!("No active collection")
         }
     }
     pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<FolderChanges> {
