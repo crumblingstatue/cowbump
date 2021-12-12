@@ -549,6 +549,7 @@ pub(super) fn do_frame(
                             if ui.button("Select all").clicked() {
                                 state.selected_uids.clear();
                                 state.selected_uids.extend(&seq.entries);
+                                win.ids = state.selected_uids.clone();
                             }
                         });
                         ui.horizontal(|ui| {
