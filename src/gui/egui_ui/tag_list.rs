@@ -78,7 +78,9 @@ pub(super) fn do_frame(
                 }
             });
             if *new_tag_add_ref
-                && ui.text_edit_singleline(new_tag_buf_ref).lost_focus()
+                && ui
+                    .add(TextEdit::singleline(new_tag_buf_ref).hint_text("New tag"))
+                    .lost_focus()
                 && ui.input().key_pressed(Key::Enter)
             {
                 coll.add_new_tag_from_text(mem::take(new_tag_buf_ref), uid_counter);
@@ -212,7 +214,12 @@ pub(super) fn do_frame(
                                     *new_name_add_ref = true;
                                 }
                                 if *new_name_add_ref
-                                    && ui.text_edit_singleline(new_name_ref).lost_focus()
+                                    && ui
+                                        .add(
+                                            TextEdit::singleline(new_name_ref)
+                                                .hint_text("New alias"),
+                                        )
+                                        .lost_focus()
                                     && ui.input().key_pressed(Key::Enter)
                                 {
                                     tag.names.push(mem::take(new_name_ref));
@@ -238,7 +245,12 @@ pub(super) fn do_frame(
                                     *new_imply_add_ref = true;
                                 }
                                 if *new_imply_add_ref
-                                    && ui.text_edit_singleline(new_imply_ref).lost_focus()
+                                    && ui
+                                        .add(
+                                            TextEdit::singleline(new_imply_ref)
+                                                .hint_text("New implication"),
+                                        )
+                                        .lost_focus()
                                     && ui.input().key_pressed(Key::Enter)
                                 {
                                     if let Some(resolved_id) = coll.resolve_tag(new_imply_ref) {
