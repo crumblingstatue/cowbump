@@ -44,6 +44,7 @@ pub struct EntriesWindow {
     new_tags: Vec<String>,
     children: Vec<ChildWrapper>,
     ac_state: AcState,
+    window_id: u64,
 }
 
 struct ChildWrapper {
@@ -67,9 +68,10 @@ impl ChildWrapper {
 }
 
 impl EntriesWindow {
-    pub fn new(ids: Vec<entry::Id>) -> Self {
+    pub fn new(ids: Vec<entry::Id>, window_id: u64) -> Self {
         Self {
             ids,
+            window_id,
             ..Default::default()
         }
     }
@@ -180,6 +182,7 @@ pub(super) fn do_frame(
         let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
         let mut close = esc_pressed;
         egui::Window::new(title)
+            .id(egui::Id::new("en_window").with(win.window_id))
             .open(&mut open)
             .min_width(960.)
             .show(egui_ctx, |ui| {

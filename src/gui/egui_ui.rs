@@ -51,6 +51,8 @@ pub(crate) struct EguiState {
     pub search_edit: bool,
     search_string: String,
     pub filter_popup: FilterPopup,
+    /// Uid counter for egui entities like windows
+    egui_uid_counter: u64,
 }
 
 impl Default for EguiState {
@@ -72,6 +74,7 @@ impl Default for EguiState {
             search_edit: false,
             search_string: Default::default(),
             filter_popup: Default::default(),
+            egui_uid_counter: 0,
         }
     }
 }
@@ -285,6 +288,8 @@ fn prompt(
 
 impl EguiState {
     pub(crate) fn add_entries_window(&mut self, vec: Vec<entry::Id>) {
-        self.entries_windows.push(EntriesWindow::new(vec));
+        self.entries_windows
+            .push(EntriesWindow::new(vec, self.egui_uid_counter));
+        self.egui_uid_counter += 1;
     }
 }
