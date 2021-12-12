@@ -180,8 +180,8 @@ pub(super) fn do_sequences_window(
                     }
                 });
                 if seq_win.add_new {
-                    let line_edit =
-                        TextEdit::singleline(&mut seq_win.add_new_buffer).hint_text("Name");
+                    let line_edit = TextEdit::singleline(&mut seq_win.add_new_buffer)
+                        .hint_text("New sequence name");
                     let re = ui.add(line_edit);
                     if focus {
                         re.request_focus();
