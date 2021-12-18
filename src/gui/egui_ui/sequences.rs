@@ -147,6 +147,7 @@ pub(super) fn do_sequences_window(
     coll: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &CtxRef,
+    preferences: &mut Preferences,
 ) {
     let seq_win = &mut egui_state.sequences_window;
     if seq_win.on {
@@ -211,6 +212,11 @@ pub(super) fn do_sequences_window(
                             if seq_win.pick_mode && ui.button("✚ Add to this").clicked() {
                                 seq_win.pick_result = Some(uid);
                             }
+                            if ui.button("✏ Edit").clicked() {
+                                egui_state
+                                    .sequence_windows
+                                    .push(SequenceWindow::new(uid, None));
+                            }
                             let del_butt =
                                 Button::new("🗑 Delete").fill(Color32::from_rgb(130, 14, 14));
                             if ui.add(del_butt).clicked() {
@@ -222,9 +228,7 @@ pub(super) fn do_sequences_window(
                             for en in seq.entries.iter().take(7) {
                                 let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
                                 if ui.add(but).clicked() {
-                                    egui_state
-                                        .sequence_windows
-                                        .push(SequenceWindow::new(uid, Some(*en)));
+                                    open_sequence(seq, *en, &coll.entries, preferences)
                                 }
                             }
                         });

@@ -190,7 +190,13 @@ pub(super) fn do_ui(
             egui_ctx,
             &mut app.database.uid_counter,
         );
-        sequences::do_sequences_window(egui_state, coll, &mut app.database.uid_counter, egui_ctx);
+        sequences::do_sequences_window(
+            egui_state,
+            coll,
+            &mut app.database.uid_counter,
+            egui_ctx,
+            &mut app.database.preferences,
+        );
         sequences::do_sequence_windows(egui_state, coll, egui_ctx, &mut app.database.preferences);
         entries_window::do_frame(
             state,
