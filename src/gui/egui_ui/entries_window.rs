@@ -17,8 +17,8 @@ use crate::{
     entry,
     filter_spec::FilterSpec,
     gui::{
-        clamp_bottom, common_tags, entries_view::EntriesView, get_tex_for_entry, native_dialog,
-        open_sequence, open_with_external, Resources, State,
+        clamp_bottom, common_tags, entries_view::EntriesView, feed_args, get_tex_for_entry,
+        native_dialog, open_sequence, open_with_external, Resources, State,
     },
     tag,
 };
@@ -391,16 +391,7 @@ pub(super) fn do_frame(
                                 cmd.stdout(Stdio::piped());
                                 for uid in &win.ids {
                                     let en = &coll.entries[uid];
-                                    for arg in win.args_buffer.split_whitespace() {
-                                        if arg == "{}" {
-                                            cmd.arg(&en.path);
-                                        } else {
-                                            cmd.arg(arg);
-                                        }
-                                    }
-                                    if win.args_buffer.is_empty() {
-                                        cmd.arg(&en.path);
-                                    }
+                                    feed_args(&win.args_buffer, &[&en.path], &mut cmd);
                                 }
                                 match cmd.spawn() {
                                     Ok(child) => {

@@ -403,12 +403,26 @@ fn clamp_top(state: &mut State) {
     }
 }
 
+fn feed_args(args_string: &str, paths: &[&Path], command: &mut Command) {
+    if args_string.is_empty() {
+        command.args(paths);
+    } else {
+        args_string.split_whitespace().for_each(|word| {
+            if word == "{}" {
+                command.args(paths);
+            } else {
+                command.arg(word);
+            }
+        })
+    }
+}
+
 fn open_with_external(paths: &[&Path], preferences: &mut Preferences) -> anyhow::Result<()> {
     let built_tasks = build_tasks(paths, preferences)?;
     for task in built_tasks.tasks {
         let app = &preferences.applications[&task.app];
         let mut cmd = Command::new(&app.path);
-        cmd.args(task.args);
+        feed_args(&app.args_string, &task.args, &mut cmd);
         cmd.spawn()?;
     }
     if built_tasks.remainder.len() >= 5 {
