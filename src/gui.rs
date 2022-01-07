@@ -321,6 +321,9 @@ fn handle_event_viewer(
                     } else {
                         state.selected_uids.push(uid);
                     }
+                } else if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
+                    let seq = &coll.sequences[&seq_id];
+                    open_sequence(seq, uid, &coll.entries, preferences);
                 } else if let Err(e) = open_with_external(&[&coll.entries[&uid].path], preferences)
                 {
                     native_dialog::error("Failed to open file", e);
