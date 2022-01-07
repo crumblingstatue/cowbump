@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use egui::{Button, Color32, Label, ScrollArea, Window};
+use egui::{Color32, ImageButton, Label, ScrollArea, TextureId, Window};
 use fnv::FnvHashMap;
 use sfml::graphics::{RenderTarget, RenderWindow};
 
@@ -8,11 +8,16 @@ use crate::{db::FolderChanges, entry, gui::entries_view::EntriesView};
 
 use super::EguiState;
 
+struct AddedInfo {
+    id: entry::Id,
+    checked: bool,
+}
+
 #[derive(Default)]
 pub struct ChangesWindow {
     pub open: bool,
     changes: FolderChanges,
-    resolved: FnvHashMap<PathBuf, entry::Id>,
+    added: FnvHashMap<PathBuf, AddedInfo>,
     applied: bool,
 }
 
@@ -35,24 +40,40 @@ pub(super) fn do_frame(
             ui.horizontal(|ui| {
                 if !changes.add.is_empty() {
                     ui.vertical(|ui| {
-                        ui.set_width(400.);
-                        ui.set_height(600.);
+                        ui.set_width(800.);
+                        ui.set_height(720.);
                         ui.heading("Added");
                         ScrollArea::vertical()
                             .id_source("scroll_add")
                             .show(ui, |ui| {
                                 for add in &changes.add {
-                                    match win.resolved.get(add) {
-                                        Some(id) => {
-                                            let button =
-                                                Button::new(add.to_string_lossy().as_ref());
-                                            if ui.add(button).clicked() {
-                                                state.highlight_and_seek_to_entry(
-                                                    *id,
-                                                    rw.size().y,
-                                                    &app.active_collection.as_ref().unwrap().1,
+                                    match win.added.get_mut(add) {
+                                        Some(info) => {
+                                            ui.horizontal(|ui| {
+                                                let img_button = ImageButton::new(
+                                                    TextureId::User(info.id.0),
+                                                    (128.0, 128.0),
                                                 );
-                                            }
+                                                let re = ui.add(img_button);
+                                                if info.checked {
+                                                    ui.painter().rect_stroke(
+                                                        re.rect,
+                                                        1.0,
+                                                        (2.0, Color32::GREEN),
+                                                    );
+                                                }
+                                                if re.clicked() {
+                                                    state.highlight_and_seek_to_entry(
+                                                        info.id,
+                                                        rw.size().y,
+                                                        &app.active_collection.as_ref().unwrap().1,
+                                                    );
+                                                }
+                                                ui.checkbox(
+                                                    &mut info.checked,
+                                                    add.to_string_lossy().as_ref(),
+                                                );
+                                            });
                                         }
                                         None => {
                                             let label = Label::new(add.to_string_lossy().as_ref())
@@ -86,7 +107,8 @@ pub(super) fn do_frame(
                 if !win.applied {
                     if ui.button("Apply").clicked() {
                         app.apply_changes_to_active_collection(changes, |path, id| {
-                            win.resolved.insert(path.to_owned(), id);
+                            win.added
+                                .insert(path.to_owned(), AddedInfo { id, checked: false });
                         });
                         state.entries_view =
                             EntriesView::from_collection(app.active_collection().unwrap().1);
