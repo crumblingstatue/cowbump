@@ -265,6 +265,10 @@ pub(super) fn do_frame(
                     ui.close_menu();
                     egui_state.sequences_window.on ^= true;
                 }
+                if ui.button("Changes").clicked() {
+                    ui.close_menu();
+                    egui_state.changes_window.open ^= true;
+                }
             });
             ui.menu_button("Help", |ui| {
                 if ui.button("About").clicked() {

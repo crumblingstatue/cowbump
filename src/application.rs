@@ -5,7 +5,7 @@ use anyhow::{bail, Context};
 use crate::{
     collection::{self, Collection},
     db::{Db, FolderChanges},
-    serialization,
+    entry, serialization,
 };
 
 pub struct Application {
@@ -60,9 +60,13 @@ impl Application {
         self.active_collection.as_mut().map(|c| (c.0, &mut c.1))
     }
 
-    pub(crate) fn apply_changes_to_active_collection(&mut self, changes: &FolderChanges) {
+    pub(crate) fn apply_changes_to_active_collection(
+        &mut self,
+        changes: &FolderChanges,
+        callback: impl FnMut(&Path, entry::Id),
+    ) {
         if let Some((_id, coll)) = self.active_collection.as_mut() {
-            coll.apply_changes(changes, &mut self.database.uid_counter)
+            coll.apply_changes(changes, &mut self.database.uid_counter, callback)
         }
     }
     pub fn save_active_collection(&self) -> anyhow::Result<()> {

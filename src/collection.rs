@@ -207,9 +207,15 @@ impl Collection {
         Ok(FolderChanges { add, remove })
     }
 
-    pub(crate) fn apply_changes(&mut self, changes: &FolderChanges, uid_counter: &mut UidCounter) {
+    pub(crate) fn apply_changes(
+        &mut self,
+        changes: &FolderChanges,
+        uid_counter: &mut UidCounter,
+        mut callback: impl FnMut(&Path, entry::Id),
+    ) {
         for path in &changes.add {
-            self.add_new_entry(path.clone(), uid_counter);
+            let id = self.add_new_entry(path.clone(), uid_counter);
+            callback(path, id);
         }
         self.entries
             .retain(|_k, en| !changes.remove.contains(&en.path));
