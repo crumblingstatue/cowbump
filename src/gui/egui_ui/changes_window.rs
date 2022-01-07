@@ -35,7 +35,7 @@ pub(super) fn do_frame(
             ui.horizontal(|ui| {
                 if !changes.add.is_empty() {
                     ui.vertical(|ui| {
-                        ui.set_width(300.);
+                        ui.set_width(400.);
                         ui.set_height(600.);
                         ui.heading("Added");
                         ScrollArea::vertical()
