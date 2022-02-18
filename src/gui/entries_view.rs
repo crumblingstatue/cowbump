@@ -13,10 +13,25 @@ use super::{
     get_tex_for_entry, thumbnail_loader::ThumbnailLoader, Resources, State, ThumbnailCache,
 };
 
-#[derive(Default)]
 pub struct EntriesView {
     pub y_offset: f32,
+    pub sort_by: SortBy,
     uids: Vec<entry::Id>,
+}
+
+impl Default for EntriesView {
+    fn default() -> Self {
+        Self {
+            y_offset: Default::default(),
+            sort_by: SortBy::Path,
+            uids: Default::default(),
+        }
+    }
+}
+
+pub enum SortBy {
+    Path,
+    Id,
 }
 
 impl EntriesView {
@@ -25,12 +40,16 @@ impl EntriesView {
         let mut this = Self {
             uids,
             y_offset: 0.0,
+            sort_by: SortBy::Path,
         };
         this.sort(coll);
         this
     }
     pub fn sort(&mut self, coll: &Collection) {
-        self.uids.sort_by_key(|uid| &coll.entries[uid].path);
+        match self.sort_by {
+            SortBy::Id => self.uids.sort_by_key(|uid| uid.0),
+            SortBy::Path => self.uids.sort_by_key(|uid| &coll.entries[uid].path),
+        }
     }
     pub fn filter<'a>(
         &'a self,

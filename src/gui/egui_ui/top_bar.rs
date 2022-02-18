@@ -253,7 +253,14 @@ pub(super) fn do_frame(
                     .clicked()
                 {
                     ui.close_menu();
-                    egui_state.action = Some(Action::SortEntries);
+                    egui_state.action = Some(Action::SortByPath);
+                }
+                if ui
+                    .add_enabled(active_coll, Button::new("♻ Sort by id"))
+                    .clicked()
+                {
+                    ui.close_menu();
+                    egui_state.action = Some(Action::SortById);
                 }
             });
             ui.menu_button("Windows", |ui| {

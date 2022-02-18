@@ -5,7 +5,11 @@ pub mod native_dialog;
 mod thumbnail_loader;
 mod util;
 
-use self::{egui_ui::Action, entries_view::EntriesView, thumbnail_loader::ThumbnailLoader};
+use self::{
+    egui_ui::Action,
+    entries_view::{EntriesView, SortBy},
+    thumbnail_loader::ThumbnailLoader,
+};
 use crate::{
     application::Application,
     collection::{self, Collection, Entries},
@@ -174,7 +178,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     search_prev(&mut state, coll.as_mut().unwrap(), window.size().y)
                 }
                 Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
-                Action::SortEntries => state.entries_view.sort(coll.as_mut().unwrap()),
+                Action::SortByPath => {
+                    state.entries_view.sort_by = SortBy::Path;
+                    state.entries_view.sort(coll.as_mut().unwrap())
+                }
+                Action::SortById => {
+                    state.entries_view.sort_by = SortBy::Id;
+                    state.entries_view.sort(coll.as_mut().unwrap())
+                }
                 Action::OpenEntriesWindow => {
                     egui_state.add_entries_window(state.selected_uids.clone())
                 }

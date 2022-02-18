@@ -138,7 +138,8 @@ pub(crate) enum Action {
     SearchPrev,
     SelectAll,
     SelectNone,
-    SortEntries,
+    SortByPath,
+    SortById,
     OpenEntriesWindow,
 }
 
