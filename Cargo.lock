@@ -313,6 +313,7 @@ dependencies = [
  "fnv",
  "image",
  "open",
+ "recently_used_list",
  "rfd",
  "rmp-serde",
  "serde",
@@ -1080,6 +1081,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "recently_used_list"
+version = "0.1.0"
+source = "git+https://github.com/crumblingstatue/recently_used_list.git#249cc7f3032da3743569fee393fc7ffea8b22dc4"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1191,6 +1200,9 @@ name = "serde"
 version = "1.0.131"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4ad69dfbd3e45369132cc64e6748c2d65cdfb001a2b1c232d128b4ad60561c1"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"

@@ -7,10 +7,8 @@ use std::{
 use fnv::{FnvHashMap, FnvHashSet};
 use zip::{write::FileOptions, ZipArchive, ZipWriter};
 
-use crate::{
-    collection, entry, preferences::Preferences, recently_used_list::RecentlyUsedList,
-    serialization, tag,
-};
+use crate::{collection, entry, preferences::Preferences, serialization, tag};
+use recently_used_list::RecentlyUsedList;
 
 /// Unique identifier for entries/tags.
 ///

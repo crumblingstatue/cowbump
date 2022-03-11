@@ -34,6 +34,9 @@ branch = "egui-autocomplete"
 git = "https://github.com/crumblingstatue/egui.git"
 branch = "autocomplete"
 
+[dependencies.recently_used_list]
+git = "https://github.com/crumblingstatue/recently_used_list.git"
+
 [profile.release]
 codegen-units = 1
 panic = "abort"

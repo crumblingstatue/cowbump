@@ -75,7 +75,7 @@ pub(super) fn do_frame(
                     }
                     ui.close_menu();
                 }
-                ui.add_enabled_ui(app.database.recent.len() > 0, |ui| {
+                ui.add_enabled_ui(!app.database.recent.is_empty(), |ui| {
                     ui.menu_button("🕓 Recent", |ui| {
                         enum Action {
                             Open(collection::Id),

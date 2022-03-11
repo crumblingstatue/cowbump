@@ -61,7 +61,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    if app.database.preferences.open_last_coll_at_start && app.database.recent.len() > 0 {
+    if app.database.preferences.open_last_coll_at_start && !app.database.recent.is_empty() {
         match app.load_last() {
             Ok(changes) => {
                 if !changes.empty() {
