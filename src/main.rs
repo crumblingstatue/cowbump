@@ -1,4 +1,4 @@
-#![feature(try_blocks, bool_to_option, decl_macro, vec_retain_mut)]
+#![feature(try_blocks, bool_to_option, decl_macro)]
 #![windows_subsystem = "windows"]
 
 mod application;
