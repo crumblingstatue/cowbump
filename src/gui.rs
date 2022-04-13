@@ -299,11 +299,16 @@ fn entry_at_xy(
     state: &State,
     on_screen_entries: &[entry::Id],
 ) -> Option<entry::Id> {
+    let thumb_index = thumb_index_at_xy(x, y, state);
+    on_screen_entries.get(thumb_index).copied()
+}
+
+fn thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
     let thumb_x = x as u32 / state.thumbnail_size;
     let rel_offset = state.entries_view.y_offset as u32 % state.thumbnail_size;
     let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
     let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
-    on_screen_entries.get(thumb_index as usize).copied()
+    thumb_index as usize
 }
 
 fn handle_event_viewer(
@@ -331,6 +336,17 @@ fn handle_event_viewer(
                         state.selected_uids.retain(|&rhs| rhs != uid);
                     } else {
                         state.selected_uids.push(uid);
+                    }
+                } else if Key::LControl.is_pressed() {
+                    let thumb_idx = thumb_index_at_xy(x, y, state);
+                    match state.select_begin {
+                        Some(begin) => {
+                            for id in on_screen_entries.iter().skip(begin).take(thumb_idx + 1) {
+                                state.selected_uids.push(*id);
+                            }
+                            state.select_begin = None;
+                        }
+                        None => state.select_begin = Some(thumb_idx),
                     }
                 } else if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
                     let seq = &coll.sequences[&seq_id];
@@ -642,6 +658,8 @@ struct State {
     clipboard_ctx: Clipboard,
     entries_view: EntriesView,
     selected_uids: Vec<entry::Id>,
+    /// For batch select, this marks the beginning
+    select_begin: Option<usize>,
 }
 
 fn set_active_collection(
@@ -722,6 +740,7 @@ impl State {
             entries_view: EntriesView::default(),
             search_spec: FilterSpec::default(),
             selected_uids: Default::default(),
+            select_begin: None,
         }
     }
     fn wipe_search(&mut self) {
