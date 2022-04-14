@@ -260,6 +260,9 @@ pub(super) fn do_frame(
                                             .unwrap()
                                             .tags
                                             .retain(|&t| t != tagid);
+                                        state
+                                            .entries_view
+                                            .update_from_collection(coll, &state.filter);
                                     }
                                 } else {
                                     ui.add(tag(
