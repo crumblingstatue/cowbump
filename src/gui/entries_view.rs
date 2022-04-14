@@ -95,9 +95,16 @@ pub(super) fn draw_thumbnails(
         .write_to_cache(&mut state.thumbnail_cache);
     let mut sprite = Sprite::new();
     let (skip, take) = thumbs_skip_take(state, window.size().y);
-    for (i, uid) in state.entries_view.iter().skip(skip).take(take).enumerate() {
-        let column = (i as u32) % state.thumbnails_per_row as u32;
-        let row = (i as u32) / state.thumbnails_per_row as u32;
+    for (rel_idx, (abs_idx, uid)) in state
+        .entries_view
+        .iter()
+        .enumerate()
+        .skip(skip)
+        .take(take)
+        .enumerate()
+    {
+        let column = (rel_idx as u32) % state.thumbnails_per_row as u32;
+        let row = (rel_idx as u32) / state.thumbnails_per_row as u32;
         let x = (column * thumb_size) as f32;
         let y = (row * thumb_size) as f32 - (state.entries_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
@@ -126,6 +133,11 @@ pub(super) fn draw_thumbnails(
             rs.set_outline_color(Color::rgb(200, 200, 0));
             rs.set_outline_thickness(-2.0);
             window.draw(&rs);
+        }
+        if let Some(idx) = state.select_begin && idx == abs_idx {
+            let mut s = Sprite::with_texture(&res.sel_begin_texture);
+            s.set_position((x, y));
+            window.draw(&s);
         }
     }
 }

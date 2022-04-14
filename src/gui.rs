@@ -594,6 +594,7 @@ type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;
 struct Resources {
     loading_texture: SfBox<Texture>,
     error_texture: SfBox<Texture>,
+    sel_begin_texture: SfBox<Texture>,
     font: SfBox<Font>,
 }
 
@@ -601,13 +602,17 @@ impl Resources {
     pub fn load() -> anyhow::Result<Self> {
         let mut loading_texture = Texture::new().context("texture create error")?;
         let mut error_texture = Texture::new().context("texture create error")?;
+        let mut sel_begin_texture = Texture::new().context("texture create error")?;
         let font =
             Font::from_memory(include_bytes!("../Vera.ttf")).context("failed to load font")?;
         loading_texture.load_from_memory(include_bytes!("../loading.png"), IntRect::default())?;
         error_texture.load_from_memory(include_bytes!("../error.png"), IntRect::default())?;
+        sel_begin_texture
+            .load_from_memory(include_bytes!("../select_begin.png"), IntRect::default())?;
         Ok(Self {
             loading_texture,
             error_texture,
+            sel_begin_texture,
             font,
         })
     }
