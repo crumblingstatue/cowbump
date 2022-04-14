@@ -46,7 +46,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let res = Resources::load()?;
     let mut state = State::new(window.size().x);
     let mut egui_state = EguiState::default();
-    let mut on_screen_uids: Vec<entry::Id> = Vec::new();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
     let egui_ctx = sf_egui.context();
@@ -139,7 +138,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     event,
                     &mut state,
                     &mut egui_state,
-                    &on_screen_uids,
                     coll,
                     &window,
                     sf_egui.context(),
@@ -195,12 +193,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
             }
         }
-        recalc_on_screen_items(
-            &mut on_screen_uids,
-            &state.entries_view,
-            &state,
-            window.size().y,
-        );
         window.clear(Color::BLACK);
         match &mut coll {
             Some(db) => {
@@ -209,7 +201,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &res,
                     &mut window,
                     db,
-                    &on_screen_uids,
                     load_anim_rotation,
                     !sf_egui.context().wants_pointer_input(),
                 );
@@ -294,25 +285,9 @@ fn common_tags(ids: &[entry::Id], coll: &Collection) -> TagSet {
     set
 }
 
-fn entry_at_xy(
-    x: i32,
-    y: i32,
-    state: &State,
-    on_screen_entries: &[entry::Id],
-) -> Option<entry::Id> {
-    let thumb_index = rel_thumb_index_at_xy(x, y, state);
-    on_screen_entries.get(thumb_index).copied()
-}
-
-/// Returns the relative thumb index at (x,y) on the screen
-///
-/// This is relative, so the top left image index is always 0, etc.
-fn rel_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
-    let thumb_x = x as u32 / state.thumbnail_size;
-    let rel_offset = state.entries_view.y_offset as u32 % state.thumbnail_size;
-    let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
-    let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
-    thumb_index as usize
+fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
+    let thumb_index = abs_thumb_index_at_xy(x, y, state);
+    state.entries_view.get(thumb_index)
 }
 
 /// Returns the absolute thumb index at (x,y) on the screen
@@ -330,7 +305,6 @@ fn handle_event_viewer(
     event: Event,
     state: &mut State,
     egui_state: &mut EguiState,
-    on_screen_entries: &[entry::Id],
     coll: &mut Collection,
     window: &RenderWindow,
     egui_ctx: &CtxRef,
@@ -341,7 +315,7 @@ fn handle_event_viewer(
             if egui_ctx.wants_pointer_input() {
                 return;
             }
-            let uid = match entry_at_xy(x, y, state, on_screen_entries) {
+            let uid = match entry_at_xy(x, y, state) {
                 Some(uid) => uid,
                 None => return,
             };
@@ -420,7 +394,7 @@ fn handle_event_viewer(
                 egui_state.filter_popup.on = true;
             } else if code == Key::C {
                 let mp = window.mouse_position();
-                let uid = match entry_at_xy(mp.x, mp.y, state, on_screen_entries) {
+                let uid = match entry_at_xy(mp.x, mp.y, state) {
                     Some(uid) => uid,
                     None => return,
                 };
@@ -613,32 +587,6 @@ fn search_goto_cursor(state: &mut State, coll: &Collection, view_height: u32) {
     } else {
         state.search_success = false;
     }
-}
-
-fn recalc_on_screen_items(
-    uids: &mut Vec<entry::Id>,
-    entries_view: &EntriesView,
-    state: &State,
-    window_height: u32,
-) {
-    uids.clear();
-    let thumb_size = state.thumbnail_size;
-    let mut thumbnails_per_column = (window_height / thumb_size) as u8;
-    // Compensate for truncating division
-    if window_height % thumb_size != 0 {
-        thumbnails_per_column += 1;
-    }
-    // Since we can scroll, we can have another partially drawn frame per screen
-    thumbnails_per_column += 1;
-    let thumbnails_per_screen = (state.thumbnails_per_row * thumbnails_per_column) as usize;
-    let row_offset = state.entries_view.y_offset as u32 / thumb_size;
-    let skip = row_offset * state.thumbnails_per_row as u32;
-    uids.extend(
-        entries_view
-            .iter()
-            .skip(skip as usize)
-            .take(thumbnails_per_screen),
-    );
 }
 
 type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;
