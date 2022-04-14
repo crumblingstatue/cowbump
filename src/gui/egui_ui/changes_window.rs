@@ -66,7 +66,6 @@ pub(super) fn do_frame(
                                                     state.highlight_and_seek_to_entry(
                                                         info.id,
                                                         rw.size().y,
-                                                        &app.active_collection.as_ref().unwrap().1,
                                                     );
                                                 }
                                                 ui.checkbox(
@@ -110,8 +109,10 @@ pub(super) fn do_frame(
                             win.added
                                 .insert(path.to_owned(), AddedInfo { id, checked: false });
                         });
-                        state.entries_view =
-                            EntriesView::from_collection(app.active_collection().unwrap().1);
+                        state.entries_view = EntriesView::from_collection(
+                            app.active_collection().unwrap().1,
+                            &state.filter,
+                        );
                         win.applied = true;
                     }
                     if ui.button("Ignore").clicked() {

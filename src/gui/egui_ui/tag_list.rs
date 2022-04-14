@@ -48,6 +48,7 @@ pub(super) fn do_frame(
     let mut close = false;
     let close_ref = &mut close;
     let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
+    let entries_view_ref = &mut state.entries_view;
     let filter_string_ref = &mut egui_state.filter_popup.string;
     let filter_spec_ref = &mut state.filter;
     let selected_uids = &mut egui_state.tag_window.selected_uids;
@@ -72,6 +73,7 @@ pub(super) fn do_frame(
                 }
                 if ui.button("Clear tags").clicked() {
                     filter_spec_ref.clear();
+                    entries_view_ref.update_from_collection(coll, filter_spec_ref);
                 }
                 if ui.button("Add new tag").clicked() {
                     *new_tag_add_ref ^= true;
@@ -99,11 +101,10 @@ pub(super) fn do_frame(
                             .striped(true)
                             .num_columns(4)
                             .show(ui, |ui| {
-                                let tags = &mut coll.tags;
-                                let mut uids: Vec<tag::Id> = tags.keys().cloned().collect();
-                                uids.sort_by_key(|uid| &tags[uid].names[0]);
+                                let mut uids: Vec<tag::Id> = coll.tags.keys().cloned().collect();
+                                uids.sort_by_key(|uid| &coll.tags[uid].names[0]);
                                 for tag_uid in &uids {
-                                    let tag = &tags[tag_uid];
+                                    let tag = &coll.tags[tag_uid];
                                     let name = &tag.names[0];
                                     if !name.contains(&tag_filter_string_ref[..]) {
                                         continue;
@@ -152,7 +153,10 @@ pub(super) fn do_frame(
                                     }
                                     ui.end_row();
                                     if clicked_any {
-                                        *filter_string_ref = filter_spec_ref.to_spec_string(tags);
+                                        *filter_string_ref =
+                                            filter_spec_ref.to_spec_string(&coll.tags);
+                                        entries_view_ref
+                                            .update_from_collection(coll, filter_spec_ref);
                                     }
                                 }
                             });

@@ -182,7 +182,10 @@ pub(super) fn do_ui(
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         do_search_edit(state, egui_state, egui_ctx, coll, win);
         if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
-            crate::gui::clamp_bottom(win, state, coll);
+            state
+                .entries_view
+                .update_from_collection(coll, &state.filter);
+            crate::gui::clamp_bottom(win, state);
         }
         tag_list::do_frame(
             state,

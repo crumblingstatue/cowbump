@@ -35,17 +35,29 @@ pub enum SortBy {
 }
 
 impl EntriesView {
-    pub fn from_collection(coll: &Collection) -> Self {
+    pub fn from_collection(coll: &Collection, filter_spec: &FilterSpec) -> Self {
         let mut this = Self {
             uids: Vec::new(),
             y_offset: 0.0,
             sort_by: SortBy::Path,
         };
-        this.update_from_collection(coll);
+        this.update_from_collection(coll, filter_spec);
         this
     }
-    pub fn update_from_collection(&mut self, coll: &Collection) {
-        self.uids = coll.entries.keys().cloned().collect();
+    pub fn update_from_collection(&mut self, coll: &Collection, filter_spec: &FilterSpec) {
+        self.uids = coll
+            .entries
+            .keys()
+            .filter_map(|uid| {
+                crate::entry::filter_map(
+                    *uid,
+                    &coll.entries[uid],
+                    filter_spec,
+                    &coll.tags,
+                    &coll.sequences,
+                )
+            })
+            .collect();
         self.sort(coll);
     }
     fn sort(&mut self, coll: &Collection) {
@@ -54,22 +66,11 @@ impl EntriesView {
             SortBy::Path => self.uids.sort_by_key(|uid| &coll.entries[uid].path),
         }
     }
-    pub fn filter<'a>(
-        &'a self,
-        coll: &'a Collection,
-        spec: &'a FilterSpec,
-    ) -> impl Iterator<Item = entry::Id> + 'a {
-        self.uids.iter().filter_map(|uid| {
-            crate::entry::filter_map(*uid, &coll.entries[uid], spec, &coll.tags, &coll.sequences)
-        })
+    pub fn iter(&self) -> impl Iterator<Item = entry::Id> + '_ {
+        self.uids.iter().cloned()
     }
-    pub fn entry_position(
-        &self,
-        id: entry::Id,
-        coll: &Collection,
-        spec: &FilterSpec,
-    ) -> Option<usize> {
-        self.filter(coll, spec).position(|id2| id2 == id)
+    pub fn entry_position(&self, id: entry::Id) -> Option<usize> {
+        self.iter().position(|id2| id2 == id)
     }
 }
 

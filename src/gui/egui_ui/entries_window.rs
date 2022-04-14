@@ -86,6 +86,7 @@ fn tag_ui(
     coll: &Collection,
     filter_string: &mut String,
     changed_filter: &mut bool,
+    entries_view: &mut EntriesView,
 ) -> egui::Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
@@ -101,11 +102,13 @@ fn tag_ui(
                 filter.set_doesnt_have(id, false);
                 *filter_string = filter.to_spec_string(&coll.tags);
                 *changed_filter = true;
+                entries_view.update_from_collection(coll, filter);
             } else if re.clicked_by(PointerButton::Secondary) {
                 filter.toggle_doesnt_have(id);
                 filter.set_has(id, false);
                 *filter_string = filter.to_spec_string(&coll.tags);
                 *changed_filter = true;
+                entries_view.update_from_collection(coll, filter);
             }
             if let Some(del) = del {
                 if ui.button("x").clicked() {
@@ -125,6 +128,7 @@ fn tag<'a>(
     coll: &'a Collection,
     filter_string: &'a mut String,
     changed_filter: &'a mut bool,
+    entries_view: &'a mut EntriesView,
 ) -> impl egui::Widget + 'a {
     move |ui: &mut egui::Ui| {
         tag_ui(
@@ -136,6 +140,7 @@ fn tag<'a>(
             coll,
             filter_string,
             changed_filter,
+            entries_view,
         )
     }
 }
@@ -216,7 +221,7 @@ pub(super) fn do_frame(
                             if ui
                                 .add(ImageButton::new(TextureId::User(id.0), (w, h)))
                                 .clicked()
-                                && !state.highlight_and_seek_to_entry(id, rend_win.size().y, coll)
+                                && !state.highlight_and_seek_to_entry(id, rend_win.size().y)
                             {
                                 // Can't find in view, open it in external instead
                                 let paths = [&*coll.entries[&id].path];
@@ -246,6 +251,7 @@ pub(super) fn do_frame(
                                         coll,
                                         &mut egui_state.filter_popup.string,
                                         &mut changed_filter,
+                                        &mut state.entries_view,
                                     ));
                                     if del {
                                         // TODO: This only works for 1 item windows
@@ -264,10 +270,11 @@ pub(super) fn do_frame(
                                         coll,
                                         &mut egui_state.filter_popup.string,
                                         &mut changed_filter,
+                                        &mut state.entries_view,
                                     ));
                                 }
                                 if changed_filter {
-                                    clamp_bottom(rend_win, state, coll);
+                                    clamp_bottom(rend_win, state);
                                 }
                             }
                         });
@@ -510,9 +517,12 @@ pub(super) fn do_frame(
                             ui.label(&label_string);
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                                    if let Err(e) =
-                                        remove_entries(&mut state.entries_view, del_uids, coll)
-                                    {
+                                    if let Err(e) = remove_entries(
+                                        &mut state.entries_view,
+                                        del_uids,
+                                        coll,
+                                        &state.filter,
+                                    ) {
                                         native_dialog::error("Error deleting entries", e);
                                     }
                                     win.delete_confirm = false;
@@ -577,11 +587,12 @@ fn remove_entries(
     view: &mut EntriesView,
     entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
+    filter_spec: &FilterSpec,
 ) -> anyhow::Result<()> {
     for uid in entries.drain(..) {
         let path = &coll.entries[&uid].path;
         std::fs::remove_file(path)?;
-        view.update_from_collection(coll);
+        view.update_from_collection(coll, filter_spec);
         coll.entries.remove(&uid);
     }
     Ok(())

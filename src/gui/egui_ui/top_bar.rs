@@ -39,8 +39,13 @@ pub(super) fn do_frame(
                             if !changes.empty() {
                                 egui_state.changes_window.open(changes);
                             }
-                            crate::gui::set_active_collection(&mut state.entries_view, app, id)
-                                .unwrap();
+                            crate::gui::set_active_collection(
+                                &mut state.entries_view,
+                                app,
+                                id,
+                                &state.filter,
+                            )
+                            .unwrap();
                         } else {
                             load_folder_window::open(&mut egui_state.load_folder_window, dir_path);
                         }
@@ -110,6 +115,7 @@ pub(super) fn do_frame(
                                         &mut state.entries_view,
                                         app,
                                         id,
+                                        &state.filter,
                                     );
                                 }
                                 Err(e) => {

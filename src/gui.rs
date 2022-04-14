@@ -68,7 +68,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     egui_state.changes_window.open(changes);
                 }
                 let coll = app.active_collection.as_ref().unwrap();
-                state.entries_view = EntriesView::from_collection(&coll.1);
+                state.entries_view = EntriesView::from_collection(&coll.1, &state.filter);
                 let root_path = &app.database.collections[&coll.0];
                 std::env::set_current_dir(root_path)?;
             }
@@ -84,8 +84,8 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             let scroll_speed = app.database.preferences.arrow_key_scroll_speed;
             if Key::Down.is_pressed() {
                 state.entries_view.y_offset += scroll_speed;
-                if let Some((_id, coll)) = &app.active_collection {
-                    clamp_bottom(&window, &mut state, coll);
+                if app.active_collection.is_some() {
+                    clamp_bottom(&window, &mut state);
                 }
             } else if Key::Up.is_pressed() {
                 state.entries_view.y_offset -= scroll_speed;
@@ -112,13 +112,13 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             }
                         }
                         Key::End => {
-                            if let Some((_id, coll)) = &mut app.active_collection {
-                                if !sf_egui.context().wants_keyboard_input() {
-                                    // Align the bottom edge of the view with the bottom edge of the last row.
-                                    // To do align the camera with a bottom edge, we need to subtract the screen
-                                    // height from it.
-                                    go_to_bottom(&window, &mut state, coll);
-                                }
+                            if app.active_collection.is_some()
+                                && !sf_egui.context().wants_keyboard_input()
+                            {
+                                // Align the bottom edge of the view with the bottom edge of the last row.
+                                // To do align the camera with a bottom edge, we need to subtract the screen
+                                // height from it.
+                                go_to_bottom(&window, &mut state);
                             }
                         }
                         Key::F1 => egui_state.top_bar ^= true,
@@ -182,28 +182,25 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     state.entries_view.sort_by = SortBy::Path;
                     state
                         .entries_view
-                        .update_from_collection(coll.as_ref().unwrap())
+                        .update_from_collection(coll.as_ref().unwrap(), &state.filter)
                 }
                 Action::SortById => {
                     state.entries_view.sort_by = SortBy::Id;
                     state
                         .entries_view
-                        .update_from_collection(coll.as_ref().unwrap())
+                        .update_from_collection(coll.as_ref().unwrap(), &state.filter)
                 }
                 Action::OpenEntriesWindow => {
                     egui_state.add_entries_window(state.selected_uids.clone())
                 }
             }
         }
-        if let Some(coll) = &mut coll {
-            recalc_on_screen_items(
-                &mut on_screen_uids,
-                coll,
-                &state.entries_view,
-                &state,
-                window.size().y,
-            );
-        }
+        recalc_on_screen_items(
+            &mut on_screen_uids,
+            &state.entries_view,
+            &state,
+            window.size().y,
+        );
         window.clear(Color::BLACK);
         match &mut coll {
             Some(db) => {
@@ -262,19 +259,19 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn go_to_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
-    state.entries_view.y_offset = find_bottom(state, coll, window);
+fn go_to_bottom(window: &RenderWindow, state: &mut State) {
+    state.entries_view.y_offset = find_bottom(state, window);
 }
 
-fn clamp_bottom(window: &RenderWindow, state: &mut State, coll: &Collection) {
-    let bottom = find_bottom(state, coll, window);
+fn clamp_bottom(window: &RenderWindow, state: &mut State) {
+    let bottom = find_bottom(state, window);
     if state.entries_view.y_offset > bottom {
         state.entries_view.y_offset = bottom;
     }
 }
 
-fn find_bottom(state: &State, coll: &Collection, window: &RenderWindow) -> f32 {
-    let n_pics = state.entries_view.filter(coll, &state.filter).count();
+fn find_bottom(state: &State, window: &RenderWindow) -> f32 {
+    let n_pics = state.entries_view.iter().count();
     let mut rows = n_pics as u32 / state.thumbnails_per_row as u32;
     if n_pics as u32 % state.thumbnails_per_row as u32 != 0 {
         rows += 1;
@@ -374,7 +371,7 @@ fn handle_event_viewer(
             }
             if code == Key::PageDown {
                 state.entries_view.y_offset += window.size().y as f32;
-                clamp_bottom(window, state, coll);
+                clamp_bottom(window, state);
             } else if code == Key::PageUp {
                 state.entries_view.y_offset -= window.size().y as f32;
                 clamp_top(state);
@@ -416,7 +413,9 @@ fn handle_event_viewer(
             } else if code == Key::Q {
                 egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
-                state.entries_view.update_from_collection(coll);
+                state
+                    .entries_view
+                    .update_from_collection(coll, &state.filter);
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
@@ -424,7 +423,7 @@ fn handle_event_viewer(
             if delta > 0.0 {
                 clamp_top(state);
             } else {
-                clamp_bottom(window, state, coll);
+                clamp_bottom(window, state);
             }
         }
         _ => {}
@@ -577,7 +576,7 @@ pub(crate) fn open_sequence(
 fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
     state
         .entries_view
-        .filter(coll, &state.filter)
+        .iter()
         .enumerate()
         .filter(|(_, uid)| {
             let en = &coll.entries[uid];
@@ -599,7 +598,6 @@ fn search_goto_cursor(state: &mut State, coll: &Collection, view_height: u32) {
 
 fn recalc_on_screen_items(
     uids: &mut Vec<entry::Id>,
-    coll: &Collection,
     entries_view: &EntriesView,
     state: &State,
     window_height: u32,
@@ -618,7 +616,7 @@ fn recalc_on_screen_items(
     let skip = row_offset * state.thumbnails_per_row as u32;
     uids.extend(
         entries_view
-            .filter(coll, &state.filter)
+            .iter()
             .skip(skip as usize)
             .take(thumbnails_per_screen),
     );
@@ -670,9 +668,11 @@ fn set_active_collection(
     entries_view: &mut EntriesView,
     app: &mut Application,
     id: collection::Id,
+    filter_spec: &FilterSpec,
 ) -> anyhow::Result<()> {
     app.save_active_collection()?;
-    *entries_view = EntriesView::from_collection(app.active_collection().as_ref().unwrap().1);
+    *entries_view =
+        EntriesView::from_collection(app.active_collection().as_ref().unwrap().1, filter_spec);
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
 }
@@ -774,13 +774,8 @@ impl State {
         let pixel_x = col * self.thumbnail_size;
         (pixel_x, pixel_y)
     }
-    fn highlight_and_seek_to_entry(
-        &mut self,
-        id: entry::Id,
-        height: u32,
-        coll: &Collection,
-    ) -> bool {
-        match self.entries_view.entry_position(id, coll, &self.filter) {
+    fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
+        match self.entries_view.entry_position(id) {
             Some(idx) => {
                 self.highlight = Some(idx as u32);
                 self.seek_view_to_contain_index(idx, height);
