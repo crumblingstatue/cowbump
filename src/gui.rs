@@ -300,14 +300,28 @@ fn entry_at_xy(
     state: &State,
     on_screen_entries: &[entry::Id],
 ) -> Option<entry::Id> {
-    let thumb_index = thumb_index_at_xy(x, y, state);
+    let thumb_index = rel_thumb_index_at_xy(x, y, state);
     on_screen_entries.get(thumb_index).copied()
 }
 
-fn thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
+/// Returns the relative thumb index at (x,y) on the screen
+///
+/// This is relative, so the top left image index is always 0, etc.
+fn rel_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
     let thumb_x = x as u32 / state.thumbnail_size;
     let rel_offset = state.entries_view.y_offset as u32 % state.thumbnail_size;
     let thumb_y = (y as u32 + rel_offset) / state.thumbnail_size;
+    let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
+    thumb_index as usize
+}
+
+/// Returns the absolute thumb index at (x,y) on the screen
+///
+/// This is absolute, so the top left image on the screen could have a different index
+/// based on the scroll y offset
+fn abs_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
+    let thumb_x = x as u32 / state.thumbnail_size;
+    let thumb_y = (y as u32 + state.entries_view.y_offset as u32) / state.thumbnail_size;
     let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
     thumb_index as usize
 }
@@ -339,11 +353,16 @@ fn handle_event_viewer(
                         state.selected_uids.push(uid);
                     }
                 } else if Key::LControl.is_pressed() {
-                    let thumb_idx = thumb_index_at_xy(x, y, state);
+                    let thumb_idx = abs_thumb_index_at_xy(x, y, state);
                     match state.select_begin {
                         Some(begin) => {
-                            for id in on_screen_entries.iter().skip(begin).take(thumb_idx + 1) {
-                                state.selected_uids.push(*id);
+                            for id in state
+                                .entries_view
+                                .iter()
+                                .skip(begin)
+                                .take((thumb_idx + 1) - begin)
+                            {
+                                state.selected_uids.push(id);
                             }
                             state.select_begin = None;
                         }
