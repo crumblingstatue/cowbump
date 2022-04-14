@@ -45,19 +45,7 @@ impl EntriesView {
         this
     }
     pub fn update_from_collection(&mut self, coll: &Collection, filter_spec: &FilterSpec) {
-        self.uids = coll
-            .entries
-            .keys()
-            .filter_map(|uid| {
-                crate::entry::filter_map(
-                    *uid,
-                    &coll.entries[uid],
-                    filter_spec,
-                    &coll.tags,
-                    &coll.sequences,
-                )
-            })
-            .collect();
+        self.uids = coll.filter(filter_spec).collect();
         self.sort(coll);
     }
     fn sort(&mut self, coll: &Collection) {
