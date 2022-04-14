@@ -180,11 +180,15 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
                 Action::SortByPath => {
                     state.entries_view.sort_by = SortBy::Path;
-                    state.entries_view.sort(coll.as_mut().unwrap())
+                    state
+                        .entries_view
+                        .update_from_collection(coll.as_ref().unwrap())
                 }
                 Action::SortById => {
                     state.entries_view.sort_by = SortBy::Id;
-                    state.entries_view.sort(coll.as_mut().unwrap())
+                    state
+                        .entries_view
+                        .update_from_collection(coll.as_ref().unwrap())
                 }
                 Action::OpenEntriesWindow => {
                     egui_state.add_entries_window(state.selected_uids.clone())
@@ -412,7 +416,7 @@ fn handle_event_viewer(
             } else if code == Key::Q {
                 egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
-                state.entries_view.sort(coll);
+                state.entries_view.update_from_collection(coll);
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {

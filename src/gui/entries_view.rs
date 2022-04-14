@@ -36,16 +36,19 @@ pub enum SortBy {
 
 impl EntriesView {
     pub fn from_collection(coll: &Collection) -> Self {
-        let uids: Vec<entry::Id> = coll.entries.keys().cloned().collect();
         let mut this = Self {
-            uids,
+            uids: Vec::new(),
             y_offset: 0.0,
             sort_by: SortBy::Path,
         };
-        this.sort(coll);
+        this.update_from_collection(coll);
         this
     }
-    pub fn sort(&mut self, coll: &Collection) {
+    pub fn update_from_collection(&mut self, coll: &Collection) {
+        self.uids = coll.entries.keys().cloned().collect();
+        self.sort(coll);
+    }
+    fn sort(&mut self, coll: &Collection) {
         match self.sort_by {
             SortBy::Id => self.uids.sort_by_key(|uid| uid.0),
             SortBy::Path => self.uids.sort_by_key(|uid| &coll.entries[uid].path),
@@ -59,10 +62,6 @@ impl EntriesView {
         self.uids.iter().filter_map(|uid| {
             crate::entry::filter_map(*uid, &coll.entries[uid], spec, &coll.tags, &coll.sequences)
         })
-    }
-    /// Delete `uid` from the list.
-    pub fn delete(&mut self, uid: entry::Id) {
-        self.uids.retain(|&rhs| uid != rhs);
     }
     pub fn entry_position(
         &self,

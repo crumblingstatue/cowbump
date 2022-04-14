@@ -581,7 +581,7 @@ fn remove_entries(
     for uid in entries.drain(..) {
         let path = &coll.entries[&uid].path;
         std::fs::remove_file(path)?;
-        view.delete(uid);
+        view.update_from_collection(coll);
         coll.entries.remove(&uid);
     }
     Ok(())
