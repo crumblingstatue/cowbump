@@ -28,7 +28,8 @@ pub(super) fn do_frame(
     coll: &mut Collection,
 ) -> bool {
     let popup = &mut egui_state.filter_popup;
-    let mut filter_changed = false;
+    let mut text_changed = false;
+    let mut success = false;
     if popup.on {
         egui::Window::new("Filter")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
@@ -61,14 +62,18 @@ pub(super) fn do_frame(
                         &re,
                     ) {
                         state.wipe_search();
-                        filter_changed = true;
+                        text_changed = true;
                     }
                     ui.label(&format!("{} results", count));
                     popup.string.make_ascii_lowercase();
                     match FilterSpec::parse_and_resolve(&popup.string, coll) {
-                        Ok(spec) => state.filter = spec,
+                        Ok(spec) => {
+                            state.filter = spec;
+                            success = true;
+                        }
                         Err(e) => {
                             err = Some(format!("Error: {}", e));
+                            success = false;
                         }
                     };
                     if input.key_pressed(Key::Enter) || input.key_pressed(Key::Escape) {
@@ -77,7 +82,7 @@ pub(super) fn do_frame(
                     if re.changed() {
                         popup.ac_state.input_changed = true;
                         state.wipe_search();
-                        filter_changed = true;
+                        text_changed = true;
                     }
                     ui.memory().request_focus(re.id);
                 });
@@ -86,5 +91,5 @@ pub(super) fn do_frame(
                 }
             });
     }
-    filter_changed
+    text_changed && success
 }
