@@ -274,6 +274,9 @@ pub(super) fn do_frame(
                                     ));
                                 }
                                 if changed_filter {
+                                    state
+                                        .entries_view
+                                        .update_from_collection(coll, &state.filter);
                                     clamp_bottom(rend_win, state);
                                 }
                             }
@@ -334,6 +337,9 @@ pub(super) fn do_frame(
                                 }
                                 win.add_tag_buffer.clear();
                                 win.editing_tags = false;
+                                state
+                                    .entries_view
+                                    .update_from_collection(coll, &state.filter);
                             }
                         }
 
