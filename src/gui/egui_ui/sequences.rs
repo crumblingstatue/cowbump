@@ -1,5 +1,5 @@
-use egui::{
-    Align, Button, Color32, CtxRef, DragValue, ImageButton, Key, ScrollArea, TextEdit, TextureId,
+use egui_sfml::egui::{
+    Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit, TextureId,
     Window,
 };
 
@@ -17,7 +17,7 @@ use super::EguiState;
 pub(super) fn do_sequence_windows(
     egui_state: &mut EguiState,
     coll: &mut Collection,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     prefs: &mut Preferences,
 ) {
     egui_state.sequence_windows.retain_mut(|win| {
@@ -55,7 +55,7 @@ pub(super) fn do_sequence_windows(
                             }
                             let re = ui.add(img_butt);
                             if win.focus_req == Some(img_uid) {
-                                re.scroll_to_me(Align::Center);
+                                re.scroll_to_me(Some(Align::Center));
                                 win.focus_req = None;
                             }
                             if re.clicked() {
@@ -146,7 +146,7 @@ pub(super) fn do_sequences_window(
     egui_state: &mut EguiState,
     coll: &mut Collection,
     uid_counter: &mut UidCounter,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     preferences: &mut Preferences,
 ) {
     let seq_win = &mut egui_state.sequences_window;

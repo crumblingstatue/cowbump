@@ -1,6 +1,6 @@
 use std::mem;
 
-use egui::{Button, Color32, CtxRef, Grid, Key, ScrollArea, TextEdit};
+use egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit};
 
 use crate::{
     collection::Collection,
@@ -39,7 +39,7 @@ pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
     coll: &mut Collection,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     uid_counter: &mut UidCounter,
 ) {
     if !egui_state.tag_window.on {
@@ -62,7 +62,7 @@ pub(super) fn do_frame(
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     let prompts = &mut egui_state.prompts;
-    egui::Window::new("Tag list")
+    egui_sfml::egui::Window::new("Tag list")
         .open(&mut egui_state.tag_window.on)
         .show(egui_ctx, move |ui| {
             ui.horizontal(|ui| {
@@ -133,13 +133,14 @@ pub(super) fn do_frame(
                                         filter_spec_ref.set_doesnt_have(*tag_uid, false);
                                         clicked_any = true;
                                     }
-                                    let neg_button = Button::new("！")
-                                        .text_color(Color32::RED)
-                                        .fill(if doesnt_have_this_tag {
-                                            Color32::from_rgb(109, 47, 43)
-                                        } else {
-                                            Color32::from_rgb(45, 45, 45)
-                                        });
+                                    let neg_button =
+                                        Button::new(RichText::new("！").color(Color32::RED)).fill(
+                                            if doesnt_have_this_tag {
+                                                Color32::from_rgb(109, 47, 43)
+                                            } else {
+                                                Color32::from_rgb(45, 45, 45)
+                                            },
+                                        );
                                     if ui.add(neg_button).clicked() {
                                         filter_spec_ref.toggle_doesnt_have(*tag_uid);
                                         filter_spec_ref.set_has(*tag_uid, false);
@@ -210,7 +211,7 @@ pub(super) fn do_frame(
                             ui.add_space(4.0);
                             let tag = coll.tags.get_mut(id).unwrap();
                             tag.names.retain_mut(|name| {
-                                ui.label(name);
+                                ui.label(&*name);
                                 true
                             });
                             ui.horizontal(|ui| {

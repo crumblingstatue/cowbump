@@ -20,10 +20,9 @@ use crate::{
     preferences::{AppId, Preferences},
     sequence::Sequence,
 };
-use anyhow::{bail, Context};
+use anyhow::{bail, Context as _};
 use arboard::Clipboard;
-use egui::{CtxRef, FontDefinitions, FontFamily, TextStyle};
-use egui_sfml::SfEgui;
+use egui_sfml::{egui::Context, SfEgui};
 use sfml::{
     graphics::{
         Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
@@ -32,7 +31,7 @@ use sfml::{
     window::{mouse, Event, Key, Style, VideoMode},
     SfBox,
 };
-use std::{collections::BTreeMap, path::Path, process::Command};
+use std::{path::Path, process::Command};
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
@@ -48,17 +47,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut egui_state = EguiState::default();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
-    let egui_ctx = sf_egui.context();
-    let font_defs = FontDefinitions {
-        family_and_size: BTreeMap::from([
-            (TextStyle::Small, (FontFamily::Proportional, 12.0)),
-            (TextStyle::Body, (FontFamily::Proportional, 18.0)),
-            (TextStyle::Button, (FontFamily::Proportional, 18.0)),
-            (TextStyle::Heading, (FontFamily::Proportional, 20.0)),
-            (TextStyle::Monospace, (FontFamily::Monospace, 13.0)),
-        ]),
-        ..Default::default()
-    };
 
     if app.database.preferences.open_last_coll_at_start && !app.database.recent.is_empty() {
         match app.load_last() {
@@ -77,7 +65,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
     }
 
-    egui_ctx.set_fonts(font_defs);
     while window.is_open() {
         if !sf_egui.context().wants_keyboard_input() {
             let scroll_speed = app.database.preferences.arrow_key_scroll_speed;
@@ -307,7 +294,7 @@ fn handle_event_viewer(
     egui_state: &mut EguiState,
     coll: &mut Collection,
     window: &RenderWindow,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     preferences: &mut Preferences,
 ) {
     match event {
@@ -603,8 +590,9 @@ impl Resources {
         let mut loading_texture = Texture::new().context("texture create error")?;
         let mut error_texture = Texture::new().context("texture create error")?;
         let mut sel_begin_texture = Texture::new().context("texture create error")?;
-        let font =
-            Font::from_memory(include_bytes!("../Vera.ttf")).context("failed to load font")?;
+        let font = unsafe {
+            Font::from_memory(include_bytes!("../Vera.ttf")).context("failed to load font")?
+        };
         loading_texture.load_from_memory(include_bytes!("../loading.png"), IntRect::default())?;
         error_texture.load_from_memory(include_bytes!("../error.png"), IntRect::default())?;
         sel_begin_texture

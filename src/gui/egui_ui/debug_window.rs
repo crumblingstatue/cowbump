@@ -1,4 +1,4 @@
-use egui::{Align, Color32, Label, ScrollArea, Window};
+use egui_sfml::egui::{Align, Color32, Context, Label, RichText, ScrollArea, Window};
 
 use super::EguiState;
 
@@ -22,7 +22,7 @@ impl DebugWindow {
     }
 }
 
-pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &egui::CtxRef) {
+pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &Context) {
     let win = &mut egui_state.debug_window;
     if !win.open {
         return;
@@ -40,12 +40,14 @@ pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &egui::CtxRef) {
                         }
                         for (i, entry) in log.iter().enumerate() {
                             ui.horizontal(|ui| {
-                                ui.add(Label::new(i.to_string()).text_color(Color32::DARK_GRAY));
+                                ui.add(Label::new(
+                                    RichText::new(i.to_string()).color(Color32::DARK_GRAY),
+                                ));
                                 ui.label(entry);
                             });
                         }
                         if win.auto_scroll {
-                            ui.scroll_to_cursor(Align::BOTTOM)
+                            ui.scroll_to_cursor(Some(Align::BOTTOM))
                         }
                     });
                 });

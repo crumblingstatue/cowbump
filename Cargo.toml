@@ -28,11 +28,6 @@ features = ["graphics"]
 
 [dependencies.egui-sfml]
 git = "https://github.com/crumblingstatue/egui-sfml.git"
-branch = "egui-autocomplete"
-
-[dependencies.egui]
-git = "https://github.com/crumblingstatue/egui.git"
-branch = "autocomplete"
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"

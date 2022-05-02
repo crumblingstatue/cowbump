@@ -3,11 +3,11 @@ use std::{
     process::{Child, Command, ExitStatus, Stdio},
 };
 
-use egui::{
+use egui_sfml::egui::{
     epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
     text_edit::CursorRange,
-    vec2, Button, Color32, ImageButton, Key, Label, PointerButton, Rgba, ScrollArea, Sense,
-    TextEdit, TextureId,
+    vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton, Response,
+    Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
 };
 use sfml::graphics::{RenderTarget, RenderWindow};
 
@@ -78,7 +78,7 @@ impl EntriesWindow {
 }
 
 fn tag_ui(
-    ui: &mut egui::Ui,
+    ui: &mut Ui,
     name: &str,
     id: tag::Id,
     del: Option<&mut bool>,
@@ -87,16 +87,16 @@ fn tag_ui(
     filter_string: &mut String,
     changed_filter: &mut bool,
     entries_view: &mut EntriesView,
-) -> egui::Response {
+) -> Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
-            let mut label = Label::new(name).sense(Sense::click());
+            let mut text = RichText::new(name);
             if filter.has_tag_by_name(name, coll) {
-                label = label.background_color(Color32::from_rgb(20, 100, 20));
+                text = text.background_color(Color32::from_rgb(20, 100, 20));
             } else if filter.doesnt_have_tag_by_name(name, coll) {
-                label = label.background_color(Color32::from_rgb(100, 20, 20))
+                text = text.background_color(Color32::from_rgb(100, 20, 20))
             }
-            let re = ui.add(label);
+            let re = ui.add(Label::new(text).sense(Sense::click()));
             if re.clicked_by(PointerButton::Primary) {
                 filter.toggle_has(id);
                 filter.set_doesnt_have(id, false);
@@ -129,8 +129,8 @@ fn tag<'a>(
     filter_string: &'a mut String,
     changed_filter: &'a mut bool,
     entries_view: &'a mut EntriesView,
-) -> impl egui::Widget + 'a {
-    move |ui: &mut egui::Ui| {
+) -> impl Widget + 'a {
+    move |ui: &mut Ui| {
         tag_ui(
             ui,
             name,
@@ -145,7 +145,7 @@ fn tag<'a>(
     }
 }
 
-pub fn text_edit_cursor_set_to_end(ui: &mut egui::Ui, te_id: egui::Id) {
+pub fn text_edit_cursor_set_to_end(ui: &mut Ui, te_id: egui_sfml::egui::Id) {
     let mut state = TextEdit::load_state(ui.ctx(), te_id).unwrap();
     state.set_cursor_range(Some(CursorRange::one(Cursor {
         ccursor: CCursor {
@@ -166,7 +166,7 @@ pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
     coll: &mut Collection,
-    egui_ctx: &egui::CtxRef,
+    egui_ctx: &Context,
     rend_win: &RenderWindow,
     db: &mut Db,
     res: &Resources,
@@ -186,8 +186,8 @@ pub(super) fn do_frame(
         };
         let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
         let mut close = esc_pressed;
-        egui::Window::new(title)
-            .id(egui::Id::new("en_window").with(win.window_id))
+        egui_sfml::egui::Window::new(title)
+            .id(egui_sfml::egui::Id::new("en_window").with(win.window_id))
             .open(&mut open)
             .min_width(960.)
             .show(egui_ctx, |ui| {
@@ -297,9 +297,14 @@ pub(super) fn do_frame(
                         }
                         if win.editing_tags {
                             let te_id = ui.make_persistent_id("text_edit_add_tag");
+                            let up_pressed = ui
+                                .input_mut()
+                                .consume_key(Modifiers::default(), Key::ArrowUp);
+                            let down_pressed = ui
+                                .input_mut()
+                                .consume_key(Modifiers::default(), Key::ArrowDown);
                             let te = TextEdit::singleline(&mut win.add_tag_buffer)
                                 .hint_text("New tags")
-                                .ignore_up_and_down_keys()
                                 .id(te_id);
                             if win.ac_state.applied {
                                 text_edit_cursor_set_to_end(ui, te_id);
@@ -308,14 +313,14 @@ pub(super) fn do_frame(
                             if re.changed() {
                                 win.ac_state.input_changed = true;
                             }
-                            let input = egui_ctx.input();
                             tag_autocomplete_popup(
-                                input,
                                 &mut win.add_tag_buffer,
                                 &mut win.ac_state,
                                 coll,
                                 ui,
                                 &re,
+                                up_pressed,
+                                down_pressed,
                             );
                             win.add_tag_buffer.make_ascii_lowercase();
                             re.request_focus();
@@ -400,7 +405,7 @@ pub(super) fn do_frame(
                             let re = ui.text_edit_singleline(&mut win.cmd_buffer);
                             ui.label("Args (use {} for entry path, or leave empty)");
                             ui.text_edit_singleline(&mut win.args_buffer);
-                            if re.ctx.input().key_pressed(egui::Key::Enter) {
+                            if re.ctx.input().key_pressed(egui_sfml::egui::Key::Enter) {
                                 let mut cmd = Command::new(&win.cmd_buffer);
                                 cmd.stderr(Stdio::piped());
                                 cmd.stdin(Stdio::piped());
@@ -420,10 +425,10 @@ pub(super) fn do_frame(
                                 }
                             }
                             if !win.err_str.is_empty() {
-                                ui.add(
-                                    Label::new(format!("Error: {}", win.err_str))
-                                        .text_color(Rgba::RED),
-                                );
+                                ui.add(Label::new(
+                                    RichText::new(format!("Error: {}", win.err_str))
+                                        .color(Rgba::RED),
+                                ));
                             }
                         }
                         win.children.retain_mut(|c_wrap| {
@@ -491,7 +496,7 @@ pub(super) fn do_frame(
                         }
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
-                            if re.ctx.input().key_pressed(egui::Key::Enter) {
+                            if re.ctx.input().key_pressed(egui_sfml::egui::Key::Enter) {
                                 if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
                                     native_dialog::error("File rename error", e);
                                 }

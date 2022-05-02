@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use egui::{
-    Button, CollapsingHeader, ComboBox, CtxRef, Grid, ScrollArea, SidePanel, Slider, TextEdit,
+use egui_sfml::egui::{
+    Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider, TextEdit, Ui,
     Window,
 };
 use rfd::FileDialog;
@@ -48,7 +48,7 @@ enum Category {
 pub(crate) fn do_frame(
     egui_state: &mut EguiState,
     app: &mut crate::application::Application,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
 ) {
     let win = &mut egui_state.preferences_window;
     let prefs = &mut app.database.preferences;
@@ -151,7 +151,7 @@ pub(crate) fn do_frame(
         });
 }
 
-fn slider_with_default<T: FloatPref>(ui: &mut egui::Ui, attribute: &mut f32) {
+fn slider_with_default<T: FloatPref>(ui: &mut Ui, attribute: &mut f32) {
     ui.label(T::NAME);
     ui.horizontal(|ui| {
         ui.add(Slider::new(attribute, T::RANGE));
@@ -161,7 +161,7 @@ fn slider_with_default<T: FloatPref>(ui: &mut egui::Ui, attribute: &mut f32) {
     });
 }
 
-fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut egui::Ui) {
+fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui) {
     let te = TextEdit::singleline(&mut app.name).hint_text("Name");
     ui.add(te);
     ui.horizontal(|ui| {

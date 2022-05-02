@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use egui::{popup_below_widget, InputState, Key};
+use egui_sfml::egui::{popup_below_widget, Key, Ui};
 
 use crate::{collection::Collection, tag};
 
@@ -27,12 +27,13 @@ impl Default for AcState {
 ///
 /// Returns whether a suggestion was applied or not.
 pub(super) fn tag_autocomplete_popup(
-    input: &InputState,
     string: &mut String,
     state: &mut AcState,
     coll: &mut Collection,
-    ui: &mut egui::Ui,
-    response: &egui::Response,
+    ui: &mut Ui,
+    response: &egui_sfml::egui::Response,
+    up_pressed: bool,
+    down_pressed: bool,
 ) -> bool {
     macro ret($x:expr) {
         state.input_changed = false;
@@ -45,14 +46,14 @@ pub(super) fn tag_autocomplete_popup(
     if last.bytes().next() == Some(b'!') {
         last = &last[1..];
     }
-    if input.key_pressed(Key::ArrowDown) {
+    if down_pressed {
         match &mut state.select {
             None => state.select = Some(0),
             Some(sel) => *sel += 1,
         }
     }
     if let Some(sel) = &mut state.select {
-        if input.key_pressed(Key::ArrowUp) {
+        if up_pressed {
             if *sel > 0 {
                 *sel -= 1;
             } else {
@@ -111,7 +112,8 @@ pub(super) fn tag_autocomplete_popup(
                             complete = C::Special(special);
                         }
                         if state.select == Some(i)
-                            && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
+                            && (ui.input().key_pressed(Key::Tab)
+                                || ui.input().key_pressed(Key::Enter))
                         {
                             complete = C::Special(special);
                         }
@@ -130,7 +132,8 @@ pub(super) fn tag_autocomplete_popup(
                             complete = C::Id(id);
                         }
                         if state.select == Some(i)
-                            && (input.key_pressed(Key::Tab) || input.key_pressed(Key::Enter))
+                            && (ui.input().key_pressed(Key::Tab)
+                                || ui.input().key_pressed(Key::Enter))
                         {
                             complete = C::Id(id);
                         }

@@ -17,7 +17,7 @@ use crate::{
     gui::{search_goto_cursor, State},
     tag,
 };
-use egui::{Align2, Color32, CtxRef, TextEdit, Window};
+use egui_sfml::egui::{Align2, Color32, Context, TextEdit, Window};
 use sfml::graphics::{RenderTarget, RenderWindow};
 
 use self::{
@@ -89,7 +89,7 @@ enum PromptAction {
     DeleteTags(Vec<tag::Id>),
 }
 
-fn ok_prompt(ctx: &CtxRef, title: &str, msg: &str) -> bool {
+fn ok_prompt(ctx: &Context, title: &str, msg: &str) -> bool {
     let mut clicked = false;
     Window::new(title)
         .collapsible(false)
@@ -110,7 +110,7 @@ enum OkCancel {
     Cancel,
 }
 
-fn ok_cancel_prompt(ctx: &CtxRef, title: &str, msg: &str) -> Option<OkCancel> {
+fn ok_cancel_prompt(ctx: &Context, title: &str, msg: &str) -> Option<OkCancel> {
     let mut clicked = None;
     Window::new(title)
         .collapsible(false)
@@ -169,7 +169,7 @@ struct InfoMessage {
 pub(super) fn do_ui(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &egui::CtxRef,
+    egui_ctx: &Context,
     app: &mut Application,
     res: &Resources,
     win: &RenderWindow,
@@ -217,13 +217,13 @@ pub(super) fn do_ui(
     Ok(())
 }
 
-fn do_info_messages(egui_state: &mut EguiState, egui_ctx: &CtxRef) {
+fn do_info_messages(egui_state: &mut EguiState, egui_ctx: &Context) {
     egui_state
         .info_messages
         .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
 }
 
-fn do_prompts(egui_state: &mut EguiState, egui_ctx: &CtxRef, app: &mut Application) {
+fn do_prompts(egui_state: &mut EguiState, egui_ctx: &Context, app: &mut Application) {
     egui_state.prompts.retain(|prompt| {
         match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
             Some(OkCancel::Ok) => match prompt.action {
@@ -245,12 +245,12 @@ fn do_prompts(egui_state: &mut EguiState, egui_ctx: &CtxRef, app: &mut Applicati
 fn do_search_edit(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     coll: &mut Collection,
     win: &RenderWindow,
 ) {
     if egui_state.search_edit {
-        egui::Window::new("Search")
+        egui_sfml::egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
             .title_bar(false)
             .auto_sized()
@@ -268,10 +268,13 @@ fn do_search_edit(
                             ui.label(&format!("Error: {}", e));
                         }
                     }
-                    if re.ctx.input().key_pressed(egui::Key::Enter) || re.lost_focus() {
+                    // Avoid a deadlock with this let binding.
+                    // Inlining it into the if condition causes a deadlock
+                    let lost_focus = re.lost_focus();
+                    if ui.input().key_pressed(egui_sfml::egui::Key::Enter) || lost_focus {
                         egui_state.search_edit = false;
                     }
-                    if re.changed() || re.ctx.input().key_pressed(egui::Key::Enter) {
+                    if re.changed() || ui.input().key_pressed(egui_sfml::egui::Key::Enter) {
                         state.search_cursor = 0;
                         search_goto_cursor(state, coll, win.size().y);
                     }

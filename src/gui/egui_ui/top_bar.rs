@@ -1,4 +1,4 @@
-use egui::{Button, Color32, CtxRef, Label, TopBottomPanel};
+use egui_sfml::egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel};
 use rfd::{FileDialog, MessageButtons, MessageDialog};
 use sfml::graphics::RenderWindow;
 
@@ -13,7 +13,7 @@ use super::{info_message, load_folder_window, prompt, Action, EguiState, PromptA
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     app: &mut Application,
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
@@ -309,15 +309,13 @@ pub(super) fn do_frame(
             });
             if n_selected > 0 {
                 ui.separator();
-                ui.add(
-                    Label::new(format!("{} entries selected", n_selected))
-                        .text_color(Color32::GREEN),
-                );
+                ui.add(Label::new(
+                    RichText::new(format!("{} entries selected", n_selected)).color(Color32::GREEN),
+                ));
                 if ui
-                    .add(
-                        Button::new("(Click here (or Esc) to deselect)")
-                            .text_color(Color32::YELLOW),
-                    )
+                    .add(Button::new(
+                        RichText::new("(Click here (or Esc) to deselect)").color(Color32::YELLOW),
+                    ))
                     .clicked()
                 {
                     state.selected_uids.clear();

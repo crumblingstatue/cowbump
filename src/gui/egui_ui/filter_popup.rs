@@ -1,4 +1,4 @@
-use egui::{Align2, Color32, CtxRef, Key, TextEdit};
+use egui_sfml::egui::{Align2, Color32, Context, Key, Modifiers, TextEdit};
 
 use crate::{
     collection::Collection,
@@ -24,14 +24,14 @@ pub struct FilterPopup {
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     coll: &mut Collection,
 ) -> bool {
     let popup = &mut egui_state.filter_popup;
     let mut text_changed = false;
     let mut success = false;
     if popup.on {
-        egui::Window::new("Filter")
+        egui_sfml::egui::Window::new("Filter")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
             .title_bar(false)
             .auto_sized()
@@ -41,9 +41,14 @@ pub(super) fn do_frame(
                     ui.label("filter");
                     let count = coll.filter(&state.filter).count();
                     let te_id = ui.make_persistent_id("text_edit_tag_popup");
+                    let up_pressed = ui
+                        .input_mut()
+                        .consume_key(Modifiers::default(), Key::ArrowUp);
+                    let down_pressed = ui
+                        .input_mut()
+                        .consume_key(Modifiers::default(), Key::ArrowDown);
                     let mut te = TextEdit::singleline(&mut popup.string)
                         .lock_focus(true)
-                        .ignore_up_and_down_keys()
                         .id(te_id);
                     if count == 0 {
                         te = te.text_color(Color32::RED);
@@ -52,14 +57,14 @@ pub(super) fn do_frame(
                         text_edit_cursor_set_to_end(ui, te_id);
                     }
                     let re = ui.add(te);
-                    let input = egui_ctx.input();
                     if tag_autocomplete_popup(
-                        input,
                         &mut popup.string,
                         &mut popup.ac_state,
                         coll,
                         ui,
                         &re,
+                        up_pressed,
+                        down_pressed,
                     ) {
                         state.wipe_search();
                         text_changed = true;
@@ -76,7 +81,9 @@ pub(super) fn do_frame(
                             success = false;
                         }
                     };
-                    if input.key_pressed(Key::Enter) || input.key_pressed(Key::Escape) {
+                    if egui_ctx.input().key_pressed(Key::Enter)
+                        || egui_ctx.input().key_pressed(Key::Escape)
+                    {
                         popup.on = false;
                     }
                     if re.changed() {

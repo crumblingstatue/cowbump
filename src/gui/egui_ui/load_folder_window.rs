@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     io, mem,
     path::{Path, PathBuf},
     sync::{
@@ -9,8 +8,9 @@ use std::{
     thread::JoinHandle,
 };
 
-use egui::{
-    vec2, Align, Button, Color32, CtxRef, Key, Label, ProgressBar, ScrollArea, Sense, Window,
+use egui_sfml::egui::{
+    vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea, Sense,
+    Window,
 };
 use sfml::{graphics::Texture, SfBox};
 
@@ -71,14 +71,13 @@ pub(super) fn open(win: &mut LoadFolderWindow, path: PathBuf) {
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &CtxRef,
+    egui_ctx: &Context,
     resources: &Resources,
     app: &mut Application,
 ) {
     let win = &mut egui_state.load_folder_window;
-    let input = egui_ctx.input();
     let mut new_sel = None;
-    if input.key_pressed(Key::ArrowUp) {
+    if egui_ctx.input().key_pressed(Key::ArrowUp) {
         if let Some(sel) = win.res_select.as_mut() {
             if *sel > 0 {
                 *sel -= 1;
@@ -86,7 +85,7 @@ pub(super) fn do_frame(
             }
         }
     }
-    if input.key_pressed(Key::ArrowDown) {
+    if egui_ctx.input().key_pressed(Key::ArrowDown) {
         if let Some(sel) = win.res_select.as_mut() {
             *sel += 1;
             new_sel = Some(*sel);
@@ -102,9 +101,11 @@ pub(super) fn do_frame(
         .show(egui_ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.heading("Folder ");
-                let label = Label::new(win.root.to_string_lossy().as_ref())
-                    .heading()
-                    .text_color(Color32::YELLOW);
+                let label = Label::new(
+                    RichText::new(win.root.to_string_lossy().as_ref())
+                        .heading()
+                        .color(Color32::YELLOW),
+                );
                 ui.add(label);
             });
             ui.separator();
@@ -117,16 +118,16 @@ pub(super) fn do_frame(
                             Ok(path) => {
                                 ui.horizontal(|ui| {
                                     ui.checkbox(&mut path.add, "");
-                                    let mut label = Label::new(&path.path.to_string_lossy())
-                                        .sense(Sense::click());
+                                    let mut rich_text =
+                                        RichText::new(&*path.path.to_string_lossy());
                                     if win.res_select == Some(i) {
-                                        label =
-                                            label.background_color(Color32::from_rgb(100, 40, 110));
+                                        rich_text = rich_text
+                                            .background_color(Color32::from_rgb(100, 40, 110));
                                     }
                                     if win.res_hover == Some(i) {
-                                        label = label.text_color(Color32::WHITE);
+                                        rich_text = rich_text.color(Color32::WHITE);
                                     }
-                                    let re = ui.add(label);
+                                    let re = ui.add(Label::new(rich_text).sense(Sense::click()));
                                     if re.hovered() {
                                         win.res_hover = Some(i);
                                     }
@@ -136,7 +137,7 @@ pub(super) fn do_frame(
                                         did_select_new = true;
                                     }
                                     if new_sel == Some(i) {
-                                        re.scroll_to_me(Align::Center);
+                                        re.scroll_to_me(Some(Align::Center));
                                         did_select_new = true;
                                     }
                                     if did_select_new {
@@ -151,9 +152,8 @@ pub(super) fn do_frame(
                                 });
                             }
                             Err(e) => {
-                                let label =
-                                    Label::new(Cow::Owned(e.to_string())).text_color(Color32::RED);
-                                ui.add(label);
+                                let rich_text = RichText::new(e.to_string()).color(Color32::RED);
+                                ui.add(Label::new(rich_text));
                             }
                         }
                     }

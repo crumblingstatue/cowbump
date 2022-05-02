@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use egui::{Color32, ImageButton, Label, ScrollArea, TextureId, Window};
+use egui_sfml::egui::{
+    Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window,
+};
 use fnv::FnvHashMap;
 use sfml::graphics::{RenderTarget, RenderWindow};
 
@@ -24,7 +26,7 @@ pub struct ChangesWindow {
 pub(super) fn do_frame(
     state: &mut crate::gui::State,
     egui_state: &mut EguiState,
-    egui_ctx: &egui::CtxRef,
+    egui_ctx: &Context,
     app: &mut crate::application::Application,
     rw: &RenderWindow,
 ) {
@@ -75,8 +77,10 @@ pub(super) fn do_frame(
                                             });
                                         }
                                         None => {
-                                            let label = Label::new(add.to_string_lossy().as_ref())
-                                                .text_color(Color32::GREEN);
+                                            let label = Label::new(
+                                                RichText::new(add.to_string_lossy().as_ref())
+                                                    .color(Color32::GREEN),
+                                            );
                                             ui.add(label);
                                         }
                                     }
@@ -93,8 +97,10 @@ pub(super) fn do_frame(
                             .id_source("scroll_rm")
                             .show(ui, |ui| {
                                 for rem in &changes.remove {
-                                    let label = Label::new(rem.to_string_lossy().as_ref())
-                                        .text_color(Color32::RED);
+                                    let label = Label::new(
+                                        RichText::new(rem.to_string_lossy().as_ref())
+                                            .color(Color32::RED),
+                                    );
                                     ui.add(label);
                                 }
                             });
