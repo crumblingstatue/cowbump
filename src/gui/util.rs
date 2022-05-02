@@ -1,8 +1,8 @@
-use rfd::FileDialog;
-use sfml::{
+use egui_sfml::sfml::{
     graphics::{Image, RenderTarget, RenderWindow, Texture},
     system::Vector2u,
 };
+use rfd::FileDialog;
 
 use crate::gui::native_dialog;
 use anyhow::Context;

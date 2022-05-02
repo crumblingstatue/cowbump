@@ -1,6 +1,8 @@
-use egui_sfml::egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel};
+use egui_sfml::{
+    egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
+    sfml::graphics::RenderWindow,
+};
 use rfd::{FileDialog, MessageButtons, MessageDialog};
-use sfml::graphics::RenderWindow;
 
 use crate::{
     application::{self, Application},

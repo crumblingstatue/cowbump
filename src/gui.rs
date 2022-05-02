@@ -22,14 +22,17 @@ use crate::{
 };
 use anyhow::{bail, Context as _};
 use arboard::Clipboard;
-use egui_sfml::{egui::Context, SfEgui};
-use sfml::{
-    graphics::{
-        Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
-        Texture, Transformable,
+use egui_sfml::{
+    egui::Context,
+    sfml::{
+        graphics::{
+            Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
+            Texture, Transformable,
+        },
+        window::{mouse, Event, Key, Style, VideoMode},
+        SfBox,
     },
-    window::{mouse, Event, Key, Style, VideoMode},
-    SfBox,
+    SfEgui,
 };
 use std::{path::Path, process::Command};
 

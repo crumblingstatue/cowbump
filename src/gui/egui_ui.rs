@@ -17,8 +17,10 @@ use crate::{
     gui::{search_goto_cursor, State},
     tag,
 };
-use egui_sfml::egui::{Align2, Color32, Context, TextEdit, Window};
-use sfml::graphics::{RenderTarget, RenderWindow};
+use egui_sfml::{
+    egui::{Align2, Color32, Context, TextEdit, Window},
+    sfml::graphics::{RenderTarget, RenderWindow},
+};
 
 use self::{
     changes_window::ChangesWindow,

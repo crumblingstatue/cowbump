@@ -1,6 +1,6 @@
 use crate::{db::EntryMap, entry, gui::ThumbnailCache};
+use egui_sfml::sfml::graphics::Texture;
 use image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba};
-use sfml::graphics::Texture;
 use std::{
     collections::hash_map,
     path::Path,
@@ -65,7 +65,7 @@ impl ThumbnailLoader {
     }
 }
 
-pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> sfml::SfBox<Texture> {
+pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> egui_sfml::sfml::SfBox<Texture> {
     let (w, h) = buf.dimensions();
     let mut tex = Texture::new().unwrap();
     if !tex.create(w, h) {

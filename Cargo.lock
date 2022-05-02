@@ -267,7 +267,6 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_derive",
- "sfml",
  "thiserror",
  "walkdir",
  "zip",

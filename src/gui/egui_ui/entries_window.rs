@@ -3,13 +3,15 @@ use std::{
     process::{Child, Command, ExitStatus, Stdio},
 };
 
-use egui_sfml::egui::{
-    epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
-    text_edit::CursorRange,
-    vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton, Response,
-    Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
+use egui_sfml::{
+    egui::{
+        epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
+        text_edit::CursorRange,
+        vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
+        Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
+    },
+    sfml::graphics::{RenderTarget, RenderWindow},
 };
-use sfml::graphics::{RenderTarget, RenderWindow};
 
 use crate::{
     collection::Collection,

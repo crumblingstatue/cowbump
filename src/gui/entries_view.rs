@@ -1,4 +1,4 @@
-use sfml::{
+use egui_sfml::sfml::{
     graphics::{
         Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite, Text,
         Transformable,

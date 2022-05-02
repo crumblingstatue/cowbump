@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use egui_sfml::egui::{
-    Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window,
+use egui_sfml::{
+    egui::{Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window},
+    sfml::graphics::{RenderTarget, RenderWindow},
 };
 use fnv::FnvHashMap;
-use sfml::graphics::{RenderTarget, RenderWindow};
 
 use crate::{db::FolderChanges, entry, gui::entries_view::EntriesView};
 

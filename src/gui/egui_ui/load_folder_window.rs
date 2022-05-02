@@ -8,11 +8,13 @@ use std::{
     thread::JoinHandle,
 };
 
-use egui_sfml::egui::{
-    vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea, Sense,
-    Window,
+use egui_sfml::{
+    egui::{
+        vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea,
+        Sense, Window,
+    },
+    sfml::{graphics::Texture, SfBox},
 };
-use sfml::{graphics::Texture, SfBox};
 
 use crate::{
     application::Application,
