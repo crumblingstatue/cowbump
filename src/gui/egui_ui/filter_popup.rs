@@ -71,22 +71,21 @@ pub(super) fn do_frame(
                     }
                     ui.label(&format!("{} results", count));
                     popup.string.make_ascii_lowercase();
-                    match FilterSpec::parse_and_resolve(&popup.string, coll) {
-                        Ok(spec) => {
-                            state.filter = spec;
-                            success = true;
-                        }
-                        Err(e) => {
-                            err = Some(format!("Error: {}", e));
-                            success = false;
-                        }
-                    };
-                    if egui_ctx.input().key_pressed(Key::Enter)
-                        || egui_ctx.input().key_pressed(Key::Escape)
-                    {
+                    let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
+                    if enter_pressed || egui_ctx.input().key_pressed(Key::Escape) {
                         popup.on = false;
                     }
-                    if re.changed() {
+                    if re.changed() || text_changed || enter_pressed {
+                        match FilterSpec::parse_and_resolve(&popup.string, coll) {
+                            Ok(spec) => {
+                                state.filter = spec;
+                                success = true;
+                            }
+                            Err(e) => {
+                                err = Some(format!("Error: {}", e));
+                                success = false;
+                            }
+                        };
                         popup.ac_state.input_changed = true;
                         state.wipe_search();
                         text_changed = true;
