@@ -17,6 +17,7 @@ use super::{tag_autocomplete::AcState, EguiState};
 pub struct FilterPopup {
     pub on: bool,
     pub string: String,
+    pub err_string: String,
     ac_state: AcState,
 }
 
@@ -36,7 +37,6 @@ pub(super) fn do_frame(
             .title_bar(false)
             .auto_sized()
             .show(egui_ctx, |ui| {
-                let mut err = None;
                 ui.horizontal(|ui| {
                     ui.label("filter");
                     let count = coll.filter(&state.filter).count();
@@ -76,13 +76,14 @@ pub(super) fn do_frame(
                         popup.on = false;
                     }
                     if re.changed() || text_changed || enter_pressed {
+                        popup.err_string.clear();
                         match FilterSpec::parse_and_resolve(&popup.string, coll) {
                             Ok(spec) => {
                                 state.filter = spec;
                                 success = true;
                             }
                             Err(e) => {
-                                err = Some(format!("Error: {}", e));
+                                popup.err_string = format!("Error: {}", e);
                                 success = false;
                             }
                         };
@@ -92,8 +93,8 @@ pub(super) fn do_frame(
                     }
                     ui.memory().request_focus(re.id);
                 });
-                if let Some(e) = err {
-                    ui.label(e);
+                if !popup.err_string.is_empty() {
+                    ui.label(&popup.err_string);
                 }
             });
     }
