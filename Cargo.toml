@@ -27,6 +27,9 @@ git = "https://github.com/crumblingstatue/egui-sfml.git"
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"
 
+[dependencies.tagfilter-lang]
+git = "https://github.com/crumblingstatue/tagfilter-lang.git"
+
 [profile.release]
 codegen-units = 1
 panic = "abort"

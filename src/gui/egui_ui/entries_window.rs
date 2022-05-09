@@ -17,7 +17,7 @@ use crate::{
     collection::Collection,
     db::Db,
     entry,
-    filter_spec::FilterSpec,
+    filter_reqs::Requirements,
     gui::{
         clamp_bottom, common_tags, entries_view::EntriesView, feed_args, get_tex_for_entry,
         native_dialog, open_sequence, open_with_external, Resources, State,
@@ -84,7 +84,7 @@ fn tag_ui(
     name: &str,
     id: tag::Id,
     del: Option<&mut bool>,
-    filter: &mut FilterSpec,
+    reqs: &mut Requirements,
     coll: &Collection,
     filter_string: &mut String,
     changed_filter: &mut bool,
@@ -93,24 +93,24 @@ fn tag_ui(
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
             let mut text = RichText::new(name);
-            if filter.has_tag_by_name(name, coll) {
+            if reqs.have_tag_by_name(name, coll) {
                 text = text.background_color(Color32::from_rgb(20, 100, 20));
-            } else if filter.doesnt_have_tag_by_name(name, coll) {
+            } else if reqs.not_have_tag_by_name(name, coll) {
                 text = text.background_color(Color32::from_rgb(100, 20, 20))
             }
             let re = ui.add(Label::new(text).sense(Sense::click()));
             if re.clicked_by(PointerButton::Primary) {
-                filter.toggle_has(id);
-                filter.set_doesnt_have(id, false);
-                *filter_string = filter.to_spec_string(&coll.tags);
+                reqs.toggle_have_tag(id);
+                reqs.set_not_have_tag(id, false);
+                *filter_string = reqs.to_string(&coll.tags);
                 *changed_filter = true;
-                entries_view.update_from_collection(coll, filter);
+                entries_view.update_from_collection(coll, reqs);
             } else if re.clicked_by(PointerButton::Secondary) {
-                filter.toggle_doesnt_have(id);
-                filter.set_has(id, false);
-                *filter_string = filter.to_spec_string(&coll.tags);
+                reqs.toggle_not_have_tag(id);
+                reqs.set_have_tag(id, false);
+                *filter_string = reqs.to_string(&coll.tags);
                 *changed_filter = true;
-                entries_view.update_from_collection(coll, filter);
+                entries_view.update_from_collection(coll, reqs);
             }
             if let Some(del) = del {
                 if ui.button("x").clicked() {
@@ -126,7 +126,7 @@ fn tag<'a>(
     name: &'a str,
     id: tag::Id,
     del: Option<&'a mut bool>,
-    filter: &'a mut FilterSpec,
+    filter: &'a mut Requirements,
     coll: &'a Collection,
     filter_string: &'a mut String,
     changed_filter: &'a mut bool,
@@ -603,12 +603,12 @@ fn remove_entries(
     view: &mut EntriesView,
     entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
-    filter_spec: &FilterSpec,
+    requirements: &Requirements,
 ) -> anyhow::Result<()> {
     for uid in entries.drain(..) {
         let path = &coll.entries[&uid].path;
         std::fs::remove_file(path)?;
-        view.update_from_collection(coll, filter_spec);
+        view.update_from_collection(coll, requirements);
         coll.entries.remove(&uid);
     }
     Ok(())

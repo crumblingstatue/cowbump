@@ -13,7 +13,6 @@ use crate::{
     application::Application,
     collection::Collection,
     entry,
-    filter_spec::FilterSpec,
     gui::{search_goto_cursor, State},
     tag,
 };
@@ -264,8 +263,11 @@ fn do_search_edit(
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
-                    match FilterSpec::parse_and_resolve(&egui_state.search_string, coll) {
-                        Ok(spec) => state.search_spec = spec,
+                    match state
+                        .search_reqs
+                        .parse_and_resolve(&egui_state.search_string, coll)
+                    {
+                        Ok(()) => (),
                         Err(e) => {
                             ui.label(&format!("Error: {}", e));
                         }

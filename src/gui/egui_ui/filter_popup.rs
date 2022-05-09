@@ -2,7 +2,6 @@ use egui_sfml::egui::{Align2, Color32, Context, Key, Modifiers, TextEdit};
 
 use crate::{
     collection::Collection,
-    filter_spec::FilterSpec,
     gui::{
         egui_ui::{
             entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
@@ -77,16 +76,15 @@ pub(super) fn do_frame(
                     }
                     if re.changed() || text_changed || enter_pressed {
                         popup.err_string.clear();
-                        match FilterSpec::parse_and_resolve(&popup.string, coll) {
-                            Ok(spec) => {
-                                state.filter = spec;
+                        match state.filter.parse_and_resolve(&popup.string, coll) {
+                            Ok(()) => {
                                 success = true;
                             }
                             Err(e) => {
                                 popup.err_string = format!("Error: {}", e);
                                 success = false;
                             }
-                        };
+                        }
                         popup.ac_state.input_changed = true;
                         state.wipe_search();
                         text_changed = true;

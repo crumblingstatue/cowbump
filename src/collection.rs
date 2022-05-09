@@ -1,7 +1,7 @@
 use crate::{
     db::{EntryMap, EntrySet, FolderChanges, Uid, UidCounter},
     entry::{self, Entry},
-    filter_spec::FilterSpec,
+    filter_reqs::Requirements,
     folder_scan::walkdir,
     sequence::{self, Sequence},
     tag::{self, Tag},
@@ -114,9 +114,9 @@ impl Collection {
             uid_counter,
         ))
     }
-    pub fn filter<'a>(&'a self, spec: &'a FilterSpec) -> impl Iterator<Item = entry::Id> + 'a {
+    pub fn filter<'a>(&'a self, reqs: &'a Requirements) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries.iter().filter_map(move |(&uid, en)| {
-            crate::entry::filter_map(uid, en, spec, &self.tags, &self.sequences)
+            crate::entry::filter_map(uid, en, reqs, &self.tags, &self.sequences)
         })
     }
     pub fn rename(&mut self, uid: entry::Id, new: &str) -> anyhow::Result<()> {

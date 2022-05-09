@@ -267,6 +267,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_derive",
+ "tagfilter-lang",
  "thiserror",
  "walkdir",
  "zip",
@@ -1172,6 +1173,14 @@ dependencies = [
  "pkg-config",
  "toml",
  "version-compare",
+]
+
+[[package]]
+name = "tagfilter-lang"
+version = "0.1.0"
+source = "git+https://github.com/crumblingstatue/tagfilter-lang.git#c91f8bdbe39cacf07871ff86dff52d412adfe555"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]

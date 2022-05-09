@@ -2,7 +2,7 @@ use crate::{
     collection::{Sequences, Tags},
     db::{TagSet, Uid},
     entry,
-    filter_spec::FilterSpec,
+    filter_reqs::{Req, Requirements},
     gui::debug_log::dlog,
     tag,
 };
@@ -27,39 +27,26 @@ impl Entry {
             tags: Default::default(),
         }
     }
-    pub fn spec_satisfied(
+    pub fn all_reqs_satisfied(
         &self,
         id: Id,
-        spec: &FilterSpec,
+        reqs: &Requirements,
         tags: &Tags,
         sequences: &Sequences,
     ) -> bool {
-        if !self
-            .path
-            .to_string_lossy()
-            .to_lowercase()
-            .contains(&spec.filename_substring)
-        {
-            return false;
+        reqs.all(|req| self.req_satisfied(id, req, tags, sequences))
+    }
+    pub fn req_satisfied(&self, id: Id, req: &Req, tags: &Tags, sequences: &Sequences) -> bool {
+        match req {
+            Req::Any(reqs) => reqs.any(|req| self.req_satisfied(id, req, tags, sequences)),
+            Req::All(reqs) => reqs.all(|req| self.req_satisfied(id, req, tags, sequences)),
+            Req::None(reqs) => reqs.none(|req| self.req_satisfied(id, req, tags, sequences)),
+            Req::Tag(id) => self.satisfies_required_tag(*id, tags),
+            Req::Not(req) => !self.req_satisfied(id, req, tags, sequences),
+            Req::FilenameSub(fsub) => self.path.to_string_lossy().to_lowercase().contains(fsub),
+            Req::PartOfSeq => sequences.values().any(|seq| seq.contains_entry(id)),
+            Req::Untagged => self.tags.is_empty(),
         }
-        for required_tag in &spec.has_tags {
-            if !self.satisfies_required_tag(*required_tag, tags) {
-                return false;
-            }
-        }
-        for required_no_tag in &spec.doesnt_have_tags {
-            if self.satisfies_required_tag(*required_no_tag, tags) {
-                return false;
-            }
-        }
-        if spec.doesnt_have_any_tags && !self.tags.is_empty() {
-            return false;
-        }
-        let part_of_seq = sequences.values().any(|seq| seq.contains_entry(id));
-        if (spec.part_of_seq && !part_of_seq) || (spec.not_part_of_seq && part_of_seq) {
-            return false;
-        }
-        true
     }
     fn satisfies_required_tag(&self, required_tag_id: tag::Id, tags: &Tags) -> bool {
         self.tags
@@ -96,11 +83,11 @@ fn tag_satisfies_required_tag(
 pub fn filter_map(
     uid: entry::Id,
     entry: &Entry,
-    spec: &FilterSpec,
+    reqs: &Requirements,
     tags: &Tags,
     sequences: &Sequences,
 ) -> Option<entry::Id> {
-    if entry.spec_satisfied(uid, spec, tags, sequences) {
+    if entry.all_reqs_satisfied(uid, reqs, tags, sequences) {
         Some(uid)
     } else {
         None

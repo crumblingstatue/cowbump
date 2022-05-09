@@ -7,7 +7,7 @@ use egui_sfml::sfml::{
     window::Key,
 };
 
-use crate::{collection::Collection, entry, filter_spec::FilterSpec};
+use crate::{collection::Collection, entry, filter_reqs::Requirements};
 
 use super::{
     get_tex_for_entry, thumbnail_loader::ThumbnailLoader, Resources, State, ThumbnailCache,
@@ -35,17 +35,17 @@ pub enum SortBy {
 }
 
 impl EntriesView {
-    pub fn from_collection(coll: &Collection, filter_spec: &FilterSpec) -> Self {
+    pub fn from_collection(coll: &Collection, reqs: &Requirements) -> Self {
         let mut this = Self {
             uids: Vec::new(),
             y_offset: 0.0,
             sort_by: SortBy::Path,
         };
-        this.update_from_collection(coll, filter_spec);
+        this.update_from_collection(coll, reqs);
         this
     }
-    pub fn update_from_collection(&mut self, coll: &Collection, filter_spec: &FilterSpec) {
-        self.uids = coll.filter(filter_spec).collect();
+    pub fn update_from_collection(&mut self, coll: &Collection, reqs: &Requirements) {
+        self.uids = coll.filter(reqs).collect();
         self.sort(coll);
     }
     fn sort(&mut self, coll: &Collection) {

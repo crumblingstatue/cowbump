@@ -15,7 +15,7 @@ use crate::{
     collection::{self, Collection, Entries},
     db::{EntryMap, TagSet},
     entry,
-    filter_spec::FilterSpec,
+    filter_reqs::Requirements,
     gui::egui_ui::EguiState,
     preferences::{AppId, Preferences},
     sequence::Sequence,
@@ -363,7 +363,7 @@ fn handle_event_viewer(
                 for &uid in state.selected_uids.iter() {
                     paths.push(&coll.entries[&uid].path);
                 }
-                if paths.is_empty() && state.filter.active() {
+                if paths.is_empty() && !state.filter.is_empty() {
                     for uid in coll.filter(&state.filter) {
                         paths.push(&coll.entries[&uid].path);
                     }
@@ -563,7 +563,7 @@ fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
         .enumerate()
         .filter(|(_, uid)| {
             let en = &coll.entries[uid];
-            en.spec_satisfied(*uid, &state.search_spec, &coll.tags, &coll.sequences)
+            en.all_reqs_satisfied(*uid, &state.search_reqs, &coll.tags, &coll.sequences)
         })
         .map(|(i, _)| i)
         .nth(nth)
@@ -612,10 +612,10 @@ impl Resources {
 struct State {
     thumbnails_per_row: u8,
     thumbnail_size: u32,
-    filter: FilterSpec,
+    filter: Requirements,
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
-    search_spec: FilterSpec,
+    search_reqs: Requirements,
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
@@ -631,11 +631,10 @@ fn set_active_collection(
     entries_view: &mut EntriesView,
     app: &mut Application,
     id: collection::Id,
-    filter_spec: &FilterSpec,
+    reqs: &Requirements,
 ) -> anyhow::Result<()> {
     app.save_active_collection()?;
-    *entries_view =
-        EntriesView::from_collection(app.active_collection().as_ref().unwrap().1, filter_spec);
+    *entries_view = EntriesView::from_collection(app.active_collection().as_ref().unwrap().1, reqs);
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
 }
@@ -697,7 +696,7 @@ impl State {
         Self {
             thumbnails_per_row,
             thumbnail_size,
-            filter: FilterSpec::default(),
+            filter: Requirements::default(),
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
             search_cursor: 0,
@@ -705,7 +704,7 @@ impl State {
             highlight: None,
             clipboard_ctx: Clipboard::new().unwrap(),
             entries_view: EntriesView::default(),
-            search_spec: FilterSpec::default(),
+            search_reqs: Requirements::default(),
             selected_uids: Default::default(),
             select_begin: None,
         }

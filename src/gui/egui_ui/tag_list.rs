@@ -50,7 +50,7 @@ pub(super) fn do_frame(
     let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
     let entries_view_ref = &mut state.entries_view;
     let filter_string_ref = &mut egui_state.filter_popup.string;
-    let filter_spec_ref = &mut state.filter;
+    let reqs_ref = &mut state.filter;
     let selected_uids = &mut egui_state.tag_window.selected_uids;
     let active_ref = &mut egui_state.tag_window.prop_active;
     let new_name_ref = &mut egui_state.tag_window.new_name;
@@ -72,8 +72,8 @@ pub(super) fn do_frame(
                     tag_filter_string_ref.clear();
                 }
                 if ui.button("Clear tags").clicked() {
-                    filter_spec_ref.clear();
-                    entries_view_ref.update_from_collection(coll, filter_spec_ref);
+                    reqs_ref.clear();
+                    entries_view_ref.update_from_collection(coll, reqs_ref);
                 }
                 if ui.button("Add new tag").clicked() {
                     *new_tag_add_ref ^= true;
@@ -119,9 +119,8 @@ pub(super) fn do_frame(
                                     if ui.add(button).clicked() {
                                         *active_ref = Some(*tag_uid);
                                     }
-                                    let has_this_tag = filter_spec_ref.has_tags.contains(tag_uid);
-                                    let doesnt_have_this_tag =
-                                        filter_spec_ref.doesnt_have_tags.contains(tag_uid);
+                                    let has_this_tag = reqs_ref.have_tag(*tag_uid);
+                                    let doesnt_have_this_tag = reqs_ref.not_have_tag(*tag_uid);
                                     let button = Button::new("✔").fill(if has_this_tag {
                                         Color32::from_rgb(43, 109, 57)
                                     } else {
@@ -129,8 +128,8 @@ pub(super) fn do_frame(
                                     });
                                     let mut clicked_any = false;
                                     if ui.add(button).clicked() {
-                                        filter_spec_ref.toggle_has(*tag_uid);
-                                        filter_spec_ref.set_doesnt_have(*tag_uid, false);
+                                        reqs_ref.toggle_have_tag(*tag_uid);
+                                        reqs_ref.set_not_have_tag(*tag_uid, false);
                                         clicked_any = true;
                                     }
                                     let neg_button =
@@ -142,8 +141,8 @@ pub(super) fn do_frame(
                                             },
                                         );
                                     if ui.add(neg_button).clicked() {
-                                        filter_spec_ref.toggle_doesnt_have(*tag_uid);
-                                        filter_spec_ref.set_has(*tag_uid, false);
+                                        reqs_ref.toggle_not_have_tag(*tag_uid);
+                                        reqs_ref.set_have_tag(*tag_uid, false);
                                         clicked_any = true;
                                     }
                                     ui.checkbox(&mut checked, "");
@@ -154,10 +153,8 @@ pub(super) fn do_frame(
                                     }
                                     ui.end_row();
                                     if clicked_any {
-                                        *filter_string_ref =
-                                            filter_spec_ref.to_spec_string(&coll.tags);
-                                        entries_view_ref
-                                            .update_from_collection(coll, filter_spec_ref);
+                                        *filter_string_ref = reqs_ref.to_string(&coll.tags);
+                                        entries_view_ref.update_from_collection(coll, reqs_ref);
                                     }
                                 }
                             });
