@@ -159,10 +159,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     window.close();
                 }
                 Action::SelectNone => state.selected_uids.clear(),
-                Action::SearchNext => {
+                Action::FindNext => {
                     search_next(&mut state, coll.as_mut().unwrap(), window.size().y)
                 }
-                Action::SearchPrev => {
+                Action::FindPrev => {
                     search_prev(&mut state, coll.as_mut().unwrap(), window.size().y)
                 }
                 Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
@@ -375,7 +375,7 @@ fn handle_event_viewer(
             } else if code == Key::A && ctrl {
                 select_all(state, coll);
             } else if code == Key::Slash {
-                egui_state.search_popup.on = true;
+                egui_state.find_popup.on = true;
             } else if code == Key::N {
                 search_next(state, coll, window.size().y);
             } else if code == Key::P {

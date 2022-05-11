@@ -209,25 +209,25 @@ pub(super) fn do_frame(
                 }
                 ui.separator();
                 if ui
-                    .add_enabled(active_coll, Button::new("🔍 Search (/)"))
+                    .add_enabled(active_coll, Button::new("🔍 Find (/)"))
                     .clicked()
                 {
                     ui.close_menu();
-                    egui_state.search_popup.on ^= true;
+                    egui_state.find_popup.on ^= true;
                 }
                 if ui
                     .add_enabled(active_coll, Button::new("⮫ Next result (N)"))
                     .clicked()
                 {
                     ui.close_menu();
-                    egui_state.action = Some(Action::SearchNext);
+                    egui_state.action = Some(Action::FindNext);
                 }
                 if ui
                     .add_enabled(active_coll, Button::new("⮪ Previous result (P)"))
                     .clicked()
                 {
                     ui.close_menu();
-                    egui_state.action = Some(Action::SearchPrev);
+                    egui_state.action = Some(Action::FindPrev);
                 }
                 ui.separator();
                 if ui
