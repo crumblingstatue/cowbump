@@ -50,8 +50,7 @@ pub(crate) struct EguiState {
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
     pub debug_window: DebugWindow,
-    pub search_edit: bool,
-    search_string: String,
+    pub search_popup: QueryPopup,
     pub filter_popup: QueryPopup,
     /// Uid counter for egui entities like windows
     egui_uid_counter: u64,
@@ -73,8 +72,7 @@ impl Default for EguiState {
             prompts: Default::default(),
             just_closed_window_with_esc: Default::default(),
             debug_window: Default::default(),
-            search_edit: false,
-            search_string: Default::default(),
+            search_popup: Default::default(),
             filter_popup: Default::default(),
             egui_uid_counter: 0,
         }
@@ -251,7 +249,7 @@ fn do_search_edit(
     coll: &mut Collection,
     win: &RenderWindow,
 ) {
-    if egui_state.search_edit {
+    if egui_state.search_popup.on {
         egui_sfml::egui::Window::new("Search")
             .anchor(Align2::LEFT_TOP, [32.0, 32.0])
             .title_bar(false)
@@ -259,14 +257,14 @@ fn do_search_edit(
             .show(egui_ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("search");
-                    let mut te = TextEdit::singleline(&mut egui_state.search_string);
+                    let mut te = TextEdit::singleline(&mut egui_state.search_popup.string);
                     if !state.search_success {
                         te = te.text_color(Color32::RED);
                     }
                     let re = ui.add(te);
                     match state
                         .search_reqs
-                        .parse_and_resolve(&egui_state.search_string, coll)
+                        .parse_and_resolve(&egui_state.search_popup.string, coll)
                     {
                         Ok(()) => (),
                         Err(e) => {
@@ -277,7 +275,7 @@ fn do_search_edit(
                     // Inlining it into the if condition causes a deadlock
                     let lost_focus = re.lost_focus();
                     if ui.input().key_pressed(egui_sfml::egui::Key::Enter) || lost_focus {
-                        egui_state.search_edit = false;
+                        egui_state.search_popup.on = false;
                     }
                     if re.changed() || ui.input().key_pressed(egui_sfml::egui::Key::Enter) {
                         state.search_cursor = 0;

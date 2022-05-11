@@ -375,7 +375,7 @@ fn handle_event_viewer(
             } else if code == Key::A && ctrl {
                 select_all(state, coll);
             } else if code == Key::Slash {
-                egui_state.search_edit = true;
+                egui_state.search_popup.on = true;
             } else if code == Key::N {
                 search_next(state, coll, window.size().y);
             } else if code == Key::P {

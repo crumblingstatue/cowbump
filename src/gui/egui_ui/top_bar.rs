@@ -213,7 +213,7 @@ pub(super) fn do_frame(
                     .clicked()
                 {
                     ui.close_menu();
-                    egui_state.search_edit ^= true;
+                    egui_state.search_popup.on ^= true;
                 }
                 if ui
                     .add_enabled(active_coll, Button::new("⮫ Next result (N)"))
