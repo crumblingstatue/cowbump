@@ -41,11 +41,7 @@ pub(super) fn tag_autocomplete_popup(
     }
     state.applied = false;
     let popup_id = ui.make_persistent_id("tag_completion");
-    let mut last = string.split_ascii_whitespace().last().unwrap_or("");
-    // Ignore '!' character
-    if last.bytes().next() == Some(b'!') {
-        last = &last[1..];
-    }
+    let last = find_word_to_complete(string);
     if down_pressed {
         match &mut state.select {
             None => state.select = Some(0),
@@ -65,14 +61,14 @@ pub(super) fn tag_autocomplete_popup(
         // Always select index 0 when input was changed for convenience
         state.select = Some(0);
     }
-    if !string.is_empty() {
+    if !string.is_empty() && !last.is_empty() {
         let mut exact_match = None;
         macro filt_predicate($tag:expr) {
             $tag.names.iter().any(|tag| tag.contains(last))
         }
         // Get length of list and also whether there is an exact match
         let mut i = 0;
-        let len = coll
+        let mut len = coll
             .tags
             .iter()
             .filter(|(_id, tag)| {
@@ -90,6 +86,11 @@ pub(super) fn tag_autocomplete_popup(
             Some(idx) if state.input_changed => state.select = Some(idx),
             _ => {}
         }
+        let specials = ["@any", "@all", "@none", "@f", "@seq", "@untagged"];
+        let last_is_special = last.bytes().next() == Some(b'@');
+        if last_is_special {
+            len += specials.len();
+        }
         if len > 0 {
             if let Some(selection) = &mut state.select {
                 if *selection >= len {
@@ -103,8 +104,8 @@ pub(super) fn tag_autocomplete_popup(
             }
             let mut complete = C::Nothing;
             popup_below_widget(ui, popup_id, response, |ui| {
-                if last.bytes().next() == Some(b':') {
-                    for (i, special) in [":no-tag", ":seq", ":no-seq"].into_iter().enumerate() {
+                if last_is_special {
+                    for (i, special) in specials.into_iter().enumerate() {
                         if ui
                             .selectable_label(state.select == Some(i), special)
                             .clicked()
@@ -163,6 +164,14 @@ pub(super) fn tag_autocomplete_popup(
         }
     }
     ret!(false);
+}
+
+fn find_word_to_complete(string: &str) -> &str {
+    let last_begin = string
+        .rfind(|c: char| matches!(c, '[' | ']' | '!') || c.is_whitespace())
+        .map(|pos| pos + 1)
+        .unwrap_or(0);
+    &string[last_begin..]
 }
 
 fn str_range(parent: &str, sub: &str) -> Range<usize> {
