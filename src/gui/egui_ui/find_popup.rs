@@ -26,9 +26,9 @@ pub(super) fn do_frame(
             }
             let re = ui.add(te);
             match state.search_reqs.parse_and_resolve(&popup.string, coll) {
-                Ok(()) => (),
+                Ok(()) => popup.err_string.clear(),
                 Err(e) => {
-                    ui.label(&format!("Error: {}", e));
+                    popup.err_string = e.to_string();
                 }
             }
             // Avoid a deadlock with this let binding.
