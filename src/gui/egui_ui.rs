@@ -2,6 +2,7 @@ mod changes_window;
 mod debug_window;
 mod entries_window;
 mod filter_popup;
+mod find_popup;
 mod load_folder_window;
 mod preferences_window;
 mod query_popup;
@@ -10,16 +11,10 @@ mod tag_autocomplete;
 mod tag_list;
 mod top_bar;
 
-use crate::{
-    application::Application,
-    collection::Collection,
-    entry,
-    gui::{search_goto_cursor, State},
-    tag,
-};
+use crate::{application::Application, entry, gui::State, tag};
 use egui_sfml::{
-    egui::{Align2, Color32, Context, TextEdit, Window},
-    sfml::graphics::{RenderTarget, RenderWindow},
+    egui::{Context, Window},
+    sfml::graphics::RenderWindow,
 };
 
 use self::{
@@ -180,7 +175,7 @@ pub(super) fn do_ui(
     changes_window::do_frame(state, egui_state, egui_ctx, app, win);
     debug_window::do_frame(egui_state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
-        do_find_popup(state, egui_state, egui_ctx, coll, win);
+        find_popup::do_frame(state, egui_state, egui_ctx, coll, win);
         if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
             state
                 .entries_view
@@ -240,51 +235,6 @@ fn do_prompts(egui_state: &mut EguiState, egui_ctx: &Context, app: &mut Applicat
             None => true,
         }
     });
-}
-
-fn do_find_popup(
-    state: &mut State,
-    egui_state: &mut EguiState,
-    egui_ctx: &Context,
-    coll: &mut Collection,
-    win: &RenderWindow,
-) {
-    if egui_state.find_popup.on {
-        egui_sfml::egui::Window::new("Find")
-            .anchor(Align2::LEFT_TOP, [32.0, 32.0])
-            .title_bar(false)
-            .auto_sized()
-            .show(egui_ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("find");
-                    let mut te = TextEdit::singleline(&mut egui_state.find_popup.string);
-                    if !state.search_success {
-                        te = te.text_color(Color32::RED);
-                    }
-                    let re = ui.add(te);
-                    match state
-                        .search_reqs
-                        .parse_and_resolve(&egui_state.find_popup.string, coll)
-                    {
-                        Ok(()) => (),
-                        Err(e) => {
-                            ui.label(&format!("Error: {}", e));
-                        }
-                    }
-                    // Avoid a deadlock with this let binding.
-                    // Inlining it into the if condition causes a deadlock
-                    let lost_focus = re.lost_focus();
-                    if ui.input().key_pressed(egui_sfml::egui::Key::Enter) || lost_focus {
-                        egui_state.find_popup.on = false;
-                    }
-                    if re.changed() || ui.input().key_pressed(egui_sfml::egui::Key::Enter) {
-                        state.search_cursor = 0;
-                        search_goto_cursor(state, coll, win.size().y);
-                    }
-                    ui.memory().request_focus(re.id);
-                });
-            });
-    }
 }
 
 fn prompt(
