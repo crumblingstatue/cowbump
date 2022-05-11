@@ -25,23 +25,20 @@ pub(super) fn do_frame(
         .filter_popup
         .do_frame("filter", egui_ctx, |popup, ui| {
             let count = coll.filter(&state.filter).count();
-            let te_id = ui.make_persistent_id("text_edit_tag_popup");
             let up_pressed = ui
                 .input_mut()
                 .consume_key(Modifiers::default(), Key::ArrowUp);
             let down_pressed = ui
                 .input_mut()
                 .consume_key(Modifiers::default(), Key::ArrowDown);
-            let mut te = TextEdit::singleline(&mut popup.string)
-                .lock_focus(true)
-                .id(te_id);
+            let mut te = TextEdit::singleline(&mut popup.string).lock_focus(true);
             if count == 0 {
                 te = te.text_color(Color32::RED);
             }
-            if popup.ac_state.applied {
-                text_edit_cursor_set_to_end(ui, te_id);
-            }
             let re = ui.add(te);
+            if popup.ac_state.applied {
+                text_edit_cursor_set_to_end(ui, re.id);
+            }
             if tag_autocomplete_popup(
                 &mut popup.string,
                 &mut popup.ac_state,
