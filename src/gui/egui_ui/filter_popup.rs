@@ -10,15 +10,7 @@ use crate::{
     },
 };
 
-use super::{tag_autocomplete::AcState, EguiState};
-
-#[derive(Default)]
-pub struct FilterPopup {
-    pub on: bool,
-    pub string: String,
-    pub err_string: String,
-    ac_state: AcState,
-}
+use super::EguiState;
 
 /// Returns whether filter state changed
 pub(super) fn do_frame(

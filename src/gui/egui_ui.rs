@@ -4,6 +4,7 @@ mod entries_window;
 mod filter_popup;
 mod load_folder_window;
 mod preferences_window;
+mod query_popup;
 mod sequences;
 mod tag_autocomplete;
 mod tag_list;
@@ -25,9 +26,9 @@ use self::{
     changes_window::ChangesWindow,
     debug_window::DebugWindow,
     entries_window::EntriesWindow,
-    filter_popup::FilterPopup,
     load_folder_window::LoadFolderWindow,
     preferences_window::PreferencesWindow,
+    query_popup::QueryPopup,
     sequences::{SequenceWindow, SequencesWindow},
     tag_list::TagWindow,
 };
@@ -51,7 +52,7 @@ pub(crate) struct EguiState {
     pub debug_window: DebugWindow,
     pub search_edit: bool,
     search_string: String,
-    pub filter_popup: FilterPopup,
+    pub filter_popup: QueryPopup,
     /// Uid counter for egui entities like windows
     egui_uid_counter: u64,
 }
