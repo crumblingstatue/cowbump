@@ -563,7 +563,7 @@ fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
         .enumerate()
         .filter(|(_, uid)| {
             let en = &coll.entries[uid];
-            en.all_reqs_satisfied(*uid, &state.search_reqs, &coll.tags, &coll.sequences)
+            en.all_reqs_satisfied(*uid, &state.find_reqs, &coll.tags, &coll.sequences)
         })
         .map(|(i, _)| i)
         .nth(nth)
@@ -615,7 +615,7 @@ struct State {
     filter: Requirements,
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
-    search_reqs: Requirements,
+    find_reqs: Requirements,
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
@@ -704,7 +704,7 @@ impl State {
             highlight: None,
             clipboard_ctx: Clipboard::new().unwrap(),
             entries_view: EntriesView::default(),
-            search_reqs: Requirements::default(),
+            find_reqs: Requirements::default(),
             selected_uids: Default::default(),
             select_begin: None,
         }

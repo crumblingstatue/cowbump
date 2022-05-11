@@ -1,5 +1,5 @@
 use egui_sfml::{
-    egui::{Color32, Context, TextEdit},
+    egui::{Context, Key, Modifiers, TextEdit},
     sfml::graphics::{RenderTarget, RenderWindow},
 };
 
@@ -8,7 +8,10 @@ use crate::{
     gui::{search_goto_cursor, State},
 };
 
-use super::EguiState;
+use super::{
+    entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
+    EguiState,
+};
 
 pub(super) fn do_frame(
     state: &mut State,
@@ -20,26 +23,49 @@ pub(super) fn do_frame(
     egui_state
         .find_popup
         .do_frame("find", egui_ctx, |popup, ui| {
-            let mut te = TextEdit::singleline(&mut popup.string);
-            if !state.search_success {
-                te = te.text_color(Color32::RED);
-            }
+            let up_pressed = ui
+                .input_mut()
+                .consume_key(Modifiers::default(), Key::ArrowUp);
+            let down_pressed = ui
+                .input_mut()
+                .consume_key(Modifiers::default(), Key::ArrowDown);
+            let te = TextEdit::singleline(&mut popup.string).lock_focus(true);
             let re = ui.add(te);
-            match state.search_reqs.parse_and_resolve(&popup.string, coll) {
-                Ok(()) => popup.err_string.clear(),
-                Err(e) => {
-                    popup.err_string = e.to_string();
-                }
+            if popup.ac_state.applied {
+                text_edit_cursor_set_to_end(ui, re.id);
             }
-            // Avoid a deadlock with this let binding.
-            // Inlining it into the if condition causes a deadlock
-            let lost_focus = re.lost_focus();
-            if ui.input().key_pressed(egui_sfml::egui::Key::Enter) || lost_focus {
+            let mut text_changed = false;
+            if tag_autocomplete_popup(
+                &mut popup.string,
+                &mut popup.ac_state,
+                coll,
+                ui,
+                &re,
+                up_pressed,
+                down_pressed,
+            ) {
+                state.wipe_search();
+                text_changed = true;
+            }
+            popup.string.make_ascii_lowercase();
+            let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
+            if enter_pressed || egui_ctx.input().key_pressed(Key::Escape) {
                 popup.on = false;
             }
-            if re.changed() || ui.input().key_pressed(egui_sfml::egui::Key::Enter) {
-                state.search_cursor = 0;
-                search_goto_cursor(state, coll, win.size().y);
+            if re.changed() || text_changed || enter_pressed {
+                popup.err_string.clear();
+                match state.find_reqs.parse_and_resolve(&popup.string, coll) {
+                    Ok(()) => {
+                        if enter_pressed {
+                            state.search_cursor = 0;
+                            search_goto_cursor(state, coll, win.size().y);
+                        }
+                    }
+                    Err(e) => {
+                        popup.err_string = format!("Error: {}", e);
+                    }
+                }
+                popup.ac_state.input_changed = true;
             }
             ui.memory().request_focus(re.id);
         });
