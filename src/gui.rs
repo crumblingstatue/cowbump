@@ -92,7 +92,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     Ok(()) => window.close(),
                     Err(e) => native_dialog::error("Failed to save collection", e),
                 },
-                Event::KeyPressed { code, .. } => {
+                Event::KeyPressed {
+                    code, ctrl, shift, ..
+                } => {
                     match code {
                         Key::Escape => esc_pressed = true,
                         Key::Home => {
@@ -117,7 +119,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             }
                         }
                         Key::F11 => util::take_and_save_screenshot(&window),
-                        Key::F12 => egui_state.debug_window.toggle(),
+                        Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
                         _ => {}
                     }
                 }
