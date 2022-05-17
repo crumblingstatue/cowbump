@@ -71,7 +71,7 @@ impl Application {
     }
     pub fn save_active_collection(&self) -> anyhow::Result<()> {
         match self.active_collection.as_ref() {
-            Some((id, coll)) => save_collection(&self.database.data_dir, *id, coll),
+            Some((id, coll)) => Self::save_collection(&self.database.data_dir, *id, coll),
             None => Ok(()),
         }
     }
@@ -80,21 +80,20 @@ impl Application {
         coll: Option<(collection::Id, Collection)>,
     ) -> anyhow::Result<()> {
         if let Some((id, coll)) = &self.active_collection {
-            save_collection(&self.database.data_dir, *id, coll)?;
+            Self::save_collection(&self.database.data_dir, *id, coll)?;
         }
         self.active_collection = coll;
         Ok(())
     }
-}
-
-pub fn save_collection(
-    data_dir: &Path,
-    id: collection::Id,
-    collection: &Collection,
-) -> anyhow::Result<()> {
-    let dir_name = collections_dir_name(data_dir);
-    std::fs::create_dir_all(&dir_name)?;
-    serialization::write_to_file(collection, collection_filename(&dir_name, id))
+    fn save_collection(
+        data_dir: &Path,
+        id: collection::Id,
+        collection: &Collection,
+    ) -> anyhow::Result<()> {
+        let dir_name = collections_dir_name(data_dir);
+        std::fs::create_dir_all(&dir_name)?;
+        serialization::write_to_file(collection, collection_filename(&dir_name, id))
+    }
 }
 
 fn collections_dir_name(data_dir: &Path) -> PathBuf {
