@@ -5,7 +5,7 @@ use egui_sfml::{
 use rfd::{FileDialog, MessageButtons, MessageDialog};
 
 use crate::{
-    application::{self, Application},
+    application::Application,
     collection,
     gui::{native_dialog, State},
 };
@@ -73,11 +73,7 @@ pub(super) fn do_frame(
                     )
                     .clicked()
                 {
-                    if let Err(e) = application::switch_collection(
-                        &app.database.data_dir,
-                        &mut app.active_collection,
-                        None,
-                    ) {
+                    if let Err(e) = app.switch_collection(None) {
                         result = Err(e);
                     }
                     ui.close_menu();

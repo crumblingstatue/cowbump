@@ -75,18 +75,16 @@ impl Application {
             None => Ok(()),
         }
     }
-}
-
-pub(crate) fn switch_collection(
-    data_dir: &Path,
-    active_collection: &mut Option<(collection::Id, Collection)>,
-    coll: Option<(collection::Id, Collection)>,
-) -> anyhow::Result<()> {
-    if let Some((id, coll)) = active_collection {
-        save_collection(data_dir, *id, coll)?;
+    pub(crate) fn switch_collection(
+        &mut self,
+        coll: Option<(collection::Id, Collection)>,
+    ) -> anyhow::Result<()> {
+        if let Some((id, coll)) = &self.active_collection {
+            save_collection(&self.database.data_dir, *id, coll)?;
+        }
+        self.active_collection = coll;
+        Ok(())
     }
-    *active_collection = coll;
-    Ok(())
 }
 
 pub fn save_collection(
