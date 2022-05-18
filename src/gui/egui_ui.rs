@@ -9,6 +9,7 @@ mod query_popup;
 mod sequences;
 mod tag_autocomplete;
 mod tag_list;
+mod tag_specific_apps_window;
 mod top_bar;
 
 use crate::{application::Application, entry, gui::State, tag};
@@ -26,6 +27,7 @@ use self::{
     query_popup::QueryPopup,
     sequences::{SequenceWindow, SequencesWindow},
     tag_list::TagWindow,
+    tag_specific_apps_window::TagSpecificAppsWindow,
 };
 
 use super::Resources;
@@ -49,6 +51,7 @@ pub(crate) struct EguiState {
     pub filter_popup: QueryPopup,
     /// Uid counter for egui entities like windows
     egui_uid_counter: u64,
+    pub(crate) tag_specific_apps_window: TagSpecificAppsWindow,
 }
 
 impl Default for EguiState {
@@ -70,6 +73,7 @@ impl Default for EguiState {
             find_popup: Default::default(),
             filter_popup: Default::default(),
             egui_uid_counter: 0,
+            tag_specific_apps_window: Default::default(),
         }
     }
 }
@@ -197,6 +201,12 @@ pub(super) fn do_ui(
             &mut app.database.preferences,
         );
         sequences::do_sequence_windows(egui_state, coll, egui_ctx, &mut app.database.preferences);
+        tag_specific_apps_window::do_frame(
+            egui_state,
+            coll,
+            egui_ctx,
+            &mut app.database.preferences,
+        );
         entries_window::do_frame(
             state,
             egui_state,

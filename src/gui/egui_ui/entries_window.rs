@@ -20,7 +20,7 @@ use crate::{
     filter_reqs::Requirements,
     gui::{
         clamp_bottom, common_tags, entries_view::EntriesView, feed_args, get_tex_for_entry,
-        native_dialog, open_sequence, open_with_external, Resources, State,
+        native_dialog, open_sequence, open_with_external, OpenExternCandidate, Resources, State,
     },
     tag,
 };
@@ -226,7 +226,10 @@ pub(super) fn do_frame(
                                 && !state.highlight_and_seek_to_entry(id, rend_win.size().y)
                             {
                                 // Can't find in view, open it in external instead
-                                let paths = [&*coll.entries[&id].path];
+                                let paths = [OpenExternCandidate {
+                                    path: &*coll.entries[&id].path,
+                                    open_with: None,
+                                }];
                                 if let Err(e) = open_with_external(&paths, &mut db.preferences) {
                                     native_dialog::error("Error opening with external", e);
                                 }

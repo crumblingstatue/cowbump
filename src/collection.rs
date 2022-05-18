@@ -3,6 +3,7 @@ use crate::{
     entry::{self, Entry},
     filter_reqs::Requirements,
     folder_scan::walkdir,
+    preferences,
     sequence::{self, Sequence},
     tag::{self, Tag},
 };
@@ -17,6 +18,7 @@ use std::{
 pub type Entries = EntryMap<Entry>;
 pub type Tags = FnvHashMap<tag::Id, Tag>;
 pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
+pub type TagSpecificApps = FnvHashMap<tag::Id, preferences::AppId>;
 
 /// A collection of entries.
 ///
@@ -28,6 +30,8 @@ pub struct Collection {
     /// List of tags
     pub tags: Tags,
     pub sequences: Sequences,
+    #[serde(default)]
+    pub tag_specific_apps: TagSpecificApps,
 }
 
 #[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
@@ -42,6 +46,7 @@ impl Collection {
             entries: Entries::default(),
             tags: Tags::default(),
             sequences: Sequences::default(),
+            tag_specific_apps: TagSpecificApps::default(),
         };
         coll.update_from_paths(uid_counter, paths)?;
         Ok(coll)

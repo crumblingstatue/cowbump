@@ -18,6 +18,15 @@ pub struct Preferences {
     pub style: Style,
 }
 
+impl Preferences {
+    pub fn resolve_app(&self, name: &str) -> Option<AppId> {
+        self.applications
+            .iter()
+            .find(|(_k, v)| v.name == name)
+            .map(|(k, _v)| *k)
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Style {
     pub heading_size: f32,

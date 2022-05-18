@@ -362,8 +362,16 @@ fn handle_event_viewer(
                 } else if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
                     let seq = &coll.sequences[&seq_id];
                     open_sequence(seq, uid, &coll.entries, preferences);
-                } else if let Err(e) = open_with_external(&[&coll.entries[&uid].path], preferences)
-                {
+                } else if let Err(e) = open_with_external(
+                    {
+                        let en = &coll.entries[&uid];
+                        &[OpenExternCandidate {
+                            path: &en.path,
+                            open_with: find_open_with_for_entry(en, coll),
+                        }]
+                    },
+                    preferences,
+                ) {
                     native_dialog::error("Failed to open file", e);
                 }
             } else if button == mouse::Button::Right {
@@ -386,17 +394,23 @@ fn handle_event_viewer(
                 state.entries_view.y_offset -= window.size().y as f32;
                 clamp_top(state);
             } else if code == Key::Enter {
-                let mut paths: Vec<&Path> = Vec::new();
+                let mut candidates: Vec<OpenExternCandidate> = Vec::new();
                 for &uid in state.selected_uids.iter() {
-                    paths.push(&coll.entries[&uid].path);
+                    candidates.push(OpenExternCandidate {
+                        path: &coll.entries[&uid].path,
+                        open_with: None,
+                    });
                 }
-                if paths.is_empty() && !state.filter.is_empty() {
+                if candidates.is_empty() && !state.filter.is_empty() {
                     for uid in coll.filter(&state.filter) {
-                        paths.push(&coll.entries[&uid].path);
+                        candidates.push(OpenExternCandidate {
+                            path: &coll.entries[&uid].path,
+                            open_with: None,
+                        });
                     }
                 }
-                paths.sort();
-                if let Err(e) = open_with_external(&paths, preferences) {
+                candidates.sort_by_key(|c| c.path);
+                if let Err(e) = open_with_external(&candidates, preferences) {
                     native_dialog::error("Failed to open file", e);
                 }
             } else if code == Key::A && ctrl {
@@ -440,6 +454,12 @@ fn handle_event_viewer(
     }
 }
 
+fn find_open_with_for_entry(en: &entry::Entry, coll: &Collection) -> Option<AppId> {
+    en.tags
+        .iter()
+        .find_map(|tag_id| coll.tag_specific_apps.get(tag_id).cloned())
+}
+
 fn clamp_top(state: &mut State) {
     if state.entries_view.y_offset < 0.0 {
         state.entries_view.y_offset = 0.0;
@@ -460,8 +480,17 @@ fn feed_args(args_string: &str, paths: &[&Path], command: &mut Command) {
     }
 }
 
-fn open_with_external(paths: &[&Path], preferences: &mut Preferences) -> anyhow::Result<()> {
-    let built_tasks = build_tasks(paths, preferences)?;
+/// Candidate for opening with extern app
+struct OpenExternCandidate<'a> {
+    path: &'a Path,
+    open_with: Option<AppId>,
+}
+
+fn open_with_external(
+    candidates: &[OpenExternCandidate],
+    preferences: &mut Preferences,
+) -> anyhow::Result<()> {
+    let built_tasks = build_tasks(candidates, preferences)?;
     for task in built_tasks.tasks {
         let app = &preferences.applications[&task.app];
         let mut cmd = Command::new(&app.path);
@@ -486,13 +515,22 @@ struct BuiltTasks<'p> {
 }
 
 fn build_tasks<'a, 'p>(
-    paths: &[&'p Path],
+    candidates: &[OpenExternCandidate<'p>],
     preferences: &'a mut Preferences,
 ) -> anyhow::Result<BuiltTasks<'p>> {
     let mut tasks: Vec<Task> = Vec::new();
     let mut remainder = Vec::new();
-    for path in paths {
-        let ext = path
+    for candidate in candidates {
+        // Specially handle candidates that have an open_with
+        if let Some(app_id) = candidate.open_with {
+            tasks.push(Task {
+                app: app_id,
+                args: vec![candidate.path],
+            });
+            continue;
+        }
+        let ext = candidate
+            .path
             .extension()
             .map(|ext| ext.to_str().unwrap())
             .unwrap_or("")
@@ -500,11 +538,11 @@ fn build_tasks<'a, 'p>(
         match preferences.associations.get(&ext) {
             Some(Some(app_id)) => {
                 if let Some(task) = tasks.iter_mut().find(|task| task.app == *app_id) {
-                    task.args.push(path);
+                    task.args.push(candidate.path);
                 } else {
                     tasks.push(Task {
                         app: *app_id,
-                        args: vec![path],
+                        args: vec![candidate.path],
                     });
                 }
             }
@@ -512,7 +550,7 @@ fn build_tasks<'a, 'p>(
                 // Make sure extension preference exists, so the user doesn't
                 // have to add it manually to the list.
                 preferences.associations.insert(ext, None);
-                remainder.push(*path);
+                remainder.push(candidate.path);
             }
         }
     }
@@ -574,11 +612,14 @@ pub(crate) fn open_sequence(
     entries: &Entries,
     prefs: &mut Preferences,
 ) {
-    let mut paths = Vec::new();
+    let mut candidates = Vec::new();
     for img_uid in seq.entry_uids_wrapped_from(uid) {
-        paths.push(entries[&img_uid].path.as_ref());
+        candidates.push(OpenExternCandidate {
+            path: entries[&img_uid].path.as_ref(),
+            open_with: None,
+        });
     }
-    if let Err(e) = open_with_external(&paths, prefs) {
+    if let Err(e) = open_with_external(&candidates, prefs) {
         native_dialog::error("Failed to open file", e);
     }
 }

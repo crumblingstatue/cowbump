@@ -267,7 +267,7 @@ pub(super) fn do_frame(
                     egui_state.action = Some(Action::SortById);
                 }
             });
-            ui.menu_button("Windows", |ui| {
+            ui.menu_button("Collection", |ui| {
                 if ui.button("＃ Tag list (T)").clicked() {
                     ui.close_menu();
                     egui_state.tag_window.toggle();
@@ -279,6 +279,10 @@ pub(super) fn do_frame(
                 if ui.button("Changes").clicked() {
                     ui.close_menu();
                     egui_state.changes_window.open ^= true;
+                }
+                if ui.button("Tag specific applications").clicked() {
+                    ui.close_menu();
+                    egui_state.tag_specific_apps_window.open ^= true;
                 }
             });
             ui.menu_button("Help", |ui| {
