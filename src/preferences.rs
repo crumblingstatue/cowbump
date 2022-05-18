@@ -14,6 +14,27 @@ pub struct Preferences {
     pub scroll_wheel_multiplier: f32,
     #[serde(default = "UpDownArrowScrollSpeed::default")]
     pub arrow_key_scroll_speed: f32,
+    #[serde(default)]
+    pub style: Style,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Style {
+    pub heading_size: f32,
+    pub button_size: f32,
+    pub body_size: f32,
+    pub monospace_size: f32,
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Self {
+            heading_size: 20.0,
+            body_size: 16.0,
+            button_size: 16.0,
+            monospace_size: 14.0,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
@@ -58,6 +79,7 @@ impl Default for Preferences {
             associations: Default::default(),
             scroll_wheel_multiplier: ScrollWheelMultiplier::DEFAULT,
             arrow_key_scroll_speed: UpDownArrowScrollSpeed::DEFAULT,
+            style: Default::default(),
         }
     }
 }

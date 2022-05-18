@@ -45,6 +45,12 @@ enum Category {
     FileAssoc,
 }
 
+/// A slider for font sizes. Returns true if the value should be considered updated
+fn font_slider(ui: &mut Ui, label: &str, value: &mut f32) -> bool {
+    let re = ui.add(Slider::new(value, 8.0..=64.0).integer().text(label));
+    re.drag_released || re.lost_focus()
+}
+
 pub(crate) fn do_frame(
     egui_state: &mut EguiState,
     app: &mut crate::application::Application,
@@ -63,6 +69,7 @@ pub(crate) fn do_frame(
             });
             match win.category {
                 Category::Ui => {
+                    ui.heading("Scrolling");
                     slider_with_default::<ScrollWheelMultiplier>(
                         ui,
                         &mut prefs.scroll_wheel_multiplier,
@@ -71,6 +78,16 @@ pub(crate) fn do_frame(
                         ui,
                         &mut prefs.arrow_key_scroll_speed,
                     );
+                    ui.separator();
+                    ui.heading("Font sizes");
+                    let mut style_changed = false;
+                    style_changed |= font_slider(ui, "Heading", &mut prefs.style.heading_size);
+                    style_changed |= font_slider(ui, "Body", &mut prefs.style.body_size);
+                    style_changed |= font_slider(ui, "Button", &mut prefs.style.button_size);
+                    style_changed |= font_slider(ui, "Monospace", &mut prefs.style.monospace_size);
+                    if style_changed {
+                        crate::gui::set_up_style(egui_ctx, &prefs.style);
+                    }
                 }
                 Category::Startup => {
                     ui.checkbox(&mut prefs.open_last_coll_at_start, "Open last collection");
