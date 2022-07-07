@@ -227,7 +227,7 @@ pub(super) fn do_frame(
                             {
                                 // Can't find in view, open it in external instead
                                 let paths = [OpenExternCandidate {
-                                    path: &*coll.entries[&id].path,
+                                    path: &coll.entries[&id].path,
                                     open_with: None,
                                 }];
                                 if let Err(e) = open_with_external(&paths, &mut db.preferences) {
