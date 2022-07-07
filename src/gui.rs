@@ -8,6 +8,7 @@ mod util;
 use self::{
     egui_ui::Action,
     entries_view::{EntriesView, SortBy},
+    native_dialog::error,
     thumbnail_loader::ThumbnailLoader,
 };
 use crate::{
@@ -504,7 +505,9 @@ fn open_with_external(
         bail!(msg);
     }
     for path in built_tasks.remainder {
-        open::that_in_background(path);
+        if let Err(e) = open::that(path) {
+            error("Error opening", e);
+        }
     }
     Ok(())
 }

@@ -7,7 +7,10 @@ use rfd::{FileDialog, MessageButtons, MessageDialog};
 use crate::{
     application::Application,
     collection,
-    gui::{native_dialog, State},
+    gui::{
+        native_dialog::{self, error},
+        State,
+    },
 };
 
 use super::{info_message, load_folder_window, prompt, Action, EguiState, PromptAction};
@@ -302,7 +305,9 @@ pub(super) fn do_frame(
                 }
                 if ui.button("Open data dir").clicked() {
                     ui.close_menu();
-                    open::that_in_background(&app.database.data_dir);
+                    if let Err(e) = open::that(&app.database.data_dir) {
+                        error("Error opening", e);
+                    }
                 }
                 if ui.button("Debug window").clicked() {
                     ui.close_menu();
