@@ -16,7 +16,7 @@ use super::{
 pub struct EntriesView {
     pub y_offset: f32,
     pub sort_by: SortBy,
-    uids: Vec<entry::Id>,
+    pub uids: Vec<entry::Id>,
 }
 
 impl Default for EntriesView {

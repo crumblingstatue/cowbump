@@ -4,12 +4,14 @@ mod entries_view;
 pub mod native_dialog;
 mod thumbnail_loader;
 mod util;
+mod viewer;
 
 use self::{
     egui_ui::Action,
     entries_view::{EntriesView, SortBy},
     native_dialog::error,
     thumbnail_loader::ThumbnailLoader,
+    viewer::ViewerState,
 };
 use crate::{
     application::Application,
@@ -120,47 +122,30 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 },
                 Event::KeyPressed {
                     code, ctrl, shift, ..
-                } => {
-                    match code {
-                        Key::Escape => esc_pressed = true,
-                        Key::Home => {
-                            if !sf_egui.context().wants_keyboard_input() {
-                                state.entries_view.y_offset = 0.0;
-                            }
-                        }
-                        Key::End => {
-                            if app.active_collection.is_some()
-                                && !sf_egui.context().wants_keyboard_input()
-                            {
-                                // Align the bottom edge of the view with the bottom edge of the last row.
-                                // To do align the camera with a bottom edge, we need to subtract the screen
-                                // height from it.
-                                go_to_bottom(&window, &mut state);
-                            }
-                        }
-                        Key::F1 => egui_state.top_bar ^= true,
-                        Key::F2 => {
-                            if !state.selected_uids.is_empty() {
-                                egui_state.add_entries_window(state.selected_uids.clone())
-                            }
-                        }
-                        Key::F11 => util::take_and_save_screenshot(&window),
-                        Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
-                        _ => {}
-                    }
-                }
+                } => match code {
+                    Key::Escape => esc_pressed = true,
+                    Key::F1 => egui_state.top_bar ^= true,
+                    Key::F11 => util::take_and_save_screenshot(&window),
+                    Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
+                    _ => {}
+                },
                 _ => {}
             }
-            if let Some((_id, coll)) = &mut app.active_collection {
-                handle_event_viewer(
-                    event,
-                    &mut state,
-                    &mut egui_state,
-                    coll,
-                    &window,
-                    sf_egui.context(),
-                    &mut app.database.preferences,
-                );
+            match state.activity {
+                Activity::Thumbnails => {
+                    if let Some((_id, coll)) = &mut app.active_collection {
+                        handle_event_thumbnails(
+                            event,
+                            &mut state,
+                            &mut egui_state,
+                            coll,
+                            &window,
+                            sf_egui.context(),
+                            &mut app.database.preferences,
+                        );
+                    }
+                }
+                Activity::Viewer => viewer::handle_event(&mut state, &event),
             }
         }
         egui_state.begin_frame();
@@ -213,16 +198,21 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
         window.clear(Color::BLACK);
         match &mut coll {
-            Some(db) => {
-                entries_view::draw_thumbnails(
-                    &mut state,
-                    &res,
-                    &mut window,
-                    db,
-                    load_anim_rotation,
-                    !sf_egui.context().wants_pointer_input(),
-                );
-            }
+            Some(db) => match state.activity {
+                Activity::Thumbnails => {
+                    entries_view::draw_thumbnails(
+                        &mut state,
+                        &res,
+                        &mut window,
+                        db,
+                        load_anim_rotation,
+                        !sf_egui.context().wants_pointer_input(),
+                    );
+                }
+                Activity::Viewer => {
+                    viewer::draw(&mut state, &mut window, db);
+                }
+            },
             None => {
                 let msg = "Welcome to cowbump!\n\
                 \n\
@@ -319,7 +309,7 @@ fn abs_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
     thumb_index as usize
 }
 
-fn handle_event_viewer(
+fn handle_event_thumbnails(
     event: Event,
     state: &mut State,
     egui_state: &mut EguiState,
@@ -360,20 +350,10 @@ fn handle_event_viewer(
                         }
                         None => state.select_begin = Some(thumb_idx),
                     }
-                } else if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
-                    let seq = &coll.sequences[&seq_id];
-                    open_sequence(seq, uid, &coll.entries, preferences);
-                } else if let Err(e) = open_with_external(
-                    {
-                        let en = &coll.entries[&uid];
-                        &[OpenExternCandidate {
-                            path: &en.path,
-                            open_with: find_open_with_for_entry(en, coll),
-                        }]
-                    },
-                    preferences,
-                ) {
-                    native_dialog::error("Failed to open file", e);
+                } else if preferences.use_built_in_viewer {
+                    handle_built_in_open(state, abs_thumb_index_at_xy(x, y, state));
+                } else {
+                    handle_external_open(coll, uid, preferences);
                 }
             } else if button == mouse::Button::Right {
                 let vec = if state.selected_uids.contains(&uid) {
@@ -441,6 +421,17 @@ fn handle_event_viewer(
                 state
                     .entries_view
                     .update_from_collection(coll, &state.filter);
+            } else if code == Key::Home {
+                if !egui_ctx.wants_keyboard_input() {
+                    state.entries_view.y_offset = 0.0;
+                }
+            } else if code == Key::End && !egui_ctx.wants_keyboard_input() {
+                // Align the bottom edge of the view with the bottom edge of the last row.
+                // To do align the camera with a bottom edge, we need to subtract the screen
+                // height from it.
+                go_to_bottom(window, state);
+            } else if code == Key::F2 && !state.selected_uids.is_empty() {
+                egui_state.add_entries_window(state.selected_uids.clone())
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
@@ -452,6 +443,30 @@ fn handle_event_viewer(
             }
         }
         _ => {}
+    }
+}
+
+fn handle_built_in_open(state: &mut State, index: usize) {
+    state.activity = Activity::Viewer;
+    state.viewer_state.index = index;
+    state.viewer_state.reset_view();
+}
+
+fn handle_external_open(coll: &mut Collection, uid: entry::Id, preferences: &mut Preferences) {
+    if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
+        let seq = &coll.sequences[&seq_id];
+        open_sequence(seq, uid, &coll.entries, preferences);
+    } else if let Err(e) = open_with_external(
+        {
+            let en = &coll.entries[&uid];
+            &[OpenExternCandidate {
+                path: &en.path,
+                open_with: find_open_with_for_entry(en, coll),
+            }]
+        },
+        preferences,
+    ) {
+        native_dialog::error("Failed to open file", e);
     }
 }
 
@@ -696,6 +711,14 @@ struct State {
     selected_uids: Vec<entry::Id>,
     /// For batch select, this marks the beginning
     select_begin: Option<usize>,
+    activity: Activity,
+    viewer_state: ViewerState,
+}
+
+#[derive(PartialEq, Eq)]
+enum Activity {
+    Thumbnails,
+    Viewer,
 }
 
 fn set_active_collection(
@@ -778,6 +801,8 @@ impl State {
             find_reqs: Requirements::default(),
             selected_uids: Default::default(),
             select_begin: None,
+            activity: Activity::Thumbnails,
+            viewer_state: ViewerState::default(),
         }
     }
     fn wipe_search(&mut self) {

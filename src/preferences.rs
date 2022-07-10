@@ -16,6 +16,12 @@ pub struct Preferences {
     pub arrow_key_scroll_speed: f32,
     #[serde(default)]
     pub style: Style,
+    #[serde(default = "built_in_viewer_default")]
+    pub use_built_in_viewer: bool,
+}
+
+fn built_in_viewer_default() -> bool {
+    true
 }
 
 impl Preferences {
@@ -89,6 +95,7 @@ impl Default for Preferences {
             scroll_wheel_multiplier: ScrollWheelMultiplier::DEFAULT,
             arrow_key_scroll_speed: UpDownArrowScrollSpeed::DEFAULT,
             style: Default::default(),
+            use_built_in_viewer: true,
         }
     }
 }

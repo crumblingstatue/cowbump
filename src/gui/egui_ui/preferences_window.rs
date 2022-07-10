@@ -88,6 +88,11 @@ pub(crate) fn do_frame(
                     if style_changed {
                         crate::gui::set_up_style(egui_ctx, &prefs.style);
                     }
+                    ui.heading("Viewer");
+                    ui.checkbox(
+                        &mut prefs.use_built_in_viewer,
+                        "Use built-in viewer for supported formats",
+                    );
                 }
                 Category::Startup => {
                     ui.checkbox(&mut prefs.open_last_coll_at_start, "Open last collection");
