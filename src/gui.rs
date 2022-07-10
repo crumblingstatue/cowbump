@@ -111,7 +111,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
             }
         }
-        let mut esc_pressed = false;
 
         while let Some(event) = window.poll_event() {
             sf_egui.add_event(&event);
@@ -123,7 +122,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 Event::KeyPressed {
                     code, ctrl, shift, ..
                 } => match code {
-                    Key::Escape => esc_pressed = true,
                     Key::F1 => egui_state.top_bar ^= true,
                     Key::F11 => util::take_and_save_screenshot(&window),
                     Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
@@ -155,13 +153,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         });
         if let Err(e) = result {
             native_dialog::error("Error", e);
-        }
-        if esc_pressed
-            && !sf_egui.context().wants_keyboard_input()
-            && !sf_egui.context().wants_pointer_input()
-            && !egui_state.just_closed_window_with_esc
-        {
-            state.selected_uids.clear()
         }
         let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &egui_state.action {
@@ -422,6 +413,12 @@ fn handle_event_thumbnails(
                 go_to_bottom(window, state);
             } else if code == Key::F2 && !state.selected_uids.is_empty() {
                 egui_state.add_entries_window(state.selected_uids.clone())
+            } else if code == Key::Escape
+                && !egui_ctx.wants_keyboard_input()
+                && !egui_ctx.wants_pointer_input()
+                && !egui_state.just_closed_window_with_esc
+            {
+                state.selected_uids.clear()
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
