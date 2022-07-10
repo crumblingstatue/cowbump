@@ -210,7 +210,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     );
                 }
                 Activity::Viewer => {
-                    viewer::draw(&mut state, &mut window, db);
+                    viewer::draw(&mut state, &mut window, db, &res);
                 }
             },
             None => {
@@ -351,7 +351,11 @@ fn handle_event_thumbnails(
                         None => state.select_begin = Some(thumb_idx),
                     }
                 } else if preferences.use_built_in_viewer {
-                    handle_built_in_open(state, abs_thumb_index_at_xy(x, y, state));
+                    handle_built_in_open(
+                        state,
+                        state.entries_view.uids.clone(),
+                        abs_thumb_index_at_xy(x, y, state),
+                    );
                 } else {
                     handle_external_open(coll, uid, preferences);
                 }
@@ -375,24 +379,10 @@ fn handle_event_thumbnails(
                 state.entries_view.y_offset -= window.size().y as f32;
                 clamp_top(state);
             } else if code == Key::Enter {
-                let mut candidates: Vec<OpenExternCandidate> = Vec::new();
-                for &uid in state.selected_uids.iter() {
-                    candidates.push(OpenExternCandidate {
-                        path: &coll.entries[&uid].path,
-                        open_with: None,
-                    });
-                }
-                if candidates.is_empty() && !state.filter.is_empty() {
-                    for uid in coll.filter(&state.filter) {
-                        candidates.push(OpenExternCandidate {
-                            path: &coll.entries[&uid].path,
-                            open_with: None,
-                        });
-                    }
-                }
-                candidates.sort_by_key(|c| c.path);
-                if let Err(e) = open_with_external(&candidates, preferences) {
-                    native_dialog::error("Failed to open file", e);
+                if preferences.use_built_in_viewer {
+                    enter_open_builtin(state);
+                } else {
+                    enter_open_external(state, coll, preferences);
                 }
             } else if code == Key::A && ctrl {
                 select_all(state, coll);
@@ -446,9 +436,40 @@ fn handle_event_thumbnails(
     }
 }
 
-fn handle_built_in_open(state: &mut State, index: usize) {
+fn enter_open_builtin(state: &mut State) {
+    if state.selected_uids.is_empty() {
+        handle_built_in_open(state, state.entries_view.uids.clone(), 0);
+    } else {
+        handle_built_in_open(state, state.selected_uids.clone(), 0);
+    }
+}
+
+fn enter_open_external(state: &mut State, coll: &mut Collection, preferences: &mut Preferences) {
+    let mut candidates: Vec<OpenExternCandidate> = Vec::new();
+    for &uid in state.selected_uids.iter() {
+        candidates.push(OpenExternCandidate {
+            path: &coll.entries[&uid].path,
+            open_with: None,
+        });
+    }
+    if candidates.is_empty() && !state.filter.is_empty() {
+        for uid in coll.filter(&state.filter) {
+            candidates.push(OpenExternCandidate {
+                path: &coll.entries[&uid].path,
+                open_with: None,
+            });
+        }
+    }
+    candidates.sort_by_key(|c| c.path);
+    if let Err(e) = open_with_external(&candidates, preferences) {
+        native_dialog::error("Failed to open file", e);
+    }
+}
+
+fn handle_built_in_open(state: &mut State, image_list: Vec<entry::Id>, starting_index: usize) {
     state.activity = Activity::Viewer;
-    state.viewer_state.index = index;
+    state.viewer_state.image_list = image_list;
+    state.viewer_state.index = starting_index;
     state.viewer_state.reset_view();
 }
 
