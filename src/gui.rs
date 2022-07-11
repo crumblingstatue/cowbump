@@ -143,7 +143,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         );
                     }
                 }
-                Activity::Viewer => viewer::handle_event(&mut state, &event),
+                Activity::Viewer => viewer::handle_event(&mut state, &event, &mut window),
             }
         }
         egui_state.begin_frame();
@@ -346,6 +346,7 @@ fn handle_event_thumbnails(
                         state,
                         state.entries_view.uids.clone(),
                         abs_thumb_index_at_xy(x, y, state),
+                        window,
                     );
                 } else {
                     handle_external_open(coll, uid, preferences);
@@ -371,7 +372,7 @@ fn handle_event_thumbnails(
                 clamp_top(state);
             } else if code == Key::Enter {
                 if preferences.use_built_in_viewer {
-                    enter_open_builtin(state);
+                    enter_open_builtin(state, window);
                 } else {
                     enter_open_external(state, coll, preferences);
                 }
@@ -433,11 +434,11 @@ fn handle_event_thumbnails(
     }
 }
 
-fn enter_open_builtin(state: &mut State) {
+fn enter_open_builtin(state: &mut State, window: &RenderWindow) {
     if state.selected_uids.is_empty() {
-        handle_built_in_open(state, state.entries_view.uids.clone(), 0);
+        handle_built_in_open(state, state.entries_view.uids.clone(), 0, window);
     } else {
-        handle_built_in_open(state, state.selected_uids.clone(), 0);
+        handle_built_in_open(state, state.selected_uids.clone(), 0, window);
     }
 }
 
@@ -463,11 +464,16 @@ fn enter_open_external(state: &mut State, coll: &mut Collection, preferences: &m
     }
 }
 
-fn handle_built_in_open(state: &mut State, image_list: Vec<entry::Id>, starting_index: usize) {
+fn handle_built_in_open(
+    state: &mut State,
+    image_list: Vec<entry::Id>,
+    starting_index: usize,
+    window: &RenderWindow,
+) {
     state.activity = Activity::Viewer;
     state.viewer_state.image_list = image_list;
     state.viewer_state.index = starting_index;
-    state.viewer_state.reset_view();
+    state.viewer_state.reset_view(window);
 }
 
 fn handle_external_open(coll: &mut Collection, uid: entry::Id, preferences: &mut Preferences) {

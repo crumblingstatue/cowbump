@@ -48,11 +48,12 @@ pub(super) fn draw(
                     en.insert(Err(anyhow::anyhow!(e)));
                 }
             }
+            state.viewer_state.reset_view(window);
         }
     }
 }
 
-pub(super) fn handle_event(state: &mut State, event: &Event) {
+pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut RenderWindow) {
     match *event {
         Event::KeyPressed { code, shift, .. } => match code {
             Key::Left => {
@@ -61,7 +62,7 @@ pub(super) fn handle_event(state: &mut State, event: &Event) {
                 } else {
                     state.viewer_state.index -= 1;
                 }
-                state.viewer_state.reset_view();
+                state.viewer_state.reset_view(window);
             }
             Key::Right => {
                 if state.viewer_state.index == state.viewer_state.image_list.len() - 1 {
@@ -69,7 +70,7 @@ pub(super) fn handle_event(state: &mut State, event: &Event) {
                 } else {
                     state.viewer_state.index += 1;
                 }
-                state.viewer_state.reset_view();
+                state.viewer_state.reset_view(window);
             }
             Key::Escape => state.activity = Activity::Thumbnails,
             Key::Equal if shift => state.viewer_state.scale += 0.1,
@@ -119,8 +120,16 @@ pub struct ViewerState {
 }
 
 impl ViewerState {
-    pub fn reset_view(&mut self) {
+    pub fn reset_view(&mut self, window: &RenderWindow) {
         self.scale = 1.0;
         self.image_offset = (0, 0);
+        let id = self.image_list[self.index];
+        if let Some(Ok(img)) = self.image_cache.get(&id) {
+            let img_size = img.size();
+            let win_size = window.size();
+            if img_size.y > win_size.y {
+                self.scale = win_size.y as f32 / img_size.y as f32;
+            }
+        }
     }
 }
