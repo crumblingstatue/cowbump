@@ -342,7 +342,7 @@ fn handle_event_thumbnails(
                         None => state.select_begin = Some(thumb_idx),
                     }
                 } else if preferences.use_built_in_viewer {
-                    handle_built_in_open(
+                    open_built_in_viewer(
                         state,
                         state.entries_view.uids.clone(),
                         abs_thumb_index_at_xy(x, y, state),
@@ -436,9 +436,9 @@ fn handle_event_thumbnails(
 
 fn enter_open_builtin(state: &mut State, window: &RenderWindow) {
     if state.selected_uids.is_empty() {
-        handle_built_in_open(state, state.entries_view.uids.clone(), 0, window);
+        open_built_in_viewer(state, state.entries_view.uids.clone(), 0, window);
     } else {
-        handle_built_in_open(state, state.selected_uids.clone(), 0, window);
+        open_built_in_viewer(state, state.selected_uids.clone(), 0, window);
     }
 }
 
@@ -464,7 +464,8 @@ fn enter_open_external(state: &mut State, coll: &mut Collection, preferences: &m
     }
 }
 
-fn handle_built_in_open(
+/// Opens the built-in viewer with a list of images and a starting index in that list
+fn open_built_in_viewer(
     state: &mut State,
     image_list: Vec<entry::Id>,
     starting_index: usize,
