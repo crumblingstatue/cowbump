@@ -20,7 +20,8 @@ use crate::{
     filter_reqs::Requirements,
     gui::{
         clamp_bottom, common_tags, entries_view::EntriesView, feed_args, get_tex_for_entry,
-        native_dialog, open_sequence, open_with_external, OpenExternCandidate, Resources, State,
+        native_dialog, open_sequence_with_external, open_with_external, OpenExternCandidate,
+        Resources, State,
     },
     tag,
 };
@@ -581,7 +582,7 @@ pub(super) fn do_frame(
                                     let img_but =
                                         ImageButton::new(TextureId::User(img_id.0), (128., 128.));
                                     if ui.add(img_but).clicked() {
-                                        open_sequence(
+                                        open_sequence_with_external(
                                             seq,
                                             img_id,
                                             &coll.entries,

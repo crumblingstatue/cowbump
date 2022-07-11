@@ -479,7 +479,7 @@ fn handle_built_in_open(
 fn handle_external_open(coll: &mut Collection, uid: entry::Id, preferences: &mut Preferences) {
     if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
         let seq = &coll.sequences[&seq_id];
-        open_sequence(seq, uid, &coll.entries, preferences);
+        open_sequence_with_external(seq, uid, &coll.entries, preferences);
     } else if let Err(e) = open_with_external(
         {
             let en = &coll.entries[&uid];
@@ -648,7 +648,7 @@ fn search_next(state: &mut State, coll: &mut Collection, view_height: u32) {
     }
 }
 
-pub(crate) fn open_sequence(
+pub(crate) fn open_sequence_with_external(
     seq: &Sequence,
     uid: entry::Id,
     entries: &Entries,
