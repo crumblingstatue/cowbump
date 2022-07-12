@@ -10,10 +10,7 @@ mod viewer;
 use self::{
     egui_ui::Action,
     entries_view::{EntriesView, SortBy},
-    open::{
-        builtin::{enter_open_builtin, open_built_in_viewer},
-        external::{enter_open_external, handle_external_open},
-    },
+    open::{builtin, external},
     thumbnail_loader::ThumbnailLoader,
     viewer::ViewerState,
 };
@@ -344,14 +341,14 @@ fn handle_event_thumbnails(
                         None => state.select_begin = Some(thumb_idx),
                     }
                 } else if preferences.use_built_in_viewer {
-                    open_built_in_viewer(
+                    builtin::open(
                         state,
                         state.entries_view.uids.clone(),
                         abs_thumb_index_at_xy(x, y, state),
                         window,
                     );
                 } else {
-                    handle_external_open(coll, uid, preferences);
+                    external::handle_open(coll, uid, preferences);
                 }
             } else if button == mouse::Button::Right {
                 let vec = if state.selected_uids.contains(&uid) {
@@ -374,9 +371,9 @@ fn handle_event_thumbnails(
                 clamp_top(state);
             } else if code == Key::Enter {
                 if preferences.use_built_in_viewer {
-                    enter_open_builtin(state, window);
+                    builtin::on_enter_open(state, window);
                 } else {
-                    enter_open_external(state, coll, preferences);
+                    external::on_enter_open(state, coll, preferences);
                 }
             } else if code == Key::A && ctrl {
                 select_all(state, coll);

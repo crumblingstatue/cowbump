@@ -7,7 +7,7 @@ use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::open::external::open_sequence_with_external,
+    gui::open::external::open_sequence,
     preferences::Preferences,
     sequence::{self},
 };
@@ -134,7 +134,7 @@ pub(super) fn do_sequence_windows(
                     seq.remove_entry(uid);
                 }
                 Action::Open => {
-                    open_sequence_with_external(seq, uid, &coll.entries, prefs);
+                    open_sequence(seq, uid, &coll.entries, prefs);
                 }
             }
         }
@@ -228,12 +228,7 @@ pub(super) fn do_sequences_window(
                             for en in seq.entries.iter().take(7) {
                                 let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
                                 if ui.add(but).clicked() {
-                                    open_sequence_with_external(
-                                        seq,
-                                        *en,
-                                        &coll.entries,
-                                        preferences,
-                                    )
+                                    open_sequence(seq, *en, &coll.entries, preferences)
                                 }
                             }
                         });

@@ -13,8 +13,8 @@ use crate::{
     sequence::Sequence,
 };
 
-/// Enter-press open with externally configured viewers
-pub(in crate::gui) fn enter_open_external(
+/// Open functionality when enter is pressed in thumbnails view
+pub(in crate::gui) fn on_enter_open(
     state: &mut State,
     coll: &mut Collection,
     preferences: &mut Preferences,
@@ -35,16 +35,16 @@ pub(in crate::gui) fn enter_open_external(
         }
     }
     candidates.sort_by_key(|c| c.path);
-    if let Err(e) = open_with_external(&candidates, preferences) {
+    if let Err(e) = open(&candidates, preferences) {
         native_dialog::error("Failed to open file", e);
     }
 }
 
-pub fn handle_external_open(coll: &mut Collection, uid: entry::Id, preferences: &mut Preferences) {
+pub fn handle_open(coll: &mut Collection, uid: entry::Id, preferences: &mut Preferences) {
     if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
         let seq = &coll.sequences[&seq_id];
-        open_sequence_with_external(seq, uid, &coll.entries, preferences);
-    } else if let Err(e) = open_with_external(
+        open_sequence(seq, uid, &coll.entries, preferences);
+    } else if let Err(e) = open(
         {
             let en = &coll.entries[&uid];
             &[OpenExternCandidate {
@@ -64,7 +64,7 @@ pub struct OpenExternCandidate<'a> {
     pub open_with: Option<AppId>,
 }
 
-pub fn open_with_external(
+pub fn open(
     candidates: &[OpenExternCandidate],
     preferences: &mut Preferences,
 ) -> anyhow::Result<()> {
@@ -149,7 +149,7 @@ struct Task<'p> {
     args: Vec<&'p Path>,
 }
 
-pub(crate) fn open_sequence_with_external(
+pub(crate) fn open_sequence(
     seq: &Sequence,
     uid: entry::Id,
     entries: &Entries,
@@ -162,7 +162,7 @@ pub(crate) fn open_sequence_with_external(
             open_with: None,
         });
     }
-    if let Err(e) = open_with_external(&candidates, prefs) {
+    if let Err(e) = open(&candidates, prefs) {
         native_dialog::error("Failed to open file", e);
     }
 }

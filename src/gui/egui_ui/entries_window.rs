@@ -22,9 +22,7 @@ use crate::{
         clamp_bottom, common_tags,
         entries_view::EntriesView,
         get_tex_for_entry, native_dialog,
-        open::external::{
-            feed_args, open_sequence_with_external, open_with_external, OpenExternCandidate,
-        },
+        open::external::{self, feed_args, open_sequence, OpenExternCandidate},
         Resources, State,
     },
     tag,
@@ -235,7 +233,7 @@ pub(super) fn do_frame(
                                     path: &coll.entries[&id].path,
                                     open_with: None,
                                 }];
-                                if let Err(e) = open_with_external(&paths, &mut db.preferences) {
+                                if let Err(e) = external::open(&paths, &mut db.preferences) {
                                     native_dialog::error("Error opening with external", e);
                                 }
                             }
@@ -586,7 +584,7 @@ pub(super) fn do_frame(
                                     let img_but =
                                         ImageButton::new(TextureId::User(img_id.0), (128., 128.));
                                     if ui.add(img_but).clicked() {
-                                        open_sequence_with_external(
+                                        open_sequence(
                                             seq,
                                             img_id,
                                             &coll.entries,
