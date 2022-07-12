@@ -7,7 +7,7 @@ use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::open_sequence_with_external,
+    gui::open::open_sequence_with_external,
     preferences::Preferences,
     sequence::{self},
 };
