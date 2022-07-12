@@ -434,6 +434,7 @@ fn handle_event_thumbnails(
     }
 }
 
+/// Enter-press open with the built-in viewer
 fn enter_open_builtin(state: &mut State, window: &RenderWindow) {
     if state.selected_uids.is_empty() {
         open_built_in_viewer(state, state.entries_view.uids.clone(), 0, window);
@@ -442,6 +443,7 @@ fn enter_open_builtin(state: &mut State, window: &RenderWindow) {
     }
 }
 
+/// Enter-press open with externally configured viewers
 fn enter_open_external(state: &mut State, coll: &mut Collection, preferences: &mut Preferences) {
     let mut candidates: Vec<OpenExternCandidate> = Vec::new();
     for &uid in state.selected_uids.iter() {
