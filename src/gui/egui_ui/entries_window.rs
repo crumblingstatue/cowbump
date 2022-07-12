@@ -22,7 +22,9 @@ use crate::{
         clamp_bottom, common_tags,
         entries_view::EntriesView,
         get_tex_for_entry, native_dialog,
-        open::{feed_args, open_sequence_with_external, open_with_external, OpenExternCandidate},
+        open::external::{
+            feed_args, open_sequence_with_external, open_with_external, OpenExternCandidate,
+        },
         Resources, State,
     },
     tag,

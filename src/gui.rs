@@ -10,7 +10,10 @@ mod viewer;
 use self::{
     egui_ui::Action,
     entries_view::{EntriesView, SortBy},
-    open::{enter_open_builtin, enter_open_external, handle_external_open, open_built_in_viewer},
+    open::{
+        builtin::{enter_open_builtin, open_built_in_viewer},
+        external::{enter_open_external, handle_external_open},
+    },
     thumbnail_loader::ThumbnailLoader,
     viewer::ViewerState,
 };
