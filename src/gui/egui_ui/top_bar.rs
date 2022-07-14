@@ -41,32 +41,7 @@ pub(super) fn do_frame(
                     }
                 }
             }
-            ui.menu_button("Help", |ui| {
-                if ui.button("About").clicked() {
-                    ui.close_menu();
-                    MessageDialog::new()
-                        .set_description(&format!("Cowbump version {}", crate::VERSION))
-                        .show();
-                }
-                ui.separator();
-                ui.vertical_centered(|ui| {
-                    ui.label("= Debug =");
-                });
-                if ui.button("Save screenshot (F11)").clicked() {
-                    ui.close_menu();
-                    crate::gui::util::take_and_save_screenshot(win);
-                }
-                if ui.button("Open data dir").clicked() {
-                    ui.close_menu();
-                    if let Err(e) = open::that(&app.database.data_dir) {
-                        error("Error opening", e);
-                    }
-                }
-                if ui.button("Debug window").clicked() {
-                    ui.close_menu();
-                    egui_state.debug_window.toggle();
-                }
-            });
+            help_menu(ui, win, app, egui_state);
             if state.activity == Activity::Thumbnails && n_selected > 0 {
                 ui.separator();
                 ui.add(Label::new(
@@ -86,6 +61,40 @@ pub(super) fn do_frame(
         });
     });
     result
+}
+
+fn help_menu(
+    ui: &mut egui::Ui,
+    win: &RenderWindow,
+    app: &mut Application,
+    egui_state: &mut EguiState,
+) {
+    ui.menu_button("Help", |ui| {
+        if ui.button("About").clicked() {
+            ui.close_menu();
+            MessageDialog::new()
+                .set_description(&format!("Cowbump version {}", crate::VERSION))
+                .show();
+        }
+        ui.separator();
+        ui.vertical_centered(|ui| {
+            ui.label("= Debug =");
+        });
+        if ui.button("Save screenshot (F11)").clicked() {
+            ui.close_menu();
+            crate::gui::util::take_and_save_screenshot(win);
+        }
+        if ui.button("Open data dir").clicked() {
+            ui.close_menu();
+            if let Err(e) = open::that(&app.database.data_dir) {
+                error("Error opening", e);
+            }
+        }
+        if ui.button("Debug window").clicked() {
+            ui.close_menu();
+            egui_state.debug_window.toggle();
+        }
+    });
 }
 
 fn file_menu(
