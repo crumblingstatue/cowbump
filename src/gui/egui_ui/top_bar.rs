@@ -42,18 +42,32 @@ pub(super) fn do_frame(
                 }
             }
             help_menu(ui, win, app, egui_state);
-            if state.activity == Activity::Thumbnails && n_selected > 0 {
-                ui.separator();
-                ui.add(Label::new(
-                    RichText::new(format!("{} entries selected", n_selected)).color(Color32::GREEN),
-                ));
-                if ui
-                    .add(Button::new(
-                        RichText::new("(Click here (or Esc) to deselect)").color(Color32::YELLOW),
-                    ))
-                    .clicked()
-                {
-                    state.selected_uids.clear();
+            match state.activity {
+                Activity::Thumbnails => {
+                    if n_selected > 0 {
+                        ui.separator();
+                        ui.add(Label::new(
+                            RichText::new(format!("{} entries selected", n_selected))
+                                .color(Color32::GREEN),
+                        ));
+                        if ui
+                            .add(Button::new(
+                                RichText::new("(Click here (or Esc) to deselect)")
+                                    .color(Color32::YELLOW),
+                            ))
+                            .clicked()
+                        {
+                            state.selected_uids.clear();
+                        }
+                    }
+                }
+                Activity::Viewer => {
+                    ui.separator();
+                    ui.label(format!(
+                        "{}/{}",
+                        state.viewer_state.index + 1,
+                        state.viewer_state.image_list.len()
+                    ));
                 }
             }
             ui.separator();
