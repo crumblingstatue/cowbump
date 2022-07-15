@@ -18,7 +18,7 @@ use self::{
 use crate::{
     application::Application,
     collection::{self, Collection},
-    db::{EntryMap, TagSet},
+    db::EntryMap,
     entry,
     filter_reqs::Requirements,
     gui::egui_ui::EguiState,
@@ -221,16 +221,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         app.database.save()?;
     }
     Ok(())
-}
-
-fn common_tags(ids: &[entry::Id], coll: &Collection) -> TagSet {
-    let mut set = TagSet::default();
-    for &id in ids {
-        for &tagid in &coll.entries[&id].tags {
-            set.insert(tagid);
-        }
-    }
-    set
 }
 
 type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;

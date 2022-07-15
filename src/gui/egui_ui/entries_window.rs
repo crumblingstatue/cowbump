@@ -19,7 +19,6 @@ use crate::{
     entry,
     filter_reqs::Requirements,
     gui::{
-        common_tags,
         entries_view::EntriesView,
         get_tex_for_entry, native_dialog,
         open::external::{self, feed_args, open_sequence, OpenExternCandidate},
@@ -243,7 +242,7 @@ pub(super) fn do_frame(
                     ui.vertical(|ui| {
                         // region: Tags
                         ui.horizontal_wrapped(|ui| {
-                            for tagid in common_tags(&win.ids, coll) {
+                            for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
                                 let tag_name = match coll.tags.get(&tagid) {
                                     Some(tag) => &tag.names[0],
                                     None => "<unknown tag>",

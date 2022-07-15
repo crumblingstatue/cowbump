@@ -5,13 +5,14 @@ mod application;
 mod collection;
 mod db;
 mod entry;
+mod entry_utils;
 mod filter_reqs;
 mod folder_scan;
 mod gui;
 mod preferences;
 mod sequence;
 mod serialization;
-pub mod set_ext;
+mod set_ext;
 mod tag;
 
 const VERSION: &str = include_str!("../version.txt");
