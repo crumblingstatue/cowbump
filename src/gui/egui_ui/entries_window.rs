@@ -19,10 +19,11 @@ use crate::{
     entry,
     filter_reqs::Requirements,
     gui::{
-        clamp_bottom, common_tags,
+        common_tags,
         entries_view::EntriesView,
         get_tex_for_entry, native_dialog,
         open::external::{self, feed_args, open_sequence, OpenExternCandidate},
+        thumbnails_view::clamp_bottom,
         Resources, State,
     },
     tag,

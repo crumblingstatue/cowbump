@@ -184,7 +184,7 @@ pub(super) fn do_ui(
             state
                 .entries_view
                 .update_from_collection(coll, &state.filter);
-            crate::gui::clamp_bottom(win, state);
+            super::thumbnails_view::clamp_bottom(win, state);
         }
         tag_list::do_frame(
             state,

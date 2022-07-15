@@ -5,7 +5,7 @@ use egui_sfml::{
 
 use crate::{
     collection::Collection,
-    gui::{search_goto_cursor, State},
+    gui::{thumbnails_view::search_goto_cursor, State},
 };
 
 use super::{
