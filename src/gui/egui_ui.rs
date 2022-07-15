@@ -14,7 +14,7 @@ mod top_bar;
 
 use crate::{application::Application, entry, gui::State, tag};
 use egui_sfml::{
-    egui::{Context, Window},
+    egui::{Context, FontFamily, FontId, TextStyle, Window},
     sfml::graphics::RenderWindow,
 };
 
@@ -268,4 +268,28 @@ impl EguiState {
             .push(EntriesWindow::new(vec, self.egui_uid_counter));
         self.egui_uid_counter += 1;
     }
+}
+
+pub fn set_up_style(ctx: &Context, pref_style: &crate::preferences::Style) {
+    let mut style = (*ctx.style()).clone();
+    style.text_styles = [
+        (
+            TextStyle::Heading,
+            FontId::new(pref_style.heading_size, FontFamily::Proportional),
+        ),
+        (
+            TextStyle::Button,
+            FontId::new(pref_style.button_size, FontFamily::Proportional),
+        ),
+        (
+            TextStyle::Body,
+            FontId::new(pref_style.body_size, FontFamily::Proportional),
+        ),
+        (
+            TextStyle::Monospace,
+            FontId::new(pref_style.monospace_size, FontFamily::Monospace),
+        ),
+    ]
+    .into();
+    ctx.set_style(style);
 }

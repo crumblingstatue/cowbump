@@ -86,7 +86,7 @@ pub(crate) fn do_frame(
                     style_changed |= font_slider(ui, "Button", &mut prefs.style.button_size);
                     style_changed |= font_slider(ui, "Monospace", &mut prefs.style.monospace_size);
                     if style_changed {
-                        crate::gui::set_up_style(egui_ctx, &prefs.style);
+                        crate::gui::egui_ui::set_up_style(egui_ctx, &prefs.style);
                     }
                     ui.heading("Viewer");
                     ui.checkbox(

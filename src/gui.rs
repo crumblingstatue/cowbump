@@ -26,7 +26,7 @@ use crate::{
 use anyhow::Context as _;
 use arboard::Clipboard;
 use egui_sfml::{
-    egui::{Context, FontFamily, FontId, TextStyle},
+    egui::Context,
     sfml::{
         graphics::{
             Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
@@ -37,30 +37,6 @@ use egui_sfml::{
     },
     SfEgui,
 };
-
-pub fn set_up_style(ctx: &Context, pref_style: &crate::preferences::Style) {
-    let mut style = (*ctx.style()).clone();
-    style.text_styles = [
-        (
-            TextStyle::Heading,
-            FontId::new(pref_style.heading_size, FontFamily::Proportional),
-        ),
-        (
-            TextStyle::Button,
-            FontId::new(pref_style.button_size, FontFamily::Proportional),
-        ),
-        (
-            TextStyle::Body,
-            FontId::new(pref_style.body_size, FontFamily::Proportional),
-        ),
-        (
-            TextStyle::Monospace,
-            FontId::new(pref_style.monospace_size, FontFamily::Monospace),
-        ),
-    ]
-    .into();
-    ctx.set_style(style);
-}
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut window = RenderWindow::new(
@@ -76,7 +52,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut egui_state = EguiState::default();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
-    set_up_style(sf_egui.context(), &app.database.preferences.style);
+    egui_ui::set_up_style(sf_egui.context(), &app.database.preferences.style);
 
     if app.database.preferences.open_last_coll_at_start && !app.database.recent.is_empty() {
         match app.load_last() {
