@@ -12,10 +12,10 @@ mod tag_list;
 mod tag_specific_apps_window;
 mod top_bar;
 
-use crate::{application::Application, entry, gui::State, tag};
+use crate::{application::Application, collection::Collection, entry, gui::State, tag};
 use egui_sfml::{
     egui::{Context, FontFamily, FontId, TextStyle, Window},
-    sfml::graphics::RenderWindow,
+    sfml::graphics::{RenderWindow, Texture},
 };
 
 use self::{
@@ -30,7 +30,7 @@ use self::{
     tag_specific_apps_window::TagSpecificAppsWindow,
 };
 
-use super::Resources;
+use super::{get_tex_for_entry, Resources};
 
 pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,
@@ -292,4 +292,44 @@ pub fn set_up_style(ctx: &Context, pref_style: &crate::preferences::Style) {
     ]
     .into();
     ctx.set_style(style);
+}
+
+pub(super) struct TexSrc<'state, 'res, 'db> {
+    state: &'state mut State,
+    res: &'res Resources,
+    coll: Option<&'db Collection>,
+}
+
+impl<'state, 'res, 'db> TexSrc<'state, 'res, 'db> {
+    pub(super) fn new(
+        state: &'state mut State,
+        res: &'res Resources,
+        app: &'db mut Application,
+    ) -> Self {
+        TexSrc {
+            state,
+            res,
+            coll: app.active_collection.as_ref().map(|(_id, col)| col),
+        }
+    }
+}
+
+impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
+    fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
+        let tex = match self.coll {
+            Some(coll) => {
+                get_tex_for_entry(
+                    &self.state.thumbnail_cache,
+                    entry::Id(id),
+                    coll,
+                    &mut self.state.thumbnail_loader,
+                    self.state.thumbnail_size,
+                    self.res,
+                )
+                .1
+            }
+            None => &*self.res.error_texture,
+        };
+        (tex.size().x as f32, tex.size().y as f32, tex)
+    }
 }

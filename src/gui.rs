@@ -208,11 +208,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             rs.set_outline_thickness(4.0);
             window.draw(&rs);
         }
-        let mut tex_src = TexSrc {
-            state: &mut state,
-            res: &res,
-            coll: app.active_collection.as_ref().map(|(_id, col)| col),
-        };
+        let mut tex_src = egui_ui::TexSrc::new(&mut state, &res, app);
         sf_egui.draw(&mut window, Some(&mut tex_src));
         window.display();
         load_anim_rotation += 2.0;
@@ -289,32 +285,6 @@ fn set_active_collection(
     *entries_view = EntriesView::from_collection(app.active_collection().as_ref().unwrap().1, reqs);
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
-}
-
-struct TexSrc<'state, 'res, 'db> {
-    state: &'state mut State,
-    res: &'res Resources,
-    coll: Option<&'db Collection>,
-}
-
-impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
-    fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
-        let tex = match self.coll {
-            Some(coll) => {
-                get_tex_for_entry(
-                    &self.state.thumbnail_cache,
-                    entry::Id(id),
-                    coll,
-                    &mut self.state.thumbnail_loader,
-                    self.state.thumbnail_size,
-                    self.res,
-                )
-                .1
-            }
-            None => &*self.res.error_texture,
-        };
-        (tex.size().x as f32, tex.size().y as f32, tex)
-    }
 }
 
 fn get_tex_for_entry<'t>(
