@@ -109,6 +109,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         width as f32,
                         height as f32,
                     )));
+                    state.thumbs_view.resize(width);
                 }
                 _ => {}
             }

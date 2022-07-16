@@ -36,18 +36,26 @@ pub enum SortBy {
     Id,
 }
 
+fn thumbs_per_row_and_size(window_width: u32) -> (u8, u32) {
+    let thumbnails_per_row = 5;
+    let thumbnail_size = window_width / thumbnails_per_row as u32;
+    (thumbnails_per_row, thumbnail_size)
+}
+
 impl ThumbnailsView {
     pub fn new(window_width: u32) -> Self {
-        let thumbnails_per_row = 5;
-        let thumbnail_size = window_width / thumbnails_per_row as u32;
+        let (thumbs_per_row, thumb_size) = thumbs_per_row_and_size(window_width);
         Self {
             y_offset: Default::default(),
             sort_by: SortBy::Path,
             uids: Default::default(),
-            thumb_size: thumbnail_size,
-            thumbs_per_row: thumbnails_per_row,
+            thumb_size,
+            thumbs_per_row,
             highlight: None,
         }
+    }
+    pub fn resize(&mut self, window_width: u32) {
+        (self.thumbs_per_row, self.thumb_size) = thumbs_per_row_and_size(window_width);
     }
     pub fn from_collection(window_width: u32, coll: &Collection, reqs: &Requirements) -> Self {
         let mut this = Self::new(window_width);
