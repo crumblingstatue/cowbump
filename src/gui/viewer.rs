@@ -100,7 +100,7 @@ pub struct ViewerState {
 }
 
 impl ViewerState {
-    pub fn reset_view(&mut self, window: &RenderWindow) {
+    pub(in crate::gui) fn reset_view(&mut self, window: &RenderWindow) {
         self.scale = 1.0;
         self.image_offset = (0, 0);
         let id = self.image_list[self.index];
