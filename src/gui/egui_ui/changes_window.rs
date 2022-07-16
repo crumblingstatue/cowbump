@@ -65,7 +65,7 @@ pub(super) fn do_frame(
                                                     );
                                                 }
                                                 if re.clicked() {
-                                                    state.highlight_and_seek_to_entry(
+                                                    state.thumbs_view.highlight_and_seek_to_entry(
                                                         info.id,
                                                         rw.size().y,
                                                     );

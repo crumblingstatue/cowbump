@@ -225,7 +225,9 @@ pub(super) fn do_frame(
                             if ui
                                 .add(ImageButton::new(TextureId::User(id.0), (w, h)))
                                 .clicked()
-                                && !state.highlight_and_seek_to_entry(id, rend_win.size().y)
+                                && !state
+                                    .thumbs_view
+                                    .highlight_and_seek_to_entry(id, rend_win.size().y)
                             {
                                 // Can't find in view, open it in external instead
                                 let paths = [OpenExternCandidate {

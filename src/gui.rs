@@ -338,14 +338,4 @@ impl State {
         self.search_success = false;
         self.thumbs_view.highlight = None;
     }
-    fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
-        match self.thumbs_view.entry_position(id) {
-            Some(idx) => {
-                self.thumbs_view.highlight = Some(idx as u32);
-                self.thumbs_view.seek_to_contain_index(idx, height);
-                true
-            }
-            None => false,
-        }
-    }
 }

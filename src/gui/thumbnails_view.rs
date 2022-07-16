@@ -149,6 +149,16 @@ impl ThumbnailsView {
             *view_y += diff as f32;
         }
     }
+    pub fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
+        match self.entry_position(id) {
+            Some(idx) => {
+                self.highlight = Some(idx as u32);
+                self.seek_to_contain_index(idx, height);
+                true
+            }
+            None => false,
+        }
+    }
 }
 
 pub(super) fn draw_thumbnails(
