@@ -10,9 +10,7 @@ mod viewer;
 use self::{
     egui_ui::Action,
     thumbnail_loader::ThumbnailLoader,
-    thumbnails_view::{
-        clamp_bottom, handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView,
-    },
+    thumbnails_view::{handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView},
     viewer::ViewerState,
 };
 use crate::{
@@ -77,7 +75,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             if Key::Down.is_pressed() {
                 state.thumbs_view.y_offset += scroll_speed;
                 if app.active_collection.is_some() {
-                    clamp_bottom(&window, &mut state);
+                    state.thumbs_view.clamp_bottom(&window);
                 }
             } else if Key::Up.is_pressed() {
                 state.thumbs_view.y_offset -= scroll_speed;

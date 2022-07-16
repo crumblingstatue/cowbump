@@ -97,6 +97,12 @@ impl ThumbnailsView {
         }
         b
     }
+    pub fn clamp_bottom(&mut self, window: &RenderWindow) {
+        let bottom = self.find_bottom(window);
+        if self.y_offset > bottom {
+            self.y_offset = bottom;
+        }
+    }
 }
 
 pub(super) fn draw_thumbnails(
@@ -211,13 +217,6 @@ fn go_to_bottom(window: &RenderWindow, state: &mut State) {
     state.thumbs_view.y_offset = state.thumbs_view.find_bottom(window);
 }
 
-pub(in crate::gui) fn clamp_bottom(window: &RenderWindow, state: &mut State) {
-    let bottom = state.thumbs_view.find_bottom(window);
-    if state.thumbs_view.y_offset > bottom {
-        state.thumbs_view.y_offset = bottom;
-    }
-}
-
 fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
     let thumb_index = abs_thumb_index_at_xy(x, y, state);
     state.thumbs_view.get(thumb_index)
@@ -300,7 +299,7 @@ pub(in crate::gui) fn handle_event(
             }
             if code == Key::PageDown {
                 state.thumbs_view.y_offset += window.size().y as f32;
-                clamp_bottom(window, state);
+                state.thumbs_view.clamp_bottom(window);
             } else if code == Key::PageUp {
                 state.thumbs_view.y_offset -= window.size().y as f32;
                 clamp_top(state);
@@ -361,7 +360,7 @@ pub(in crate::gui) fn handle_event(
             if delta > 0.0 {
                 clamp_top(state);
             } else {
-                clamp_bottom(window, state);
+                state.thumbs_view.clamp_bottom(window);
             }
         }
         _ => {}

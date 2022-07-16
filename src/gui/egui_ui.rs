@@ -184,7 +184,7 @@ pub(super) fn do_ui(
             state
                 .thumbs_view
                 .update_from_collection(coll, &state.filter);
-            super::thumbnails_view::clamp_bottom(win, state);
+            state.thumbs_view.clamp_bottom(win);
         }
         tag_list::do_frame(
             state,

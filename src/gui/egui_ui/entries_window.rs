@@ -287,7 +287,7 @@ pub(super) fn do_frame(
                                     state
                                         .thumbs_view
                                         .update_from_collection(coll, &state.filter);
-                                    crate::gui::thumbnails_view::clamp_bottom(rend_win, state);
+                                    state.thumbs_view.clamp_bottom(rend_win);
                                 }
                             }
                         });
