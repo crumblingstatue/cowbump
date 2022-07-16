@@ -312,7 +312,7 @@ pub(in crate::gui) fn handle_event(
                         None => state.select_begin = Some(thumb_idx),
                     }
                 } else if preferences.use_built_in_viewer {
-                    builtin::open(
+                    builtin::open_list(
                         state,
                         state.thumbs_view.uids.clone(),
                         state.thumbs_view.abs_thumb_index_at_xy(x, y),
