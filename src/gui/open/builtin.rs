@@ -4,6 +4,7 @@ use crate::{
     collection::Collection,
     entry,
     gui::{Activity, State},
+    sequence::Sequence,
 };
 
 /// Open functionality when enter is pressed in thumbnails view
@@ -47,4 +48,13 @@ pub(in crate::gui) fn open_single_with_others(
     } else {
         open_list(state, state.thumbs_view.uids.clone(), thumb_index, window);
     };
+}
+
+pub(in crate::gui) fn open_sequence(
+    state: &mut State,
+    seq: &Sequence,
+    start_uid: entry::Id,
+    window: &RenderWindow,
+) {
+    open_list(state, seq.entry_uids_wrapped_from(start_uid), 0, window);
 }

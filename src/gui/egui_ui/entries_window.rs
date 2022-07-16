@@ -20,7 +20,10 @@ use crate::{
     filter_reqs::Requirements,
     gui::{
         get_tex_for_entry, native_dialog,
-        open::external::{self, feed_args, open_sequence, OpenExternCandidate},
+        open::{
+            builtin,
+            external::{self, feed_args, OpenExternCandidate},
+        },
         resources::Resources,
         thumbnails_view::ThumbnailsView,
         State,
@@ -586,12 +589,16 @@ pub(super) fn do_frame(
                                     let img_but =
                                         ImageButton::new(TextureId::User(img_id.0), (128., 128.));
                                     if ui.add(img_but).clicked() {
-                                        open_sequence(
-                                            seq,
-                                            img_id,
-                                            &coll.entries,
-                                            &mut db.preferences,
-                                        )
+                                        if db.preferences.use_built_in_viewer {
+                                            builtin::open_sequence(state, seq, img_id, rend_win);
+                                        } else {
+                                            external::open_sequence(
+                                                seq,
+                                                img_id,
+                                                &coll.entries,
+                                                &mut db.preferences,
+                                            )
+                                        }
                                     }
                                 }
                             });

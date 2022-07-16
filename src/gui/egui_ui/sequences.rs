@@ -1,13 +1,22 @@
-use egui_sfml::egui::{
-    Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit, TextureId,
-    Window,
+use egui_sfml::{
+    egui::{
+        Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit,
+        TextureId, Window,
+    },
+    sfml::graphics::RenderWindow,
 };
 
 use crate::{
     collection::Collection,
     db::UidCounter,
     entry,
-    gui::open::external::open_sequence,
+    gui::{
+        open::{
+            builtin,
+            external::{self},
+        },
+        State,
+    },
     preferences::Preferences,
     sequence::{self},
 };
@@ -15,10 +24,12 @@ use crate::{
 use super::EguiState;
 
 pub(super) fn do_sequence_windows(
+    state: &mut State,
     egui_state: &mut EguiState,
     coll: &mut Collection,
     egui_ctx: &Context,
     prefs: &mut Preferences,
+    window: &RenderWindow,
 ) {
     egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
@@ -134,7 +145,11 @@ pub(super) fn do_sequence_windows(
                     seq.remove_entry(uid);
                 }
                 Action::Open => {
-                    open_sequence(seq, uid, &coll.entries, prefs);
+                    if prefs.use_built_in_viewer {
+                        builtin::open_sequence(state, seq, uid, window);
+                    } else {
+                        external::open_sequence(seq, uid, &coll.entries, prefs);
+                    }
                 }
             }
         }
@@ -143,11 +158,13 @@ pub(super) fn do_sequence_windows(
 }
 
 pub(super) fn do_sequences_window(
+    state: &mut State,
     egui_state: &mut EguiState,
     coll: &mut Collection,
     uid_counter: &mut UidCounter,
     egui_ctx: &Context,
     preferences: &mut Preferences,
+    window: &RenderWindow,
 ) {
     let seq_win = &mut egui_state.sequences_window;
     if seq_win.on {
@@ -228,7 +245,16 @@ pub(super) fn do_sequences_window(
                             for en in seq.entries.iter().take(7) {
                                 let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
                                 if ui.add(but).clicked() {
-                                    open_sequence(seq, *en, &coll.entries, preferences)
+                                    if preferences.use_built_in_viewer {
+                                        builtin::open_sequence(state, seq, *en, window);
+                                    } else {
+                                        external::open_sequence(
+                                            seq,
+                                            *en,
+                                            &coll.entries,
+                                            preferences,
+                                        );
+                                    }
                                 }
                             }
                         });

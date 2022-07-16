@@ -194,13 +194,22 @@ pub(super) fn do_ui(
             &mut app.database.uid_counter,
         );
         sequences::do_sequences_window(
+            state,
             egui_state,
             coll,
             &mut app.database.uid_counter,
             egui_ctx,
             &mut app.database.preferences,
+            win,
         );
-        sequences::do_sequence_windows(egui_state, coll, egui_ctx, &mut app.database.preferences);
+        sequences::do_sequence_windows(
+            state,
+            egui_state,
+            coll,
+            egui_ctx,
+            &mut app.database.preferences,
+            win,
+        );
         tag_specific_apps_window::do_frame(
             egui_state,
             coll,
