@@ -1,10 +1,12 @@
+use std::collections::VecDeque;
+
 use egui_sfml::sfml::{
     graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
     window::{mouse, Event, Key},
     SfBox,
 };
 
-use crate::{collection::Collection, db::EntryMap, entry};
+use crate::{collection::Collection, entry};
 
 use super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State};
 
@@ -20,8 +22,8 @@ pub(super) fn draw(
     }
     let id = state.viewer_state.image_list[state.viewer_state.index];
     let entry = &coll.entries[&id];
-    match state.viewer_state.image_cache.entry(id) {
-        std::collections::hash_map::Entry::Occupied(en) => match en.get() {
+    match state.viewer_state.image_cache.get(id) {
+        Some(result) => match result {
             Ok(tex) => {
                 let mut spr = Sprite::with_texture(tex);
                 spr.move_((
@@ -37,15 +39,18 @@ pub(super) fn draw(
                 window.draw(&text);
             }
         },
-        std::collections::hash_map::Entry::Vacant(en) => {
+        None => {
             let data = std::fs::read(&entry.path).unwrap();
             match image::load_from_memory(&data) {
                 Ok(img) => {
                     let tex = imagebuf_to_sf_tex(img.to_rgba8());
-                    en.insert(Ok(tex));
+                    state.viewer_state.image_cache.insert((id, Ok(tex)));
                 }
                 Err(e) => {
-                    en.insert(Err(anyhow::anyhow!(e)));
+                    state
+                        .viewer_state
+                        .image_cache
+                        .insert((id, Err(anyhow::anyhow!(e))));
                 }
             }
             state.viewer_state.reset_view(window);
@@ -90,10 +95,41 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut Render
     }
 }
 
+type ImageResult = Result<SfBox<Texture>, anyhow::Error>;
+type CacheKvPair = (entry::Id, ImageResult);
+
+struct ImageCache {
+    img_results: VecDeque<CacheKvPair>,
+    capacity: usize,
+}
+
+impl Default for ImageCache {
+    fn default() -> Self {
+        Self {
+            img_results: Default::default(),
+            capacity: 100,
+        }
+    }
+}
+
+impl ImageCache {
+    fn get(&self, id: entry::Id) -> Option<&ImageResult> {
+        self.img_results
+            .iter()
+            .find_map(|kvpair| (kvpair.0 == id).then(|| &kvpair.1))
+    }
+    fn insert(&mut self, kvpair: CacheKvPair) {
+        self.img_results.push_back(kvpair);
+        if self.img_results.len() > self.capacity {
+            self.img_results.pop_front();
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct ViewerState {
     pub index: usize,
-    image_cache: EntryMap<Result<SfBox<Texture>, anyhow::Error>>,
+    image_cache: ImageCache,
     scale: f32,
     image_offset: (i32, i32),
     grab_origin: Option<(i32, i32)>,
@@ -105,7 +141,7 @@ impl ViewerState {
         self.scale = 1.0;
         self.image_offset = (0, 0);
         let id = self.image_list[self.index];
-        if let Some(Ok(img)) = self.image_cache.get(&id) {
+        if let Some(Ok(img)) = self.image_cache.get(id) {
             let img_size = img.size();
             let win_size = window.size();
             if img_size.y > win_size.y {
