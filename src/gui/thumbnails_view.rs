@@ -103,6 +103,9 @@ impl ThumbnailsView {
             self.y_offset = bottom;
         }
     }
+    fn go_to_bottom(&mut self, window: &RenderWindow) {
+        self.y_offset = self.find_bottom(window);
+    }
 }
 
 pub(super) fn draw_thumbnails(
@@ -211,10 +214,6 @@ fn draw_thumbnail<'a: 'b, 'b>(
             window.draw_text(&text, &RenderStates::DEFAULT);
         }
     }
-}
-
-fn go_to_bottom(window: &RenderWindow, state: &mut State) {
-    state.thumbs_view.y_offset = state.thumbs_view.find_bottom(window);
 }
 
 fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
@@ -344,7 +343,7 @@ pub(in crate::gui) fn handle_event(
                 // Align the bottom edge of the view with the bottom edge of the last row.
                 // To do align the camera with a bottom edge, we need to subtract the screen
                 // height from it.
-                go_to_bottom(window, state);
+                state.thumbs_view.go_to_bottom(window);
             } else if code == Key::F2 && !state.selected_uids.is_empty() {
                 egui_state.add_entries_window(state.selected_uids.clone())
             } else if code == Key::Escape
