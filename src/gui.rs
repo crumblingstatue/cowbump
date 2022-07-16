@@ -2,6 +2,7 @@ pub mod debug_log;
 mod egui_ui;
 pub mod native_dialog;
 mod open;
+mod resources;
 mod thumbnail_loader;
 mod thumbnails_view;
 mod util;
@@ -9,6 +10,7 @@ mod viewer;
 
 use self::{
     egui_ui::Action,
+    resources::Resources,
     thumbnail_loader::ThumbnailLoader,
     thumbnails_view::{handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView},
     viewer::ViewerState,
@@ -26,8 +28,8 @@ use arboard::Clipboard;
 use egui_sfml::{
     sfml::{
         graphics::{
-            Color, Font, IntRect, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text,
-            Texture, Transformable,
+            Color, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
+            Transformable,
         },
         window::{Event, Key, Style, VideoMode},
         SfBox,
@@ -223,34 +225,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
 }
 
 type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;
-
-struct Resources {
-    loading_texture: SfBox<Texture>,
-    error_texture: SfBox<Texture>,
-    sel_begin_texture: SfBox<Texture>,
-    font: SfBox<Font>,
-}
-
-impl Resources {
-    pub fn load() -> anyhow::Result<Self> {
-        let mut loading_texture = Texture::new().context("texture create error")?;
-        let mut error_texture = Texture::new().context("texture create error")?;
-        let mut sel_begin_texture = Texture::new().context("texture create error")?;
-        let font = unsafe {
-            Font::from_memory(include_bytes!("../Vera.ttf")).context("failed to load font")?
-        };
-        loading_texture.load_from_memory(include_bytes!("../loading.png"), IntRect::default())?;
-        error_texture.load_from_memory(include_bytes!("../error.png"), IntRect::default())?;
-        sel_begin_texture
-            .load_from_memory(include_bytes!("../select_begin.png"), IntRect::default())?;
-        Ok(Self {
-            loading_texture,
-            error_texture,
-            sel_begin_texture,
-            font,
-        })
-    }
-}
 
 struct State {
     filter: Requirements,

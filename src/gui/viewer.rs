@@ -6,7 +6,7 @@ use egui_sfml::sfml::{
 
 use crate::{collection::Collection, db::EntryMap, entry};
 
-use super::{thumbnail_loader::imagebuf_to_sf_tex, Activity, Resources, State};
+use super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State};
 
 pub(super) fn draw(
     state: &mut State,

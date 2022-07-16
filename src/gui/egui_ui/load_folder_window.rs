@@ -20,7 +20,7 @@ use crate::{
     application::Application,
     collection::Collection,
     folder_scan::walkdir,
-    gui::{thumbnail_loader, Resources, State},
+    gui::{resources::Resources, thumbnail_loader, State},
 };
 
 use super::EguiState;

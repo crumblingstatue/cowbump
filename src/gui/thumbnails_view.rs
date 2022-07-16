@@ -17,8 +17,9 @@ use super::{
     egui_ui::EguiState,
     get_tex_for_entry, native_dialog,
     open::{builtin, external},
+    resources::Resources,
     thumbnail_loader::ThumbnailLoader,
-    Resources, State, ThumbnailCache,
+    State, ThumbnailCache,
 };
 
 pub struct ThumbnailsView {

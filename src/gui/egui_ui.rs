@@ -30,7 +30,7 @@ use self::{
     tag_specific_apps_window::TagSpecificAppsWindow,
 };
 
-use super::{get_tex_for_entry, Resources};
+use super::{get_tex_for_entry, resources::Resources};
 
 pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,

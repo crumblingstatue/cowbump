@@ -21,8 +21,9 @@ use crate::{
     gui::{
         get_tex_for_entry, native_dialog,
         open::external::{self, feed_args, open_sequence, OpenExternCandidate},
+        resources::Resources,
         thumbnails_view::ThumbnailsView,
-        Resources, State,
+        State,
     },
     tag,
 };
