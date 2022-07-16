@@ -88,7 +88,7 @@ pub(crate) fn do_frame(
                     if style_changed {
                         crate::gui::egui_ui::set_up_style(egui_ctx, &prefs.style);
                     }
-                    ui.heading("Viewer");
+                    ui.heading("Opening");
                     ui.checkbox(
                         &mut prefs.use_built_in_viewer,
                         "Use built-in viewer for supported formats",
