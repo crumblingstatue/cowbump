@@ -70,21 +70,20 @@ impl ThumbnailsView {
     pub fn get(&self, index: usize) -> Option<entry::Id> {
         self.uids.get(index).copied()
     }
-}
-
-fn thumbs_skip_take(state: &State, window_height: u32) -> (usize, usize) {
-    let thumb_size = state.thumbs_view.thumb_size;
-    let mut thumbnails_per_column = (window_height / thumb_size) as u8;
-    // Compensate for truncating division
-    if window_height % thumb_size != 0 {
+    fn skip_take(&self, window_height: u32) -> (usize, usize) {
+        let thumb_size = self.thumb_size;
+        let mut thumbnails_per_column = (window_height / thumb_size) as u8;
+        // Compensate for truncating division
+        if window_height % thumb_size != 0 {
+            thumbnails_per_column += 1;
+        }
+        // Since we can scroll, we can have another partially drawn frame per screen
         thumbnails_per_column += 1;
+        let thumbnails_per_screen = (self.thumbs_per_row * thumbnails_per_column) as usize;
+        let row_offset = self.y_offset as u32 / thumb_size;
+        let skip = row_offset * self.thumbs_per_row as u32;
+        (skip as usize, thumbnails_per_screen)
     }
-    // Since we can scroll, we can have another partially drawn frame per screen
-    thumbnails_per_column += 1;
-    let thumbnails_per_screen = (state.thumbs_view.thumbs_per_row * thumbnails_per_column) as usize;
-    let row_offset = state.thumbs_view.y_offset as u32 / thumb_size;
-    let skip = row_offset * state.thumbs_view.thumbs_per_row as u32;
-    (skip as usize, thumbnails_per_screen)
 }
 
 pub(super) fn draw_thumbnails(
@@ -101,7 +100,7 @@ pub(super) fn draw_thumbnails(
         .thumbnail_loader
         .write_to_cache(&mut state.thumbnail_cache);
     let mut sprite = Sprite::new();
-    let (skip, take) = thumbs_skip_take(state, window.size().y);
+    let (skip, take) = state.thumbs_view.skip_take(window.size().y);
     for (rel_idx, (abs_idx, uid)) in state
         .thumbs_view
         .iter()
