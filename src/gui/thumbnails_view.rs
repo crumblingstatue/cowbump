@@ -22,8 +22,8 @@ use super::{
 };
 
 pub struct ThumbnailsView {
-    pub thumbnails_per_row: u8,
-    pub thumbnail_size: u32,
+    pub thumbs_per_row: u8,
+    pub thumb_size: u32,
     pub y_offset: f32,
     pub sort_by: SortBy,
     pub uids: Vec<entry::Id>,
@@ -42,8 +42,8 @@ impl ThumbnailsView {
             y_offset: Default::default(),
             sort_by: SortBy::Path,
             uids: Default::default(),
-            thumbnail_size,
-            thumbnails_per_row,
+            thumb_size: thumbnail_size,
+            thumbs_per_row: thumbnails_per_row,
         }
     }
     pub fn from_collection(window_width: u32, coll: &Collection, reqs: &Requirements) -> Self {
@@ -73,7 +73,7 @@ impl ThumbnailsView {
 }
 
 fn thumbs_skip_take(state: &State, window_height: u32) -> (usize, usize) {
-    let thumb_size = state.thumbs_view.thumbnail_size;
+    let thumb_size = state.thumbs_view.thumb_size;
     let mut thumbnails_per_column = (window_height / thumb_size) as u8;
     // Compensate for truncating division
     if window_height % thumb_size != 0 {
@@ -81,10 +81,9 @@ fn thumbs_skip_take(state: &State, window_height: u32) -> (usize, usize) {
     }
     // Since we can scroll, we can have another partially drawn frame per screen
     thumbnails_per_column += 1;
-    let thumbnails_per_screen =
-        (state.thumbs_view.thumbnails_per_row * thumbnails_per_column) as usize;
+    let thumbnails_per_screen = (state.thumbs_view.thumbs_per_row * thumbnails_per_column) as usize;
     let row_offset = state.thumbs_view.y_offset as u32 / thumb_size;
-    let skip = row_offset * state.thumbs_view.thumbnails_per_row as u32;
+    let skip = row_offset * state.thumbs_view.thumbs_per_row as u32;
     (skip as usize, thumbnails_per_screen)
 }
 
@@ -97,7 +96,7 @@ pub(super) fn draw_thumbnails(
     pointer_active: bool,
 ) {
     let mouse_pos = window.mouse_position();
-    let thumb_size = state.thumbs_view.thumbnail_size;
+    let thumb_size = state.thumbs_view.thumb_size;
     state
         .thumbnail_loader
         .write_to_cache(&mut state.thumbnail_cache);
@@ -111,8 +110,8 @@ pub(super) fn draw_thumbnails(
         .take(take)
         .enumerate()
     {
-        let column = (rel_idx as u32) % state.thumbs_view.thumbnails_per_row as u32;
-        let row = (rel_idx as u32) / state.thumbs_view.thumbnails_per_row as u32;
+        let column = (rel_idx as u32) % state.thumbs_view.thumbs_per_row as u32;
+        let row = (rel_idx as u32) / state.thumbs_view.thumbs_per_row as u32;
         let x = (column * thumb_size) as f32;
         let y = (row * thumb_size) as f32 - (state.thumbs_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
@@ -209,11 +208,11 @@ pub(in crate::gui) fn clamp_bottom(window: &RenderWindow, state: &mut State) {
 
 fn find_bottom(state: &State, window: &RenderWindow) -> f32 {
     let n_pics = state.thumbs_view.iter().count();
-    let mut rows = n_pics as u32 / state.thumbs_view.thumbnails_per_row as u32;
-    if n_pics as u32 % state.thumbs_view.thumbnails_per_row as u32 != 0 {
+    let mut rows = n_pics as u32 / state.thumbs_view.thumbs_per_row as u32;
+    if n_pics as u32 % state.thumbs_view.thumbs_per_row as u32 != 0 {
         rows += 1;
     }
-    let bottom = rows * state.thumbs_view.thumbnail_size;
+    let bottom = rows * state.thumbs_view.thumb_size;
     let mut b = bottom as f32 - window.size().y as f32;
     if b < 0. {
         b = 0.;
@@ -231,9 +230,9 @@ fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
 /// This is absolute, so the top left image on the screen could have a different index
 /// based on the scroll y offset
 fn abs_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
-    let thumb_x = x as u32 / state.thumbs_view.thumbnail_size;
-    let thumb_y = (y as u32 + state.thumbs_view.y_offset as u32) / state.thumbs_view.thumbnail_size;
-    let thumb_index = thumb_y * state.thumbs_view.thumbnails_per_row as u32 + thumb_x;
+    let thumb_x = x as u32 / state.thumbs_view.thumb_size;
+    let thumb_y = (y as u32 + state.thumbs_view.y_offset as u32) / state.thumbs_view.thumb_size;
+    let thumb_index = thumb_y * state.thumbs_view.thumbs_per_row as u32 + thumb_x;
     thumb_index as usize
 }
 

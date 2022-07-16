@@ -205,13 +205,13 @@ pub(super) fn do_frame(
                                 id,
                                 coll,
                                 &mut state.thumbnail_loader,
-                                state.thumbs_view.thumbnail_size,
+                                state.thumbs_view.thumb_size,
                                 res,
                             )
                             .1
                             .size();
                             let ratio = tex_size.x as f32 / tex_size.y as f32;
-                            let ts = state.thumbs_view.thumbnail_size as f32;
+                            let ts = state.thumbs_view.thumb_size as f32;
                             let h = match n_entries as u32 {
                                 0..=2 => ts,
                                 3..=6 => ts / 2.0,

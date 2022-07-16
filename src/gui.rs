@@ -194,8 +194,8 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         if let Some(index) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
                 (
-                    state.thumbs_view.thumbnail_size as f32,
-                    state.thumbs_view.thumbnail_size as f32,
+                    state.thumbs_view.thumb_size as f32,
+                    state.thumbs_view.thumb_size as f32,
                 )
                     .into(),
             );
@@ -345,7 +345,7 @@ impl State {
     fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
         let (_x, y) = self.item_position(index as u32);
         let view_y = &mut self.thumbs_view.y_offset;
-        let thumb_size = self.thumbs_view.thumbnail_size as u32;
+        let thumb_size = self.thumbs_view.thumb_size as u32;
         if y < (*view_y as u32) {
             let diff = (*view_y as u32) - y;
             *view_y -= diff as f32;
@@ -357,11 +357,11 @@ impl State {
     }
     /// Calculate absolute pixel position of an item at `index`
     fn item_position(&self, index: u32) -> (u32, u32) {
-        let thumbs_per_row: u32 = self.thumbs_view.thumbnails_per_row.into();
+        let thumbs_per_row: u32 = self.thumbs_view.thumbs_per_row.into();
         let row = index / thumbs_per_row;
-        let pixel_y = row * self.thumbs_view.thumbnail_size;
+        let pixel_y = row * self.thumbs_view.thumb_size;
         let col = index % thumbs_per_row;
-        let pixel_x = col * self.thumbs_view.thumbnail_size;
+        let pixel_x = col * self.thumbs_view.thumb_size;
         (pixel_x, pixel_y)
     }
     fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {

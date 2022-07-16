@@ -323,7 +323,7 @@ impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
                     entry::Id(id),
                     coll,
                     &mut self.state.thumbnail_loader,
-                    self.state.thumbs_view.thumbnail_size,
+                    self.state.thumbs_view.thumb_size,
                     self.res,
                 )
                 .1
