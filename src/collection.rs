@@ -168,16 +168,26 @@ impl Collection {
     }
 
     pub(crate) fn find_related_sequences(&self, ids: &[entry::Id]) -> Vec<sequence::Id> {
-        self.sequences
-            .iter()
-            .filter_map(|(k, v)| {
-                if slice_contains_any_of(&v.entries, ids) {
-                    Some(*k)
-                } else {
-                    None
-                }
-            })
-            .collect()
+        self.related_seqs_of(ids).collect()
+    }
+
+    fn related_seqs_of<'a>(
+        &'a self,
+        ids: &'a [entry::Id],
+    ) -> impl Iterator<Item = sequence::Id> + 'a {
+        self.sequences.iter().filter_map(|(k, v)| {
+            if slice_contains_any_of(&v.entries, ids) {
+                Some(*k)
+            } else {
+                None
+            }
+        })
+    }
+
+    pub(crate) fn get_first_related_sequence_of(&self, id: entry::Id) -> Option<&Sequence> {
+        self.related_seqs_of(&[id])
+            .next()
+            .map(|id| &self.sequences[&id])
     }
 
     pub(crate) fn scan_changes(&self, root: &Path) -> anyhow::Result<FolderChanges> {
