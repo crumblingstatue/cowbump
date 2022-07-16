@@ -29,7 +29,7 @@ use egui_sfml::{
     sfml::{
         graphics::{
             Color, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
-            Transformable,
+            Transformable, View,
         },
         window::{Event, Key, Style, VideoMode},
         SfBox,
@@ -102,6 +102,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
                     _ => {}
                 },
+                Event::Resized { width, height } => {
+                    window.set_view(&View::from_rect(&Rect::new(
+                        0.,
+                        0.,
+                        width as f32,
+                        height as f32,
+                    )));
+                }
                 _ => {}
             }
             match state.activity {
