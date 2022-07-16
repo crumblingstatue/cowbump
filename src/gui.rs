@@ -38,12 +38,12 @@ use egui_sfml::{
 };
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
-    let mut window = RenderWindow::new(
-        VideoMode::desktop_mode(),
-        "Cowbump",
-        Style::NONE,
-        &Default::default(),
-    );
+    let (video, style) = if app.database.preferences.start_fullscreen {
+        (VideoMode::desktop_mode(), Style::NONE)
+    } else {
+        (VideoMode::new(1280, 720, 32), Style::RESIZE)
+    };
+    let mut window = RenderWindow::new(video, "Cowbump", style, &Default::default());
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
     let res = Resources::load()?;

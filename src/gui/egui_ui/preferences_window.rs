@@ -95,6 +95,7 @@ pub(crate) fn do_frame(
                     );
                 }
                 Category::Startup => {
+                    ui.checkbox(&mut prefs.start_fullscreen, "Start in fullscreen mode");
                     ui.checkbox(&mut prefs.open_last_coll_at_start, "Open last collection");
                 }
                 Category::FileAssoc => {

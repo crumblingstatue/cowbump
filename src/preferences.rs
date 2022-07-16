@@ -18,6 +18,8 @@ pub struct Preferences {
     pub style: Style,
     #[serde(default = "built_in_viewer_default")]
     pub use_built_in_viewer: bool,
+    #[serde(default)]
+    pub start_fullscreen: bool,
 }
 
 fn built_in_viewer_default() -> bool {
@@ -96,6 +98,7 @@ impl Default for Preferences {
             arrow_key_scroll_speed: UpDownArrowScrollSpeed::DEFAULT,
             style: Default::default(),
             use_built_in_viewer: true,
+            start_fullscreen: false,
         }
     }
 }
