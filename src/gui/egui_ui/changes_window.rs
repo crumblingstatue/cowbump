@@ -116,6 +116,7 @@ pub(super) fn do_frame(
                                 .insert(path.to_owned(), AddedInfo { id, checked: false });
                         });
                         state.thumbs_view = ThumbnailsView::from_collection(
+                            rw.size().x,
                             app.active_collection().unwrap().1,
                             &state.filter,
                         );

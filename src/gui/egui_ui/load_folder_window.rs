@@ -76,6 +76,7 @@ pub(super) fn do_frame(
     egui_ctx: &Context,
     resources: &Resources,
     app: &mut Application,
+    window_width: u32,
 ) {
     let win = &mut egui_state.load_folder_window;
     let mut new_sel = None;
@@ -192,6 +193,7 @@ pub(super) fn do_frame(
                             app,
                             id,
                             &state.filter,
+                            window_width,
                         )
                         .unwrap();
                         *win = Default::default();

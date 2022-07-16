@@ -60,7 +60,8 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     egui_state.changes_window.open(changes);
                 }
                 let coll = app.active_collection.as_ref().unwrap();
-                state.thumbs_view = ThumbnailsView::from_collection(&coll.1, &state.filter);
+                state.thumbs_view =
+                    ThumbnailsView::from_collection(window.size().x, &coll.1, &state.filter);
                 let root_path = &app.database.collections[&coll.0];
                 std::env::set_current_dir(root_path)?;
             }
@@ -192,7 +193,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
         if let Some(index) = state.highlight {
             let mut search_highlight = RectangleShape::with_size(
-                (state.thumbnail_size as f32, state.thumbnail_size as f32).into(),
+                (
+                    state.thumbs_view.thumbnail_size as f32,
+                    state.thumbs_view.thumbnail_size as f32,
+                )
+                    .into(),
             );
             search_highlight.set_fill_color(Color::TRANSPARENT);
             search_highlight.set_outline_color(Color::RED);
@@ -250,8 +255,6 @@ impl Resources {
 }
 
 struct State {
-    thumbnails_per_row: u8,
-    thumbnail_size: u32,
     filter: Requirements,
     thumbnail_cache: ThumbnailCache,
     thumbnail_loader: ThumbnailLoader,
@@ -280,10 +283,14 @@ fn set_active_collection(
     app: &mut Application,
     id: collection::Id,
     reqs: &Requirements,
+    window_width: u32,
 ) -> anyhow::Result<()> {
     app.save_active_collection()?;
-    *entries_view =
-        ThumbnailsView::from_collection(app.active_collection().as_ref().unwrap().1, reqs);
+    *entries_view = ThumbnailsView::from_collection(
+        window_width,
+        app.active_collection().as_ref().unwrap().1,
+        reqs,
+    );
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
 }
@@ -312,13 +319,9 @@ fn get_tex_for_entry<'t>(
 
 impl State {
     fn new(window_width: u32) -> Self {
-        let thumbnails_per_row = 5;
-        let thumbnail_size = window_width / thumbnails_per_row as u32;
         let mut egui_state = EguiState::default();
         egui_state.top_bar = true;
         Self {
-            thumbnails_per_row,
-            thumbnail_size,
             filter: Requirements::default(),
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
@@ -326,7 +329,7 @@ impl State {
             search_success: false,
             highlight: None,
             clipboard_ctx: Clipboard::new().unwrap(),
-            thumbs_view: ThumbnailsView::default(),
+            thumbs_view: ThumbnailsView::new(window_width),
             find_reqs: Requirements::default(),
             selected_uids: Default::default(),
             select_begin: None,
@@ -342,7 +345,7 @@ impl State {
     fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
         let (_x, y) = self.item_position(index as u32);
         let view_y = &mut self.thumbs_view.y_offset;
-        let thumb_size = self.thumbnail_size as u32;
+        let thumb_size = self.thumbs_view.thumbnail_size as u32;
         if y < (*view_y as u32) {
             let diff = (*view_y as u32) - y;
             *view_y -= diff as f32;
@@ -354,11 +357,11 @@ impl State {
     }
     /// Calculate absolute pixel position of an item at `index`
     fn item_position(&self, index: u32) -> (u32, u32) {
-        let thumbs_per_row: u32 = self.thumbnails_per_row.into();
+        let thumbs_per_row: u32 = self.thumbs_view.thumbnails_per_row.into();
         let row = index / thumbs_per_row;
-        let pixel_y = row * self.thumbnail_size;
+        let pixel_y = row * self.thumbs_view.thumbnail_size;
         let col = index % thumbs_per_row;
-        let pixel_x = col * self.thumbnail_size;
+        let pixel_x = col * self.thumbs_view.thumbnail_size;
         (pixel_x, pixel_y)
     }
     fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {

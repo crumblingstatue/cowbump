@@ -1,6 +1,6 @@
 use egui_sfml::{
     egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
-    sfml::graphics::RenderWindow,
+    sfml::graphics::{RenderTarget, RenderWindow},
 };
 use rfd::{FileDialog, MessageButtons, MessageDialog};
 
@@ -31,7 +31,7 @@ pub(super) fn do_frame(
         egui::menu::bar(ui, |ui| {
             match state.activity {
                 Activity::Thumbnails => {
-                    file_menu(ui, app, state, egui_state, &mut result);
+                    file_menu(ui, app, state, egui_state, &mut result, win.size().x);
                     actions_menu(ui, app, egui_state, n_selected);
                     collection_menu(ui, egui_state);
                 }
@@ -117,6 +117,7 @@ fn file_menu(
     state: &mut State,
     egui_state: &mut EguiState,
     result: &mut anyhow::Result<()>,
+    window_width: u32,
 ) {
     ui.menu_button("File", |ui| {
         if ui.button("🗁 Load folder").clicked() {
@@ -138,6 +139,7 @@ fn file_menu(
                         app,
                         id,
                         &state.filter,
+                        window_width,
                     )
                     .unwrap();
                 } else {
@@ -203,6 +205,7 @@ fn file_menu(
                                 app,
                                 id,
                                 &state.filter,
+                                window_width,
                             );
                         }
                         Err(e) => {

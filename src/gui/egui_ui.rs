@@ -15,7 +15,7 @@ mod top_bar;
 use crate::{application::Application, collection::Collection, entry, gui::State, tag};
 use egui_sfml::{
     egui::{Context, FontFamily, FontId, TextStyle, Window},
-    sfml::graphics::{RenderWindow, Texture},
+    sfml::graphics::{RenderTarget, RenderWindow, Texture},
 };
 
 use self::{
@@ -175,7 +175,7 @@ pub(super) fn do_ui(
 ) -> anyhow::Result<()> {
     top_bar::do_frame(state, egui_state, egui_ctx, app, win)?;
     preferences_window::do_frame(egui_state, app, egui_ctx);
-    load_folder_window::do_frame(state, egui_state, egui_ctx, res, app);
+    load_folder_window::do_frame(state, egui_state, egui_ctx, res, app, win.size().x);
     changes_window::do_frame(state, egui_state, egui_ctx, app, win);
     debug_window::do_frame(egui_state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
@@ -323,7 +323,7 @@ impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
                     entry::Id(id),
                     coll,
                     &mut self.state.thumbnail_loader,
-                    self.state.thumbnail_size,
+                    self.state.thumbs_view.thumbnail_size,
                     self.res,
                 )
                 .1
