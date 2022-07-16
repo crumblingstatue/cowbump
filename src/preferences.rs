@@ -1,5 +1,6 @@
 use std::{ops::RangeInclusive, path::PathBuf};
 
+use egui_sfml::egui::emath::Numeric;
 use fnv::FnvHashMap;
 use serde_derive::{Deserialize, Serialize};
 
@@ -20,10 +21,16 @@ pub struct Preferences {
     pub use_built_in_viewer: bool,
     #[serde(default)]
     pub start_fullscreen: bool,
+    #[serde(default = "thumbs_per_row_default")]
+    pub thumbs_per_row: u8,
 }
 
-fn built_in_viewer_default() -> bool {
+const fn built_in_viewer_default() -> bool {
     true
+}
+
+const fn thumbs_per_row_default() -> u8 {
+    5
 }
 
 impl Preferences {
@@ -65,27 +72,38 @@ pub struct App {
 #[derive(Serialize, Deserialize, Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct AppId(pub Uid);
 
-pub trait FloatPref {
-    const DEFAULT: f32;
-    const RANGE: RangeInclusive<f32>;
+pub trait ValuePref {
+    type Type: Numeric = f32;
+    const DEFAULT: Self::Type;
+    const RANGE: RangeInclusive<Self::Type>;
     const NAME: &'static str;
-    fn default() -> f32 {
+    fn default() -> Self::Type {
         Self::DEFAULT
     }
 }
 
 pub enum ScrollWheelMultiplier {}
-impl FloatPref for ScrollWheelMultiplier {
+impl ValuePref for ScrollWheelMultiplier {
     const DEFAULT: f32 = 64.0;
     const RANGE: RangeInclusive<f32> = 2.0..=512.0;
     const NAME: &'static str = "Mouse wheel scrolling multiplier";
 }
 
 pub enum UpDownArrowScrollSpeed {}
-impl FloatPref for UpDownArrowScrollSpeed {
+impl ValuePref for UpDownArrowScrollSpeed {
     const DEFAULT: f32 = 8.0;
     const RANGE: RangeInclusive<f32> = 1.0..=64.0;
     const NAME: &'static str = "Up/Down arrow key scroll speed";
+}
+
+pub enum ThumbnailsPerRow {}
+impl ValuePref for ThumbnailsPerRow {
+    type Type = u8;
+    const DEFAULT: u8 = thumbs_per_row_default();
+
+    const RANGE: RangeInclusive<Self::Type> = 1..=20;
+
+    const NAME: &'static str = "Thumbnails per row";
 }
 
 impl Default for Preferences {
@@ -99,6 +117,7 @@ impl Default for Preferences {
             style: Default::default(),
             use_built_in_viewer: true,
             start_fullscreen: false,
+            thumbs_per_row: thumbs_per_row_default(),
         }
     }
 }

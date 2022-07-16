@@ -22,6 +22,7 @@ use crate::{
     entry,
     filter_reqs::Requirements,
     gui::egui_ui::EguiState,
+    preferences::Preferences,
 };
 use anyhow::Context as _;
 use arboard::Clipboard;
@@ -47,7 +48,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
     let res = Resources::load()?;
-    let mut state = State::new(window.size().x);
+    let mut state = State::new(window.size().x, &app.database.preferences);
     let mut egui_state = EguiState::default();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
@@ -60,8 +61,12 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     egui_state.changes_window.open(changes);
                 }
                 let coll = app.active_collection.as_ref().unwrap();
-                state.thumbs_view =
-                    ThumbnailsView::from_collection(window.size().x, &coll.1, &state.filter);
+                state.thumbs_view = ThumbnailsView::from_collection(
+                    window.size().x,
+                    &coll.1,
+                    &state.filter,
+                    &app.database.preferences,
+                );
                 let root_path = &app.database.collections[&coll.0];
                 std::env::set_current_dir(root_path)?;
             }
@@ -109,7 +114,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         width as f32,
                         height as f32,
                     )));
-                    state.thumbs_view.resize(width);
+                    state.thumbs_view.resize(width, &app.database.preferences);
                 }
                 _ => {}
             }
@@ -268,8 +273,12 @@ fn set_active_collection(
     app.save_active_collection()?;
     *entries_view = ThumbnailsView::from_collection(
         window_width,
-        app.active_collection().as_ref().unwrap().1,
+        Application::active_collection(&mut app.active_collection)
+            .as_ref()
+            .unwrap()
+            .1,
         reqs,
+        &app.database.preferences,
     );
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
@@ -298,7 +307,7 @@ fn get_tex_for_entry<'t>(
 }
 
 impl State {
-    fn new(window_width: u32) -> Self {
+    fn new(window_width: u32, prefs: &Preferences) -> Self {
         let mut egui_state = EguiState::default();
         egui_state.top_bar = true;
         Self {
@@ -308,7 +317,7 @@ impl State {
             search_cursor: 0,
             search_success: false,
             clipboard_ctx: Clipboard::new().unwrap(),
-            thumbs_view: ThumbnailsView::new(window_width),
+            thumbs_view: ThumbnailsView::new(window_width, prefs),
             find_reqs: Requirements::default(),
             selected_uids: Default::default(),
             select_begin: None,

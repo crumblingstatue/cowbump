@@ -36,15 +36,15 @@ pub enum SortBy {
     Id,
 }
 
-fn thumbs_per_row_and_size(window_width: u32) -> (u8, u32) {
-    let thumbnails_per_row = 5;
+fn thumbs_per_row_and_size(window_width: u32, preferences: &Preferences) -> (u8, u32) {
+    let thumbnails_per_row = preferences.thumbs_per_row;
     let thumbnail_size = window_width / thumbnails_per_row as u32;
     (thumbnails_per_row, thumbnail_size)
 }
 
 impl ThumbnailsView {
-    pub fn new(window_width: u32) -> Self {
-        let (thumbs_per_row, thumb_size) = thumbs_per_row_and_size(window_width);
+    pub fn new(window_width: u32, preferences: &Preferences) -> Self {
+        let (thumbs_per_row, thumb_size) = thumbs_per_row_and_size(window_width, preferences);
         Self {
             y_offset: Default::default(),
             sort_by: SortBy::Path,
@@ -54,11 +54,16 @@ impl ThumbnailsView {
             highlight: None,
         }
     }
-    pub fn resize(&mut self, window_width: u32) {
-        (self.thumbs_per_row, self.thumb_size) = thumbs_per_row_and_size(window_width);
+    pub fn resize(&mut self, window_width: u32, preferences: &Preferences) {
+        (self.thumbs_per_row, self.thumb_size) = thumbs_per_row_and_size(window_width, preferences);
     }
-    pub fn from_collection(window_width: u32, coll: &Collection, reqs: &Requirements) -> Self {
-        let mut this = Self::new(window_width);
+    pub fn from_collection(
+        window_width: u32,
+        coll: &Collection,
+        reqs: &Requirements,
+        preferences: &Preferences,
+    ) -> Self {
+        let mut this = Self::new(window_width, preferences);
         this.update_from_collection(coll, reqs);
         this
     }
@@ -90,7 +95,8 @@ impl ThumbnailsView {
         }
         // Since we can scroll, we can have another partially drawn frame per screen
         thumbnails_per_column += 1;
-        let thumbnails_per_screen = (self.thumbs_per_row * thumbnails_per_column) as usize;
+        let thumbnails_per_screen =
+            usize::from(self.thumbs_per_row) * usize::from(thumbnails_per_column);
         let row_offset = self.y_offset as u32 / thumb_size;
         let skip = row_offset * self.thumbs_per_row as u32;
         (skip as usize, thumbnails_per_screen)

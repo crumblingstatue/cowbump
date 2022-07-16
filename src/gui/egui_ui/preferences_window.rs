@@ -1,12 +1,20 @@
 use std::path::PathBuf;
 
-use egui_sfml::egui::{
-    Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider, TextEdit, Ui,
-    Window,
+use egui_sfml::{
+    egui::{
+        Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider, TextEdit,
+        Ui, Window,
+    },
+    sfml::graphics::RenderTarget,
 };
 use rfd::FileDialog;
 
-use crate::preferences::{App, AppId, FloatPref, ScrollWheelMultiplier, UpDownArrowScrollSpeed};
+use crate::{
+    gui::State,
+    preferences::{
+        App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
+    },
+};
 
 use super::EguiState;
 
@@ -51,10 +59,12 @@ fn font_slider(ui: &mut Ui, label: &str, value: &mut f32) -> bool {
     re.drag_released || re.lost_focus()
 }
 
-pub(crate) fn do_frame(
+pub(in crate::gui) fn do_frame(
+    state: &mut State,
     egui_state: &mut EguiState,
     app: &mut crate::application::Application,
     egui_ctx: &Context,
+    rw: &egui_sfml::sfml::graphics::RenderWindow,
 ) {
     let win = &mut egui_state.preferences_window;
     let prefs = &mut app.database.preferences;
@@ -69,6 +79,10 @@ pub(crate) fn do_frame(
             });
             match win.category {
                 Category::Ui => {
+                    ui.heading("Thumbnails view");
+                    if slider_with_default::<ThumbnailsPerRow>(ui, &mut prefs.thumbs_per_row) {
+                        state.thumbs_view.resize(rw.size().x, prefs)
+                    }
                     ui.heading("Scrolling");
                     slider_with_default::<ScrollWheelMultiplier>(
                         ui,
@@ -174,14 +188,18 @@ pub(crate) fn do_frame(
         });
 }
 
-fn slider_with_default<T: FloatPref>(ui: &mut Ui, attribute: &mut f32) {
+/// Returns whether the value changes
+fn slider_with_default<T: ValuePref>(ui: &mut Ui, attribute: &mut T::Type) -> bool {
+    let mut changed = false;
     ui.label(T::NAME);
     ui.horizontal(|ui| {
-        ui.add(Slider::new(attribute, T::RANGE));
+        changed = ui.add(Slider::new(attribute, T::RANGE)).changed();
         if ui.button("Restore default").clicked() {
             *attribute = T::DEFAULT;
+            changed = true;
         }
     });
+    changed
 }
 
 fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui) {

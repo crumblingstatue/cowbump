@@ -6,7 +6,9 @@ use egui_sfml::{
 };
 use fnv::FnvHashMap;
 
-use crate::{db::FolderChanges, entry, gui::thumbnails_view::ThumbnailsView};
+use crate::{
+    application::Application, db::FolderChanges, entry, gui::thumbnails_view::ThumbnailsView,
+};
 
 use super::EguiState;
 
@@ -117,8 +119,11 @@ pub(super) fn do_frame(
                         });
                         state.thumbs_view = ThumbnailsView::from_collection(
                             rw.size().x,
-                            app.active_collection().unwrap().1,
+                            Application::active_collection(&mut app.active_collection)
+                                .unwrap()
+                                .1,
                             &state.filter,
+                            &app.database.preferences,
                         );
                         win.applied = true;
                     }

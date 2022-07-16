@@ -174,7 +174,7 @@ pub(super) fn do_ui(
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
     top_bar::do_frame(state, egui_state, egui_ctx, app, win)?;
-    preferences_window::do_frame(egui_state, app, egui_ctx);
+    preferences_window::do_frame(state, egui_state, app, egui_ctx, win);
     load_folder_window::do_frame(state, egui_state, egui_ctx, res, app, win.size().x);
     changes_window::do_frame(state, egui_state, egui_ctx, app, win);
     debug_window::do_frame(egui_state, egui_ctx);

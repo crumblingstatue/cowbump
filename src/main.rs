@@ -1,4 +1,4 @@
-#![feature(try_blocks, decl_macro, let_chains)]
+#![feature(try_blocks, decl_macro, let_chains, associated_type_defaults)]
 #![windows_subsystem = "windows"]
 
 mod application;

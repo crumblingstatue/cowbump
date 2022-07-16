@@ -8,9 +8,11 @@ use crate::{
     entry, serialization,
 };
 
+type ActiveCollection = Option<(collection::Id, Collection)>;
+
 pub struct Application {
     pub database: Db,
-    pub active_collection: Option<(collection::Id, Collection)>,
+    pub active_collection: ActiveCollection,
     pub no_save: bool,
 }
 
@@ -56,10 +58,11 @@ impl Application {
         self.database.recent.use_(id);
         Ok(changes)
     }
-    pub(crate) fn active_collection(&mut self) -> Option<(collection::Id, &mut Collection)> {
-        self.active_collection.as_mut().map(|c| (c.0, &mut c.1))
+    pub(crate) fn active_collection(
+        active_collection: &mut ActiveCollection,
+    ) -> Option<(collection::Id, &mut Collection)> {
+        active_collection.as_mut().map(|c| (c.0, &mut c.1))
     }
-
     pub(crate) fn apply_changes_to_active_collection(
         &mut self,
         changes: &FolderChanges,
