@@ -9,7 +9,7 @@ use crate::{
     collection,
     gui::{
         native_dialog::{self, error},
-        Activity, State,
+        viewer, Activity, State,
     },
 };
 
@@ -39,6 +39,27 @@ pub(super) fn do_frame(
                     if ui.button("Back (Esc)").clicked() {
                         state.activity = Activity::Thumbnails;
                     }
+                    ui.menu_button("Viewer", |ui| {
+                        if ui.button("Previous (<-)").clicked() {
+                            viewer::prev(state, win);
+                        }
+                        if ui.button("Next (->)").clicked() {
+                            viewer::next(state, win);
+                        }
+                        if ui.button("Zoom out (-)").clicked() {
+                            viewer::zoom_out(state);
+                        }
+                        if ui.button("Original zoom (=)").clicked() {
+                            viewer::original_scale(state);
+                        }
+                        if ui.button("Zoom in (+)").clicked() {
+                            viewer::zoom_in(state);
+                        }
+                        ui.separator();
+                        if ui.button("Remove from view list (Del)").clicked() {
+                            viewer::remove_from_view_list(state);
+                        }
+                    });
                 }
             }
             help_menu(ui, win, app, egui_state);

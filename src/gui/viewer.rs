@@ -56,33 +56,13 @@ pub(super) fn draw(
 pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut RenderWindow) {
     match *event {
         Event::KeyPressed { code, shift, .. } => match code {
-            Key::Left => {
-                if state.viewer_state.index == 0 {
-                    state.viewer_state.index = state.viewer_state.image_list.len() - 1;
-                } else {
-                    state.viewer_state.index -= 1;
-                }
-                state.viewer_state.reset_view(window);
-            }
-            Key::Right => {
-                if state.viewer_state.index == state.viewer_state.image_list.len() - 1 {
-                    state.viewer_state.index = 0;
-                } else {
-                    state.viewer_state.index += 1;
-                }
-                state.viewer_state.reset_view(window);
-            }
+            Key::Left => prev(state, window),
+            Key::Right => next(state, window),
             Key::Escape => state.activity = Activity::Thumbnails,
-            Key::Equal if shift => state.viewer_state.scale += 0.1,
-            Key::Equal => state.viewer_state.scale = 1.0,
-            Key::Hyphen => state.viewer_state.scale -= 0.1,
-            Key::Delete => {
-                state
-                    .viewer_state
-                    .image_list
-                    .remove(state.viewer_state.index);
-                state.viewer_state.index = state.viewer_state.index.saturating_sub(1);
-            }
+            Key::Equal if shift => zoom_in(state),
+            Key::Equal => original_scale(state),
+            Key::Hyphen => zoom_out(state),
+            Key::Delete => remove_from_view_list(state),
             _ => {}
         },
         Event::MouseButtonPressed {
@@ -107,6 +87,44 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut Render
         }
         _ => {}
     }
+}
+
+pub(in crate::gui) fn remove_from_view_list(state: &mut State) {
+    state
+        .viewer_state
+        .image_list
+        .remove(state.viewer_state.index);
+    state.viewer_state.index = state.viewer_state.index.saturating_sub(1);
+}
+
+pub(in crate::gui) fn zoom_out(state: &mut State) {
+    state.viewer_state.scale -= 0.1
+}
+
+pub(in crate::gui) fn original_scale(state: &mut State) {
+    state.viewer_state.scale = 1.0
+}
+
+pub(in crate::gui) fn zoom_in(state: &mut State) {
+    state.viewer_state.scale += 0.1
+}
+
+pub(in crate::gui) fn next(state: &mut State, window: &RenderWindow) {
+    if state.viewer_state.index == state.viewer_state.image_list.len() - 1 {
+        state.viewer_state.index = 0;
+    } else {
+        state.viewer_state.index += 1;
+    }
+    state.viewer_state.reset_view(window);
+}
+
+pub(in crate::gui) fn prev(state: &mut State, window: &RenderWindow) {
+    if state.viewer_state.index == 0 {
+        state.viewer_state.index = state.viewer_state.image_list.len() - 1;
+    } else {
+        state.viewer_state.index -= 1;
+    }
+    state.viewer_state.reset_view(window);
 }
 
 #[derive(Default)]
