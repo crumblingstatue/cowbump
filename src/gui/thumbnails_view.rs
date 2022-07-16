@@ -125,6 +125,15 @@ impl ThumbnailsView {
         let thumb_index = self.abs_thumb_index_at_xy(x, y);
         self.get(thumb_index)
     }
+    /// Calculate absolute pixel position of an item at `index`
+    pub fn item_position(&self, index: u32) -> (u32, u32) {
+        let thumbs_per_row: u32 = self.thumbs_per_row.into();
+        let row = index / thumbs_per_row;
+        let pixel_y = row * self.thumb_size;
+        let col = index % thumbs_per_row;
+        let pixel_x = col * self.thumb_size;
+        (pixel_x, pixel_y)
+    }
 }
 
 pub(super) fn draw_thumbnails(

@@ -200,7 +200,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             search_highlight.set_fill_color(Color::TRANSPARENT);
             search_highlight.set_outline_color(Color::RED);
             search_highlight.set_outline_thickness(-4.0);
-            let (x, y) = state.item_position(index);
+            let (x, y) = state.thumbs_view.item_position(index);
             search_highlight.set_position((x as f32, y as f32 - state.thumbs_view.y_offset));
             window.draw(&search_highlight);
         }
@@ -341,7 +341,7 @@ impl State {
         self.highlight = None;
     }
     fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
-        let (_x, y) = self.item_position(index as u32);
+        let (_x, y) = self.thumbs_view.item_position(index as u32);
         let view_y = &mut self.thumbs_view.y_offset;
         let thumb_size = self.thumbs_view.thumb_size as u32;
         if y < (*view_y as u32) {
@@ -352,15 +352,6 @@ impl State {
             let diff = (y + thumb_size) - (*view_y as u32 + height);
             *view_y += diff as f32;
         }
-    }
-    /// Calculate absolute pixel position of an item at `index`
-    fn item_position(&self, index: u32) -> (u32, u32) {
-        let thumbs_per_row: u32 = self.thumbs_view.thumbs_per_row.into();
-        let row = index / thumbs_per_row;
-        let pixel_y = row * self.thumbs_view.thumb_size;
-        let col = index % thumbs_per_row;
-        let pixel_x = col * self.thumbs_view.thumb_size;
-        (pixel_x, pixel_y)
     }
     fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
         match self.thumbs_view.entry_position(id) {
