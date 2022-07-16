@@ -97,6 +97,11 @@ impl ThumbnailsView {
         }
         b
     }
+    fn clamp_top(&mut self) {
+        if self.y_offset < 0.0 {
+            self.y_offset = 0.0;
+        }
+    }
     pub fn clamp_bottom(&mut self, window: &RenderWindow) {
         let bottom = self.find_bottom(window);
         if self.y_offset > bottom {
@@ -301,7 +306,7 @@ pub(in crate::gui) fn handle_event(
                 state.thumbs_view.clamp_bottom(window);
             } else if code == Key::PageUp {
                 state.thumbs_view.y_offset -= window.size().y as f32;
-                clamp_top(state);
+                state.thumbs_view.clamp_top();
             } else if code == Key::Enter {
                 if preferences.use_built_in_viewer {
                     builtin::on_enter_open(state, window);
@@ -357,18 +362,12 @@ pub(in crate::gui) fn handle_event(
         Event::MouseWheelScrolled { delta, .. } => {
             state.thumbs_view.y_offset -= delta * preferences.scroll_wheel_multiplier;
             if delta > 0.0 {
-                clamp_top(state);
+                state.thumbs_view.clamp_top();
             } else {
                 state.thumbs_view.clamp_bottom(window);
             }
         }
         _ => {}
-    }
-}
-
-fn clamp_top(state: &mut State) {
-    if state.thumbs_view.y_offset < 0.0 {
-        state.thumbs_view.y_offset = 0.0;
     }
 }
 
