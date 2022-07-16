@@ -340,24 +340,11 @@ impl State {
         self.search_success = false;
         self.highlight = None;
     }
-    fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
-        let (_x, y) = self.thumbs_view.item_position(index as u32);
-        let view_y = &mut self.thumbs_view.y_offset;
-        let thumb_size = self.thumbs_view.thumb_size as u32;
-        if y < (*view_y as u32) {
-            let diff = (*view_y as u32) - y;
-            *view_y -= diff as f32;
-        }
-        if y + thumb_size > (*view_y as u32 + height) {
-            let diff = (y + thumb_size) - (*view_y as u32 + height);
-            *view_y += diff as f32;
-        }
-    }
     fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
         match self.thumbs_view.entry_position(id) {
             Some(idx) => {
                 self.highlight = Some(idx as u32);
-                self.seek_view_to_contain_index(idx, height);
+                self.thumbs_view.seek_to_contain_index(idx, height);
                 true
             }
             None => false,

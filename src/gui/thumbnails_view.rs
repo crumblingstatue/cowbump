@@ -134,6 +134,19 @@ impl ThumbnailsView {
         let pixel_x = col * self.thumb_size;
         (pixel_x, pixel_y)
     }
+    pub fn seek_to_contain_index(&mut self, index: usize, height: u32) {
+        let (_x, y) = self.item_position(index as u32);
+        let view_y = &mut self.y_offset;
+        let thumb_size = self.thumb_size as u32;
+        if y < (*view_y as u32) {
+            let diff = (*view_y as u32) - y;
+            *view_y -= diff as f32;
+        }
+        if y + thumb_size > (*view_y as u32 + height) {
+            let diff = (y + thumb_size) - (*view_y as u32 + height);
+            *view_y += diff as f32;
+        }
+    }
 }
 
 pub(super) fn draw_thumbnails(
@@ -438,7 +451,7 @@ pub(in crate::gui) fn search_goto_cursor(state: &mut State, coll: &Collection, v
     if let Some(index) = find_nth(state, coll, state.search_cursor) {
         state.highlight = Some(index as u32);
         state.search_success = true;
-        state.seek_view_to_contain_index(index, view_height);
+        state.thumbs_view.seek_to_contain_index(index, view_height);
     } else {
         state.search_success = false;
     }
