@@ -155,12 +155,12 @@ struct Task<'p> {
 
 pub(crate) fn open_sequence(
     seq: &Sequence,
-    uid: entry::Id,
+    start_uid: entry::Id,
     entries: &Entries,
     prefs: &mut Preferences,
 ) {
     let mut candidates = Vec::new();
-    for img_uid in seq.entry_uids_wrapped_from(uid) {
+    for img_uid in seq.entry_uids_wrapped_from(start_uid) {
         candidates.push(OpenExternCandidate {
             path: entries[&img_uid].path.as_ref(),
             open_with: None,
