@@ -111,6 +111,16 @@ impl ThumbnailsView {
     fn go_to_bottom(&mut self, window: &RenderWindow) {
         self.y_offset = self.find_bottom(window);
     }
+    /// Returns the absolute thumb index at (x,y) on the screen
+    ///
+    /// This is absolute, so the top left image on the screen could have a different index
+    /// based on the scroll y offset
+    fn abs_thumb_index_at_xy(&self, x: i32, y: i32) -> usize {
+        let thumb_x = x as u32 / self.thumb_size;
+        let thumb_y = (y as u32 + self.y_offset as u32) / self.thumb_size;
+        let thumb_index = thumb_y * self.thumbs_per_row as u32 + thumb_x;
+        thumb_index as usize
+    }
 }
 
 pub(super) fn draw_thumbnails(
@@ -222,19 +232,8 @@ fn draw_thumbnail<'a: 'b, 'b>(
 }
 
 fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
-    let thumb_index = abs_thumb_index_at_xy(x, y, state);
+    let thumb_index = state.thumbs_view.abs_thumb_index_at_xy(x, y);
     state.thumbs_view.get(thumb_index)
-}
-
-/// Returns the absolute thumb index at (x,y) on the screen
-///
-/// This is absolute, so the top left image on the screen could have a different index
-/// based on the scroll y offset
-fn abs_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
-    let thumb_x = x as u32 / state.thumbs_view.thumb_size;
-    let thumb_y = (y as u32 + state.thumbs_view.y_offset as u32) / state.thumbs_view.thumb_size;
-    let thumb_index = thumb_y * state.thumbs_view.thumbs_per_row as u32 + thumb_x;
-    thumb_index as usize
 }
 
 pub(in crate::gui) fn handle_event(
@@ -263,7 +262,7 @@ pub(in crate::gui) fn handle_event(
                         state.selected_uids.push(uid);
                     }
                 } else if Key::LControl.is_pressed() {
-                    let thumb_idx = abs_thumb_index_at_xy(x, y, state);
+                    let thumb_idx = state.thumbs_view.abs_thumb_index_at_xy(x, y);
                     match state.select_begin {
                         Some(begin) => {
                             for id in state
@@ -282,7 +281,7 @@ pub(in crate::gui) fn handle_event(
                     builtin::open(
                         state,
                         state.thumbs_view.uids.clone(),
-                        abs_thumb_index_at_xy(x, y, state),
+                        state.thumbs_view.abs_thumb_index_at_xy(x, y),
                         window,
                     );
                 } else {
