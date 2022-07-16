@@ -40,7 +40,11 @@ pub(in crate::gui) fn on_enter_open(
     }
 }
 
-pub fn handle_open(coll: &mut Collection, uid: entry::Id, preferences: &mut Preferences) {
+pub fn open_single_with_others(
+    coll: &mut Collection,
+    uid: entry::Id,
+    preferences: &mut Preferences,
+) {
     if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
         let seq = &coll.sequences[&seq_id];
         open_sequence(seq, uid, &coll.entries, preferences);

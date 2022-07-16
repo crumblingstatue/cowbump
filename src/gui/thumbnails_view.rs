@@ -322,7 +322,7 @@ pub(in crate::gui) fn handle_event(
                         );
                     }
                 } else {
-                    external::handle_open(coll, uid, preferences);
+                    external::open_single_with_others(coll, uid, preferences);
                 }
             } else if button == mouse::Button::Right {
                 let vec = if state.selected_uids.contains(&uid) {
