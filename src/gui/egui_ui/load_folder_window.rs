@@ -188,7 +188,7 @@ pub(super) fn do_frame(
                             Collection::make_new(&mut app.database.uid_counter, &paths).unwrap();
                         let id = app.add_collection(coll, (*win.root).clone());
                         crate::gui::set_active_collection(
-                            &mut state.entries_view,
+                            &mut state.thumbs_view,
                             app,
                             id,
                             &state.filter,

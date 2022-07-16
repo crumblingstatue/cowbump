@@ -48,7 +48,7 @@ pub(super) fn do_frame(
     let mut close = false;
     let close_ref = &mut close;
     let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
-    let entries_view_ref = &mut state.entries_view;
+    let entries_view_ref = &mut state.thumbs_view;
     let filter_string_ref = &mut egui_state.filter_popup.string;
     let reqs_ref = &mut state.filter;
     let selected_uids = &mut egui_state.tag_window.selected_uids;

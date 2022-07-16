@@ -2,33 +2,213 @@ use anyhow::Context as _;
 use egui_sfml::{
     egui::Context,
     sfml::{
-        graphics::{RenderTarget, RenderWindow},
+        graphics::{
+            Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite,
+            Text, Transformable,
+        },
+        system::Vector2f,
         window::{mouse, Event, Key},
     },
 };
 
-use crate::{collection::Collection, entry, preferences::Preferences};
+use crate::{collection::Collection, entry, filter_reqs::Requirements, preferences::Preferences};
 
 use super::{
     egui_ui::EguiState,
-    native_dialog,
+    get_tex_for_entry, native_dialog,
     open::{builtin, external},
-    State,
+    thumbnail_loader::ThumbnailLoader,
+    Resources, State, ThumbnailCache,
 };
 
+pub struct ThumbnailsView {
+    pub y_offset: f32,
+    pub sort_by: SortBy,
+    pub uids: Vec<entry::Id>,
+}
+
+impl Default for ThumbnailsView {
+    fn default() -> Self {
+        Self {
+            y_offset: Default::default(),
+            sort_by: SortBy::Path,
+            uids: Default::default(),
+        }
+    }
+}
+
+pub enum SortBy {
+    Path,
+    Id,
+}
+
+impl ThumbnailsView {
+    pub fn from_collection(coll: &Collection, reqs: &Requirements) -> Self {
+        let mut this = Self {
+            uids: Vec::new(),
+            y_offset: 0.0,
+            sort_by: SortBy::Path,
+        };
+        this.update_from_collection(coll, reqs);
+        this
+    }
+    pub fn update_from_collection(&mut self, coll: &Collection, reqs: &Requirements) {
+        self.uids = coll.filter(reqs).collect();
+        self.sort(coll);
+    }
+    fn sort(&mut self, coll: &Collection) {
+        match self.sort_by {
+            SortBy::Id => self.uids.sort_by_key(|uid| uid.0),
+            SortBy::Path => self.uids.sort_by_key(|uid| &coll.entries[uid].path),
+        }
+    }
+    pub fn iter(&self) -> impl Iterator<Item = entry::Id> + '_ {
+        self.uids.iter().cloned()
+    }
+    pub fn entry_position(&self, id: entry::Id) -> Option<usize> {
+        self.iter().position(|id2| id2 == id)
+    }
+    pub fn get(&self, index: usize) -> Option<entry::Id> {
+        self.uids.get(index).copied()
+    }
+}
+
+fn thumbs_skip_take(state: &State, window_height: u32) -> (usize, usize) {
+    let thumb_size = state.thumbnail_size;
+    let mut thumbnails_per_column = (window_height / thumb_size) as u8;
+    // Compensate for truncating division
+    if window_height % thumb_size != 0 {
+        thumbnails_per_column += 1;
+    }
+    // Since we can scroll, we can have another partially drawn frame per screen
+    thumbnails_per_column += 1;
+    let thumbnails_per_screen = (state.thumbnails_per_row * thumbnails_per_column) as usize;
+    let row_offset = state.thumbs_view.y_offset as u32 / thumb_size;
+    let skip = row_offset * state.thumbnails_per_row as u32;
+    (skip as usize, thumbnails_per_screen)
+}
+
+pub(super) fn draw_thumbnails(
+    state: &mut State,
+    res: &Resources,
+    window: &mut RenderWindow,
+    coll: &Collection,
+    load_anim_rotation: f32,
+    pointer_active: bool,
+) {
+    let mouse_pos = window.mouse_position();
+    let thumb_size = state.thumbnail_size;
+    state
+        .thumbnail_loader
+        .write_to_cache(&mut state.thumbnail_cache);
+    let mut sprite = Sprite::new();
+    let (skip, take) = thumbs_skip_take(state, window.size().y);
+    for (rel_idx, (abs_idx, uid)) in state
+        .thumbs_view
+        .iter()
+        .enumerate()
+        .skip(skip)
+        .take(take)
+        .enumerate()
+    {
+        let column = (rel_idx as u32) % state.thumbnails_per_row as u32;
+        let row = (rel_idx as u32) / state.thumbnails_per_row as u32;
+        let x = (column * thumb_size) as f32;
+        let y = (row * thumb_size) as f32 - (state.thumbs_view.y_offset % thumb_size as f32);
+        let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
+        let mouse_over = image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
+        if state.selected_uids.contains(&uid) {
+            sprite.set_color(Color::GREEN);
+        } else {
+            sprite.set_color(Color::WHITE);
+        }
+        draw_thumbnail(
+            &state.thumbnail_cache,
+            coll,
+            window,
+            x,
+            y,
+            uid,
+            thumb_size,
+            &mut sprite,
+            res,
+            &mut state.thumbnail_loader,
+            load_anim_rotation,
+        );
+        if mouse_over && pointer_active {
+            let mut rs = RectangleShape::from_rect(image_rect);
+            rs.set_fill_color(Color::rgba(225, 225, 200, 48));
+            rs.set_outline_color(Color::rgb(200, 200, 0));
+            rs.set_outline_thickness(-2.0);
+            window.draw(&rs);
+        }
+        if let Some(idx) = state.select_begin && idx == abs_idx {
+            let mut s = Sprite::with_texture(&res.sel_begin_texture);
+            s.set_position((x, y));
+            window.draw(&s);
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn draw_thumbnail<'a: 'b, 'b>(
+    thumbnail_cache: &'a ThumbnailCache,
+    coll: &Collection,
+    window: &mut RenderWindow,
+    x: f32,
+    y: f32,
+    id: entry::Id,
+    thumb_size: u32,
+    sprite: &mut Sprite<'b>,
+    res: &'a Resources,
+    thumbnail_loader: &mut ThumbnailLoader,
+    load_anim_rotation: f32,
+) {
+    let (has_img, texture) =
+        get_tex_for_entry(thumbnail_cache, id, coll, thumbnail_loader, thumb_size, res);
+    sprite.set_texture(texture, true);
+    sprite.set_position((x, y));
+    if thumbnail_loader.busy_with().contains(&id) {
+        sprite.set_origin((27.0, 6.0));
+        sprite.move_((48.0, 48.0));
+        sprite.set_rotation(load_anim_rotation);
+    } else {
+        sprite.set_rotation(0.0);
+        sprite.set_origin((0.0, 0.0));
+    }
+    window.draw_sprite(sprite, &RenderStates::DEFAULT);
+    let mut show_filename = !has_img;
+    let fname_pos = (x, y + 64.0);
+    if Key::LAlt.is_pressed() {
+        show_filename = true;
+        let mut rect = RectangleShape::new();
+        rect.set_fill_color(Color::rgba(0, 0, 0, 128));
+        rect.set_size((380., 24.));
+        rect.set_position(fname_pos);
+        window.draw(&rect);
+    }
+    if show_filename {
+        if let Some(path_string) = coll.entries[&id].path.to_str() {
+            let mut text = Text::new(path_string, &res.font, 12);
+            text.set_position(fname_pos);
+            window.draw_text(&text, &RenderStates::DEFAULT);
+        }
+    }
+}
+
 fn go_to_bottom(window: &RenderWindow, state: &mut State) {
-    state.entries_view.y_offset = find_bottom(state, window);
+    state.thumbs_view.y_offset = find_bottom(state, window);
 }
 
 pub(in crate::gui) fn clamp_bottom(window: &RenderWindow, state: &mut State) {
     let bottom = find_bottom(state, window);
-    if state.entries_view.y_offset > bottom {
-        state.entries_view.y_offset = bottom;
+    if state.thumbs_view.y_offset > bottom {
+        state.thumbs_view.y_offset = bottom;
     }
 }
 
 fn find_bottom(state: &State, window: &RenderWindow) -> f32 {
-    let n_pics = state.entries_view.iter().count();
+    let n_pics = state.thumbs_view.iter().count();
     let mut rows = n_pics as u32 / state.thumbnails_per_row as u32;
     if n_pics as u32 % state.thumbnails_per_row as u32 != 0 {
         rows += 1;
@@ -43,7 +223,7 @@ fn find_bottom(state: &State, window: &RenderWindow) -> f32 {
 
 fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
     let thumb_index = abs_thumb_index_at_xy(x, y, state);
-    state.entries_view.get(thumb_index)
+    state.thumbs_view.get(thumb_index)
 }
 
 /// Returns the absolute thumb index at (x,y) on the screen
@@ -52,7 +232,7 @@ fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
 /// based on the scroll y offset
 fn abs_thumb_index_at_xy(x: i32, y: i32, state: &State) -> usize {
     let thumb_x = x as u32 / state.thumbnail_size;
-    let thumb_y = (y as u32 + state.entries_view.y_offset as u32) / state.thumbnail_size;
+    let thumb_y = (y as u32 + state.thumbs_view.y_offset as u32) / state.thumbnail_size;
     let thumb_index = thumb_y * state.thumbnails_per_row as u32 + thumb_x;
     thumb_index as usize
 }
@@ -87,7 +267,7 @@ pub(in crate::gui) fn handle_event(
                     match state.select_begin {
                         Some(begin) => {
                             for id in state
-                                .entries_view
+                                .thumbs_view
                                 .iter()
                                 .skip(begin)
                                 .take((thumb_idx + 1) - begin)
@@ -101,7 +281,7 @@ pub(in crate::gui) fn handle_event(
                 } else if preferences.use_built_in_viewer {
                     builtin::open(
                         state,
-                        state.entries_view.uids.clone(),
+                        state.thumbs_view.uids.clone(),
                         abs_thumb_index_at_xy(x, y, state),
                         window,
                     );
@@ -122,10 +302,10 @@ pub(in crate::gui) fn handle_event(
                 return;
             }
             if code == Key::PageDown {
-                state.entries_view.y_offset += window.size().y as f32;
+                state.thumbs_view.y_offset += window.size().y as f32;
                 clamp_bottom(window, state);
             } else if code == Key::PageUp {
-                state.entries_view.y_offset -= window.size().y as f32;
+                state.thumbs_view.y_offset -= window.size().y as f32;
                 clamp_top(state);
             } else if code == Key::Enter {
                 if preferences.use_built_in_viewer {
@@ -158,11 +338,11 @@ pub(in crate::gui) fn handle_event(
                 egui_state.sequences_window.on ^= true;
             } else if code == Key::S {
                 state
-                    .entries_view
+                    .thumbs_view
                     .update_from_collection(coll, &state.filter);
             } else if code == Key::Home {
                 if !egui_ctx.wants_keyboard_input() {
-                    state.entries_view.y_offset = 0.0;
+                    state.thumbs_view.y_offset = 0.0;
                 }
             } else if code == Key::End && !egui_ctx.wants_keyboard_input() {
                 // Align the bottom edge of the view with the bottom edge of the last row.
@@ -180,7 +360,7 @@ pub(in crate::gui) fn handle_event(
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
-            state.entries_view.y_offset -= delta * preferences.scroll_wheel_multiplier;
+            state.thumbs_view.y_offset -= delta * preferences.scroll_wheel_multiplier;
             if delta > 0.0 {
                 clamp_top(state);
             } else {
@@ -192,8 +372,8 @@ pub(in crate::gui) fn handle_event(
 }
 
 fn clamp_top(state: &mut State) {
-    if state.entries_view.y_offset < 0.0 {
-        state.entries_view.y_offset = 0.0;
+    if state.thumbs_view.y_offset < 0.0 {
+        state.thumbs_view.y_offset = 0.0;
     }
 }
 
@@ -242,7 +422,7 @@ pub(in crate::gui) fn search_next(state: &mut State, coll: &mut Collection, view
 
 fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
     state
-        .entries_view
+        .thumbs_view
         .iter()
         .enumerate()
         .filter(|(_, uid)| {

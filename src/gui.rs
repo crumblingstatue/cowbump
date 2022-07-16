@@ -1,18 +1,18 @@
 pub mod debug_log;
 mod egui_ui;
-mod entries_view;
 pub mod native_dialog;
 mod open;
 mod thumbnail_loader;
-pub mod thumbnails_view;
+mod thumbnails_view;
 mod util;
 mod viewer;
 
 use self::{
     egui_ui::Action,
-    entries_view::{EntriesView, SortBy},
     thumbnail_loader::ThumbnailLoader,
-    thumbnails_view::{clamp_bottom, handle_event, search_next, search_prev, select_all},
+    thumbnails_view::{
+        clamp_bottom, handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView,
+    },
     viewer::ViewerState,
 };
 use crate::{
@@ -60,7 +60,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     egui_state.changes_window.open(changes);
                 }
                 let coll = app.active_collection.as_ref().unwrap();
-                state.entries_view = EntriesView::from_collection(&coll.1, &state.filter);
+                state.thumbs_view = ThumbnailsView::from_collection(&coll.1, &state.filter);
                 let root_path = &app.database.collections[&coll.0];
                 std::env::set_current_dir(root_path)?;
             }
@@ -74,14 +74,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         if !sf_egui.context().wants_keyboard_input() {
             let scroll_speed = app.database.preferences.arrow_key_scroll_speed;
             if Key::Down.is_pressed() {
-                state.entries_view.y_offset += scroll_speed;
+                state.thumbs_view.y_offset += scroll_speed;
                 if app.active_collection.is_some() {
                     clamp_bottom(&window, &mut state);
                 }
             } else if Key::Up.is_pressed() {
-                state.entries_view.y_offset -= scroll_speed;
-                if state.entries_view.y_offset < 0.0 {
-                    state.entries_view.y_offset = 0.0;
+                state.thumbs_view.y_offset -= scroll_speed;
+                if state.thumbs_view.y_offset < 0.0 {
+                    state.thumbs_view.y_offset = 0.0;
                 }
             }
         }
@@ -145,15 +145,15 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
                 Action::SortByPath => {
-                    state.entries_view.sort_by = SortBy::Path;
+                    state.thumbs_view.sort_by = SortBy::Path;
                     state
-                        .entries_view
+                        .thumbs_view
                         .update_from_collection(coll.as_ref().unwrap(), &state.filter)
                 }
                 Action::SortById => {
-                    state.entries_view.sort_by = SortBy::Id;
+                    state.thumbs_view.sort_by = SortBy::Id;
                     state
-                        .entries_view
+                        .thumbs_view
                         .update_from_collection(coll.as_ref().unwrap(), &state.filter)
                 }
                 Action::OpenEntriesWindow => {
@@ -165,7 +165,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         match &mut coll {
             Some(db) => match state.activity {
                 Activity::Thumbnails => {
-                    entries_view::draw_thumbnails(
+                    thumbnails_view::draw_thumbnails(
                         &mut state,
                         &res,
                         &mut window,
@@ -198,7 +198,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             search_highlight.set_outline_color(Color::RED);
             search_highlight.set_outline_thickness(-4.0);
             let (x, y) = state.item_position(index);
-            search_highlight.set_position((x as f32, y as f32 - state.entries_view.y_offset));
+            search_highlight.set_position((x as f32, y as f32 - state.thumbs_view.y_offset));
             window.draw(&search_highlight);
         }
         if let Some(tex) = egui_state.load_folder_window.texture.as_ref() {
@@ -261,7 +261,7 @@ struct State {
     search_success: bool,
     highlight: Option<u32>,
     clipboard_ctx: Clipboard,
-    entries_view: EntriesView,
+    thumbs_view: ThumbnailsView,
     selected_uids: Vec<entry::Id>,
     /// For batch select, this marks the beginning
     select_begin: Option<usize>,
@@ -276,13 +276,14 @@ enum Activity {
 }
 
 fn set_active_collection(
-    entries_view: &mut EntriesView,
+    entries_view: &mut ThumbnailsView,
     app: &mut Application,
     id: collection::Id,
     reqs: &Requirements,
 ) -> anyhow::Result<()> {
     app.save_active_collection()?;
-    *entries_view = EntriesView::from_collection(app.active_collection().as_ref().unwrap().1, reqs);
+    *entries_view =
+        ThumbnailsView::from_collection(app.active_collection().as_ref().unwrap().1, reqs);
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
 }
@@ -325,7 +326,7 @@ impl State {
             search_success: false,
             highlight: None,
             clipboard_ctx: Clipboard::new().unwrap(),
-            entries_view: EntriesView::default(),
+            thumbs_view: ThumbnailsView::default(),
             find_reqs: Requirements::default(),
             selected_uids: Default::default(),
             select_begin: None,
@@ -340,7 +341,7 @@ impl State {
     }
     fn seek_view_to_contain_index(&mut self, index: usize, height: u32) {
         let (_x, y) = self.item_position(index as u32);
-        let view_y = &mut self.entries_view.y_offset;
+        let view_y = &mut self.thumbs_view.y_offset;
         let thumb_size = self.thumbnail_size as u32;
         if y < (*view_y as u32) {
             let diff = (*view_y as u32) - y;
@@ -361,7 +362,7 @@ impl State {
         (pixel_x, pixel_y)
     }
     fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
-        match self.entries_view.entry_position(id) {
+        match self.thumbs_view.entry_position(id) {
             Some(idx) => {
                 self.highlight = Some(idx as u32);
                 self.seek_view_to_contain_index(idx, height);

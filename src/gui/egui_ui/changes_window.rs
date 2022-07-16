@@ -6,7 +6,7 @@ use egui_sfml::{
 };
 use fnv::FnvHashMap;
 
-use crate::{db::FolderChanges, entry, gui::entries_view::EntriesView};
+use crate::{db::FolderChanges, entry, gui::thumbnails_view::ThumbnailsView};
 
 use super::EguiState;
 
@@ -115,7 +115,7 @@ pub(super) fn do_frame(
                             win.added
                                 .insert(path.to_owned(), AddedInfo { id, checked: false });
                         });
-                        state.entries_view = EntriesView::from_collection(
+                        state.thumbs_view = ThumbnailsView::from_collection(
                             app.active_collection().unwrap().1,
                             &state.filter,
                         );

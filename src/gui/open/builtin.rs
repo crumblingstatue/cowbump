@@ -8,7 +8,7 @@ use crate::{
 /// Open functionality when enter is pressed in thumbnails view
 pub(in crate::gui) fn on_enter_open(state: &mut State, window: &RenderWindow) {
     if state.selected_uids.is_empty() {
-        open(state, state.entries_view.uids.clone(), 0, window);
+        open(state, state.thumbs_view.uids.clone(), 0, window);
     } else {
         open(state, state.selected_uids.clone(), 0, window);
     }

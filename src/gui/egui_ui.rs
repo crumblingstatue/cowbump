@@ -182,7 +182,7 @@ pub(super) fn do_ui(
         find_popup::do_frame(state, egui_state, egui_ctx, coll, win);
         if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
             state
-                .entries_view
+                .thumbs_view
                 .update_from_collection(coll, &state.filter);
             super::thumbnails_view::clamp_bottom(win, state);
         }

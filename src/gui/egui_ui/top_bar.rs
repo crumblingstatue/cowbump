@@ -134,7 +134,7 @@ fn file_menu(
                         egui_state.changes_window.open(changes);
                     }
                     crate::gui::set_active_collection(
-                        &mut state.entries_view,
+                        &mut state.thumbs_view,
                         app,
                         id,
                         &state.filter,
@@ -199,7 +199,7 @@ fn file_menu(
                                 egui_state.changes_window.open(changes);
                             }
                             *result = crate::gui::set_active_collection(
-                                &mut state.entries_view,
+                                &mut state.thumbs_view,
                                 app,
                                 id,
                                 &state.filter,

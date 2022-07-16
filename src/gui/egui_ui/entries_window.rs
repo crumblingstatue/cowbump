@@ -19,10 +19,9 @@ use crate::{
     entry,
     filter_reqs::Requirements,
     gui::{
-        entries_view::EntriesView,
         get_tex_for_entry, native_dialog,
         open::external::{self, feed_args, open_sequence, OpenExternCandidate},
-        thumbnails_view::clamp_bottom,
+        thumbnails_view::ThumbnailsView,
         Resources, State,
     },
     tag,
@@ -91,7 +90,7 @@ fn tag_ui(
     coll: &Collection,
     filter_string: &mut String,
     changed_filter: &mut bool,
-    entries_view: &mut EntriesView,
+    entries_view: &mut ThumbnailsView,
 ) -> Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
         ui.group(|ui| {
@@ -133,7 +132,7 @@ fn tag<'a>(
     coll: &'a Collection,
     filter_string: &'a mut String,
     changed_filter: &'a mut bool,
-    entries_view: &'a mut EntriesView,
+    entries_view: &'a mut ThumbnailsView,
 ) -> impl Widget + 'a {
     move |ui: &mut Ui| {
         tag_ui(
@@ -259,7 +258,7 @@ pub(super) fn do_frame(
                                         coll,
                                         &mut egui_state.filter_popup.string,
                                         &mut changed_filter,
-                                        &mut state.entries_view,
+                                        &mut state.thumbs_view,
                                     ));
                                     if del {
                                         // TODO: This only works for 1 item windows
@@ -269,7 +268,7 @@ pub(super) fn do_frame(
                                             .tags
                                             .retain(|&t| t != tagid);
                                         state
-                                            .entries_view
+                                            .thumbs_view
                                             .update_from_collection(coll, &state.filter);
                                     }
                                 } else {
@@ -281,14 +280,14 @@ pub(super) fn do_frame(
                                         coll,
                                         &mut egui_state.filter_popup.string,
                                         &mut changed_filter,
-                                        &mut state.entries_view,
+                                        &mut state.thumbs_view,
                                     ));
                                 }
                                 if changed_filter {
                                     state
-                                        .entries_view
+                                        .thumbs_view
                                         .update_from_collection(coll, &state.filter);
-                                    clamp_bottom(rend_win, state);
+                                    crate::gui::thumbnails_view::clamp_bottom(rend_win, state);
                                 }
                             }
                         });
@@ -354,7 +353,7 @@ pub(super) fn do_frame(
                                 win.add_tag_buffer.clear();
                                 win.editing_tags = false;
                                 state
-                                    .entries_view
+                                    .thumbs_view
                                     .update_from_collection(coll, &state.filter);
                             }
                         }
@@ -540,7 +539,7 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
                                     if let Err(e) = remove_entries(
-                                        &mut state.entries_view,
+                                        &mut state.thumbs_view,
                                         del_uids,
                                         coll,
                                         &state.filter,
@@ -606,7 +605,7 @@ pub(super) fn do_frame(
 }
 
 fn remove_entries(
-    view: &mut EntriesView,
+    view: &mut ThumbnailsView,
     entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
     requirements: &Requirements,
