@@ -121,6 +121,10 @@ impl ThumbnailsView {
         let thumb_index = thumb_y * self.thumbs_per_row as u32 + thumb_x;
         thumb_index as usize
     }
+    fn entry_at_xy(&self, x: i32, y: i32) -> Option<entry::Id> {
+        let thumb_index = self.abs_thumb_index_at_xy(x, y);
+        self.get(thumb_index)
+    }
 }
 
 pub(super) fn draw_thumbnails(
@@ -231,11 +235,6 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
 }
 
-fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
-    let thumb_index = state.thumbs_view.abs_thumb_index_at_xy(x, y);
-    state.thumbs_view.get(thumb_index)
-}
-
 pub(in crate::gui) fn handle_event(
     event: Event,
     state: &mut State,
@@ -250,7 +249,7 @@ pub(in crate::gui) fn handle_event(
             if egui_ctx.wants_pointer_input() {
                 return;
             }
-            let uid = match entry_at_xy(x, y, state) {
+            let uid = match state.thumbs_view.entry_at_xy(x, y) {
                 Some(uid) => uid,
                 None => return,
             };
@@ -324,7 +323,7 @@ pub(in crate::gui) fn handle_event(
                 egui_state.filter_popup.on = true;
             } else if code == Key::C {
                 let mp = window.mouse_position();
-                let uid = match entry_at_xy(mp.x, mp.y, state) {
+                let uid = match state.thumbs_view.entry_at_xy(mp.x, mp.y) {
                     Some(uid) => uid,
                     None => return,
                 };
