@@ -84,6 +84,19 @@ impl ThumbnailsView {
         let skip = row_offset * self.thumbs_per_row as u32;
         (skip as usize, thumbnails_per_screen)
     }
+    fn find_bottom(&self, window: &RenderWindow) -> f32 {
+        let n_pics = self.iter().count();
+        let mut rows = n_pics as u32 / self.thumbs_per_row as u32;
+        if n_pics as u32 % self.thumbs_per_row as u32 != 0 {
+            rows += 1;
+        }
+        let bottom = rows * self.thumb_size;
+        let mut b = bottom as f32 - window.size().y as f32;
+        if b < 0. {
+            b = 0.;
+        }
+        b
+    }
 }
 
 pub(super) fn draw_thumbnails(
@@ -195,28 +208,14 @@ fn draw_thumbnail<'a: 'b, 'b>(
 }
 
 fn go_to_bottom(window: &RenderWindow, state: &mut State) {
-    state.thumbs_view.y_offset = find_bottom(state, window);
+    state.thumbs_view.y_offset = state.thumbs_view.find_bottom(window);
 }
 
 pub(in crate::gui) fn clamp_bottom(window: &RenderWindow, state: &mut State) {
-    let bottom = find_bottom(state, window);
+    let bottom = state.thumbs_view.find_bottom(window);
     if state.thumbs_view.y_offset > bottom {
         state.thumbs_view.y_offset = bottom;
     }
-}
-
-fn find_bottom(state: &State, window: &RenderWindow) -> f32 {
-    let n_pics = state.thumbs_view.iter().count();
-    let mut rows = n_pics as u32 / state.thumbs_view.thumbs_per_row as u32;
-    if n_pics as u32 % state.thumbs_view.thumbs_per_row as u32 != 0 {
-        rows += 1;
-    }
-    let bottom = rows * state.thumbs_view.thumb_size;
-    let mut b = bottom as f32 - window.size().y as f32;
-    if b < 0. {
-        b = 0.;
-    }
-    b
 }
 
 fn entry_at_xy(x: i32, y: i32, state: &State) -> Option<entry::Id> {
