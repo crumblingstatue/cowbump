@@ -56,13 +56,13 @@ pub(super) fn draw(
 pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut RenderWindow) {
     match *event {
         Event::KeyPressed { code, shift, .. } => match code {
-            Key::Left => prev(state, window),
-            Key::Right => next(state, window),
+            Key::Left => state.viewer_state.prev(window),
+            Key::Right => state.viewer_state.next(window),
             Key::Escape => state.activity = Activity::Thumbnails,
-            Key::Equal if shift => zoom_in(state),
-            Key::Equal => original_scale(state),
-            Key::Hyphen => zoom_out(state),
-            Key::Delete => remove_from_view_list(state),
+            Key::Equal if shift => state.viewer_state.zoom_in(),
+            Key::Equal => state.viewer_state.original_scale(),
+            Key::Hyphen => state.viewer_state.zoom_out(),
+            Key::Delete => state.viewer_state.remove_from_view_list(),
             _ => {}
         },
         Event::MouseButtonPressed {
@@ -89,44 +89,6 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut Render
     }
 }
 
-pub(in crate::gui) fn remove_from_view_list(state: &mut State) {
-    state
-        .viewer_state
-        .image_list
-        .remove(state.viewer_state.index);
-    state.viewer_state.index = state.viewer_state.index.saturating_sub(1);
-}
-
-pub(in crate::gui) fn zoom_out(state: &mut State) {
-    state.viewer_state.scale -= 0.1
-}
-
-pub(in crate::gui) fn original_scale(state: &mut State) {
-    state.viewer_state.scale = 1.0
-}
-
-pub(in crate::gui) fn zoom_in(state: &mut State) {
-    state.viewer_state.scale += 0.1
-}
-
-pub(in crate::gui) fn next(state: &mut State, window: &RenderWindow) {
-    if state.viewer_state.index == state.viewer_state.image_list.len() - 1 {
-        state.viewer_state.index = 0;
-    } else {
-        state.viewer_state.index += 1;
-    }
-    state.viewer_state.reset_view(window);
-}
-
-pub(in crate::gui) fn prev(state: &mut State, window: &RenderWindow) {
-    if state.viewer_state.index == 0 {
-        state.viewer_state.index = state.viewer_state.image_list.len() - 1;
-    } else {
-        state.viewer_state.index -= 1;
-    }
-    state.viewer_state.reset_view(window);
-}
-
 #[derive(Default)]
 pub struct ViewerState {
     pub index: usize,
@@ -149,5 +111,39 @@ impl ViewerState {
                 self.scale = win_size.y as f32 / img_size.y as f32;
             }
         }
+    }
+    pub(in crate::gui) fn remove_from_view_list(&mut self) {
+        self.image_list.remove(self.index);
+        self.index = self.index.saturating_sub(1);
+    }
+
+    pub(in crate::gui) fn zoom_out(&mut self) {
+        self.scale -= 0.1
+    }
+
+    pub(in crate::gui) fn original_scale(&mut self) {
+        self.scale = 1.0
+    }
+
+    pub(in crate::gui) fn zoom_in(&mut self) {
+        self.scale += 0.1
+    }
+
+    pub(in crate::gui) fn next(&mut self, window: &RenderWindow) {
+        if self.index == self.image_list.len() - 1 {
+            self.index = 0;
+        } else {
+            self.index += 1;
+        }
+        self.reset_view(window);
+    }
+
+    pub(in crate::gui) fn prev(&mut self, window: &RenderWindow) {
+        if self.index == 0 {
+            self.index = self.image_list.len() - 1;
+        } else {
+            self.index -= 1;
+        }
+        self.reset_view(window);
     }
 }
