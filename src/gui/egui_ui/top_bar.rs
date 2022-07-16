@@ -55,7 +55,7 @@ pub(super) fn do_frame(
                         if ui.button("Zoom in (+)").clicked() {
                             state.viewer_state.zoom_in();
                         }
-                        if ui.button("Reset View").clicked() {
+                        if ui.button("Reset View (R)").clicked() {
                             state.viewer_state.reset_view(win);
                         }
                         ui.separator();

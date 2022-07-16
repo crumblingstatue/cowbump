@@ -63,6 +63,7 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut Render
             Key::Equal => state.viewer_state.original_scale(),
             Key::Hyphen => state.viewer_state.zoom_out(),
             Key::Delete => state.viewer_state.remove_from_view_list(),
+            Key::R => state.viewer_state.reset_view(window),
             _ => {}
         },
         Event::MouseButtonPressed {
