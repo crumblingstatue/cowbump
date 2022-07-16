@@ -189,7 +189,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 window.draw(&text);
             }
         }
-        if let Some(index) = state.highlight {
+        if let Some(index) = state.thumbs_view.highlight {
             let mut search_highlight = RectangleShape::with_size(
                 (
                     state.thumbs_view.thumb_size as f32,
@@ -260,7 +260,6 @@ struct State {
     /// The same search can be used to seek multiple entries
     search_cursor: usize,
     search_success: bool,
-    highlight: Option<u32>,
     clipboard_ctx: Clipboard,
     thumbs_view: ThumbnailsView,
     selected_uids: Vec<entry::Id>,
@@ -325,7 +324,6 @@ impl State {
             thumbnail_loader: Default::default(),
             search_cursor: 0,
             search_success: false,
-            highlight: None,
             clipboard_ctx: Clipboard::new().unwrap(),
             thumbs_view: ThumbnailsView::new(window_width),
             find_reqs: Requirements::default(),
@@ -338,12 +336,12 @@ impl State {
     fn wipe_search(&mut self) {
         self.search_cursor = 0;
         self.search_success = false;
-        self.highlight = None;
+        self.thumbs_view.highlight = None;
     }
     fn highlight_and_seek_to_entry(&mut self, id: entry::Id, height: u32) -> bool {
         match self.thumbs_view.entry_position(id) {
             Some(idx) => {
-                self.highlight = Some(idx as u32);
+                self.thumbs_view.highlight = Some(idx as u32);
                 self.thumbs_view.seek_to_contain_index(idx, height);
                 true
             }

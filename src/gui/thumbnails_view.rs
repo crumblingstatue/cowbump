@@ -27,6 +27,7 @@ pub struct ThumbnailsView {
     pub y_offset: f32,
     pub sort_by: SortBy,
     pub uids: Vec<entry::Id>,
+    pub highlight: Option<u32>,
 }
 
 pub enum SortBy {
@@ -44,6 +45,7 @@ impl ThumbnailsView {
             uids: Default::default(),
             thumb_size: thumbnail_size,
             thumbs_per_row: thumbnails_per_row,
+            highlight: None,
         }
     }
     pub fn from_collection(window_width: u32, coll: &Collection, reqs: &Requirements) -> Self {
@@ -449,7 +451,7 @@ fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
 
 pub(in crate::gui) fn search_goto_cursor(state: &mut State, coll: &Collection, view_height: u32) {
     if let Some(index) = find_nth(state, coll, state.search_cursor) {
-        state.highlight = Some(index as u32);
+        state.thumbs_view.highlight = Some(index as u32);
         state.search_success = true;
         state.thumbs_view.seek_to_contain_index(index, view_height);
     } else {
