@@ -116,7 +116,7 @@ impl ImageCache {
     fn get(&self, id: entry::Id) -> Option<&ImageResult> {
         self.img_results
             .iter()
-            .find_map(|kvpair| (kvpair.0 == id).then(|| &kvpair.1))
+            .find_map(|kvpair| (kvpair.0 == id).then_some(&kvpair.1))
     }
     fn insert(&mut self, kvpair: CacheKvPair) {
         self.img_results.push_back(kvpair);
