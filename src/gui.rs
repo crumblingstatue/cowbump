@@ -300,7 +300,9 @@ fn get_tex_for_entry<'t>(
             None => (false, &*res.error_texture),
         },
         None => {
-            let entry = &coll.entries[&id];
+            let Some(entry) = &coll.entries.get(&id) else {
+                return (false, &*res.error_texture);
+            };
             thumbnail_loader.request(&entry.path, thumb_size, id);
             (false, &*res.loading_texture)
         }
