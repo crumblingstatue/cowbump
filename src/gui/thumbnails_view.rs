@@ -154,7 +154,7 @@ impl ThumbnailsView {
     pub fn seek_to_contain_index(&mut self, index: usize, height: u32) {
         let (_x, y) = self.item_position(index as u32);
         let view_y = &mut self.y_offset;
-        let thumb_size = self.thumb_size as u32;
+        let thumb_size = self.thumb_size;
         if y < (*view_y as u32) {
             let diff = (*view_y as u32) - y;
             *view_y -= diff as f32;

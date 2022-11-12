@@ -137,9 +137,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
         egui_state.begin_frame();
         let mut result = Ok(());
-        sf_egui.do_frame(|ctx| {
-            result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, &window);
-        });
+        sf_egui
+            .do_frame(|ctx| {
+                result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, &window);
+            })
+            .unwrap();
         if let Err(e) = result {
             native_dialog::error("Error", e);
         }
