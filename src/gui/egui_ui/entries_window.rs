@@ -19,6 +19,7 @@ use crate::{
     entry,
     filter_reqs::Requirements,
     gui::{
+        debug_log::dlog,
         get_tex_for_entry, native_dialog,
         open::{
             builtin,
@@ -182,12 +183,20 @@ pub(super) fn do_frame(
     egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
+        let Some(first_entry_id) = win.ids.get(0) else {
+            dlog!("EntriesWindow doesn't have any entries");
+            return false;
+        };
+        let mut invalid = false;
         let title = {
             if win.ids.len() == 1 {
-                coll.entries[&win.ids[0]]
-                    .path
-                    .to_string_lossy()
-                    .into_owned()
+                match coll.entries.get(first_entry_id) {
+                    Some(en) => en.path.to_string_lossy().into_owned(),
+                    None => {
+                        invalid = true;
+                        String::from("<Invalid entry>")
+                    }
+                }
             } else {
                 format!("{} entries", n_entries)
             }
@@ -199,6 +208,10 @@ pub(super) fn do_frame(
             .open(&mut open)
             .min_width(960.)
             .show(egui_ctx, |ui| {
+                if invalid {
+                    ui.label("Invalid entry. This is a bug.");
+                    return;
+                }
                 ui.horizontal(|ui| {
                     ui.horizontal_wrapped(|ui| {
                         ui.set_max_width(512.0);
