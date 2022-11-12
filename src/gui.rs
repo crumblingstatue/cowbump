@@ -253,8 +253,8 @@ struct State {
     clipboard_ctx: Clipboard,
     thumbs_view: ThumbnailsView,
     selected_uids: Vec<entry::Id>,
-    /// For batch select, this marks the beginning
-    select_begin: Option<usize>,
+    /// For batch select, this marks the "a" point
+    select_a: Option<usize>,
     activity: Activity,
     viewer_state: ViewerState,
 }
@@ -322,7 +322,7 @@ impl State {
             thumbs_view: ThumbnailsView::new(window_width, prefs),
             find_reqs: Requirements::default(),
             selected_uids: Default::default(),
-            select_begin: None,
+            select_a: None,
             activity: Activity::Thumbnails,
             viewer_state: ViewerState::default(),
         }

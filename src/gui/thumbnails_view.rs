@@ -230,7 +230,7 @@ pub(super) fn draw_thumbnails(
             rs.set_outline_thickness(-2.0);
             window.draw(&rs);
         }
-        if let Some(idx) = state.select_begin && idx == abs_idx {
+        if let Some(idx) = state.select_a && idx == abs_idx {
             let mut s = Sprite::with_texture(&res.sel_begin_texture);
             s.set_position((x, y));
             window.draw(&s);
@@ -310,20 +310,16 @@ pub(in crate::gui) fn handle_event(
                         state.selected_uids.push(uid);
                     }
                 } else if Key::LControl.is_pressed() {
-                    let thumb_idx = state.thumbs_view.abs_thumb_index_at_xy(x, y);
-                    match state.select_begin {
-                        Some(begin) => {
-                            for id in state
-                                .thumbs_view
-                                .iter()
-                                .skip(begin)
-                                .take((thumb_idx + 1) - begin)
-                            {
+                    let curr_thumb_idx = state.thumbs_view.abs_thumb_index_at_xy(x, y);
+                    match state.select_a {
+                        Some(a) => {
+                            let (min, max) = (a.min(curr_thumb_idx), a.max(curr_thumb_idx));
+                            for id in state.thumbs_view.iter().skip(min).take((max + 1) - min) {
                                 state.selected_uids.push(id);
                             }
-                            state.select_begin = None;
+                            state.select_a = None;
                         }
-                        None => state.select_begin = Some(thumb_idx),
+                        None => state.select_a = Some(curr_thumb_idx),
                     }
                 } else if preferences.use_built_in_viewer {
                     if let Some(id) = state.thumbs_view.entry_at_xy(x, y) {
