@@ -7,5 +7,5 @@ thread_local! {
 pub macro dlog($($arg:tt) *) {
     LOG.with(|log| {
         log.borrow_mut().push(format!($($arg)*))
-    });
+    })
 }

@@ -636,8 +636,12 @@ fn remove_entries(
     for uid in entries.drain(..) {
         let path = &coll.entries[&uid].path;
         std::fs::remove_file(path)?;
-        view.update_from_collection(coll, requirements);
-        coll.entries.remove(&uid);
+        match coll.entries.remove(&uid) {
+            Some(en) => dlog!("Removed `{:?}`: {:?}", uid, en.path),
+            None => dlog!("Warning: Remove of entry `{:?}` failed", uid),
+        }
     }
+    // Make sure to only update the view after the collection entry removes finished
+    view.update_from_collection(coll, requirements);
     Ok(())
 }
