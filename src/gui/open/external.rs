@@ -104,9 +104,9 @@ struct BuiltTasks<'p> {
     remainder: Vec<&'p Path>,
 }
 
-fn build_tasks<'a, 'p>(
+fn build_tasks<'p>(
     candidates: &[OpenExternCandidate<'p>],
-    preferences: &'a mut Preferences,
+    preferences: &mut Preferences,
 ) -> anyhow::Result<BuiltTasks<'p>> {
     let mut tasks: Vec<Task> = Vec::new();
     let mut remainder = Vec::new();
