@@ -46,7 +46,7 @@ pub(super) fn do_sequence_windows(
         }
         let mut action = Action::SwapLeft;
         let mut subject = None;
-        if egui_ctx.input().key_pressed(Key::Escape) {
+        if egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {
             open = false;
             egui_state.just_closed_window_with_esc = true;
         }
@@ -78,7 +78,8 @@ pub(super) fn do_sequence_windows(
                                 let mut pos = i;
                                 let dv =
                                     DragValue::new(&mut pos).clamp_range(0..=seq.entries.len() - 1);
-                                if ui.add(dv).changed() && egui_ctx.input().key_pressed(Key::Enter)
+                                if ui.add(dv).changed()
+                                    && egui_ctx.input(|inp| inp.key_pressed(Key::Enter))
                                 {
                                     action = Action::SwapAt(pos);
                                     subject = Some(img_uid);
@@ -168,8 +169,8 @@ pub(super) fn do_sequences_window(
 ) {
     let seq_win = &mut egui_state.sequences_window;
     if seq_win.on {
-        let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
-        let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
+        let enter_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Enter));
+        let esc_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Escape));
         if esc_pressed {
             seq_win.on = false;
             egui_state.just_closed_window_with_esc = true;

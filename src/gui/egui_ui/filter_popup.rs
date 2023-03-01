@@ -25,12 +25,10 @@ pub(super) fn do_frame(
         .filter_popup
         .do_frame("filter", egui_ctx, |popup, ui| {
             let count = coll.filter(&state.filter).count();
-            let up_pressed = ui
-                .input_mut()
-                .consume_key(Modifiers::default(), Key::ArrowUp);
-            let down_pressed = ui
-                .input_mut()
-                .consume_key(Modifiers::default(), Key::ArrowDown);
+            let up_pressed =
+                ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowUp));
+            let down_pressed =
+                ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowDown));
             let mut te = TextEdit::singleline(&mut popup.string).lock_focus(true);
             if count == 0 {
                 te = te.text_color(Color32::RED);
@@ -53,8 +51,8 @@ pub(super) fn do_frame(
             }
             ui.label(&format!("{} results", count));
             popup.string.make_ascii_lowercase();
-            let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
-            if enter_pressed || egui_ctx.input().key_pressed(Key::Escape) {
+            let enter_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Enter));
+            if enter_pressed || egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {
                 popup.on = false;
             }
             if re.changed() || text_changed || enter_pressed {
@@ -72,7 +70,7 @@ pub(super) fn do_frame(
                 state.wipe_search();
                 text_changed = true;
             }
-            ui.memory().request_focus(re.id);
+            ui.memory_mut(|mem| mem.request_focus(re.id))
         });
     text_changed && success
 }

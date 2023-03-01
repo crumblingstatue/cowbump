@@ -113,8 +113,8 @@ pub(super) fn tag_autocomplete_popup(
                             complete = C::Special(special);
                         }
                         if state.select == Some(i)
-                            && (ui.input().key_pressed(Key::Tab)
-                                || ui.input().key_pressed(Key::Enter))
+                            && (ui.input(|inp| inp.key_pressed(Key::Tab))
+                                || ui.input(|inp| inp.key_pressed(Key::Enter)))
                         {
                             complete = C::Special(special);
                         }
@@ -133,8 +133,8 @@ pub(super) fn tag_autocomplete_popup(
                             complete = C::Id(id);
                         }
                         if state.select == Some(i)
-                            && (ui.input().key_pressed(Key::Tab)
-                                || ui.input().key_pressed(Key::Enter))
+                            && (ui.input(|inp| inp.key_pressed(Key::Tab))
+                                || ui.input(|inp| inp.key_pressed(Key::Enter)))
                         {
                             complete = C::Id(id);
                         }
@@ -157,9 +157,9 @@ pub(super) fn tag_autocomplete_popup(
                 C::Nothing => {}
             }
             if !string.is_empty() {
-                ui.memory().open_popup(popup_id);
+                ui.memory_mut(|mem| mem.open_popup(popup_id));
             } else {
-                ui.memory().close_popup();
+                ui.memory_mut(|mem| mem.close_popup());
             }
         }
     }

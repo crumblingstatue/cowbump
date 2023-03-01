@@ -201,7 +201,7 @@ pub(super) fn do_frame(
                 format!("{} entries", n_entries)
             }
         };
-        let esc_pressed = egui_ctx.input().key_pressed(Key::Escape);
+        let esc_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Escape));
         let mut close = esc_pressed;
         egui_sfml::egui::Window::new(title)
             .id(egui_sfml::egui::Id::new("en_window").with(win.window_id))
@@ -327,12 +327,13 @@ pub(super) fn do_frame(
                         }
                         if win.editing_tags {
                             let te_id = ui.make_persistent_id("text_edit_add_tag");
-                            let up_pressed = ui
-                                .input_mut()
-                                .consume_key(Modifiers::default(), Key::ArrowUp);
-                            let down_pressed = ui
-                                .input_mut()
-                                .consume_key(Modifiers::default(), Key::ArrowDown);
+                            let up_pressed = ui.input_mut(|inp| {
+                                inp.consume_key(Modifiers::default(), Key::ArrowUp)
+                            });
+
+                            let down_pressed = ui.input_mut(|inp| {
+                                inp.consume_key(Modifiers::default(), Key::ArrowDown)
+                            });
                             let te = TextEdit::singleline(&mut win.add_tag_buffer)
                                 .hint_text("New tags")
                                 .id(te_id);
@@ -359,7 +360,7 @@ pub(super) fn do_frame(
                                 win.add_tag_buffer.clear();
                                 close = false;
                             }
-                            if re.ctx.input().key_pressed(Key::Enter) {
+                            if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
                                 let add_tag_buffer: &str = &win.add_tag_buffer;
                                 let entry_uids: &[entry::Id] = &win.ids;
                                 let tags = add_tag_buffer.split_whitespace();
@@ -435,7 +436,10 @@ pub(super) fn do_frame(
                             let re = ui.text_edit_singleline(&mut win.cmd_buffer);
                             ui.label("Args (use {} for entry path, or leave empty)");
                             ui.text_edit_singleline(&mut win.args_buffer);
-                            if re.ctx.input().key_pressed(egui_sfml::egui::Key::Enter) {
+                            if re
+                                .ctx
+                                .input(|inp| inp.key_pressed(egui_sfml::egui::Key::Enter))
+                            {
                                 let mut cmd = Command::new(&win.cmd_buffer);
                                 cmd.stderr(Stdio::piped());
                                 cmd.stdin(Stdio::piped());
@@ -526,7 +530,10 @@ pub(super) fn do_frame(
                         }
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
-                            if re.ctx.input().key_pressed(egui_sfml::egui::Key::Enter) {
+                            if re
+                                .ctx
+                                .input(|inp| inp.key_pressed(egui_sfml::egui::Key::Enter))
+                            {
                                 if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
                                     native_dialog::error("File rename error", e);
                                 }
@@ -536,7 +543,7 @@ pub(super) fn do_frame(
                                 win.renaming = false;
                                 close = false;
                             }
-                            ui.memory().request_focus(re.id);
+                            ui.memory_mut(|mem| mem.request_focus(re.id));
                         }
                         // endregion
                         // region: Delete button

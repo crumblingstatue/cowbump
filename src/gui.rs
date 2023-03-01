@@ -108,7 +108,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     _ => {}
                 },
                 Event::Resized { width, height } => {
-                    window.set_view(&View::from_rect(&Rect::new(
+                    window.set_view(&View::from_rect(Rect::new(
                         0.,
                         0.,
                         width as f32,

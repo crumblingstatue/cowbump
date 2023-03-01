@@ -7,20 +7,20 @@ default-run = "cowbump"
 
 [dependencies]
 walkdir = "2.3.2"
-serde = "1.0.147"
-serde_derive = "1.0.147"
+serde = "1.0.152"
+serde_derive = "1.0.152"
 rmp-serde = "1.1.1"
 image = "0.24.5"
 arboard = "3.2.0"
-thiserror = "1.0.37"
-anyhow = "1.0.66"
+thiserror = "1.0.38"
+anyhow = "1.0.69"
 fnv = "1.0.7"
 directories = "4.0.1"
-rfd = "0.10.0"
-open = "3.0.3"
-zstd = "0.11.2"
-zip = { version = "0.6.3", default-features = false }
-egui-sfml = "0.2.0"
+rfd = "0.11.1"
+open = "3.2.0"
+zstd = "0.12.3"
+zip = { version = "0.6.4", default-features = false }
+egui-sfml = "0.4.0"
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"

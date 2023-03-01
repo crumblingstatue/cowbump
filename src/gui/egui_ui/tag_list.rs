@@ -83,7 +83,7 @@ pub(super) fn do_frame(
                 && ui
                     .add(TextEdit::singleline(new_tag_buf_ref).hint_text("New tag"))
                     .lost_focus()
-                && ui.input().key_pressed(Key::Enter)
+                && ui.input(|inp| inp.key_pressed(Key::Enter))
             {
                 coll.add_new_tag_from_text(mem::take(new_tag_buf_ref), uid_counter);
             }
@@ -222,7 +222,7 @@ pub(super) fn do_frame(
                                                 .hint_text("New alias"),
                                         )
                                         .lost_focus()
-                                    && ui.input().key_pressed(Key::Enter)
+                                    && ui.input(|inp| inp.key_pressed(Key::Enter))
                                 {
                                     tag.names.push(mem::take(new_name_ref));
                                 }
@@ -253,7 +253,7 @@ pub(super) fn do_frame(
                                                 .hint_text("New implication"),
                                         )
                                         .lost_focus()
-                                    && ui.input().key_pressed(Key::Enter)
+                                    && ui.input(|inp| inp.key_pressed(Key::Enter))
                                 {
                                     if let Some(resolved_id) = coll.resolve_tag(new_imply_ref) {
                                         let tag = coll.tags.get_mut(id).unwrap();
@@ -268,7 +268,7 @@ pub(super) fn do_frame(
                 });
             });
 
-            if egui_ctx.input().key_pressed(Key::Escape) {
+            if egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {
                 *close_ref = true;
             }
         });

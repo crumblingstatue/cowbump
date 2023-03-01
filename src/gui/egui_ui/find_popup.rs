@@ -23,12 +23,10 @@ pub(super) fn do_frame(
     egui_state
         .find_popup
         .do_frame("find", egui_ctx, |popup, ui| {
-            let up_pressed = ui
-                .input_mut()
-                .consume_key(Modifiers::default(), Key::ArrowUp);
-            let down_pressed = ui
-                .input_mut()
-                .consume_key(Modifiers::default(), Key::ArrowDown);
+            let up_pressed =
+                ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowUp));
+            let down_pressed =
+                ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowDown));
             let te = TextEdit::singleline(&mut popup.string).lock_focus(true);
             let re = ui.add(te);
             if popup.ac_state.applied {
@@ -48,8 +46,8 @@ pub(super) fn do_frame(
                 text_changed = true;
             }
             popup.string.make_ascii_lowercase();
-            let enter_pressed = egui_ctx.input().key_pressed(Key::Enter);
-            if enter_pressed || egui_ctx.input().key_pressed(Key::Escape) {
+            let enter_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Enter));
+            if enter_pressed || egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {
                 popup.on = false;
             }
             if re.changed() || text_changed || enter_pressed {
@@ -67,6 +65,6 @@ pub(super) fn do_frame(
                 }
                 popup.ac_state.input_changed = true;
             }
-            ui.memory().request_focus(re.id);
+            ui.memory_mut(|mem| mem.request_focus(re.id));
         });
 }
