@@ -1,13 +1,16 @@
 use std::path::PathBuf;
 
 use egui_sfml::{
-    egui::{Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window},
+    egui::{self, Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window},
     sfml::graphics::{RenderTarget, RenderWindow},
 };
 use fnv::FnvHashMap;
 
 use crate::{
-    application::Application, db::FolderChanges, entry, gui::thumbnails_view::ThumbnailsView,
+    application::Application,
+    db::FolderChanges,
+    entry,
+    gui::{native_dialog, thumbnails_view::ThumbnailsView},
 };
 
 use super::EguiState;
@@ -25,6 +28,10 @@ pub struct ChangesWindow {
     applied: bool,
 }
 
+enum Action {
+    RemFile { idx: usize },
+}
+
 pub(super) fn do_frame(
     state: &mut crate::gui::State,
     egui_state: &mut EguiState,
@@ -36,8 +43,9 @@ pub(super) fn do_frame(
     if !win.open {
         return;
     }
-    let changes = &win.changes;
+    let changes = &mut win.changes;
     let mut close = false;
+    let mut action = None;
     Window::new("Changes to collection")
         .open(&mut win.open)
         .show(egui_ctx, |ui| {
@@ -50,7 +58,7 @@ pub(super) fn do_frame(
                         ScrollArea::vertical()
                             .id_source("scroll_add")
                             .show(ui, |ui| {
-                                for add in &changes.add {
+                                for (idx, add) in changes.add.iter().enumerate() {
                                     match win.added.get_mut(add) {
                                         Some(info) => {
                                             ui.horizontal(|ui| {
@@ -79,11 +87,22 @@ pub(super) fn do_frame(
                                             });
                                         }
                                         None => {
-                                            let label = Label::new(
-                                                RichText::new(add.to_string_lossy().as_ref())
-                                                    .color(Color32::GREEN),
-                                            );
-                                            ui.add(label);
+                                            ui.scope(|ui| {
+                                                let vis = &mut ui.style_mut().visuals.widgets;
+                                                vis.inactive.fg_stroke.color =
+                                                    Color32::from_rgb(26, 138, 11);
+                                                vis.hovered.fg_stroke.color =
+                                                    Color32::from_rgb(167, 255, 155);
+                                                let label =
+                                                    Label::new(add.to_string_lossy().as_ref())
+                                                        .sense(egui::Sense::click());
+                                                ui.add(label).context_menu(|ui| {
+                                                    if ui.button("Delete file").clicked() {
+                                                        action = Some(Action::RemFile { idx });
+                                                        ui.close_menu();
+                                                    }
+                                                })
+                                            });
                                         }
                                     }
                                 }
@@ -135,6 +154,17 @@ pub(super) fn do_frame(
                 }
             });
         });
+    if let Some(action) = action {
+        match action {
+            Action::RemFile { idx } => {
+                let path = &changes.add[idx];
+                if let Err(e) = std::fs::remove_file(path) {
+                    native_dialog::error("Failed to remove file", e);
+                }
+                changes.add.remove(idx);
+            }
+        }
+    }
     if close {
         win.open = false;
     }
