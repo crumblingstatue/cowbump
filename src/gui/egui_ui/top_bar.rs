@@ -118,7 +118,10 @@ fn help_menu(
         ui.vertical_centered(|ui| {
             ui.label("= Debug =");
         });
-        if ui.button("Save screenshot (F11)").clicked() {
+        if ui
+            .add(egui::Button::new("Save screenshot").shortcut_text("F11"))
+            .clicked()
+        {
             ui.close_menu();
             crate::gui::util::take_and_save_screenshot(win);
         }
@@ -310,11 +313,17 @@ fn file_menu(
 
 fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
     ui.menu_button("Collection", |ui| {
-        if ui.button("＃ Tag list (T)").clicked() {
+        if ui
+            .add(egui::Button::new("＃ Tag list").shortcut_text("T"))
+            .clicked()
+        {
             ui.close_menu();
             egui_state.tag_window.toggle();
         }
-        if ui.button("⬌ Sequences (Q)").clicked() {
+        if ui
+            .add(egui::Button::new("⬌ Sequences").shortcut_text("Q"))
+            .clicked()
+        {
             ui.close_menu();
             egui_state.sequences_window.on ^= true;
         }
@@ -338,7 +347,7 @@ fn actions_menu(
     ui.menu_button("Actions", |ui| {
         let active_coll = app.active_collection.is_some();
         if ui
-            .add_enabled(active_coll, Button::new("🔍 Filter (F)"))
+            .add_enabled(active_coll, Button::new("🔍 Filter").shortcut_text("F"))
             .clicked()
         {
             ui.close_menu();
@@ -346,21 +355,24 @@ fn actions_menu(
         }
         ui.separator();
         if ui
-            .add_enabled(active_coll, Button::new("🔍 Find (/)"))
+            .add_enabled(active_coll, Button::new("🔍 Find").shortcut_text("/"))
             .clicked()
         {
             ui.close_menu();
             egui_state.find_popup.on ^= true;
         }
         if ui
-            .add_enabled(active_coll, Button::new("⮫ Next result (N)"))
+            .add_enabled(active_coll, Button::new("⮫ Next result").shortcut_text("N"))
             .clicked()
         {
             ui.close_menu();
             egui_state.action = Some(Action::FindNext);
         }
         if ui
-            .add_enabled(active_coll, Button::new("⮪ Previous result (P)"))
+            .add_enabled(
+                active_coll,
+                Button::new("⮪ Previous result").shortcut_text("P"),
+            )
             .clicked()
         {
             ui.close_menu();
@@ -368,14 +380,20 @@ fn actions_menu(
         }
         ui.separator();
         if ui
-            .add_enabled(active_coll, Button::new("☑ Select All (ctrl+A)"))
+            .add_enabled(
+                active_coll,
+                Button::new("☑ Select All").shortcut_text("ctrl+A"),
+            )
             .clicked()
         {
             ui.close_menu();
             egui_state.action = Some(Action::SelectAll);
         }
         if ui
-            .add_enabled(active_coll, Button::new("☐ Select None (Esc)"))
+            .add_enabled(
+                active_coll,
+                Button::new("☐ Select None").shortcut_text("Esc"),
+            )
             .clicked()
         {
             ui.close_menu();
@@ -385,7 +403,7 @@ fn actions_menu(
         if ui
             .add_enabled(
                 n_selected > 0,
-                Button::new("Ｓ Open entries window for selected entries (F2)"),
+                Button::new("Ｓ Open entries window for selected entries").shortcut_text("F2"),
             )
             .clicked()
         {
@@ -394,7 +412,10 @@ fn actions_menu(
         }
         ui.separator();
         if ui
-            .add_enabled(active_coll, Button::new("♻ Sort by filename (S)"))
+            .add_enabled(
+                active_coll,
+                Button::new("♻ Sort by filename").shortcut_text("S"),
+            )
             .clicked()
         {
             ui.close_menu();
