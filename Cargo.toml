@@ -6,21 +6,21 @@ edition = "2021"
 default-run = "cowbump"
 
 [dependencies]
-walkdir = "2.3.2"
-serde = "1.0.152"
-serde_derive = "1.0.152"
+walkdir = "2.3.3"
+serde = "1.0.164"
+serde_derive = "1.0.164"
 rmp-serde = "1.1.1"
-image = "0.24.5"
+image = "0.24.6"
 arboard = "3.2.0"
-thiserror = "1.0.38"
-anyhow = "1.0.69"
+thiserror = "1.0.40"
+anyhow = "1.0.71"
 fnv = "1.0.7"
-directories = "4.0.1"
-rfd = "0.11.1"
-open = "3.2.0"
+directories = "5.0.1"
+rfd = "0.11.4"
+open = "4.2.0"
 zstd = "0.12.3"
-zip = { version = "0.6.4", default-features = false }
-egui-sfml = "0.4.0"
+zip = { version = "0.6.6", default-features = false }
+egui-sfml = {git = "https://github.com/crumblingstatue/egui-sfml.git"}
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"
