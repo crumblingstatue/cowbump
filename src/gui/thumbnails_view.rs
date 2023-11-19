@@ -230,7 +230,9 @@ pub(super) fn draw_thumbnails(
             rs.set_outline_thickness(-2.0);
             window.draw(&rs);
         }
-        if let Some(idx) = state.select_a && idx == abs_idx {
+        if let Some(idx) = state.select_a
+            && idx == abs_idx
+        {
             let mut s = Sprite::with_texture(&res.sel_begin_texture);
             s.set_position((x, y));
             window.draw(&s);
