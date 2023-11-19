@@ -173,7 +173,7 @@ impl Req {
                     Req::None(reqs)
                 }
                 "filename" | "file" | "fname" | "f" => {
-                    let filename_sub = match call.params.get(0) {
+                    let filename_sub = match call.params.first() {
                         Some(param) => match param {
                             Requirement::Tag(tag) => tag,
                             Requirement::FnCall(_) | Requirement::Not(_) => {

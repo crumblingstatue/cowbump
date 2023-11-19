@@ -183,7 +183,7 @@ pub(super) fn do_frame(
     egui_state.entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
-        let Some(first_entry_id) = win.ids.get(0) else {
+        let Some(first_entry_id) = win.ids.first() else {
             dlog!("EntriesWindow doesn't have any entries");
             return false;
         };
