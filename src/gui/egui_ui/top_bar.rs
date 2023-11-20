@@ -111,7 +111,7 @@ fn help_menu(
         if ui.button("About").clicked() {
             ui.close_menu();
             MessageDialog::new()
-                .set_description(&format!("Cowbump version {}", crate::VERSION))
+                .set_description(format!("Cowbump version {}", crate::VERSION))
                 .show();
         }
         ui.separator();
