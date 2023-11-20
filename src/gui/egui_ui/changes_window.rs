@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use egui_sfml::{
-    egui::{self, Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window},
+    egui::{
+        self, load::SizedTexture, Color32, Context, ImageButton, Label, RichText, ScrollArea,
+        TextureId, Window,
+    },
     sfml::graphics::{RenderTarget, RenderWindow},
 };
 use fnv::FnvHashMap;
@@ -62,10 +65,11 @@ pub(super) fn do_frame(
                                     match win.added.get_mut(add) {
                                         Some(info) => {
                                             ui.horizontal(|ui| {
-                                                let img_button = ImageButton::new(
-                                                    TextureId::User(info.id.0),
-                                                    (128.0, 128.0),
-                                                );
+                                                let img_button =
+                                                    ImageButton::new(SizedTexture::new(
+                                                        TextureId::User(info.id.0),
+                                                        (128.0, 128.0),
+                                                    ));
                                                 let re = ui.add(img_button);
                                                 if info.checked {
                                                     ui.painter().rect_stroke(

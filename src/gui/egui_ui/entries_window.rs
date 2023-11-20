@@ -6,6 +6,7 @@ use std::{
 use egui_sfml::{
     egui::{
         epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
+        load::SizedTexture,
         text_edit::CursorRange,
         vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
         Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
@@ -244,7 +245,10 @@ pub(super) fn do_frame(
                             };
                             let w = h * ratio;
                             if ui
-                                .add(ImageButton::new(TextureId::User(id.0), (w, h)))
+                                .add(ImageButton::new(SizedTexture::new(
+                                    TextureId::User(id.0),
+                                    (w, h),
+                                )))
                                 .clicked()
                                 && !state
                                     .thumbs_view
@@ -610,8 +614,10 @@ pub(super) fn do_frame(
                         ui.horizontal(|ui| {
                             ScrollArea::horizontal().show(ui, |ui| {
                                 for &img_id in seq.entries.iter() {
-                                    let img_but =
-                                        ImageButton::new(TextureId::User(img_id.0), (128., 128.));
+                                    let img_but = ImageButton::new(SizedTexture::new(
+                                        TextureId::User(img_id.0),
+                                        (128., 128.),
+                                    ));
                                     if ui.add(img_but).clicked() {
                                         if db.preferences.use_built_in_viewer {
                                             builtin::open_sequence(state, seq, img_id, rend_win);

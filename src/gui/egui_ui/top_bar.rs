@@ -2,7 +2,7 @@ use egui_sfml::{
     egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
     sfml::graphics::{RenderTarget, RenderWindow},
 };
-use rfd::{FileDialog, MessageButtons, MessageDialog};
+use rfd::{FileDialog, MessageButtons, MessageDialog, MessageDialogResult};
 
 use crate::{
     application::Application,
@@ -277,7 +277,8 @@ fn file_menu(
                 .set_description(
                     "This will replace all your current data with the backup. Continue?",
                 )
-                .show();
+                .show()
+                == MessageDialogResult::Ok;
             if continue_ {
                 if let Some(path) = FileDialog::new().pick_file() {
                     app.active_collection = None;

@@ -1,7 +1,7 @@
 use egui_sfml::{
     egui::{
-        Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit,
-        TextureId, Window,
+        load::SizedTexture, Align, Button, Color32, Context, DragValue, ImageButton, Key,
+        ScrollArea, TextEdit, TextureId, Window,
     },
     sfml::graphics::RenderWindow,
 };
@@ -59,8 +59,10 @@ pub(super) fn do_sequence_windows(
                     let seq_entries_len = seq.entries.len();
                     for (i, &img_uid) in seq.entries.iter().enumerate() {
                         ui.vertical(|ui| {
-                            let mut img_butt =
-                                ImageButton::new(TextureId::User(img_uid.0), (256., 256.));
+                            let mut img_butt = ImageButton::new(SizedTexture::new(
+                                TextureId::User(img_uid.0),
+                                (256., 256.),
+                            ));
                             if win.focus_req == Some(img_uid) {
                                 img_butt = img_butt.tint(Color32::YELLOW);
                             }
@@ -244,7 +246,10 @@ pub(super) fn do_sequences_window(
                         // Display the first 7 images of the sequence
                         ui.horizontal(|ui| {
                             for en in seq.entries.iter().take(7) {
-                                let but = ImageButton::new(TextureId::User(en.0), (128., 128.));
+                                let but = ImageButton::new(SizedTexture::new(
+                                    TextureId::User(en.0),
+                                    (128., 128.),
+                                ));
                                 if ui.add(but).clicked() {
                                     if preferences.use_built_in_viewer {
                                         builtin::open_sequence(state, seq, *en, window);
