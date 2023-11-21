@@ -1,3 +1,4 @@
+mod batch_rename_window;
 mod changes_window;
 mod debug_window;
 mod entries_window;
@@ -19,6 +20,7 @@ use egui_sfml::{
 };
 
 use self::{
+    batch_rename_window::BatchRenameWindow,
     changes_window::ChangesWindow,
     debug_window::DebugWindow,
     entries_window::EntriesWindow,
@@ -52,6 +54,7 @@ pub(crate) struct EguiState {
     /// Uid counter for egui entities like windows
     egui_uid_counter: u64,
     pub(crate) tag_specific_apps_window: TagSpecificAppsWindow,
+    pub(crate) batch_rename_window: BatchRenameWindow,
 }
 
 impl Default for EguiState {
@@ -74,6 +77,7 @@ impl Default for EguiState {
             filter_popup: Default::default(),
             egui_uid_counter: 0,
             tag_specific_apps_window: Default::default(),
+            batch_rename_window: Default::default(),
         }
     }
 }
@@ -225,6 +229,7 @@ pub(super) fn do_ui(
             &mut app.database,
             res,
         );
+        batch_rename_window::do_frame(egui_state, coll, egui_ctx);
         do_info_messages(egui_state, egui_ctx);
         do_prompts(egui_state, egui_ctx, app);
     }

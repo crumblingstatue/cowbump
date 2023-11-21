@@ -526,11 +526,13 @@ pub(super) fn do_frame(
                         });
                         ui.separator();
                         // region: Rename button
-                        if ui
-                            .add_enabled(win.ids.len() == 1, Button::new("Rename file").wrap(false))
-                            .clicked()
-                        {
-                            win.renaming ^= true;
+                        if win.ids.len() == 1 {
+                            if ui.add(Button::new("Rename file").wrap(false)).clicked() {
+                                win.renaming ^= true;
+                            }
+                        } else if ui.button("Batch rename...").clicked() {
+                            egui_state.batch_rename_window.open = true;
+                            egui_state.batch_rename_window.ids = win.ids.clone();
                         }
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
