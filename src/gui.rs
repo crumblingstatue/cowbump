@@ -37,6 +37,7 @@ use egui_sfml::{
     },
     SfEgui,
 };
+use rand::seq::SliceRandom;
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let (video, style) = if app.database.preferences.start_fullscreen {
@@ -172,6 +173,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     state
                         .thumbs_view
                         .update_from_collection(coll.as_ref().unwrap(), &state.filter)
+                }
+                Action::Shuffle => {
+                    state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
                 }
                 Action::OpenEntriesWindow => {
                     egui_state.add_entries_window(state.selected_uids.clone())

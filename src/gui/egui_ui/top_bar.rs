@@ -429,5 +429,12 @@ fn actions_menu(
             ui.close_menu();
             egui_state.action = Some(Action::SortById);
         }
+        if ui
+            .add_enabled(active_coll, Button::new("Shuffle"))
+            .clicked()
+        {
+            ui.close_menu();
+            egui_state.action = Some(Action::Shuffle);
+        }
     });
 }

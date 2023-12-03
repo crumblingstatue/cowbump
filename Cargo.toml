@@ -21,6 +21,7 @@ open = "5.0.0"
 zstd = "0.13.0"
 zip = { version = "0.6.6", default-features = false }
 egui-sfml = {git = "https://github.com/crumblingstatue/egui-sfml.git"}
+rand = "0.8.5"
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"
