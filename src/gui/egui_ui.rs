@@ -230,7 +230,7 @@ pub(super) fn do_ui(
             &mut app.database,
             res,
         );
-        batch_rename_window::do_frame(egui_state, coll, egui_ctx);
+        batch_rename_window::do_frame(state, egui_state, coll, egui_ctx, win);
         do_info_messages(egui_state, egui_ctx);
         do_prompts(egui_state, egui_ctx, app);
     }

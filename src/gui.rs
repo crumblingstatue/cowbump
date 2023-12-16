@@ -133,7 +133,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         );
                     }
                 }
-                Activity::Viewer => viewer::handle_event(&mut state, &event, &mut window),
+                Activity::Viewer => {
+                    if !sf_egui.context().wants_pointer_input() {
+                        viewer::handle_event(&mut state, &event, &mut window)
+                    }
+                }
             }
         }
         egui_state.begin_frame();

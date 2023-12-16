@@ -1,6 +1,12 @@
-use egui_sfml::egui::{self, PointerButton, TextureId};
+use egui_sfml::{
+    egui::{self, PointerButton, TextureId},
+    sfml::graphics::RenderWindow,
+};
 
-use crate::{entry, gui::native_dialog};
+use crate::{
+    entry,
+    gui::{native_dialog, State},
+};
 
 #[derive(Default)]
 pub struct BatchRenameWindow {
@@ -11,9 +17,11 @@ pub struct BatchRenameWindow {
 }
 
 pub(crate) fn do_frame(
+    state: &mut State,
     egui_state: &mut super::EguiState,
     coll: &mut crate::collection::Collection,
     egui_ctx: &egui_sfml::egui::Context,
+    rw: &RenderWindow,
 ) {
     if !egui_state.batch_rename_window.open {
         return;
@@ -65,7 +73,7 @@ pub(crate) fn do_frame(
                         .sort_by_key(|id| &coll.entries[id].path);
                 }
             });
-            ui.label("lmb: swap, rmb: insert before");
+            ui.label("lmb: swap, rmb: insert before, alt+lmb: view image");
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (i, id) in egui_state.batch_rename_window.ids.iter().enumerate() {
@@ -79,7 +87,15 @@ pub(crate) fn do_frame(
                             }
                         }
                         let re = ui.add(img);
-                        if re.clicked() {
+                        let alt = ui.input(|inp| inp.modifiers.alt);
+                        if re.clicked() && alt {
+                            crate::gui::open::builtin::open_list(
+                                state,
+                                egui_state.batch_rename_window.ids.clone(),
+                                i,
+                                rw,
+                            );
+                        } else if re.clicked() {
                             match egui_state.batch_rename_window.sel_idx {
                                 Some(idx) => {
                                     egui_state.batch_rename_window.ids.swap(idx, i);
