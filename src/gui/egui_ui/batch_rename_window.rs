@@ -65,37 +65,39 @@ pub(crate) fn do_frame(
                         .sort_by_key(|id| &coll.entries[id].path);
                 }
             });
-            ui.horizontal_wrapped(|ui| {
-                for (i, id) in egui_state.batch_rename_window.ids.iter().enumerate() {
-                    let mut img = egui::ImageButton::new(egui::load::SizedTexture::new(
-                        TextureId::User(id.0),
-                        egui::vec2(256., 256.),
-                    ));
-                    if let Some(sel_idx) = egui_state.batch_rename_window.sel_idx {
-                        if sel_idx == i {
-                            img = img.tint(egui::Color32::BROWN);
+            ui.label("lmb: swap, rmb: insert before");
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    for (i, id) in egui_state.batch_rename_window.ids.iter().enumerate() {
+                        let mut img = egui::ImageButton::new(egui::load::SizedTexture::new(
+                            TextureId::User(id.0),
+                            egui::vec2(256., 256.),
+                        ));
+                        if let Some(sel_idx) = egui_state.batch_rename_window.sel_idx {
+                            if sel_idx == i {
+                                img = img.tint(egui::Color32::BROWN);
+                            }
                         }
-                    }
-                    let re = ui.add(img);
-                    if re.clicked() {
-                        match egui_state.batch_rename_window.sel_idx {
-                            Some(idx) => {
-                                egui_state.batch_rename_window.ids.swap(idx, i);
+                        let re = ui.add(img);
+                        if re.clicked() {
+                            match egui_state.batch_rename_window.sel_idx {
+                                Some(idx) => {
+                                    egui_state.batch_rename_window.ids.swap(idx, i);
+                                    egui_state.batch_rename_window.sel_idx = None;
+                                    break;
+                                }
+                                None => egui_state.batch_rename_window.sel_idx = Some(i),
+                            }
+                        } else if re.clicked_by(PointerButton::Secondary) {
+                            if let Some(idx) = egui_state.batch_rename_window.sel_idx {
+                                let id = egui_state.batch_rename_window.ids.remove(idx);
+                                egui_state.batch_rename_window.ids.insert(i, id);
                                 egui_state.batch_rename_window.sel_idx = None;
                                 break;
                             }
-                            None => egui_state.batch_rename_window.sel_idx = Some(i),
-                        }
-                    } else if re.clicked_by(PointerButton::Secondary) {
-                        if let Some(idx) = egui_state.batch_rename_window.sel_idx {
-                            let id = egui_state.batch_rename_window.ids.remove(idx);
-                            egui_state.batch_rename_window.ids.insert(i, id);
-                            egui_state.batch_rename_window.sel_idx = None;
-                            break;
                         }
                     }
-                }
+                });
             });
-            ui.label("Left: swap, Right: insert before");
         });
 }
