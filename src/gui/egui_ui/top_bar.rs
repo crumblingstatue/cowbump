@@ -244,6 +244,10 @@ fn file_menu(
                 }
             });
         });
+        if ui.button("Collections database...").clicked() {
+            egui_state.collections_db_window.open = true;
+            ui.close_menu();
+        }
         ui.separator();
         if ui.button("⛃⬉ Create backup").clicked() {
             ui.close_menu();

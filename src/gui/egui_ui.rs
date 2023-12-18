@@ -1,5 +1,6 @@
 mod batch_rename_window;
 mod changes_window;
+mod collections_window;
 mod debug_window;
 mod entries_window;
 mod filter_popup;
@@ -22,6 +23,7 @@ use egui_sfml::{
 use self::{
     batch_rename_window::BatchRenameWindow,
     changes_window::ChangesWindow,
+    collections_window::CollectionsDbWindow,
     debug_window::DebugWindow,
     entries_window::EntriesWindow,
     load_folder_window::LoadFolderWindow,
@@ -55,6 +57,7 @@ pub(crate) struct EguiState {
     egui_uid_counter: u64,
     pub(crate) tag_specific_apps_window: TagSpecificAppsWindow,
     pub(crate) batch_rename_window: BatchRenameWindow,
+    pub(crate) collections_db_window: CollectionsDbWindow,
 }
 
 impl Default for EguiState {
@@ -78,6 +81,7 @@ impl Default for EguiState {
             egui_uid_counter: 0,
             tag_specific_apps_window: Default::default(),
             batch_rename_window: Default::default(),
+            collections_db_window: Default::default(),
         }
     }
 }
@@ -183,6 +187,7 @@ pub(super) fn do_ui(
     load_folder_window::do_frame(state, egui_state, egui_ctx, res, app, win.size().x);
     changes_window::do_frame(state, egui_state, egui_ctx, app, win);
     debug_window::do_frame(egui_state, egui_ctx);
+    collections_window::do_frame(app, egui_state, egui_ctx);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
         find_popup::do_frame(state, egui_state, egui_ctx, coll, win);
         if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
