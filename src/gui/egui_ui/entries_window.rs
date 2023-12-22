@@ -574,12 +574,7 @@ pub(super) fn do_frame(
                             ui.label(&label_string);
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                                    if let Err(e) = remove_entries(
-                                        &mut state.thumbs_view,
-                                        del_uids,
-                                        coll,
-                                        &state.filter,
-                                    ) {
+                                    if let Err(e) = remove_entries(del_uids, coll, state) {
                                         native_dialog::error("Error deleting entries", e);
                                     }
                                     win.delete_confirm = false;
@@ -647,10 +642,9 @@ pub(super) fn do_frame(
 }
 
 fn remove_entries(
-    view: &mut ThumbnailsView,
     entries: &mut Vec<entry::Id>,
     coll: &mut Collection,
-    requirements: &Requirements,
+    state: &mut State,
 ) -> anyhow::Result<()> {
     for uid in entries.drain(..) {
         let path = &coll.entries[&uid].path;
@@ -659,8 +653,14 @@ fn remove_entries(
             Some(en) => dlog!("Removed `{:?}`: {:?}", uid, en.path),
             None => dlog!("Warning: Remove of entry `{:?}` failed", uid),
         }
+        // Also remove from selection, if it's selected
+        if let Some(idx) = state.selected_uids.iter().position(|id| *id == uid) {
+            state.selected_uids.remove(idx);
+        }
     }
     // Make sure to only update the view after the collection entry removes finished
-    view.update_from_collection(coll, requirements);
+    state
+        .thumbs_view
+        .update_from_collection(coll, &state.filter);
     Ok(())
 }
