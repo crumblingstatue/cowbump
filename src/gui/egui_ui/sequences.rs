@@ -218,8 +218,8 @@ pub(super) fn do_sequences_window(
                 }
                 ui.separator();
                 ScrollArea::vertical().show(ui, |ui| {
-                    let mut retain = true;
                     coll.sequences.retain(|&uid, seq| {
+                        let mut retain = true;
                         if !seq
                             .name
                             .to_lowercase()
