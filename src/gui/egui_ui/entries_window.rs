@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write,
     io::Read,
     process::{Child, Command, ExitStatus, Stdio},
 };
@@ -430,6 +431,20 @@ pub(super) fn do_frame(
                             .clicked()
                         {
                             win.custom_command_prompt ^= true;
+                        }
+                        if ui.button("Copy filenames to clipboard").clicked() {
+                            let res: anyhow::Result<()> = try {
+                                let mut out = String::new();
+                                for uid in &win.ids {
+                                    let en = &coll.entries[uid];
+                                    let canonical = std::fs::canonicalize(&en.path)?;
+                                    writeln!(&mut out, "{}", canonical.display())?;
+                                }
+                                state.clipboard_ctx.set_text(out)?;
+                            };
+                            if let Err(e) = res {
+                                native_dialog::error("Filename clipboard copy error", e);
+                            }
                         }
                         if win.custom_command_prompt {
                             if esc_pressed {
