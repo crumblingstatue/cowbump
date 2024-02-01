@@ -10,7 +10,7 @@ mod viewer;
 
 use {
     self::{
-        egui_ui::Action,
+        egui_ui::{Action, EguiState},
         resources::Resources,
         thumbnail_loader::ThumbnailLoader,
         thumbnails_view::{
@@ -24,7 +24,6 @@ use {
         db::EntryMap,
         entry,
         filter_reqs::Requirements,
-        gui::egui_ui::EguiState,
         preferences::Preferences,
     },
     anyhow::Context as _,
