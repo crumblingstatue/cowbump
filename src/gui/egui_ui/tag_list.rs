@@ -207,9 +207,16 @@ pub(super) fn do_frame(
                             ui.label("Names");
                             ui.add_space(4.0);
                             let tag = coll.tags.get_mut(id).unwrap();
+                            let only_one = tag.names.len() == 1;
                             tag.names.retain_mut(|name| {
-                                ui.label(&*name);
-                                true
+                                let mut retain = true;
+                                ui.horizontal(|ui| {
+                                    ui.label(&*name);
+                                    if ui.add_enabled(!only_one, Button::new("x")).clicked() {
+                                        retain = false;
+                                    }
+                                });
+                                retain
                             });
                             ui.horizontal(|ui| {
                                 if ui.button("+").clicked() {
