@@ -1,14 +1,13 @@
-use std::collections::VecDeque;
-
-use egui_sfml::sfml::{
-    graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
-    window::{mouse, Event, Key},
-    SfBox,
+use {
+    super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State},
+    crate::{collection::Collection, entry},
+    egui_sfml::sfml::{
+        graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
+        window::{mouse, Event, Key},
+        SfBox,
+    },
+    std::collections::VecDeque,
 };
-
-use crate::{collection::Collection, entry};
-
-use super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State};
 
 pub(super) fn draw(
     state: &mut State,

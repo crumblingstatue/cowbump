@@ -1,16 +1,17 @@
-use std::{
-    fs::File,
-    io::{Read, Write},
-    path::Path,
+use {
+    rmp_serde::{encode::write_named, from_read},
+    serde::{Deserialize, Serialize},
+    std::{
+        fs::File,
+        io::{Read, Write},
+        path::Path,
+    },
 };
 
 /// Dummy version value for future proofing.
 /// The space created by this can be used in the future
 /// for versioning the data formats and defining migrations.
 const DUMMY_VERSION: u8 = 0;
-
-use rmp_serde::{encode::write_named, from_read};
-use serde::{Deserialize, Serialize};
 
 pub fn read<T: for<'de> Deserialize<'de>>(mut source: impl Read) -> anyhow::Result<T> {
     let mut ver = [0];

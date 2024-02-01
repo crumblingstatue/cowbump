@@ -1,11 +1,12 @@
-use egui_sfml::{
-    egui::{self, PointerButton, TextureId},
-    sfml::graphics::RenderWindow,
-};
-
-use crate::{
-    entry,
-    gui::{native_dialog, State},
+use {
+    crate::{
+        entry,
+        gui::{native_dialog, State},
+    },
+    egui_sfml::{
+        egui::{self, PointerButton, TextureId},
+        sfml::graphics::RenderWindow,
+    },
 };
 
 #[derive(Default)]

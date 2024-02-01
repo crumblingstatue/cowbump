@@ -1,16 +1,16 @@
-use std::{path::Path, process::Command};
-
-use anyhow::bail;
-
-use crate::{
-    collection::{Collection, Entries},
-    entry,
-    gui::{
-        native_dialog::{self, error},
-        State,
+use {
+    crate::{
+        collection::{Collection, Entries},
+        entry,
+        gui::{
+            native_dialog::{self, error},
+            State,
+        },
+        preferences::{AppId, Preferences},
+        sequence::Sequence,
     },
-    preferences::{AppId, Preferences},
-    sequence::Sequence,
+    anyhow::bail,
+    std::{path::Path, process::Command},
 };
 
 /// Open functionality when enter is pressed in thumbnails view

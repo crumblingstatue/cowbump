@@ -1,11 +1,12 @@
-use egui_sfml::sfml::{
-    graphics::{Image, RenderTarget, RenderWindow, Texture},
-    system::Vector2u,
+use {
+    crate::gui::native_dialog,
+    anyhow::Context,
+    egui_sfml::sfml::{
+        graphics::{Image, RenderTarget, RenderWindow, Texture},
+        system::Vector2u,
+    },
+    rfd::FileDialog,
 };
-use rfd::FileDialog;
-
-use crate::gui::native_dialog;
-use anyhow::Context;
 
 pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<Image> {
     let mut tex = Texture::new().context("Failed to create texture")?;

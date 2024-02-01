@@ -1,16 +1,17 @@
-use egui_sfml::egui::{Color32, Context, Key, Modifiers, TextEdit};
-
-use crate::{
-    collection::Collection,
-    gui::{
-        egui_ui::{
-            entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
+use {
+    super::EguiState,
+    crate::{
+        collection::Collection,
+        gui::{
+            egui_ui::{
+                entries_window::text_edit_cursor_set_to_end,
+                tag_autocomplete::tag_autocomplete_popup,
+            },
+            State,
         },
-        State,
     },
+    egui_sfml::egui::{Color32, Context, Key, Modifiers, TextEdit},
 };
-
-use super::EguiState;
 
 /// Returns whether filter state changed
 pub(super) fn do_frame(

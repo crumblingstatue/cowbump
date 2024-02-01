@@ -8,36 +8,40 @@ mod thumbnails_view;
 mod util;
 mod viewer;
 
-use self::{
-    egui_ui::Action,
-    resources::Resources,
-    thumbnail_loader::ThumbnailLoader,
-    thumbnails_view::{handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView},
-    viewer::ViewerState,
-};
-use crate::{
-    application::Application,
-    collection::{self, Collection},
-    db::EntryMap,
-    entry,
-    filter_reqs::Requirements,
-    gui::egui_ui::EguiState,
-    preferences::Preferences,
-};
-use anyhow::Context as _;
-use arboard::Clipboard;
-use egui_sfml::{
-    sfml::{
-        graphics::{
-            Color, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
-            Transformable, View,
+use {
+    self::{
+        egui_ui::Action,
+        resources::Resources,
+        thumbnail_loader::ThumbnailLoader,
+        thumbnails_view::{
+            handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView,
         },
-        window::{Event, Key, Style, VideoMode},
-        SfBox,
+        viewer::ViewerState,
     },
-    SfEgui,
+    crate::{
+        application::Application,
+        collection::{self, Collection},
+        db::EntryMap,
+        entry,
+        filter_reqs::Requirements,
+        gui::egui_ui::EguiState,
+        preferences::Preferences,
+    },
+    anyhow::Context as _,
+    arboard::Clipboard,
+    egui_sfml::{
+        sfml::{
+            graphics::{
+                Color, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
+                Transformable, View,
+            },
+            window::{Event, Key, Style, VideoMode},
+            SfBox,
+        },
+        SfEgui,
+    },
+    rand::seq::SliceRandom,
 };
-use rand::seq::SliceRandom;
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let (video, style) = if app.database.preferences.start_fullscreen {

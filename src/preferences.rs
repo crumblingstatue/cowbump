@@ -1,10 +1,10 @@
-use std::{ops::RangeInclusive, path::PathBuf};
-
-use egui_sfml::egui::emath::Numeric;
-use fnv::FnvHashMap;
-use serde_derive::{Deserialize, Serialize};
-
-use crate::db::Uid;
+use {
+    crate::db::Uid,
+    egui_sfml::egui::emath::Numeric,
+    fnv::FnvHashMap,
+    serde_derive::{Deserialize, Serialize},
+    std::{ops::RangeInclusive, path::PathBuf},
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct Preferences {

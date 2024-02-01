@@ -1,6 +1,7 @@
-use egui_sfml::egui::{Align2, Context, Ui, Window};
-
-use super::tag_autocomplete::AcState;
+use {
+    super::tag_autocomplete::AcState,
+    egui_sfml::egui::{Align2, Context, Ui, Window},
+};
 
 #[derive(Default)]
 pub struct QueryPopup {

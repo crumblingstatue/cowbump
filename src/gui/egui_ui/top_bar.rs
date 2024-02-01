@@ -1,19 +1,19 @@
-use egui_sfml::{
-    egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
-    sfml::graphics::{RenderTarget, RenderWindow},
-};
-use rfd::{FileDialog, MessageButtons, MessageDialog, MessageDialogResult};
-
-use crate::{
-    application::Application,
-    collection,
-    gui::{
-        native_dialog::{self, error},
-        Activity, State,
+use {
+    super::{info_message, load_folder_window, prompt, Action, EguiState, PromptAction},
+    crate::{
+        application::Application,
+        collection,
+        gui::{
+            native_dialog::{self, error},
+            Activity, State,
+        },
     },
+    egui_sfml::{
+        egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
+        sfml::graphics::{RenderTarget, RenderWindow},
+    },
+    rfd::{FileDialog, MessageButtons, MessageDialog, MessageDialogResult},
 };
-
-use super::{info_message, load_folder_window, prompt, Action, EguiState, PromptAction};
 
 pub(super) fn do_frame(
     state: &mut State,

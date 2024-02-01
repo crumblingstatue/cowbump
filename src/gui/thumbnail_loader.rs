@@ -1,10 +1,12 @@
-use crate::{db::EntryMap, entry, gui::ThumbnailCache};
-use egui_sfml::sfml::graphics::Texture;
-use image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba};
-use std::{
-    collections::hash_map,
-    path::Path,
-    sync::{Arc, Mutex},
+use {
+    crate::{db::EntryMap, entry, gui::ThumbnailCache},
+    egui_sfml::sfml::graphics::Texture,
+    image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba},
+    std::{
+        collections::hash_map,
+        path::Path,
+        sync::{Arc, Mutex},
+    },
 };
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;

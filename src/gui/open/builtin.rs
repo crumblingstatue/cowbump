@@ -1,10 +1,11 @@
-use egui_sfml::sfml::graphics::RenderWindow;
-
-use crate::{
-    collection::Collection,
-    entry,
-    gui::{Activity, State},
-    sequence::Sequence,
+use {
+    crate::{
+        collection::Collection,
+        entry,
+        gui::{Activity, State},
+        sequence::Sequence,
+    },
+    egui_sfml::sfml::graphics::RenderWindow,
 };
 
 /// Open functionality when enter is pressed in thumbnails view

@@ -1,22 +1,21 @@
-use std::path::PathBuf;
-
-use egui_sfml::{
-    egui::{
-        Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider, TextEdit,
-        Ui, Window,
+use {
+    super::EguiState,
+    crate::{
+        gui::State,
+        preferences::{
+            App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
+        },
     },
-    sfml::graphics::RenderTarget,
-};
-use rfd::FileDialog;
-
-use crate::{
-    gui::State,
-    preferences::{
-        App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
+    egui_sfml::{
+        egui::{
+            Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider,
+            TextEdit, Ui, Window,
+        },
+        sfml::graphics::RenderTarget,
     },
+    rfd::FileDialog,
+    std::path::PathBuf,
 };
-
-use super::EguiState;
 
 pub struct PreferencesWindow {
     pub on: bool,

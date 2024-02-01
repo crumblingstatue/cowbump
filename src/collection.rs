@@ -1,18 +1,20 @@
-use crate::{
-    db::{EntryMap, EntrySet, FolderChanges, Uid, UidCounter},
-    entry::{self, Entry},
-    filter_reqs::Requirements,
-    folder_scan::walkdir,
-    preferences,
-    sequence::{self, Sequence},
-    tag::{self, Tag},
-};
-use anyhow::Context;
-use fnv::FnvHashMap;
-use serde_derive::{Deserialize, Serialize};
-use std::{
-    io,
-    path::{Path, PathBuf},
+use {
+    crate::{
+        db::{EntryMap, EntrySet, FolderChanges, Uid, UidCounter},
+        entry::{self, Entry},
+        filter_reqs::Requirements,
+        folder_scan::walkdir,
+        preferences,
+        sequence::{self, Sequence},
+        tag::{self, Tag},
+    },
+    anyhow::Context,
+    fnv::FnvHashMap,
+    serde_derive::{Deserialize, Serialize},
+    std::{
+        io,
+        path::{Path, PathBuf},
+    },
 };
 
 pub type Entries = EntryMap<Entry>;

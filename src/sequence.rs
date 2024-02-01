@@ -1,5 +1,7 @@
-use crate::{db::Uid, entry};
-use serde_derive::{Deserialize, Serialize};
+use {
+    crate::{db::Uid, entry},
+    serde_derive::{Deserialize, Serialize},
+};
 
 /// An ordered sequence of entries
 #[derive(Default, Serialize, Deserialize)]

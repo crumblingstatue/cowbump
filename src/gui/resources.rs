@@ -1,7 +1,9 @@
-use anyhow::Context;
-use egui_sfml::sfml::{
-    graphics::{Font, IntRect, Texture},
-    SfBox,
+use {
+    anyhow::Context,
+    egui_sfml::sfml::{
+        graphics::{Font, IntRect, Texture},
+        SfBox,
+    },
 };
 
 macro_rules! res {

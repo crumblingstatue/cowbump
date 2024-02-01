@@ -1,22 +1,21 @@
-use std::path::PathBuf;
-
-use egui_sfml::{
-    egui::{
-        self, load::SizedTexture, Color32, Context, ImageButton, Label, RichText, ScrollArea,
-        TextureId, Window,
+use {
+    super::EguiState,
+    crate::{
+        application::Application,
+        db::FolderChanges,
+        entry,
+        gui::{native_dialog, thumbnails_view::ThumbnailsView},
     },
-    sfml::graphics::{RenderTarget, RenderWindow},
+    egui_sfml::{
+        egui::{
+            self, load::SizedTexture, Color32, Context, ImageButton, Label, RichText, ScrollArea,
+            TextureId, Window,
+        },
+        sfml::graphics::{RenderTarget, RenderWindow},
+    },
+    fnv::FnvHashMap,
+    std::path::PathBuf,
 };
-use fnv::FnvHashMap;
-
-use crate::{
-    application::Application,
-    db::FolderChanges,
-    entry,
-    gui::{native_dialog, thumbnails_view::ThumbnailsView},
-};
-
-use super::EguiState;
 
 struct AddedInfo {
     id: entry::Id,

@@ -1,25 +1,25 @@
-use anyhow::Context as _;
-use egui_sfml::{
-    egui::Context,
-    sfml::{
-        graphics::{
-            Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Sprite,
-            Text, Transformable,
-        },
-        system::Vector2f,
-        window::{mouse, Event, Key},
+use {
+    super::{
+        egui_ui::EguiState,
+        get_tex_for_entry, native_dialog,
+        open::{builtin, external},
+        resources::Resources,
+        thumbnail_loader::ThumbnailLoader,
+        State, ThumbnailCache,
     },
-};
-
-use crate::{collection::Collection, entry, filter_reqs::Requirements, preferences::Preferences};
-
-use super::{
-    egui_ui::EguiState,
-    get_tex_for_entry, native_dialog,
-    open::{builtin, external},
-    resources::Resources,
-    thumbnail_loader::ThumbnailLoader,
-    State, ThumbnailCache,
+    crate::{collection::Collection, entry, filter_reqs::Requirements, preferences::Preferences},
+    anyhow::Context as _,
+    egui_sfml::{
+        egui::Context,
+        sfml::{
+            graphics::{
+                Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
+                Sprite, Text, Transformable,
+            },
+            system::Vector2f,
+            window::{mouse, Event, Key},
+        },
+    },
 };
 
 pub struct ThumbnailsView {

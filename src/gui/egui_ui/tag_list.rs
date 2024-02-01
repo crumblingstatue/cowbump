@@ -1,19 +1,18 @@
-use std::mem;
-
-use egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit};
-
-use crate::{
-    collection::Collection,
-    db::{TagSet, UidCounter},
-    gui::{
-        debug_log::dlog,
-        egui_ui::{prompt, PromptAction},
-        State,
+use {
+    super::EguiState,
+    crate::{
+        collection::Collection,
+        db::{TagSet, UidCounter},
+        gui::{
+            debug_log::dlog,
+            egui_ui::{prompt, PromptAction},
+            State,
+        },
+        tag,
     },
-    tag,
+    egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit},
+    std::mem,
 };
-
-use super::EguiState;
 
 #[derive(Default)]
 pub struct TagWindow {

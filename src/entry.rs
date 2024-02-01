@@ -1,13 +1,15 @@
-use crate::{
-    collection::{Sequences, Tags},
-    db::{TagSet, Uid},
-    entry,
-    filter_reqs::{Req, Requirements},
-    gui::debug_log::dlog,
-    tag,
+use {
+    crate::{
+        collection::{Sequences, Tags},
+        db::{TagSet, Uid},
+        entry,
+        filter_reqs::{Req, Requirements},
+        gui::debug_log::dlog,
+        tag,
+    },
+    serde_derive::{Deserialize, Serialize},
+    std::path::PathBuf,
 };
-use serde_derive::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 /// Path to an item we're interested in organizing, along with associated tags
 #[derive(Serialize, Deserialize)]

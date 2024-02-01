@@ -1,14 +1,17 @@
 pub mod global;
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
+use {
+    crate::{collection, entry, preferences::Preferences, serialization, tag},
+    anyhow::Context,
+    directories::ProjectDirs,
+    fnv::{FnvHashMap, FnvHashSet},
+    recently_used_list::RecentlyUsedList,
+    serde_derive::{Deserialize, Serialize},
+    std::{
+        fs::File,
+        path::{Path, PathBuf},
+    },
+    zip::{write::FileOptions, ZipArchive, ZipWriter},
 };
-
-use fnv::{FnvHashMap, FnvHashSet};
-use zip::{write::FileOptions, ZipArchive, ZipWriter};
-
-use crate::{collection, entry, preferences::Preferences, serialization, tag};
-use recently_used_list::RecentlyUsedList;
 
 /// Unique identifier for entries/tags.
 ///
@@ -18,10 +21,6 @@ pub type EntrySet = FnvHashSet<entry::Id>;
 pub type EntryMap<V> = FnvHashMap<entry::Id, V>;
 pub type TagSet = FnvHashSet<tag::Id>;
 pub type CollMap<V> = FnvHashMap<collection::Id, V>;
-
-use anyhow::Context;
-use directories::ProjectDirs;
-use serde_derive::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct Db {

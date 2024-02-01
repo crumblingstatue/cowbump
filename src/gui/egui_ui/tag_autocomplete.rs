@@ -1,8 +1,8 @@
-use std::ops::Range;
-
-use egui_sfml::egui::{popup_below_widget, Key, Ui};
-
-use crate::{collection::Collection, tag};
+use {
+    crate::{collection::Collection, tag},
+    egui_sfml::egui::{popup_below_widget, Key, Ui},
+    std::ops::Range,
+};
 
 pub struct AcState {
     /// Selection index in the autocomplet list

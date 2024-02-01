@@ -1,16 +1,16 @@
-use egui_sfml::{
-    egui::{Context, Key, Modifiers, TextEdit},
-    sfml::graphics::{RenderTarget, RenderWindow},
-};
-
-use crate::{
-    collection::Collection,
-    gui::{thumbnails_view::search_goto_cursor, State},
-};
-
-use super::{
-    entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
-    EguiState,
+use {
+    super::{
+        entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
+        EguiState,
+    },
+    crate::{
+        collection::Collection,
+        gui::{thumbnails_view::search_goto_cursor, State},
+    },
+    egui_sfml::{
+        egui::{Context, Key, Modifiers, TextEdit},
+        sfml::graphics::{RenderTarget, RenderWindow},
+    },
 };
 
 pub(super) fn do_frame(

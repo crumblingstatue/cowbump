@@ -1,6 +1,7 @@
-use egui_sfml::egui::{Align, Color32, Context, Label, RichText, ScrollArea, Window};
-
-use super::EguiState;
+use {
+    super::EguiState,
+    egui_sfml::egui::{Align, Color32, Context, Label, RichText, ScrollArea, Window},
+};
 
 pub struct DebugWindow {
     open: bool,

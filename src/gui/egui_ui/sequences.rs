@@ -1,27 +1,27 @@
-use egui_sfml::{
-    egui::{
-        load::SizedTexture, Align, Button, Color32, Context, DragValue, ImageButton, Key,
-        ScrollArea, TextEdit, TextureId, Window,
-    },
-    sfml::graphics::RenderWindow,
-};
-
-use crate::{
-    collection::Collection,
-    db::UidCounter,
-    entry,
-    gui::{
-        open::{
-            builtin,
-            external::{self},
+use {
+    super::EguiState,
+    crate::{
+        collection::Collection,
+        db::UidCounter,
+        entry,
+        gui::{
+            open::{
+                builtin,
+                external::{self},
+            },
+            State,
         },
-        State,
+        preferences::Preferences,
+        sequence::{self},
     },
-    preferences::Preferences,
-    sequence::{self},
+    egui_sfml::{
+        egui::{
+            load::SizedTexture, Align, Button, Color32, Context, DragValue, ImageButton, Key,
+            ScrollArea, TextEdit, TextureId, Window,
+        },
+        sfml::graphics::RenderWindow,
+    },
 };
-
-use super::EguiState;
 
 pub(super) fn do_sequence_windows(
     state: &mut State,

@@ -14,27 +14,27 @@ mod tag_list;
 mod tag_specific_apps_window;
 mod top_bar;
 
-use crate::{application::Application, collection::Collection, entry, gui::State, tag};
-use egui_sfml::{
-    egui::{Context, FontFamily, FontId, TextStyle, Window},
-    sfml::graphics::{RenderTarget, RenderWindow, Texture},
+use {
+    self::{
+        batch_rename_window::BatchRenameWindow,
+        changes_window::ChangesWindow,
+        collections_window::CollectionsDbWindow,
+        debug_window::DebugWindow,
+        entries_window::EntriesWindow,
+        load_folder_window::LoadFolderWindow,
+        preferences_window::PreferencesWindow,
+        query_popup::QueryPopup,
+        sequences::{SequenceWindow, SequencesWindow},
+        tag_list::TagWindow,
+        tag_specific_apps_window::TagSpecificAppsWindow,
+    },
+    super::{get_tex_for_entry, resources::Resources},
+    crate::{application::Application, collection::Collection, entry, gui::State, tag},
+    egui_sfml::{
+        egui::{Context, FontFamily, FontId, TextStyle, Window},
+        sfml::graphics::{RenderTarget, RenderWindow, Texture},
+    },
 };
-
-use self::{
-    batch_rename_window::BatchRenameWindow,
-    changes_window::ChangesWindow,
-    collections_window::CollectionsDbWindow,
-    debug_window::DebugWindow,
-    entries_window::EntriesWindow,
-    load_folder_window::LoadFolderWindow,
-    preferences_window::PreferencesWindow,
-    query_popup::QueryPopup,
-    sequences::{SequenceWindow, SequencesWindow},
-    tag_list::TagWindow,
-    tag_specific_apps_window::TagSpecificAppsWindow,
-};
-
-use super::{get_tex_for_entry, resources::Resources};
 
 pub(crate) struct EguiState {
     entries_windows: Vec<EntriesWindow>,

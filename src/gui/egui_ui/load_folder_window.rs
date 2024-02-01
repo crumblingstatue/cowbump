@@ -1,29 +1,28 @@
-use std::{
-    io, mem,
-    path::{Path, PathBuf},
-    sync::{
-        mpsc::{self, channel, Receiver, Sender},
-        Arc,
+use {
+    super::EguiState,
+    crate::{
+        application::Application,
+        collection::Collection,
+        folder_scan::walkdir,
+        gui::{resources::Resources, thumbnail_loader, State},
     },
-    thread::JoinHandle,
-};
-
-use egui_sfml::{
-    egui::{
-        vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea,
-        Sense, Window,
+    egui_sfml::{
+        egui::{
+            vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea,
+            Sense, Window,
+        },
+        sfml::{graphics::Texture, SfBox},
     },
-    sfml::{graphics::Texture, SfBox},
+    std::{
+        io, mem,
+        path::{Path, PathBuf},
+        sync::{
+            mpsc::{self, channel, Receiver, Sender},
+            Arc,
+        },
+        thread::JoinHandle,
+    },
 };
-
-use crate::{
-    application::Application,
-    collection::Collection,
-    folder_scan::walkdir,
-    gui::{resources::Resources, thumbnail_loader, State},
-};
-
-use super::EguiState;
 
 #[derive(Default)]
 pub struct LoadFolderWindow {

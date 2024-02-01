@@ -1,11 +1,11 @@
-use std::path::{Path, PathBuf};
-
-use anyhow::{bail, Context};
-
-use crate::{
-    collection::{self, Collection},
-    db::{Db, FolderChanges},
-    entry, serialization,
+use {
+    crate::{
+        collection::{self, Collection},
+        db::{Db, FolderChanges},
+        entry, serialization,
+    },
+    anyhow::{bail, Context},
+    std::path::{Path, PathBuf},
 };
 
 type ActiveCollection = Option<(collection::Id, Collection)>;

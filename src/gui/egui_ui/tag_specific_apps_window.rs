@@ -1,8 +1,8 @@
-use egui_sfml::egui;
-
-use crate::{collection::Collection, preferences::Preferences};
-
-use super::EguiState;
+use {
+    super::EguiState,
+    crate::{collection::Collection, preferences::Preferences},
+    egui_sfml::egui,
+};
 
 #[derive(Default)]
 pub struct TagSpecificAppsWindow {

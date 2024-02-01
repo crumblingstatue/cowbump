@@ -1,9 +1,11 @@
-use crate::{
-    collection::{Collection, Tags},
-    tag,
+use {
+    crate::{
+        collection::{Collection, Tags},
+        tag,
+    },
+    tagfilter_lang::Requirement,
+    thiserror::Error,
 };
-use tagfilter_lang::Requirement;
-use thiserror::Error;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct Requirements {

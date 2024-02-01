@@ -1,43 +1,42 @@
-use std::{
-    fmt::Write,
-    io::Read,
-    process::{Child, Command, ExitStatus, Stdio},
-};
-
-use egui_sfml::{
-    egui::{
-        epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
-        load::SizedTexture,
-        text_edit::CursorRange,
-        vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
-        Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
+use {
+    super::{
+        sequences::SequenceWindow,
+        tag_autocomplete::{tag_autocomplete_popup, AcState},
+        EguiState,
     },
-    sfml::graphics::{RenderTarget, RenderWindow},
-};
-
-use crate::{
-    collection::Collection,
-    db::Db,
-    entry,
-    filter_reqs::Requirements,
-    gui::{
-        debug_log::dlog,
-        get_tex_for_entry, native_dialog,
-        open::{
-            builtin,
-            external::{self, feed_args, OpenExternCandidate},
+    crate::{
+        collection::Collection,
+        db::Db,
+        entry,
+        filter_reqs::Requirements,
+        gui::{
+            debug_log::dlog,
+            get_tex_for_entry, native_dialog,
+            open::{
+                builtin,
+                external::{self, feed_args, OpenExternCandidate},
+            },
+            resources::Resources,
+            thumbnails_view::ThumbnailsView,
+            State,
         },
-        resources::Resources,
-        thumbnails_view::ThumbnailsView,
-        State,
+        tag,
     },
-    tag,
-};
-
-use super::{
-    sequences::SequenceWindow,
-    tag_autocomplete::{tag_autocomplete_popup, AcState},
-    EguiState,
+    egui_sfml::{
+        egui::{
+            epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
+            load::SizedTexture,
+            text_edit::CursorRange,
+            vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
+            Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
+        },
+        sfml::graphics::{RenderTarget, RenderWindow},
+    },
+    std::{
+        fmt::Write,
+        io::Read,
+        process::{Child, Command, ExitStatus, Stdio},
+    },
 };
 
 #[derive(Default)]
