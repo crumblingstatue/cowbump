@@ -18,7 +18,6 @@ mod gui;
 mod preferences;
 mod sequence;
 mod serialization;
-mod set_ext;
 mod tag;
 
 const VERSION: &str = include_str!("../version.txt");

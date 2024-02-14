@@ -26,7 +26,7 @@ use {
         egui::{
             epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
             load::SizedTexture,
-            text_edit::CursorRange,
+            text_selection::CursorRange,
             vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
             Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
         },
@@ -157,7 +157,7 @@ fn tag<'a>(
 
 pub fn text_edit_cursor_set_to_end(ui: &mut Ui, te_id: egui_sfml::egui::Id) {
     let mut state = TextEdit::load_state(ui.ctx(), te_id).unwrap();
-    state.set_cursor_range(Some(CursorRange::one(Cursor {
+    state.cursor.set_range(Some(CursorRange::one(Cursor {
         ccursor: CCursor {
             index: 0,
             prefer_next_row: false,
