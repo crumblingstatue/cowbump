@@ -5,7 +5,7 @@ use {
         collection,
         gui::{
             native_dialog::{self, error},
-            Activity, State,
+            viewer, Activity, State,
         },
     },
     egui_sfml::{
@@ -35,35 +35,7 @@ pub(super) fn do_frame(
                     actions_menu(ui, app, egui_state, n_selected);
                     collection_menu(ui, egui_state);
                 }
-                Activity::Viewer => {
-                    if ui.button("Back (Esc)").clicked() {
-                        state.activity = Activity::Thumbnails;
-                    }
-                    ui.menu_button("Viewer", |ui| {
-                        if ui.button("Previous (<-)").clicked() {
-                            state.viewer_state.prev(win);
-                        }
-                        if ui.button("Next (->)").clicked() {
-                            state.viewer_state.next(win);
-                        }
-                        if ui.button("Zoom out (-)").clicked() {
-                            state.viewer_state.zoom_out();
-                        }
-                        if ui.button("Original zoom (=)").clicked() {
-                            state.viewer_state.original_scale();
-                        }
-                        if ui.button("Zoom in (+)").clicked() {
-                            state.viewer_state.zoom_in();
-                        }
-                        if ui.button("Reset View (R)").clicked() {
-                            state.viewer_state.reset_view(win);
-                        }
-                        ui.separator();
-                        if ui.button("Remove from view list (Del)").clicked() {
-                            state.viewer_state.remove_from_view_list();
-                        }
-                    });
-                }
+                Activity::Viewer => viewer::menu_ui(ui, state, win),
             }
             help_menu(ui, win, app, egui_state);
             match state.activity {

@@ -203,6 +203,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     );
                 }
                 Activity::Viewer => {
+                    viewer::update(&mut state, &window);
                     viewer::draw(&mut state, &mut window, db, &res);
                 }
             },

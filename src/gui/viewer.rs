@@ -1,12 +1,15 @@
 use {
     super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State},
     crate::{collection::Collection, entry},
-    egui_sfml::sfml::{
-        graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
-        window::{mouse, Event, Key},
-        SfBox,
+    egui_sfml::{
+        egui,
+        sfml::{
+            graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
+            window::{mouse, Event, Key},
+            SfBox,
+        },
     },
-    std::collections::VecDeque,
+    std::{collections::VecDeque, time::Instant},
 };
 
 pub(super) fn draw(
@@ -133,6 +136,8 @@ pub struct ViewerState {
     image_offset: (i32, i32),
     grab_origin: Option<(i32, i32)>,
     pub image_list: Vec<entry::Id>,
+    pub slideshow_timer_ms: u32,
+    pub last_slideshow_instant: Option<Instant>,
 }
 
 impl ViewerState {
@@ -181,5 +186,53 @@ impl ViewerState {
             self.index -= 1;
         }
         self.reset_view(window);
+    }
+}
+
+pub fn menu_ui(ui: &mut egui::Ui, state: &mut State, win: &RenderWindow) {
+    if ui.button("Back (Esc)").clicked() {
+        state.activity = Activity::Thumbnails;
+    }
+    ui.menu_button("Viewer", |ui| {
+        if ui.button("Previous (<-)").clicked() {
+            state.viewer_state.prev(win);
+        }
+        if ui.button("Next (->)").clicked() {
+            state.viewer_state.next(win);
+        }
+        if ui.button("Zoom out (-)").clicked() {
+            state.viewer_state.zoom_out();
+        }
+        if ui.button("Original zoom (=)").clicked() {
+            state.viewer_state.original_scale();
+        }
+        if ui.button("Zoom in (+)").clicked() {
+            state.viewer_state.zoom_in();
+        }
+        if ui.button("Reset View (R)").clicked() {
+            state.viewer_state.reset_view(win);
+        }
+        ui.separator();
+        if ui.button("Remove from view list (Del)").clicked() {
+            state.viewer_state.remove_from_view_list();
+        }
+        ui.label("Slideshow timer");
+        ui.add(egui::DragValue::new(
+            &mut state.viewer_state.slideshow_timer_ms,
+        ));
+    });
+}
+
+pub(crate) fn update(state: &mut State, win: &RenderWindow) {
+    let timer = state.viewer_state.slideshow_timer_ms;
+    if timer != 0 {
+        let last = state
+            .viewer_state
+            .last_slideshow_instant
+            .get_or_insert(Instant::now());
+        if last.elapsed().as_millis() >= state.viewer_state.slideshow_timer_ms as u128 {
+            state.viewer_state.next(win);
+            state.viewer_state.last_slideshow_instant = Some(Instant::now());
+        }
     }
 }
