@@ -16,16 +16,16 @@ use {
 
 #[derive(Default)]
 pub struct TagWindow {
-    on: bool,
-    filter_string: String,
-    selected_uids: TagSet,
-    prop_active: Option<tag::Id>,
-    new_name: String,
-    new_name_add: bool,
-    new_imply: String,
-    new_imply_add: bool,
-    new_tag_buf: String,
-    new_tag_add: bool,
+    pub on: bool,
+    pub filter_string: String,
+    pub selected_uids: TagSet,
+    pub prop_active: Option<tag::Id>,
+    pub new_name: String,
+    pub new_name_add: bool,
+    pub new_imply: String,
+    pub new_imply_add: bool,
+    pub new_tag_buf: String,
+    pub new_tag_add: bool,
 }
 
 impl TagWindow {

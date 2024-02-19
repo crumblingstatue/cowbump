@@ -94,7 +94,7 @@ fn tag_ui(
     del: Option<&mut bool>,
     reqs: &mut Requirements,
     coll: &Collection,
-    filter_string: &mut String,
+    egui_state: &mut EguiState,
     changed_filter: &mut bool,
     entries_view: &mut ThumbnailsView,
 ) -> Response {
@@ -107,16 +107,25 @@ fn tag_ui(
                 text = text.background_color(Color32::from_rgb(100, 20, 20))
             }
             let re = ui.add(Label::new(text).sense(Sense::click()));
+            re.context_menu(|ui| {
+                if ui.button("Toggle !filter").clicked() {
+                    reqs.toggle_not_have_tag(id);
+                    reqs.set_have_tag(id, false);
+                    egui_state.filter_popup.string = reqs.to_string(&coll.tags);
+                    *changed_filter = true;
+                    entries_view.update_from_collection(coll, reqs);
+                    ui.close_menu();
+                }
+                if ui.button("Open in tags window").clicked() {
+                    egui_state.tag_window.toggle();
+                    egui_state.tag_window.prop_active = Some(id);
+                    ui.close_menu();
+                }
+            });
             if re.clicked_by(PointerButton::Primary) {
                 reqs.toggle_have_tag(id);
                 reqs.set_not_have_tag(id, false);
-                *filter_string = reqs.to_string(&coll.tags);
-                *changed_filter = true;
-                entries_view.update_from_collection(coll, reqs);
-            } else if re.clicked_by(PointerButton::Secondary) {
-                reqs.toggle_not_have_tag(id);
-                reqs.set_have_tag(id, false);
-                *filter_string = reqs.to_string(&coll.tags);
+                egui_state.filter_popup.string = reqs.to_string(&coll.tags);
                 *changed_filter = true;
                 entries_view.update_from_collection(coll, reqs);
             }
@@ -136,7 +145,7 @@ fn tag<'a>(
     del: Option<&'a mut bool>,
     filter: &'a mut Requirements,
     coll: &'a Collection,
-    filter_string: &'a mut String,
+    egui_state: &'a mut EguiState,
     changed_filter: &'a mut bool,
     entries_view: &'a mut ThumbnailsView,
 ) -> impl Widget + 'a {
@@ -148,7 +157,7 @@ fn tag<'a>(
             del,
             filter,
             coll,
-            filter_string,
+            egui_state,
             changed_filter,
             entries_view,
         )
@@ -181,7 +190,8 @@ pub(super) fn do_frame(
     db: &mut Db,
     res: &Resources,
 ) {
-    egui_state.entries_windows.retain_mut(|win| {
+    let mut entries_windows = std::mem::take(&mut egui_state.entries_windows);
+    entries_windows.retain_mut(|win| {
         let mut open = true;
         let n_entries = win.ids.len();
         let Some(first_entry_id) = win.ids.first() else {
@@ -283,7 +293,7 @@ pub(super) fn do_frame(
                                         Some(&mut del),
                                         &mut state.filter,
                                         coll,
-                                        &mut egui_state.filter_popup.string,
+                                        egui_state,
                                         &mut changed_filter,
                                         &mut state.thumbs_view,
                                     ));
@@ -305,7 +315,7 @@ pub(super) fn do_frame(
                                         None,
                                         &mut state.filter,
                                         coll,
-                                        &mut egui_state.filter_popup.string,
+                                        egui_state,
                                         &mut changed_filter,
                                         &mut state.thumbs_view,
                                     ));
@@ -653,6 +663,7 @@ pub(super) fn do_frame(
         }
         open
     });
+    std::mem::swap(&mut entries_windows, &mut egui_state.entries_windows);
 }
 
 fn remove_entries(
