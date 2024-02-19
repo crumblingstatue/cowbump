@@ -210,7 +210,7 @@ pub(super) fn do_frame(
                             tag.names.retain_mut(|name| {
                                 let mut retain = true;
                                 ui.horizontal(|ui| {
-                                    ui.label(&*name);
+                                    ui.text_edit_singleline(name);
                                     if ui.add_enabled(!only_one, Button::new("x")).clicked() {
                                         retain = false;
                                     }
