@@ -264,6 +264,7 @@ pub(super) fn do_frame(
                                     if let Some(resolved_id) = coll.resolve_tag(new_imply_ref) {
                                         let tag = coll.tags.get_mut(id).unwrap();
                                         tag.implies.insert(resolved_id);
+                                        new_imply_ref.clear();
                                         dlog!("Success?");
                                         dlog!("{:?}", tag);
                                     }
