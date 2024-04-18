@@ -629,8 +629,8 @@ pub(super) fn do_frame(
                             if ui.button("Select all").clicked() {
                                 let sel = state.sel.current_mut();
                                 sel.clear();
-                                sel.extend(&seq.entries);
-                                win.ids.clone_from(sel);
+                                sel.extend(seq.entries.iter().cloned());
+                                win.ids.clone_from(sel.as_vec());
                             }
                         });
                         ui.horizontal(|ui| {
@@ -681,7 +681,7 @@ fn remove_entries(
         }
         // Also remove from selection buffers, if it's selected
         state.sel.for_each_mut(|sel| {
-            if let Some(idx) = sel.iter().position(|id| *id == uid) {
+            if let Some(idx) = sel.as_vec().iter().position(|id| *id == uid) {
                 sel.remove(idx);
             }
         });

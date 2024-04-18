@@ -307,9 +307,9 @@ pub(in crate::gui) fn handle_event(
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
                     if state.sel.current_mut().contains(&uid) {
-                        state.sel.current_mut().retain(|&rhs| rhs != uid);
+                        state.sel.current_mut().buf.retain(|&rhs| rhs != uid);
                     } else {
-                        state.sel.current_mut().push(uid);
+                        state.sel.current_mut().buf.push(uid);
                     }
                 } else if Key::LControl.is_pressed() {
                     let curr_thumb_idx = state.thumbs_view.abs_thumb_index_at_xy(x, y);
@@ -317,7 +317,7 @@ pub(in crate::gui) fn handle_event(
                         Some(a) => {
                             let (min, max) = (a.min(curr_thumb_idx), a.max(curr_thumb_idx));
                             for id in state.thumbs_view.iter().skip(min).take((max + 1) - min) {
-                                state.sel.current_mut().push(id);
+                                state.sel.current_mut().buf.push(id);
                             }
                             state.select_a = None;
                         }
@@ -338,7 +338,7 @@ pub(in crate::gui) fn handle_event(
                 }
             } else if button == mouse::Button::Right {
                 let vec = if state.sel.current_mut().contains(&uid) {
-                    state.sel.current_mut().clone()
+                    state.sel.current_mut().as_vec().clone()
                 } else {
                     vec![uid]
                 };
@@ -398,7 +398,7 @@ pub(in crate::gui) fn handle_event(
                 // height from it.
                 state.thumbs_view.go_to_bottom(window);
             } else if code == Key::F2 && !state.sel.current_mut().is_empty() {
-                egui_state.add_entries_window(state.sel.current_mut().clone())
+                egui_state.add_entries_window(state.sel.current_mut().as_vec().clone())
             } else if code == Key::Escape
                 && !egui_ctx.wants_keyboard_input()
                 && !egui_ctx.wants_pointer_input()
@@ -443,7 +443,7 @@ fn copy_image_to_clipboard(
 pub(in crate::gui) fn select_all(state: &mut State, coll: &Collection) {
     state.sel.current_mut().clear();
     for uid in coll.filter(&state.filter) {
-        state.sel.current_mut().push(uid);
+        state.sel.current_mut().buf.push(uid);
     }
 }
 

@@ -189,7 +189,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
                 }
                 Action::OpenEntriesWindow => {
-                    egui_state.add_entries_window(state.sel.current_mut().clone())
+                    egui_state.add_entries_window(state.sel.current_mut().as_vec().clone())
                 }
             }
         }
@@ -274,11 +274,48 @@ struct State {
     activity: Activity,
     viewer_state: ViewerState,
 }
+pub struct SelectionBuf {
+    pub buf: Vec<entry::Id>,
+    pub name: String,
+}
 
-pub type SelectionBuf = Vec<entry::Id>;
+impl SelectionBuf {
+    pub fn new(name: impl Into<String>) -> Self {
+        Self {
+            buf: Vec::new(),
+            name: name.into(),
+        }
+    }
+    pub fn clear(&mut self) {
+        self.buf.clear();
+    }
+    pub fn extend(&mut self, iter: impl IntoIterator<Item = entry::Id>) {
+        self.buf.extend(iter)
+    }
+    pub fn as_vec(&self) -> &Vec<entry::Id> {
+        &self.buf
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &'_ entry::Id> {
+        self.buf.iter()
+    }
+    pub fn remove(&mut self, idx: usize) {
+        self.buf.remove(idx);
+    }
+    pub fn len(&self) -> usize {
+        self.buf.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.buf.is_empty()
+    }
+    pub fn contains(&self, id: &entry::Id) -> bool {
+        self.buf.contains(id)
+    }
+}
 
 pub struct SelectionBufs {
     current: usize,
+    // TODO: Ui state. maybe should be somewhere else? Dunno.
+    rename: bool,
     bufs: Vec<SelectionBuf>,
 }
 
@@ -286,7 +323,8 @@ impl SelectionBufs {
     pub fn new() -> Self {
         Self {
             current: 0,
-            bufs: vec![Vec::new()],
+            rename: false,
+            bufs: vec![SelectionBuf::new("Sel 1")],
         }
     }
     pub fn current_mut(&mut self) -> &mut SelectionBuf {
@@ -297,8 +335,8 @@ impl SelectionBufs {
             f(buf);
         }
     }
-    pub fn add_buf(&mut self) {
-        self.bufs.push(SelectionBuf::new())
+    pub fn add_buf(&mut self, name: impl Into<String>) {
+        self.bufs.push(SelectionBuf::new(name))
     }
 }
 

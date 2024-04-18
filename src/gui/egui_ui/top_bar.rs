@@ -5,7 +5,7 @@ use {
         collection,
         gui::{
             native_dialog::{self, error},
-            viewer, Activity, State,
+            viewer, Activity, SelectionBuf, State,
         },
     },
     egui_sfml::{
@@ -57,21 +57,50 @@ pub(super) fn do_frame(
                             state.sel.current_mut().clear();
                         }
                     }
-                    for i in 0..state.sel.bufs.len() {
-                        if ui
-                            .selectable_label(i == state.sel.current, (i + 1).to_string())
-                            .on_hover_text(format!("Selection buffer {}", i + 1))
-                            .clicked()
-                        {
+                    let mut i = 0;
+                    state.sel.bufs.retain_mut(|sel| {
+                        let mut retain = true;
+                        if i == state.sel.current && state.sel.rename {
+                            ui.text_edit_singleline(&mut sel.name);
+                            if ui.input(|inp| inp.key_pressed(egui::Key::Enter)) {
+                                state.sel.rename = false;
+                            }
+                            return true;
+                        }
+                        let mut re = ui.selectable_label(i == state.sel.current, &sel.name);
+                        re = re.on_hover_text(format!("Selection buffer {}", i + 1));
+                        re.context_menu(|ui| {
+                            if ui.button("Remove").clicked() {
+                                retain = false;
+                                ui.close_menu();
+                            }
+                            if ui.button("Rename").clicked() {
+                                state.sel.rename = true;
+                                ui.close_menu();
+                            }
+                        });
+                        if re.clicked() {
                             state.sel.current = i;
                         }
+                        i += 1;
+                        retain
+                    });
+                    // Ensure invariants
+                    if state.sel.current >= state.sel.bufs.len() {
+                        state.sel.current = state.sel.bufs.len().saturating_sub(1);
+                    }
+                    if state.sel.bufs.is_empty() {
+                        state.sel.current = 0;
+                        state.sel.bufs.push(SelectionBuf::new("Sel 1"));
                     }
                     if ui
                         .button("+")
                         .on_hover_text("Add selection buffer")
                         .clicked()
                     {
-                        state.sel.add_buf();
+                        state
+                            .sel
+                            .add_buf(format!("Sel {}", state.sel.bufs.len() + 1));
                     }
                 }
                 Activity::Viewer => {

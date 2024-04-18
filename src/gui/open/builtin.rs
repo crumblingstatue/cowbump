@@ -13,7 +13,7 @@ pub(in crate::gui) fn on_enter_open(state: &mut State, window: &RenderWindow) {
     if state.sel.current_mut().is_empty() {
         open_list(state, state.thumbs_view.uids.clone(), 0, window);
     } else {
-        let sel_buf = state.sel.current_mut().clone();
+        let sel_buf = state.sel.current_mut().as_vec().clone();
         open_list(state, sel_buf, 0, window);
     }
 }
