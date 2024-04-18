@@ -58,7 +58,7 @@ impl Db {
         } else {
             Self::default()
         };
-        db.data_dir = data_dir.to_owned();
+        data_dir.clone_into(&mut db.data_dir);
         Ok(db)
     }
     pub fn insert_collection(&mut self, root: PathBuf) -> collection::Id {

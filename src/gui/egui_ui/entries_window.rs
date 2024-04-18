@@ -228,7 +228,7 @@ pub(super) fn do_frame(
                         ui.set_max_width(512.0);
                         let n_visible_entries = n_entries.min(64);
                         for &id in win.ids.iter().take(n_visible_entries) {
-                            if coll.entries.get(&id).is_none() {
+                            if !coll.entries.contains_key(&id) {
                                 ui.label(format!("No entry for id {:?}", id));
                                 continue;
                             }
@@ -556,7 +556,7 @@ pub(super) fn do_frame(
                             }
                         } else if ui.button("Batch rename...").clicked() {
                             egui_state.batch_rename_window.open = true;
-                            egui_state.batch_rename_window.ids = win.ids.clone();
+                            egui_state.batch_rename_window.ids.clone_from(&win.ids);
                         }
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
@@ -629,7 +629,7 @@ pub(super) fn do_frame(
                             if ui.button("Select all").clicked() {
                                 state.selected_uids.clear();
                                 state.selected_uids.extend(&seq.entries);
-                                win.ids = state.selected_uids.clone();
+                                win.ids.clone_from(&state.selected_uids);
                             }
                         });
                         ui.horizontal(|ui| {
