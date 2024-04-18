@@ -55,7 +55,7 @@ enum Category {
 /// A slider for font sizes. Returns true if the value should be considered updated
 fn font_slider(ui: &mut Ui, label: &str, value: &mut f32) -> bool {
     let re = ui.add(Slider::new(value, 8.0..=64.0).integer().text(label));
-    re.drag_released || re.lost_focus()
+    re.drag_stopped() || re.lost_focus()
 }
 
 pub(in crate::gui) fn do_frame(
