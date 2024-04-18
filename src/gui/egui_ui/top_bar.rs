@@ -25,7 +25,7 @@ pub(super) fn do_frame(
     if !egui_state.top_bar {
         return Ok(());
     }
-    let n_selected = state.selected_uids.len();
+    let n_selected = state.sel.current_mut().len();
     let mut result = Ok(());
     TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
         egui::menu::bar(ui, |ui| {
@@ -38,6 +38,7 @@ pub(super) fn do_frame(
                 Activity::Viewer => viewer::menu_ui(ui, state, win),
             }
             help_menu(ui, win, app, egui_state);
+            ui.separator();
             match state.activity {
                 Activity::Thumbnails => {
                     if n_selected > 0 {
@@ -53,8 +54,24 @@ pub(super) fn do_frame(
                             ))
                             .clicked()
                         {
-                            state.selected_uids.clear();
+                            state.sel.current_mut().clear();
                         }
+                    }
+                    for i in 0..state.sel.bufs.len() {
+                        if ui
+                            .selectable_label(i == state.sel.current, (i + 1).to_string())
+                            .on_hover_text(format!("Selection buffer {}", i + 1))
+                            .clicked()
+                        {
+                            state.sel.current = i;
+                        }
+                    }
+                    if ui
+                        .button("+")
+                        .on_hover_text("Add selection buffer")
+                        .clicked()
+                    {
+                        state.sel.add_buf();
                     }
                 }
                 Activity::Viewer => {

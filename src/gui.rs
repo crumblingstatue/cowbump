@@ -165,7 +165,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     app.no_save = true;
                     window.close();
                 }
-                Action::SelectNone => state.selected_uids.clear(),
+                Action::SelectNone => state.sel.current_mut().clear(),
                 Action::FindNext => {
                     search_next(&mut state, coll.as_mut().unwrap(), window.size().y)
                 }
@@ -189,7 +189,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
                 }
                 Action::OpenEntriesWindow => {
-                    egui_state.add_entries_window(state.selected_uids.clone())
+                    egui_state.add_entries_window(state.sel.current_mut().clone())
                 }
             }
         }
@@ -268,11 +268,38 @@ struct State {
     search_success: bool,
     clipboard_ctx: Clipboard,
     thumbs_view: ThumbnailsView,
-    selected_uids: Vec<entry::Id>,
+    sel: SelectionBufs,
     /// For batch select, this marks the "a" point
     select_a: Option<usize>,
     activity: Activity,
     viewer_state: ViewerState,
+}
+
+pub type SelectionBuf = Vec<entry::Id>;
+
+pub struct SelectionBufs {
+    current: usize,
+    bufs: Vec<SelectionBuf>,
+}
+
+impl SelectionBufs {
+    pub fn new() -> Self {
+        Self {
+            current: 0,
+            bufs: vec![Vec::new()],
+        }
+    }
+    pub fn current_mut(&mut self) -> &mut SelectionBuf {
+        &mut self.bufs[self.current]
+    }
+    pub fn for_each_mut(&mut self, mut f: impl FnMut(&mut SelectionBuf)) {
+        for buf in &mut self.bufs {
+            f(buf);
+        }
+    }
+    pub fn add_buf(&mut self) {
+        self.bufs.push(SelectionBuf::new())
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -339,7 +366,7 @@ impl State {
             clipboard_ctx: Clipboard::new().unwrap(),
             thumbs_view: ThumbnailsView::new(window_width, prefs),
             find_reqs: Requirements::default(),
-            selected_uids: Default::default(),
+            sel: SelectionBufs::new(),
             select_a: None,
             activity: Activity::Thumbnails,
             viewer_state: ViewerState::default(),

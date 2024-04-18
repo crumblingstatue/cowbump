@@ -205,7 +205,7 @@ pub(super) fn draw_thumbnails(
         let y = (row * thumb_size) as f32 - (state.thumbs_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
         let mouse_over = image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
-        if state.selected_uids.contains(&uid) {
+        if state.sel.current_mut().contains(&uid) {
             sprite.set_color(Color::GREEN);
         } else {
             sprite.set_color(Color::WHITE);
@@ -306,10 +306,10 @@ pub(in crate::gui) fn handle_event(
             };
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
-                    if state.selected_uids.contains(&uid) {
-                        state.selected_uids.retain(|&rhs| rhs != uid);
+                    if state.sel.current_mut().contains(&uid) {
+                        state.sel.current_mut().retain(|&rhs| rhs != uid);
                     } else {
-                        state.selected_uids.push(uid);
+                        state.sel.current_mut().push(uid);
                     }
                 } else if Key::LControl.is_pressed() {
                     let curr_thumb_idx = state.thumbs_view.abs_thumb_index_at_xy(x, y);
@@ -317,7 +317,7 @@ pub(in crate::gui) fn handle_event(
                         Some(a) => {
                             let (min, max) = (a.min(curr_thumb_idx), a.max(curr_thumb_idx));
                             for id in state.thumbs_view.iter().skip(min).take((max + 1) - min) {
-                                state.selected_uids.push(id);
+                                state.sel.current_mut().push(id);
                             }
                             state.select_a = None;
                         }
@@ -337,8 +337,8 @@ pub(in crate::gui) fn handle_event(
                     external::open_single_with_others(coll, uid, preferences);
                 }
             } else if button == mouse::Button::Right {
-                let vec = if state.selected_uids.contains(&uid) {
-                    state.selected_uids.clone()
+                let vec = if state.sel.current_mut().contains(&uid) {
+                    state.sel.current_mut().clone()
                 } else {
                     vec![uid]
                 };
@@ -397,14 +397,14 @@ pub(in crate::gui) fn handle_event(
                 // To do align the camera with a bottom edge, we need to subtract the screen
                 // height from it.
                 state.thumbs_view.go_to_bottom(window);
-            } else if code == Key::F2 && !state.selected_uids.is_empty() {
-                egui_state.add_entries_window(state.selected_uids.clone())
+            } else if code == Key::F2 && !state.sel.current_mut().is_empty() {
+                egui_state.add_entries_window(state.sel.current_mut().clone())
             } else if code == Key::Escape
                 && !egui_ctx.wants_keyboard_input()
                 && !egui_ctx.wants_pointer_input()
                 && !egui_state.just_closed_window_with_esc
             {
-                state.selected_uids.clear()
+                state.sel.current_mut().clear()
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
@@ -441,9 +441,9 @@ fn copy_image_to_clipboard(
 }
 
 pub(in crate::gui) fn select_all(state: &mut State, coll: &Collection) {
-    state.selected_uids.clear();
+    state.sel.current_mut().clear();
     for uid in coll.filter(&state.filter) {
-        state.selected_uids.push(uid);
+        state.sel.current_mut().push(uid);
     }
 }
 

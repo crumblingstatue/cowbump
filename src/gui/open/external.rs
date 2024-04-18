@@ -20,7 +20,7 @@ pub(in crate::gui) fn on_enter_open(
     preferences: &mut Preferences,
 ) {
     let mut candidates: Vec<OpenExternCandidate> = Vec::new();
-    for &uid in state.selected_uids.iter() {
+    for &uid in state.sel.current_mut().iter() {
         candidates.push(OpenExternCandidate {
             path: &coll.entries[&uid].path,
             open_with: None,

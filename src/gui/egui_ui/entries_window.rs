@@ -627,9 +627,10 @@ pub(super) fn do_frame(
                                     .push(SequenceWindow::new(seq_id, None));
                             }
                             if ui.button("Select all").clicked() {
-                                state.selected_uids.clear();
-                                state.selected_uids.extend(&seq.entries);
-                                win.ids.clone_from(&state.selected_uids);
+                                let sel = state.sel.current_mut();
+                                sel.clear();
+                                sel.extend(&seq.entries);
+                                win.ids.clone_from(sel);
                             }
                         });
                         ui.horizontal(|ui| {
@@ -678,10 +679,12 @@ fn remove_entries(
             Some(en) => dlog!("Removed `{:?}`: {:?}", uid, en.path),
             None => dlog!("Warning: Remove of entry `{:?}` failed", uid),
         }
-        // Also remove from selection, if it's selected
-        if let Some(idx) = state.selected_uids.iter().position(|id| *id == uid) {
-            state.selected_uids.remove(idx);
-        }
+        // Also remove from selection buffers, if it's selected
+        state.sel.for_each_mut(|sel| {
+            if let Some(idx) = sel.iter().position(|id| *id == uid) {
+                sel.remove(idx);
+            }
+        });
     }
     // Make sure to only update the view after the collection entry removes finished
     state

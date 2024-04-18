@@ -10,10 +10,11 @@ use {
 
 /// Open functionality when enter is pressed in thumbnails view
 pub(in crate::gui) fn on_enter_open(state: &mut State, window: &RenderWindow) {
-    if state.selected_uids.is_empty() {
+    if state.sel.current_mut().is_empty() {
         open_list(state, state.thumbs_view.uids.clone(), 0, window);
     } else {
-        open_list(state, state.selected_uids.clone(), 0, window);
+        let sel_buf = state.sel.current_mut().clone();
+        open_list(state, sel_buf, 0, window);
     }
 }
 
