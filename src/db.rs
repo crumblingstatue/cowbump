@@ -10,7 +10,7 @@ use {
         fs::File,
         path::{Path, PathBuf},
     },
-    zip::{write::FileOptions, ZipArchive, ZipWriter},
+    zip::{write::SimpleFileOptions, ZipArchive, ZipWriter},
 };
 
 /// Unique identifier for entries/tags.
@@ -76,16 +76,19 @@ impl Db {
     pub fn save_backups(&self, path: &Path) -> anyhow::Result<()> {
         let f = File::create(path)?;
         let mut zip = ZipWriter::new(f);
-        zip.start_file("cowbump.db", FileOptions::default())?;
+        zip.start_file("cowbump.db", SimpleFileOptions::default())?;
         serialization::write(self, &mut zip)?;
-        zip.add_directory("collections", FileOptions::default())?;
+        zip.add_directory("collections", SimpleFileOptions::default())?;
         for id in self.collections.keys() {
             let mut f = File::open(
                 self.data_dir
                     .join("collections")
                     .join(format!("{}.db", id.0)),
             )?;
-            zip.start_file(format!("collections/{}.db", id.0), FileOptions::default())?;
+            zip.start_file(
+                format!("collections/{}.db", id.0),
+                SimpleFileOptions::default(),
+            )?;
             std::io::copy(&mut f, &mut zip)?;
         }
         zip.finish()?;
