@@ -266,7 +266,7 @@ fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) -> io::Result<()> 
     let mut new_buf = buf.clone();
     new_buf.pop();
     new_buf.push(new_name);
-    std::fs::rename(&buf, &new_buf)?;
+    std::fs::rename(&*buf, &new_buf)?;
     *buf = new_buf;
     Ok(())
 }

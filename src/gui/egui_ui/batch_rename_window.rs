@@ -55,7 +55,7 @@ pub(crate) fn do_frame(
                         })
                         .collect();
                     for path in &new_names {
-                        if std::fs::try_exists(path).unwrap() {
+                        if std::fs::exists(path).unwrap() {
                             native_dialog::error(
                                 "Batch rename error",
                                 "One ore more files already exist under a target name",

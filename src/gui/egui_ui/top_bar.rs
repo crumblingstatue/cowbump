@@ -286,7 +286,7 @@ fn file_menu(
                         );
                     }
                     Err(e) => {
-                        info_message(&mut egui_state.info_messages, "Error", &e.to_string());
+                        info_message(&mut egui_state.info_messages, "Error", e.to_string());
                     }
                 }
             }

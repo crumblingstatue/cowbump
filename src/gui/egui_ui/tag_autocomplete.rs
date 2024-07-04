@@ -1,6 +1,6 @@
 use {
     crate::{collection::Collection, tag},
-    egui_sfml::egui::{popup_below_widget, Key, Ui},
+    egui_sfml::egui::{popup_below_widget, Key, PopupCloseBehavior, Ui},
     std::ops::Range,
 };
 
@@ -103,44 +103,50 @@ pub(super) fn tag_autocomplete_popup(
                 Nothing,
             }
             let mut complete = C::Nothing;
-            popup_below_widget(ui, popup_id, response, |ui| {
-                if last_is_special {
-                    for (i, special) in specials.into_iter().enumerate() {
-                        if ui
-                            .selectable_label(state.select == Some(i), special)
-                            .clicked()
-                        {
-                            complete = C::Special(special);
+            popup_below_widget(
+                ui,
+                popup_id,
+                response,
+                PopupCloseBehavior::CloseOnClickOutside,
+                |ui| {
+                    if last_is_special {
+                        for (i, special) in specials.into_iter().enumerate() {
+                            if ui
+                                .selectable_label(state.select == Some(i), special)
+                                .clicked()
+                            {
+                                complete = C::Special(special);
+                            }
+                            if state.select == Some(i)
+                                && (ui.input(|inp| inp.key_pressed(Key::Tab))
+                                    || ui.input(|inp| inp.key_pressed(Key::Enter)))
+                            {
+                                complete = C::Special(special);
+                            }
                         }
-                        if state.select == Some(i)
-                            && (ui.input(|inp| inp.key_pressed(Key::Tab))
-                                || ui.input(|inp| inp.key_pressed(Key::Enter)))
+                    } else {
+                        for (i, (&id, tag)) in coll
+                            .tags
+                            .iter()
+                            .filter(|(_id, tag)| filt_predicate!(tag))
+                            .enumerate()
                         {
-                            complete = C::Special(special);
+                            if ui
+                                .selectable_label(state.select == Some(i), &tag.names[0])
+                                .clicked()
+                            {
+                                complete = C::Id(id);
+                            }
+                            if state.select == Some(i)
+                                && (ui.input(|inp| inp.key_pressed(Key::Tab))
+                                    || ui.input(|inp| inp.key_pressed(Key::Enter)))
+                            {
+                                complete = C::Id(id);
+                            }
                         }
                     }
-                } else {
-                    for (i, (&id, tag)) in coll
-                        .tags
-                        .iter()
-                        .filter(|(_id, tag)| filt_predicate!(tag))
-                        .enumerate()
-                    {
-                        if ui
-                            .selectable_label(state.select == Some(i), &tag.names[0])
-                            .clicked()
-                        {
-                            complete = C::Id(id);
-                        }
-                        if state.select == Some(i)
-                            && (ui.input(|inp| inp.key_pressed(Key::Tab))
-                                || ui.input(|inp| inp.key_pressed(Key::Enter)))
-                        {
-                            complete = C::Id(id);
-                        }
-                    }
-                }
-            });
+                },
+            );
             match complete {
                 C::Id(id) => {
                     let range = str_range(string, last);

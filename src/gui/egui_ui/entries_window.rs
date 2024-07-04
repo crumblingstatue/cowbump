@@ -28,7 +28,8 @@ use {
             load::SizedTexture,
             text_selection::CursorRange,
             vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
-            Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextureId, Ui, Widget,
+            Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
+            Widget,
         },
         sfml::graphics::{RenderTarget, RenderWindow},
     },
@@ -436,7 +437,7 @@ pub(super) fn do_frame(
                             egui_state.sequences_window.pick_result = None;
                         }
                         if ui
-                            .add(Button::new("Run custom command").wrap(false))
+                            .add(Button::new("Run custom command").wrap_mode(TextWrapMode::Extend))
                             .clicked()
                         {
                             win.custom_command_prompt ^= true;
@@ -551,7 +552,10 @@ pub(super) fn do_frame(
                         ui.separator();
                         // region: Rename button
                         if win.ids.len() == 1 {
-                            if ui.add(Button::new("Rename file").wrap(false)).clicked() {
+                            if ui
+                                .add(Button::new("Rename file").wrap_mode(TextWrapMode::Extend))
+                                .clicked()
+                            {
                                 win.renaming ^= true;
                             }
                         } else if ui.button("Batch rename...").clicked() {
@@ -579,7 +583,9 @@ pub(super) fn do_frame(
                         // region: Delete button
                         if !win.delete_confirm {
                             if ui
-                                .add(Button::new("Delete from disk").wrap(false))
+                                .add(
+                                    Button::new("Delete from disk").wrap_mode(TextWrapMode::Extend),
+                                )
                                 .clicked()
                             {
                                 win.delete_confirm ^= true;

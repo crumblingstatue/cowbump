@@ -78,8 +78,7 @@ pub(super) fn do_sequence_windows(
                             ui.label(coll.entries[&img_uid].path.to_string_lossy().as_ref());
                             ui.horizontal(|ui| {
                                 let mut pos = i;
-                                let dv =
-                                    DragValue::new(&mut pos).clamp_range(0..=seq.entries.len() - 1);
+                                let dv = DragValue::new(&mut pos).range(0..=seq.entries.len() - 1);
                                 if ui.add(dv).changed()
                                     && egui_ctx.input(|inp| inp.key_pressed(Key::Enter))
                                 {
