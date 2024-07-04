@@ -53,10 +53,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     window.set_position((0, 0).into());
     let res = Resources::load()?;
     let mut state = State::new(window.size().x, &app.database.preferences);
-    let mut egui_state = EguiState::default();
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
     egui_ui::set_up_style(sf_egui.context(), &app.database.preferences.style);
+    let mut egui_state = EguiState::new(sf_egui.context());
 
     if app.database.preferences.open_last_coll_at_start && !app.database.recent.is_empty() {
         match app.load_last() {
@@ -75,7 +75,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 std::env::set_current_dir(root_path)?;
             }
             Err(e) => {
-                native_dialog::error("Error loading most recent collection", e);
+                native_dialog::error_blocking("Error loading most recent collection", e);
             }
         }
     }
@@ -101,13 +101,13 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             match event {
                 Event::Closed => match app.save_active_collection() {
                     Ok(()) => window.close(),
-                    Err(e) => native_dialog::error("Failed to save collection", e),
+                    Err(e) => native_dialog::error_blocking("Failed to save collection", e),
                 },
                 Event::KeyPressed {
                     code, ctrl, shift, ..
                 } => match code {
                     Key::F1 => egui_state.top_bar ^= true,
-                    Key::F11 => util::take_and_save_screenshot(&window),
+                    Key::F11 => util::take_and_save_screenshot(&window, &mut egui_state),
                     Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
                     _ => {}
                 },
@@ -155,7 +155,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         );
         sf_egui.end_frame(&mut window)?;
         if let Err(e) = result {
-            native_dialog::error("Error", e);
+            native_dialog::error_blocking("Error", e);
         }
         let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &egui_state.action {
@@ -393,8 +393,6 @@ fn get_tex_for_entry<'t>(
 
 impl State {
     fn new(window_width: u32, prefs: &Preferences) -> Self {
-        let mut egui_state = EguiState::default();
-        egui_state.top_bar = true;
         Self {
             filter: Requirements::default(),
             thumbnail_cache: Default::default(),

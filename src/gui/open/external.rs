@@ -3,7 +3,7 @@ use {
         collection::{Collection, Entries},
         entry,
         gui::{
-            native_dialog::{self, error},
+            native_dialog::{self, error_blocking},
             State,
         },
         preferences::{AppId, Preferences},
@@ -36,7 +36,7 @@ pub(in crate::gui) fn on_enter_open(
     }
     candidates.sort_by_key(|c| c.path);
     if let Err(e) = open(&candidates, preferences) {
-        native_dialog::error("Failed to open file", e);
+        native_dialog::error_blocking("Failed to open file", e);
     }
 }
 
@@ -58,7 +58,7 @@ pub fn open_single_with_others(
         },
         preferences,
     ) {
-        native_dialog::error("Failed to open file", e);
+        native_dialog::error_blocking("Failed to open file", e);
     }
 }
 
@@ -87,7 +87,7 @@ pub fn open(
     }
     for path in built_tasks.remainder {
         if let Err(e) = open::that(path) {
-            error("Error opening", e);
+            error_blocking("Error opening", e);
         }
     }
     Ok(())
@@ -167,7 +167,7 @@ pub(crate) fn open_sequence(
         });
     }
     if let Err(e) = open(&candidates, prefs) {
-        native_dialog::error("Failed to open file", e);
+        native_dialog::error_blocking("Failed to open file", e);
     }
 }
 

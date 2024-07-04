@@ -6,6 +6,7 @@ use {
             App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
         },
     },
+    egui_file_dialog::FileDialog,
     egui_sfml::{
         egui::{
             Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider,
@@ -13,7 +14,6 @@ use {
         },
         sfml::graphics::RenderTarget,
     },
-    rfd::FileDialog,
     std::path::PathBuf,
 };
 
@@ -115,7 +115,12 @@ pub(in crate::gui) fn do_frame(
                     ui.heading("Applications");
                     ui.separator();
                     ui.group(|ui| {
-                        app_edit_ui(&mut win.new_app, &mut win.new_app_path_string, ui);
+                        app_edit_ui(
+                            &mut win.new_app,
+                            &mut win.new_app_path_string,
+                            ui,
+                            &mut egui_state.file_dialog,
+                        );
                         let butt = Button::new("Add new");
                         if ui
                             .add_enabled(
@@ -138,7 +143,12 @@ pub(in crate::gui) fn do_frame(
                             .id_source(k.0)
                             .show(ui, |ui| {
                                 win.path_scratch_buffer = app.path.to_string_lossy().into_owned();
-                                app_edit_ui(app, &mut win.path_scratch_buffer, ui);
+                                app_edit_ui(
+                                    app,
+                                    &mut win.path_scratch_buffer,
+                                    ui,
+                                    &mut egui_state.file_dialog,
+                                );
                                 if ui.button("Delete").clicked() {
                                     retain = false;
                                 }
@@ -201,7 +211,7 @@ fn slider_with_default<T: ValuePref>(ui: &mut Ui, attribute: &mut T::Type) -> bo
     changed
 }
 
-fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui) {
+fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui, file_dialog: &mut FileDialog) {
     let te = TextEdit::singleline(&mut app.name).hint_text("Name");
     ui.add(te);
     ui.horizontal(|ui| {
@@ -210,10 +220,7 @@ fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui) {
             app.path = PathBuf::from(path_buffer.clone());
         }
         if ui.button("...").clicked() {
-            if let Some(path) = FileDialog::new().pick_file() {
-                *path_buffer = path.to_string_lossy().into_owned();
-                app.path = path;
-            }
+            file_dialog.select_file();
         }
     });
     let te = TextEdit::singleline(&mut app.args_string).hint_text("Argument list");
@@ -222,4 +229,8 @@ fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui) {
                                                         Empty argument list will automatically \
                                                         append entries as arguments",
     );
+    if let Some(path) = file_dialog.take_selected() {
+        *path_buffer = path.to_string_lossy().into_owned();
+        app.path = path;
+    }
 }

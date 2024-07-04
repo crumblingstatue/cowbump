@@ -30,9 +30,15 @@ use {
     },
     super::{get_tex_for_entry, resources::Resources},
     crate::{application::Application, collection::Collection, entry, gui::State, tag},
+    anyhow::Context as _,
+    egui_file_dialog::FileDialog,
+    egui_modal::Modal,
     egui_sfml::{
-        egui::{Context, FontFamily, FontId, TextStyle, Window},
-        sfml::graphics::{RenderTarget, RenderWindow, Texture},
+        egui::{self, Context, FontFamily, FontId, TextStyle, Window},
+        sfml::{
+            self,
+            graphics::{RenderTarget, RenderWindow, Texture},
+        },
     },
 };
 
@@ -58,10 +64,21 @@ pub(crate) struct EguiState {
     pub(crate) tag_specific_apps_window: TagSpecificAppsWindow,
     pub(crate) batch_rename_window: BatchRenameWindow,
     pub(crate) collections_db_window: CollectionsDbWindow,
+    pub(crate) file_dialog: FileDialog,
+    /// If `Some`, save this screenshot to the selected path of the file dialog
+    pub(crate) file_op: Option<FileOp>,
+    pub(crate) modal: Modal,
 }
 
-impl Default for EguiState {
-    fn default() -> Self {
+pub(crate) enum FileOp {
+    OpenDirectory,
+    SaveScreenshot(sfml::graphics::Image),
+    CreateBackup,
+    RestoreBackup,
+}
+
+impl EguiState {
+    pub(crate) fn new(ctx: &egui::Context) -> Self {
         Self {
             entries_windows: Default::default(),
             sequences_window: Default::default(),
@@ -82,6 +99,9 @@ impl Default for EguiState {
             tag_specific_apps_window: Default::default(),
             batch_rename_window: Default::default(),
             collections_db_window: Default::default(),
+            file_dialog: FileDialog::new(),
+            file_op: None,
+            modal: Modal::new(ctx, "modal_dialog"),
         }
     }
 }
@@ -238,6 +258,69 @@ pub(super) fn do_ui(
         batch_rename_window::do_frame(state, egui_state, coll, egui_ctx, win);
         do_info_messages(egui_state, egui_ctx);
         do_prompts(egui_state, egui_ctx, app);
+        egui_state.file_dialog.update(egui_ctx);
+        if let Some(op) = &egui_state.file_op
+            && let Some(path) = egui_state.file_dialog.take_selected()
+        {
+            match op {
+                FileOp::OpenDirectory => {
+                    if let Some(id) = app.database.find_collection_by_path(&path) {
+                        let changes = app.load_collection(id)?;
+                        if !changes.empty() {
+                            egui_state.changes_window.open(changes);
+                        }
+                        crate::gui::set_active_collection(
+                            &mut state.thumbs_view,
+                            app,
+                            id,
+                            &state.filter,
+                            win.size().x,
+                        )
+                        .unwrap();
+                    } else {
+                        load_folder_window::open(&mut egui_state.load_folder_window, path);
+                    }
+                }
+                FileOp::SaveScreenshot(ss) => {
+                    let path_str = path.to_str().context("Failed to convert path to str")?;
+                    ss.save_to_file(path_str)
+                        .then_some(())
+                        .context("Failed to save image")?;
+                }
+                FileOp::CreateBackup => {
+                    let result: anyhow::Result<()> = try {
+                        app.save_active_collection()?;
+                        app.database.save_backups(&path)?;
+                    };
+                    match result {
+                        Ok(_) => {
+                            info_message(
+                                &mut egui_state.info_messages,
+                                "Success",
+                                "Backup successfully created.",
+                            );
+                        }
+                        Err(e) => {
+                            info_message(&mut egui_state.info_messages, "Error", e.to_string());
+                        }
+                    }
+                }
+                FileOp::RestoreBackup => {
+                    app.active_collection = None;
+                    if let Err(e) = app.database.restore_backups_from(&path) {
+                        crate::gui::native_dialog::error_blocking("Failed to restore backup", e);
+                    } else {
+                        egui_state
+                            .modal
+                            .dialog()
+                            .with_title("Backup restored")
+                            .with_icon(egui_modal::Icon::Success)
+                            .open();
+                    }
+                }
+            }
+            egui_state.file_op = None;
+        }
     }
     Ok(())
 }

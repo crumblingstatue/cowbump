@@ -346,7 +346,9 @@ pub(in crate::gui) fn handle_event(
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
-            if egui_ctx.wants_keyboard_input() {
+            if egui_ctx.wants_keyboard_input()
+                || egui_state.file_dialog.state() == egui_file_dialog::DialogState::Open
+            {
                 return;
             }
             if code == Key::PageDown {
@@ -378,7 +380,7 @@ pub(in crate::gui) fn handle_event(
                     None => return,
                 };
                 if let Err(e) = copy_image_to_clipboard(state, coll, uid) {
-                    native_dialog::error("Clipboard copy failed", e);
+                    native_dialog::error_blocking("Clipboard copy failed", e);
                 }
             } else if code == Key::T {
                 egui_state.tag_window.toggle();

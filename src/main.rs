@@ -26,6 +26,6 @@ fn try_main() -> anyhow::Result<()> {
 fn main() {
     env_logger::init();
     if let Err(e) = try_main() {
-        gui::native_dialog::error("Fatal runtime error", e)
+        gui::native_dialog::error_blocking("Fatal runtime error", e)
     }
 }

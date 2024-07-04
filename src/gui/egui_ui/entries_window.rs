@@ -271,7 +271,7 @@ pub(super) fn do_frame(
                                     open_with: None,
                                 }];
                                 if let Err(e) = external::open(&paths, &mut db.preferences) {
-                                    native_dialog::error("Error opening with external", e);
+                                    native_dialog::error_blocking("Error opening with external", e);
                                 }
                             }
                         }
@@ -415,7 +415,7 @@ pub(super) fn do_frame(
                                             coll.add_tag_for_multi(&win.ids, id);
                                             retain = false;
                                         }
-                                        None => native_dialog::error(
+                                        None => native_dialog::error_blocking(
                                             "Error inserting tag",
                                             anyhow::anyhow!("Already exists"),
                                         ),
@@ -453,7 +453,7 @@ pub(super) fn do_frame(
                                 state.clipboard_ctx.set_text(out)?;
                             };
                             if let Err(e) = res {
-                                native_dialog::error("Filename clipboard copy error", e);
+                                native_dialog::error_blocking("Filename clipboard copy error", e);
                             }
                         }
                         if win.custom_command_prompt {
@@ -569,7 +569,7 @@ pub(super) fn do_frame(
                                 .input(|inp| inp.key_pressed(egui_sfml::egui::Key::Enter))
                             {
                                 if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
-                                    native_dialog::error("File rename error", e);
+                                    native_dialog::error_blocking("File rename error", e);
                                 }
                                 win.renaming = false;
                             }
@@ -605,7 +605,7 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
                                     if let Err(e) = remove_entries(del_uids, coll, state) {
-                                        native_dialog::error("Error deleting entries", e);
+                                        native_dialog::error_blocking("Error deleting entries", e);
                                     }
                                     win.delete_confirm = false;
                                     close = true;

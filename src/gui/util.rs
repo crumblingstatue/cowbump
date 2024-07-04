@@ -1,11 +1,11 @@
 use {
+    super::egui_ui::{EguiState, FileOp},
     crate::gui::native_dialog,
     anyhow::Context,
     egui_sfml::sfml::{
         graphics::{Image, RenderTarget, RenderWindow, Texture},
         system::Vector2u,
     },
-    rfd::FileDialog,
 };
 
 pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<Image> {
@@ -21,21 +21,13 @@ pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<Image> {
         .context("Failed to copy texture to image")
 }
 
-pub fn take_and_save_screenshot(win: &RenderWindow) {
+pub fn take_and_save_screenshot(win: &RenderWindow, egui_state: &mut EguiState) {
     let result: anyhow::Result<()> = try {
         let ss = take_screenshot(win)?;
-        if let Some(path) = FileDialog::new()
-            .add_filter("Images", &["png", "jpg", "bmp", "tga"])
-            .set_file_name("cowbump-screenshot.png")
-            .save_file()
-        {
-            let path_str = path.to_str().context("Failed to convert path to str")?;
-            ss.save_to_file(path_str)
-                .then_some(())
-                .context("Failed to save image")?;
-        }
+        egui_state.file_dialog.save_file();
+        egui_state.file_op = Some(FileOp::SaveScreenshot(ss));
     };
     if let Err(e) = result {
-        native_dialog::error("Failed to take screenshot", e);
+        native_dialog::error_blocking("Failed to take screenshot", e);
     }
 }

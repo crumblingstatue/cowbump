@@ -1,10 +1,10 @@
 use {
-    super::{info_message, load_folder_window, prompt, Action, EguiState, PromptAction},
+    super::{prompt, Action, EguiState, FileOp, PromptAction},
     crate::{
         application::Application,
         collection,
         gui::{
-            native_dialog::{self, error},
+            native_dialog::{self, error_blocking},
             viewer, Activity, SelectionBuf, State,
         },
     },
@@ -12,7 +12,6 @@ use {
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
         sfml::graphics::{RenderTarget, RenderWindow},
     },
-    rfd::{FileDialog, MessageButtons, MessageDialog, MessageDialogResult},
 };
 
 pub(super) fn do_frame(
@@ -128,9 +127,13 @@ fn help_menu(
     ui.menu_button("Help", |ui| {
         if ui.button("About").clicked() {
             ui.close_menu();
-            MessageDialog::new()
-                .set_description(format!("Cowbump version {}", crate::VERSION))
-                .show();
+            egui_state
+                .modal
+                .dialog()
+                .with_title("About Cowbump")
+                .with_icon(egui_modal::Icon::Info)
+                .with_body(format!("Cowbump version {}", crate::VERSION))
+                .open();
         }
         ui.separator();
         ui.vertical_centered(|ui| {
@@ -141,12 +144,12 @@ fn help_menu(
             .clicked()
         {
             ui.close_menu();
-            crate::gui::util::take_and_save_screenshot(win);
+            crate::gui::util::take_and_save_screenshot(win, egui_state);
         }
         if ui.button("Open data dir").clicked() {
             ui.close_menu();
             if let Err(e) = open::that(&app.database.data_dir) {
-                error("Error opening", e);
+                error_blocking("Error opening", e);
             }
         }
         if ui.button("Debug window").clicked() {
@@ -167,30 +170,8 @@ fn file_menu(
     ui.menu_button("File", |ui| {
         if ui.button("🗁 Load folder").clicked() {
             ui.close_menu();
-            if let Some(dir_path) = FileDialog::new().pick_folder() {
-                if let Some(id) = app.database.find_collection_by_path(&dir_path) {
-                    let changes = match app.load_collection(id) {
-                        Ok(changes) => changes,
-                        Err(e) => {
-                            *result = Err(e);
-                            return;
-                        }
-                    };
-                    if !changes.empty() {
-                        egui_state.changes_window.open(changes);
-                    }
-                    crate::gui::set_active_collection(
-                        &mut state.thumbs_view,
-                        app,
-                        id,
-                        &state.filter,
-                        window_width,
-                    )
-                    .unwrap();
-                } else {
-                    load_folder_window::open(&mut egui_state.load_folder_window, dir_path);
-                }
-            }
+            egui_state.file_op = Some(FileOp::OpenDirectory);
+            egui_state.file_dialog.select_directory();
         }
         if ui.button("↺ Reload folder").clicked() {
             ui.close_menu();
@@ -254,7 +235,7 @@ fn file_menu(
                             );
                         }
                         Err(e) => {
-                            native_dialog::error("Error loading recent collection", e);
+                            native_dialog::error_blocking("Error loading recent collection", e);
                         }
                     },
                     Action::Remove(id) => app.database.recent.remove(id),
@@ -269,48 +250,13 @@ fn file_menu(
         ui.separator();
         if ui.button("⛃⬉ Create backup").clicked() {
             ui.close_menu();
-            if let Some(path) = FileDialog::new()
-                .set_file_name("cowbump_backup.zip")
-                .save_file()
-            {
-                let result: anyhow::Result<()> = try {
-                    app.save_active_collection()?;
-                    app.database.save_backups(&path)?;
-                };
-                match result {
-                    Ok(_) => {
-                        info_message(
-                            &mut egui_state.info_messages,
-                            "Success",
-                            "Backup successfully created.",
-                        );
-                    }
-                    Err(e) => {
-                        info_message(&mut egui_state.info_messages, "Error", e.to_string());
-                    }
-                }
-            }
+            egui_state.file_dialog.save_file();
+            egui_state.file_op = Some(FileOp::CreateBackup);
         }
         if ui.button("⛃⬊ Restore backup").clicked() {
             ui.close_menu();
-            let continue_ = MessageDialog::new()
-                .set_buttons(MessageButtons::OkCancel)
-                .set_title("Restore backup")
-                .set_description(
-                    "This will replace all your current data with the backup. Continue?",
-                )
-                .show()
-                == MessageDialogResult::Ok;
-            if continue_ {
-                if let Some(path) = FileDialog::new().pick_file() {
-                    app.active_collection = None;
-                    if let Err(e) = app.database.restore_backups_from(&path) {
-                        native_dialog::error("Failed to restore backup", e);
-                    } else {
-                        MessageDialog::new().set_title("Backup restored!").show();
-                    }
-                }
-            }
+            egui_state.file_dialog.select_file();
+            egui_state.file_op = Some(FileOp::RestoreBackup);
         }
         ui.separator();
         if ui.button("☰ Preferences").clicked() {

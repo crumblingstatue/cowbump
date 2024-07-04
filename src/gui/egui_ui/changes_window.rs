@@ -162,7 +162,7 @@ pub(super) fn do_frame(
             Action::RemFile { idx } => {
                 let path = &changes.add[idx];
                 if let Err(e) = std::fs::remove_file(path) {
-                    native_dialog::error("Failed to remove file", e);
+                    native_dialog::error_blocking("Failed to remove file", e);
                 }
                 changes.add.remove(idx);
             }
