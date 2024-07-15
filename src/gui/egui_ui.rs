@@ -259,6 +259,7 @@ pub(super) fn do_ui(
         do_info_messages(egui_state, egui_ctx);
         do_prompts(egui_state, egui_ctx, app);
         egui_state.file_dialog.update(egui_ctx);
+        egui_state.modal.show_dialog();
         if let Some(op) = &egui_state.file_op
             && let Some(path) = egui_state.file_dialog.take_selected()
         {
