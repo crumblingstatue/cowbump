@@ -209,7 +209,7 @@ fn file_menu(
                 for &id in app.database.recent.iter() {
                     ui.horizontal(|ui| {
                         if ui
-                            .button(&format!("🗁 {}", &app.database.collections[&id].display()))
+                            .button(format!("🗁 {}", &app.database.collections[&id].display()))
                             .clicked()
                         {
                             action = Action::Open(id);

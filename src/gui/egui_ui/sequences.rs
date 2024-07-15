@@ -50,7 +50,7 @@ pub(super) fn do_sequence_windows(
             open = false;
             egui_state.just_closed_window_with_esc = true;
         }
-        Window::new(&format!("Sequence: {}", name))
+        Window::new(format!("Sequence: {}", name))
             .hscroll(true)
             .min_width(3. * 256.)
             .open(&mut open)

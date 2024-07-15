@@ -507,7 +507,7 @@ pub(super) fn do_frame(
                                     Some(code) => code.to_string(),
                                     None => "<terminated>".to_string(),
                                 };
-                                ui.label(&format!(
+                                ui.label(format!(
                                     "Exit code: {} ({})",
                                     exit_code_msg,
                                     status.success()
@@ -517,7 +517,7 @@ pub(super) fn do_frame(
                             let mut clicked = false;
                             ui.horizontal(|ui| {
                                 clicked = ui.button("x").clicked();
-                                ui.label(&format!("[running] ({})", c_wrap.child.id()));
+                                ui.label(format!("[running] ({})", c_wrap.child.id()));
                             });
                             if clicked {
                                 let _ = c_wrap.child.kill();

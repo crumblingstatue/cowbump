@@ -50,7 +50,7 @@ pub(super) fn do_frame(
                 state.wipe_search();
                 text_changed = true;
             }
-            ui.label(&format!("{} results", count));
+            ui.label(format!("{} results", count));
             popup.string.make_ascii_lowercase();
             let enter_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Enter));
             if enter_pressed || egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {

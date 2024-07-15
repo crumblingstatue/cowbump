@@ -199,7 +199,7 @@ pub(super) fn do_frame(
                     }
                     let pb = ProgressBar::new(0.0).animate(!done).desired_width(16.0);
                     ui.add(pb);
-                    ui.label(&format!("{} results", win.results.len()));
+                    ui.label(format!("{} results", win.results.len()));
                 }
             });
         });
