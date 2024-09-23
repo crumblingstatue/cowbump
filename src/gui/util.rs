@@ -11,7 +11,7 @@ use {
 pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<Image> {
     let mut tex = Texture::new().context("Failed to create texture")?;
     let Vector2u { x: w, y: h } = win.size();
-    if !tex.create(w, h) {
+    if tex.create(w, h).is_err() {
         panic!();
     }
     unsafe {

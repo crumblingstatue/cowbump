@@ -70,7 +70,7 @@ impl ThumbnailLoader {
 pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> egui_sfml::sfml::SfBox<Texture> {
     let (w, h) = buf.dimensions();
     let mut tex = Texture::new().unwrap();
-    if !tex.create(w, h) {
+    if tex.create(w, h).is_err() {
         panic!("Failed to create texture");
     }
     unsafe {

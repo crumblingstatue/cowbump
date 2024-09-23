@@ -284,9 +284,7 @@ pub(super) fn do_ui(
                 }
                 FileOp::SaveScreenshot(ss) => {
                     let path_str = path.to_str().context("Failed to convert path to str")?;
-                    ss.save_to_file(path_str)
-                        .then_some(())
-                        .context("Failed to save image")?;
+                    ss.save_to_file(path_str).context("Failed to save image")?;
                 }
                 FileOp::CreateBackup => {
                     let result: anyhow::Result<()> = try {
