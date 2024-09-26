@@ -23,7 +23,7 @@ egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git" }
 rand = "0.8.5"
 env_logger = "0.11.3"
 egui-file-dialog = { git = "https://github.com/fluxxcode/egui-file-dialog.git", branch = "develop" }
-egui-modal = { git = "https://github.com/crumblingstatue/egui-modal.git", branch = "egui-0.28" }
+egui-modal = { git = "https://github.com/crumblingstatue/egui-modal.git", branch = "egui-0.29" }
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"

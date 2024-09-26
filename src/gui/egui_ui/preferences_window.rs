@@ -140,7 +140,7 @@ pub(in crate::gui) fn do_frame(
                     prefs.applications.retain(|k, app| {
                         let mut retain = true;
                         CollapsingHeader::new(&app.name)
-                            .id_source(k.0)
+                            .id_salt(k.0)
                             .show(ui, |ui| {
                                 win.path_scratch_buffer = app.path.to_string_lossy().into_owned();
                                 app_edit_ui(

@@ -22,11 +22,11 @@ pub fn error_blocking<E: Debug>(title: &str, err: E) {
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             sf_egui.add_event(&ev);
-            sf_egui.begin_frame();
+            sf_egui.begin_pass();
             egui::CentralPanel::default().show(sf_egui.context(), |ui| {
                 ui.label(format!("{err:?}"));
             });
-            sf_egui.end_frame(&mut rw).unwrap();
+            sf_egui.end_pass(&mut rw).unwrap();
             if let Event::Closed = ev {
                 rw.close();
             }

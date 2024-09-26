@@ -144,7 +144,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             }
         }
         egui_state.begin_frame();
-        sf_egui.begin_frame();
+        sf_egui.begin_pass();
         let result = egui_ui::do_ui(
             &mut state,
             &mut egui_state,
@@ -153,7 +153,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             &res,
             &window,
         );
-        sf_egui.end_frame(&mut window)?;
+        sf_egui.end_pass(&mut window)?;
         if let Err(e) = result {
             native_dialog::error_blocking("Error", e);
         }
