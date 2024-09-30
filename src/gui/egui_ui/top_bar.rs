@@ -205,12 +205,16 @@ fn file_menu(
                 let mut action = Action::None;
                 for &id in app.database.recent.iter() {
                     ui.horizontal(|ui| {
-                        if ui
-                            .button(format!("🗁 {}", &app.database.collections[&id].display()))
-                            .clicked()
-                        {
-                            action = Action::Open(id);
-                            ui.close_menu();
+                        match app.database.collections.get(&id) {
+                            Some(coll) => {
+                                if ui.button(format!("🗁 {}", &coll.display())).clicked() {
+                                    action = Action::Open(id);
+                                    ui.close_menu();
+                                }
+                            }
+                            None => {
+                                ui.label(format!("Dangling collection with id {id:?}"));
+                            }
                         }
                         if ui.button("🗑").clicked() {
                             action = Action::Remove(id);

@@ -48,7 +48,11 @@ impl Application {
     }
     pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<FolderChanges> {
         self.save_active_collection()?;
-        let path = &self.database.collections[&id];
+        let path = &self
+            .database
+            .collections
+            .get(&id)
+            .context("No collection with such id")?;
         let coll_dir = collections_dir_name(&self.database.data_dir);
         let filename = collection_filename(&coll_dir, id);
         let coll: Collection = serialization::read_from_file(&filename)
