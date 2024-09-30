@@ -1,5 +1,5 @@
 use {
-    super::EguiState,
+    super::{icons, EguiState},
     crate::{
         application::Application,
         collection::Collection,
@@ -187,7 +187,7 @@ pub(super) fn do_frame(
             });
             ui.separator();
             ui.horizontal(|ui| {
-                if ui.button("🗙 Cancel").clicked() {
+                if ui.button(icons::CANCEL_TEXT).clicked() {
                     cancel = true;
                 }
                 let button;

@@ -1,5 +1,5 @@
 use {
-    super::EguiState,
+    super::{icons, EguiState},
     crate::{
         collection::Collection,
         db::{TagSet, UidCounter},
@@ -219,7 +219,10 @@ pub(super) fn do_frame(
                                 let mut retain = true;
                                 ui.horizontal(|ui| {
                                     ui.text_edit_singleline(name);
-                                    if ui.add_enabled(!only_one, Button::new("x")).clicked() {
+                                    if ui
+                                        .add_enabled(!only_one, Button::new(icons::REMOVE))
+                                        .clicked()
+                                    {
                                         retain = false;
                                     }
                                 });
@@ -228,12 +231,12 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 match new_name {
                                     Some(_) => {
-                                        if ui.button("🗙").clicked() {
+                                        if ui.button(icons::CANCEL).clicked() {
                                             *new_name = None;
                                         }
                                     }
                                     None => {
-                                        if ui.button("+").clicked() {
+                                        if ui.button(icons::ADD).clicked() {
                                             *new_name = Some(String::new());
                                         }
                                     }
@@ -253,7 +256,7 @@ pub(super) fn do_frame(
                             for imply_id in &coll.tags[id].implies {
                                 ui.horizontal(|ui| {
                                     ui.label(&coll.tags[imply_id].names[0]);
-                                    if ui.button("🗑").clicked() {
+                                    if ui.button(icons::REMOVE).clicked() {
                                         remove = Some(*imply_id);
                                     }
                                 });
@@ -264,12 +267,12 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 match new_imply {
                                     Some(_) => {
-                                        if ui.button("🗙").clicked() {
+                                        if ui.button(icons::CANCEL).clicked() {
                                             *new_imply = None;
                                         }
                                     }
                                     None => {
-                                        if ui.button("+").clicked() {
+                                        if ui.button(icons::ADD).clicked() {
                                             *new_imply = Some(String::new());
                                         }
                                     }

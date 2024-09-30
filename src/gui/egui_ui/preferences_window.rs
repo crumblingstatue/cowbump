@@ -1,5 +1,5 @@
 use {
-    super::EguiState,
+    super::{icons, EguiState},
     crate::{
         gui::State,
         preferences::{
@@ -158,7 +158,7 @@ pub(in crate::gui) fn do_frame(
                             ui.with_layout(
                                 egui::Layout::right_to_left(egui::Align::Center),
                                 |ui| {
-                                    if ui.button("🗑").on_hover_text("Delete").clicked() {
+                                    if ui.button(icons::REMOVE).on_hover_text("Delete").clicked() {
                                         retain = false;
                                     }
                                 },
@@ -205,7 +205,7 @@ pub(in crate::gui) fn do_frame(
                                         }
                                     },
                                 );
-                                if ui.button("🗑").clicked() {
+                                if ui.button(icons::REMOVE).clicked() {
                                     retain = false;
                                 }
                                 ui.end_row();

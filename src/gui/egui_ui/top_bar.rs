@@ -1,5 +1,5 @@
 use {
-    super::{prompt, Action, EguiState, FileOp, PromptAction},
+    super::{icons, prompt, Action, EguiState, FileOp, PromptAction},
     crate::{
         application::Application,
         collection,
@@ -90,7 +90,7 @@ pub(super) fn do_frame(
                         state.sel.bufs.push(SelectionBuf::new("Sel 1"));
                     }
                     if ui
-                        .button("+")
+                        .button(icons::ADD)
                         .on_hover_text("Add selection buffer")
                         .clicked()
                     {
@@ -216,7 +216,7 @@ fn file_menu(
                                 ui.label(format!("Dangling collection with id {id:?}"));
                             }
                         }
-                        if ui.button("🗑").clicked() {
+                        if ui.button(icons::REMOVE).clicked() {
                             action = Action::Remove(id);
                         }
                     });
@@ -265,7 +265,10 @@ fn file_menu(
             egui_state.preferences_window.toggle();
         }
         ui.separator();
-        if ui.button("🗙 Quit without saving").clicked() {
+        if ui
+            .button([icons::CANCEL, " Quit without saving"].concat())
+            .clicked()
+        {
             ui.close_menu();
             prompt(
                 &mut egui_state.prompts,

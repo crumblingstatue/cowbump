@@ -1,5 +1,6 @@
 use {
     super::{
+        icons,
         sequences::SequenceWindow,
         tag_autocomplete::{tag_autocomplete_popup, AcState},
         EguiState,
@@ -130,7 +131,7 @@ fn tag_ui(
                 entries_view.update_from_collection(coll, reqs);
             }
             if let Some(del) = del {
-                if ui.button("x").clicked() {
+                if ui.button(icons::REMOVE).clicked() {
                     *del = true;
                 }
             }
@@ -508,11 +509,11 @@ pub(super) fn do_frame(
                                     exit_code_msg,
                                     status.success()
                                 ));
-                                return !ui.button("x").clicked();
+                                return !ui.button(icons::CANCEL).clicked();
                             }
                             let mut clicked = false;
                             ui.horizontal(|ui| {
-                                clicked = ui.button("x").clicked();
+                                clicked = ui.button(icons::CANCEL).clicked();
                                 ui.label(format!("[running] ({})", c_wrap.child.id()));
                             });
                             if clicked {

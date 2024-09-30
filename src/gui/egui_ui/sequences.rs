@@ -1,5 +1,5 @@
 use {
-    super::EguiState,
+    super::{icons, EguiState},
     crate::{
         collection::Collection,
         db::UidCounter,
@@ -97,7 +97,7 @@ pub(super) fn do_sequence_windows(
                                     win.focus_req = subject;
                                 }
                                 if ui
-                                    .button("🗑")
+                                    .button(icons::REMOVE)
                                     .on_hover_text("remove from sequence")
                                     .clicked()
                                 {
@@ -183,7 +183,7 @@ pub(super) fn do_sequences_window(
                 ui.horizontal(|ui| {
                     let te = TextEdit::singleline(&mut seq_win.filter_string).hint_text("Filter");
                     ui.add(te);
-                    if ui.button("🗙").clicked() {
+                    if ui.button(icons::CANCEL).clicked() {
                         seq_win.filter_string.clear();
                     }
                     let txt = if seq_win.pick_mode {
@@ -195,7 +195,7 @@ pub(super) fn do_sequences_window(
                         seq_win.add_new ^= true;
                         focus = true;
                     }
-                    if seq_win.pick_mode && ui.button("🗙 Cancel").clicked() {
+                    if seq_win.pick_mode && ui.button(icons::CANCEL_TEXT).clicked() {
                         seq_win.pick_mode = false;
                     }
                 });
@@ -236,8 +236,8 @@ pub(super) fn do_sequences_window(
                                     .sequence_windows
                                     .push(SequenceWindow::new(uid, None));
                             }
-                            let del_butt =
-                                Button::new("🗑 Delete").fill(Color32::from_rgb(130, 14, 14));
+                            let del_butt = Button::new([icons::REMOVE, " Delete"].concat())
+                                .fill(Color32::from_rgb(130, 14, 14));
                             if ui.add(del_butt).clicked() {
                                 retain = false;
                             }

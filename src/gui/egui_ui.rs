@@ -6,6 +6,7 @@ mod debug_window;
 mod entries_window;
 mod filter_popup;
 mod find_popup;
+mod icons;
 mod load_folder_window;
 mod preferences_window;
 mod query_popup;
