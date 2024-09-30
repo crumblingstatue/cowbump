@@ -53,7 +53,7 @@ pub(super) fn do_frame(
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     let prompts = &mut egui_state.prompts;
-    egui_sfml::egui::Window::new("Tag list")
+    egui_sfml::egui::Window::new([icons::TAG, " Tag list"].concat())
         .open(&mut egui_state.tag_window.on)
         .show(egui_ctx, move |ui| {
             ui.horizontal(|ui| {
@@ -221,7 +221,12 @@ pub(super) fn do_frame(
                                 return;
                             }
                             ui.horizontal(|ui| {
-                                let name = format!("Tag {} (#{})", coll.tags[id].names[0], id.0);
+                                let name = format!(
+                                    "{} {} (#{})",
+                                    icons::TAG,
+                                    coll.tags[id].names[0],
+                                    id.0
+                                );
                                 ui.heading(&name);
                                 ui.rtl(|ui| {
                                     if ui

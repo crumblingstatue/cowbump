@@ -287,7 +287,7 @@ fn file_menu(
 fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
     ui.menu_button("Collection", |ui| {
         if ui
-            .add(Button::new("＃ Tag list").shortcut_text("T"))
+            .add(Button::new([icons::TAG, " Tag list"].concat()).shortcut_text("T"))
             .clicked()
         {
             ui.close_menu();
