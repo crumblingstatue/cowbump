@@ -91,16 +91,20 @@ pub(super) fn tag_autocomplete_popup(
             _ => {}
         }
         let specials = [
-            ("@any", "@any[tag1 tag2 ...]", "Any of the provided tags"),
-            ("@all", "@all[tag1 tag2 ...]", "All of the provided tags"),
-            ("@none", "@none[tag1 tag2 ...]", "None of the provided tags"),
+            ("@any[tag1 tag2 ...]", "Any of the provided tags", "@any[]"),
+            ("@all[tag1 tag2 ...]", "All of the provided tags", "@all[]"),
             (
-                "@f",
+                "@none[tag1 tag2 ...]",
+                "None of the provided tags",
+                "@none[]",
+            ),
+            (
                 "@f[path-segment]",
                 "Entries matching a filename or path segment",
+                "@f[]",
             ),
-            ("@seq", "@seq", "Part of a sequence"),
-            ("@untagged", "@untagged", "Entries that don't have any tags"),
+            ("@seq", "Part of a sequence", "@seq"),
+            ("@untagged", "Entries that don't have any tags", "untagged"),
         ];
         let last_is_special = last.bytes().next() == Some(b'@');
         if last_is_special {
@@ -125,7 +129,7 @@ pub(super) fn tag_autocomplete_popup(
                 PopupCloseBehavior::CloseOnClickOutside,
                 |ui| {
                     if last_is_special {
-                        for (i, (ident, usage, desc)) in specials.into_iter().enumerate() {
+                        for (i, (usage, desc, ins)) in specials.into_iter().enumerate() {
                             let selected = state.select == Some(i);
                             let re = ui.selectable_label(selected, usage);
                             if selected {
@@ -138,14 +142,14 @@ pub(super) fn tag_autocomplete_popup(
                                     });
                             }
                             if re.clicked() {
-                                complete = C::Special(ident);
+                                complete = C::Special(ins);
                                 state.select = Some(i);
                             }
                             if state.select == Some(i)
                                 && (ui.input(|inp| inp.key_pressed(Key::Tab))
                                     || ui.input(|inp| inp.key_pressed(Key::Enter)))
                             {
-                                complete = C::Special(ident);
+                                complete = C::Special(ins);
                             }
                         }
                     } else {
