@@ -188,7 +188,7 @@ pub(in crate::gui) fn do_frame(
                         }
                     });
                     ui.separator();
-                    ScrollArea::vertical().show(ui, |ui| {
+                    ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
                         Grid::new("prefs_assoc_grid").show(ui, |ui| {
                             prefs.associations.retain(|k, v| {
                                 let mut retain = true;
