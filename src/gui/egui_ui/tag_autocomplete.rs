@@ -139,6 +139,7 @@ pub(super) fn tag_autocomplete_popup(
                             }
                             if re.clicked() {
                                 complete = C::Special(ident);
+                                state.select = Some(i);
                             }
                             if state.select == Some(i)
                                 && (ui.input(|inp| inp.key_pressed(Key::Tab))
