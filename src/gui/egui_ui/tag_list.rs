@@ -70,26 +70,30 @@ pub(super) fn do_frame(
                     reqs.clear();
                     entries_view.update_from_collection(coll, reqs);
                 }
-                match new_tag {
-                    Some(_) => {
-                        if ui.button("Cancel new tag").clicked() {
-                            *new_tag = None;
-                        }
+                if new_tag.is_none() {
+                    if ui.button("Add new tag").clicked() {
+                        *new_tag = Some(String::new());
                     }
-                    None => {
-                        if ui.button("Add new tag").clicked() {
-                            *new_tag = Some(String::new());
+                } else {
+                    let mut cancel = false;
+                    let mut confirm = false;
+                    if let Some(tag) = new_tag.take_if(|tag| {
+                        let re = ui.add(TextEdit::singleline(tag).hint_text("New tag"));
+                        if ui.button(icons::CANCEL).clicked() {
+                            cancel = true;
                         }
+                        if ui.button(icons::CHECK).clicked() {
+                            confirm = true;
+                        }
+                        (re.lost_focus() && ui.input(|inp| inp.key_pressed(Key::Enter))) | confirm
+                    }) {
+                        coll.add_new_tag_from_text(tag, uid_counter);
+                    }
+                    if cancel {
+                        *new_tag = None;
                     }
                 }
             });
-            if let Some(tag) = new_tag.take_if(|tag| {
-                ui.add(TextEdit::singleline(tag).hint_text("New tag"))
-                    .lost_focus()
-                    && ui.input(|inp| inp.key_pressed(Key::Enter))
-            }) {
-                coll.add_new_tag_from_text(tag, uid_counter);
-            }
             ui.separator();
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
