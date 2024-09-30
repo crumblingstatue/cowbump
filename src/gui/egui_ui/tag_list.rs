@@ -46,18 +46,18 @@ pub(super) fn do_frame(
     }
     let mut close = false;
     let close_ref = &mut close;
-    let tag_filter_string_ref = &mut egui_state.tag_window.filter_string;
-    let entries_view_ref = &mut state.thumbs_view;
-    let filter_string_ref = &mut egui_state.filter_popup.string;
-    let reqs_ref = &mut state.filter;
+    let tag_filter_string = &mut egui_state.tag_window.filter_string;
+    let entries_view = &mut state.thumbs_view;
+    let filter_string = &mut egui_state.filter_popup.string;
+    let reqs = &mut state.filter;
     let selected_uids = &mut egui_state.tag_window.selected_uids;
-    let active_ref = &mut egui_state.tag_window.prop_active;
-    let new_name_ref = &mut egui_state.tag_window.new_name;
-    let new_name_add_ref = &mut egui_state.tag_window.new_name_add;
-    let new_imply_ref = &mut egui_state.tag_window.new_imply;
-    let new_imply_add_ref = &mut egui_state.tag_window.new_imply_add;
-    let new_tag_buf_ref = &mut egui_state.tag_window.new_tag_buf;
-    let new_tag_add_ref = &mut egui_state.tag_window.new_tag_add;
+    let active = &mut egui_state.tag_window.prop_active;
+    let new_name = &mut egui_state.tag_window.new_name;
+    let new_name_add = &mut egui_state.tag_window.new_name_add;
+    let new_imply = &mut egui_state.tag_window.new_imply;
+    let new_imply_add = &mut egui_state.tag_window.new_imply_add;
+    let new_tag_buf = &mut egui_state.tag_window.new_tag_buf;
+    let new_tag_add = &mut egui_state.tag_window.new_tag_add;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     let prompts = &mut egui_state.prompts;
@@ -65,26 +65,26 @@ pub(super) fn do_frame(
         .open(&mut egui_state.tag_window.on)
         .show(egui_ctx, move |ui| {
             ui.horizontal(|ui| {
-                let te = TextEdit::singleline(tag_filter_string_ref).hint_text("Filter");
+                let te = TextEdit::singleline(tag_filter_string).hint_text("Filter");
                 ui.add(te);
                 if ui.button("Clear filter").clicked() {
-                    tag_filter_string_ref.clear();
+                    tag_filter_string.clear();
                 }
                 if ui.button("Clear tags").clicked() {
-                    reqs_ref.clear();
-                    entries_view_ref.update_from_collection(coll, reqs_ref);
+                    reqs.clear();
+                    entries_view.update_from_collection(coll, reqs);
                 }
                 if ui.button("Add new tag").clicked() {
-                    *new_tag_add_ref ^= true;
+                    *new_tag_add ^= true;
                 }
             });
-            if *new_tag_add_ref
+            if *new_tag_add
                 && ui
-                    .add(TextEdit::singleline(new_tag_buf_ref).hint_text("New tag"))
+                    .add(TextEdit::singleline(new_tag_buf).hint_text("New tag"))
                     .lost_focus()
                 && ui.input(|inp| inp.key_pressed(Key::Enter))
             {
-                coll.add_new_tag_from_text(mem::take(new_tag_buf_ref), uid_counter);
+                coll.add_new_tag_from_text(mem::take(new_tag_buf), uid_counter);
             }
             ui.separator();
             ui.horizontal(|ui| {
@@ -105,21 +105,21 @@ pub(super) fn do_frame(
                                 for tag_uid in &uids {
                                     let tag = &coll.tags[tag_uid];
                                     let name = &tag.names[0];
-                                    if !name.contains(&tag_filter_string_ref[..]) {
+                                    if !name.contains(&tag_filter_string[..]) {
                                         continue;
                                     }
                                     let mut button = Button::new(name);
                                     let mut checked = selected_uids.contains(tag_uid);
-                                    if active_ref == &Some(*tag_uid) {
+                                    if active == &Some(*tag_uid) {
                                         button = button.fill(Color32::from_rgb(95, 69, 8));
                                     } else if checked {
                                         button = button.fill(Color32::from_rgb(189, 145, 85));
                                     }
                                     if ui.add(button).clicked() {
-                                        *active_ref = Some(*tag_uid);
+                                        *active = Some(*tag_uid);
                                     }
-                                    let has_this_tag = reqs_ref.have_tag(*tag_uid);
-                                    let doesnt_have_this_tag = reqs_ref.not_have_tag(*tag_uid);
+                                    let has_this_tag = reqs.have_tag(*tag_uid);
+                                    let doesnt_have_this_tag = reqs.not_have_tag(*tag_uid);
                                     let button = Button::new("✔").fill(if has_this_tag {
                                         Color32::from_rgb(43, 109, 57)
                                     } else {
@@ -131,8 +131,8 @@ pub(super) fn do_frame(
                                         .on_hover_text(format!("Filter for {name}"))
                                         .clicked()
                                     {
-                                        reqs_ref.toggle_have_tag(*tag_uid);
-                                        reqs_ref.set_not_have_tag(*tag_uid, false);
+                                        reqs.toggle_have_tag(*tag_uid);
+                                        reqs.set_not_have_tag(*tag_uid, false);
                                         clicked_any = true;
                                     }
                                     let neg_button =
@@ -148,8 +148,8 @@ pub(super) fn do_frame(
                                         .on_hover_text(format!("Filter for !{name}"))
                                         .clicked()
                                     {
-                                        reqs_ref.toggle_not_have_tag(*tag_uid);
-                                        reqs_ref.set_have_tag(*tag_uid, false);
+                                        reqs.toggle_not_have_tag(*tag_uid);
+                                        reqs.set_have_tag(*tag_uid, false);
                                         clicked_any = true;
                                     }
                                     ui.checkbox(&mut checked, "");
@@ -160,8 +160,8 @@ pub(super) fn do_frame(
                                     }
                                     ui.end_row();
                                     if clicked_any {
-                                        *filter_string_ref = reqs_ref.to_string(&coll.tags);
-                                        entries_view_ref.update_from_collection(coll, reqs_ref);
+                                        *filter_string = reqs.to_string(&coll.tags);
+                                        entries_view.update_from_collection(coll, reqs);
                                     }
                                 }
                             });
@@ -200,7 +200,7 @@ pub(super) fn do_frame(
                 ui.separator();
                 ui.vertical(|ui| {
                     ui.set_min_width(400.);
-                    match active_ref {
+                    match active {
                         None => {
                             ui.heading("Click a tag to edit properties");
                         }
@@ -227,18 +227,15 @@ pub(super) fn do_frame(
                             });
                             ui.horizontal(|ui| {
                                 if ui.button("+").clicked() {
-                                    *new_name_add_ref = true;
+                                    *new_name_add = true;
                                 }
-                                if *new_name_add_ref
+                                if *new_name_add
                                     && ui
-                                        .add(
-                                            TextEdit::singleline(new_name_ref)
-                                                .hint_text("New alias"),
-                                        )
+                                        .add(TextEdit::singleline(new_name).hint_text("New alias"))
                                         .lost_focus()
                                     && ui.input(|inp| inp.key_pressed(Key::Enter))
                                 {
-                                    tag.names.push(mem::take(new_name_ref));
+                                    tag.names.push(mem::take(new_name));
                                 }
                             });
                             ui.add_space(12.0);
@@ -258,21 +255,21 @@ pub(super) fn do_frame(
                             }
                             ui.horizontal(|ui| {
                                 if ui.button("+").clicked() {
-                                    *new_imply_add_ref = true;
+                                    *new_imply_add = true;
                                 }
-                                if *new_imply_add_ref
+                                if *new_imply_add
                                     && ui
                                         .add(
-                                            TextEdit::singleline(new_imply_ref)
+                                            TextEdit::singleline(new_imply)
                                                 .hint_text("New implication"),
                                         )
                                         .lost_focus()
                                     && ui.input(|inp| inp.key_pressed(Key::Enter))
                                 {
-                                    if let Some(resolved_id) = coll.resolve_tag(new_imply_ref) {
+                                    if let Some(resolved_id) = coll.resolve_tag(new_imply) {
                                         let tag = coll.tags.get_mut(id).unwrap();
                                         tag.implies.insert(resolved_id);
-                                        new_imply_ref.clear();
+                                        new_imply.clear();
                                         dlog!("Success?");
                                         dlog!("{:?}", tag);
                                     }
