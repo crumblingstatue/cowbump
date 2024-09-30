@@ -126,7 +126,11 @@ pub(super) fn do_frame(
                                         Color32::from_rgb(45, 45, 45)
                                     });
                                     let mut clicked_any = false;
-                                    if ui.add(button).clicked() {
+                                    if ui
+                                        .add(button)
+                                        .on_hover_text(format!("Filter for {name}"))
+                                        .clicked()
+                                    {
                                         reqs_ref.toggle_have_tag(*tag_uid);
                                         reqs_ref.set_not_have_tag(*tag_uid, false);
                                         clicked_any = true;
@@ -139,7 +143,11 @@ pub(super) fn do_frame(
                                                 Color32::from_rgb(45, 45, 45)
                                             },
                                         );
-                                    if ui.add(neg_button).clicked() {
+                                    if ui
+                                        .add(neg_button)
+                                        .on_hover_text(format!("Filter for !{name}"))
+                                        .clicked()
+                                    {
                                         reqs_ref.toggle_not_have_tag(*tag_uid);
                                         reqs_ref.set_have_tag(*tag_uid, false);
                                         clicked_any = true;
