@@ -59,10 +59,14 @@ pub(super) fn do_frame(
             ui.horizontal(|ui| {
                 let te = TextEdit::singleline(tag_filter_string).hint_text("Filter");
                 ui.add(te);
-                if ui.button("Clear filter").clicked() {
+                if ui
+                    .button(icons::CLEAR)
+                    .on_hover_text("Clear filter string")
+                    .clicked()
+                {
                     tag_filter_string.clear();
                 }
-                if ui.button("Clear tags").clicked() {
+                if ui.button("Clear all filters").clicked() {
                     reqs.clear();
                     entries_view.update_from_collection(coll, reqs);
                 }
