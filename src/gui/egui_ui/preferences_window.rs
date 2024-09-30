@@ -9,8 +9,8 @@ use {
     egui_file_dialog::FileDialog,
     egui_sfml::{
         egui::{
-            Button, CollapsingHeader, ComboBox, Context, Grid, ScrollArea, SidePanel, Slider,
-            TextEdit, Ui, Window,
+            self, collapsing_header::CollapsingState, Button, ComboBox, Context, Grid, ScrollArea,
+            SidePanel, Slider, TextEdit, Ui, Window,
         },
         sfml::graphics::RenderTarget,
     },
@@ -139,20 +139,32 @@ pub(in crate::gui) fn do_frame(
                     ui.separator();
                     prefs.applications.retain(|k, app| {
                         let mut retain = true;
-                        CollapsingHeader::new(&app.name)
-                            .id_salt(k.0)
-                            .show(ui, |ui| {
-                                win.path_scratch_buffer = app.path.to_string_lossy().into_owned();
-                                app_edit_ui(
-                                    app,
-                                    &mut win.path_scratch_buffer,
-                                    ui,
-                                    &mut egui_state.file_dialog,
-                                );
-                                if ui.button("Delete").clicked() {
-                                    retain = false;
-                                }
-                            });
+                        let collap = CollapsingState::load_with_default_open(
+                            egui_ctx,
+                            egui::Id::new(&app.name).with(k.0),
+                            false,
+                        );
+                        let head_re = collap.show_header(ui, |ui| {
+                            ui.label(&app.name);
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    if ui.button("🗑").on_hover_text("Delete").clicked() {
+                                        retain = false;
+                                    }
+                                },
+                            );
+                        });
+                        head_re.body(|ui| {
+                            win.path_scratch_buffer = app.path.to_string_lossy().into_owned();
+                            app_edit_ui(
+                                app,
+                                &mut win.path_scratch_buffer,
+                                ui,
+                                &mut egui_state.file_dialog,
+                            );
+                        });
+                        ui.separator();
                         retain
                     });
                     ui.separator();
@@ -212,9 +224,12 @@ fn slider_with_default<T: ValuePref>(ui: &mut Ui, attribute: &mut T::Type) -> bo
 }
 
 fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui, file_dialog: &mut FileDialog) {
-    let te = TextEdit::singleline(&mut app.name).hint_text("Name");
-    ui.add(te);
-    ui.horizontal(|ui| {
+    Grid::new("grid").num_columns(2).show(ui, |ui| {
+        ui.label("Name");
+        let te = TextEdit::singleline(&mut app.name).hint_text("Name");
+        ui.add(te);
+        ui.end_row();
+        ui.label("Path");
         let te = TextEdit::singleline(path_buffer).hint_text("Path");
         if ui.add(te).changed() {
             app.path = PathBuf::from(path_buffer.clone());
@@ -222,13 +237,15 @@ fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui, file_dialog
         if ui.button("...").clicked() {
             file_dialog.select_file();
         }
-    });
-    let te = TextEdit::singleline(&mut app.args_string).hint_text("Argument list");
-    ui.add(te).on_hover_text(
-        "Use {} as an argument placeholder. \
+        ui.end_row();
+        ui.label("Arg list");
+        let te = TextEdit::singleline(&mut app.args_string).hint_text("Argument list");
+        ui.add(te).on_hover_text(
+            "Use {} as an argument placeholder. \
                                                         Empty argument list will automatically \
                                                         append entries as arguments",
-    );
+        );
+    });
     if let Some(path) = file_dialog.take_selected() {
         *path_buffer = path.to_string_lossy().into_owned();
         app.path = path;
