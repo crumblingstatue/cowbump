@@ -113,28 +113,37 @@ pub(in crate::gui) fn do_frame(
                 }
                 Category::FileAssoc => {
                     ui.heading("Applications");
-                    ui.separator();
                     ui.group(|ui| {
-                        app_edit_ui(
-                            &mut win.new_app,
-                            &mut win.new_app_path_string,
-                            ui,
-                            &mut egui_state.file_dialog,
+                        let collap = CollapsingState::load_with_default_open(
+                            egui_ctx,
+                            egui::Id::new("add_new_collap"),
+                            false,
                         );
-                        let butt = Button::new("Add new");
-                        if ui
-                            .add_enabled(
-                                !win.new_app.name.is_empty()
-                                    && !win.new_app.path.as_os_str().is_empty(),
-                                butt,
-                            )
-                            .clicked()
-                        {
-                            let uid = AppId(app.database.uid_counter.next());
-                            prefs.applications.insert(uid, win.new_app.clone());
-                            win.new_app = Default::default();
-                            win.new_app_path_string.clear();
-                        }
+                        let head_re = collap.show_header(ui, |ui| {
+                            ui.label("Add new");
+                        });
+                        head_re.body(|ui| {
+                            app_edit_ui(
+                                &mut win.new_app,
+                                &mut win.new_app_path_string,
+                                ui,
+                                &mut egui_state.file_dialog,
+                            );
+                            let butt = Button::new("✔ Add new application");
+                            if ui
+                                .add_enabled(
+                                    !win.new_app.name.is_empty()
+                                        && !win.new_app.path.as_os_str().is_empty(),
+                                    butt,
+                                )
+                                .clicked()
+                            {
+                                let uid = AppId(app.database.uid_counter.next());
+                                prefs.applications.insert(uid, win.new_app.clone());
+                                win.new_app = Default::default();
+                                win.new_app_path_string.clear();
+                            }
+                        });
                     });
                     ui.separator();
                     prefs.applications.retain(|k, app| {
