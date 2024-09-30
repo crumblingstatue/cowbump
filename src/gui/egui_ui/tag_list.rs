@@ -66,8 +66,17 @@ pub(super) fn do_frame(
                     reqs.clear();
                     entries_view.update_from_collection(coll, reqs);
                 }
-                if ui.button("Add new tag").clicked() {
-                    *new_tag = Some(String::new());
+                match new_tag {
+                    Some(_) => {
+                        if ui.button("Cancel new tag").clicked() {
+                            *new_tag = None;
+                        }
+                    }
+                    None => {
+                        if ui.button("Add new tag").clicked() {
+                            *new_tag = Some(String::new());
+                        }
+                    }
                 }
             });
             if let Some(tag) = new_tag.take_if(|tag| {
@@ -217,8 +226,17 @@ pub(super) fn do_frame(
                                 retain
                             });
                             ui.horizontal(|ui| {
-                                if ui.button("+").clicked() {
-                                    *new_name = Some(String::new());
+                                match new_name {
+                                    Some(_) => {
+                                        if ui.button("🗙").clicked() {
+                                            *new_name = None;
+                                        }
+                                    }
+                                    None => {
+                                        if ui.button("+").clicked() {
+                                            *new_name = Some(String::new());
+                                        }
+                                    }
                                 }
                                 if let Some(new) = new_name.take_if(|name| {
                                     ui.add(TextEdit::singleline(name).hint_text("New alias"))
@@ -244,8 +262,17 @@ pub(super) fn do_frame(
                                 coll.tags.get_mut(id).unwrap().implies.remove(&imply_id);
                             }
                             ui.horizontal(|ui| {
-                                if ui.button("+").clicked() {
-                                    *new_imply = Some(String::new());
+                                match new_imply {
+                                    Some(_) => {
+                                        if ui.button("🗙").clicked() {
+                                            *new_imply = None;
+                                        }
+                                    }
+                                    None => {
+                                        if ui.button("+").clicked() {
+                                            *new_imply = Some(String::new());
+                                        }
+                                    }
                                 }
                                 if let Some(imply) = new_imply.take_if(|imply| {
                                     ui.add(TextEdit::singleline(imply).hint_text("New implication"))
