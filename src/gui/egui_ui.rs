@@ -416,7 +416,7 @@ impl<'state, 'res, 'db> TexSrc<'state, 'res, 'db> {
     }
 }
 
-impl<'state, 'res, 'db> egui_sfml::UserTexSource for TexSrc<'state, 'res, 'db> {
+impl egui_sfml::UserTexSource for TexSrc<'_, '_, '_> {
     fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
         let tex = match self.coll {
             Some(coll) => {

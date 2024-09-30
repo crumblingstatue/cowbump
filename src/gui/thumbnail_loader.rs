@@ -1,7 +1,7 @@
 use {
     crate::{db::EntryMap, entry, gui::ThumbnailCache},
     egui_sfml::sfml::graphics::Texture,
-    image::{self, imageops::FilterType, ImageBuffer, ImageResult, Rgba},
+    image::{imageops::FilterType, ImageBuffer, ImageResult, Rgba},
     std::{
         collections::hash_map,
         path::Path,
