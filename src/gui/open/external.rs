@@ -178,6 +178,6 @@ pub fn feed_args(args_string: &str, paths: &[&Path], command: &mut Command) {
             } else {
                 command.arg(word);
             }
-        })
+        });
     }
 }

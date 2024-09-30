@@ -138,7 +138,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 Activity::Viewer => {
                     if !sf_egui.context().wants_pointer_input() {
-                        viewer::handle_event(&mut state, &event, &mut window)
+                        viewer::handle_event(&mut state, &event, &mut window);
                     }
                 }
             }
@@ -167,29 +167,29 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 Action::SelectNone => state.sel.current_mut().clear(),
                 Action::FindNext => {
-                    search_next(&mut state, coll.as_mut().unwrap(), window.size().y)
+                    search_next(&mut state, coll.as_mut().unwrap(), window.size().y);
                 }
                 Action::FindPrev => {
-                    search_prev(&mut state, coll.as_mut().unwrap(), window.size().y)
+                    search_prev(&mut state, coll.as_mut().unwrap(), window.size().y);
                 }
                 Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
                 Action::SortByPath => {
                     state.thumbs_view.sort_by = SortBy::Path;
                     state
                         .thumbs_view
-                        .update_from_collection(coll.as_ref().unwrap(), &state.filter)
+                        .update_from_collection(coll.as_ref().unwrap(), &state.filter);
                 }
                 Action::SortById => {
                     state.thumbs_view.sort_by = SortBy::Id;
                     state
                         .thumbs_view
-                        .update_from_collection(coll.as_ref().unwrap(), &state.filter)
+                        .update_from_collection(coll.as_ref().unwrap(), &state.filter);
                 }
                 Action::Shuffle => {
                     state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
                 }
                 Action::OpenEntriesWindow => {
-                    egui_state.add_entries_window(state.sel.current_mut().as_vec().clone())
+                    egui_state.add_entries_window(state.sel.current_mut().as_vec().clone());
                 }
             }
         }
@@ -290,7 +290,7 @@ impl SelectionBuf {
         self.buf.clear();
     }
     pub fn extend(&mut self, iter: impl IntoIterator<Item = entry::Id>) {
-        self.buf.extend(iter)
+        self.buf.extend(iter);
     }
     pub fn as_vec(&self) -> &Vec<entry::Id> {
         &self.buf
@@ -336,7 +336,7 @@ impl SelectionBufs {
         }
     }
     pub fn add_buf(&mut self, name: impl Into<String>) {
-        self.bufs.push(SelectionBuf::new(name))
+        self.bufs.push(SelectionBuf::new(name));
     }
 }
 

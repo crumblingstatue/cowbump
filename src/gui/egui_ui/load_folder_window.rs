@@ -246,7 +246,7 @@ fn read_dir_entries(root: &Path, sender: Sender<PathResult>) {
         let dir_entry_path = match dir_entry_path.strip_prefix(root) {
             Ok(stripped) => stripped,
             Err(e) => {
-                eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
+                eprintln!("Failed to add entry {dir_entry_path:?}: {e}");
                 continue;
             }
         };

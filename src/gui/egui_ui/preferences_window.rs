@@ -80,7 +80,7 @@ pub(in crate::gui) fn do_frame(
                 Category::Ui => {
                     ui.heading("Thumbnails view");
                     if slider_with_default::<ThumbnailsPerRow>(ui, &mut prefs.thumbs_per_row) {
-                        state.thumbs_view.resize(rw.size().x, prefs)
+                        state.thumbs_view.resize(rw.size().x, prefs);
                     }
                     ui.heading("Scrolling");
                     slider_with_default::<ScrollWheelMultiplier>(

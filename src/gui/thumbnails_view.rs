@@ -400,13 +400,13 @@ pub(in crate::gui) fn handle_event(
                 // height from it.
                 state.thumbs_view.go_to_bottom(window);
             } else if code == Key::F2 && !state.sel.current_mut().is_empty() {
-                egui_state.add_entries_window(state.sel.current_mut().as_vec().clone())
+                egui_state.add_entries_window(state.sel.current_mut().as_vec().clone());
             } else if code == Key::Escape
                 && !egui_ctx.wants_keyboard_input()
                 && !egui_ctx.wants_pointer_input()
                 && !egui_state.just_closed_window_with_esc
             {
-                state.sel.current_mut().clear()
+                state.sel.current_mut().clear();
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {

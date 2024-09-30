@@ -104,7 +104,7 @@ fn tag_ui(
             if reqs.have_tag_by_name(name, coll) {
                 text = text.background_color(Color32::from_rgb(20, 100, 20));
             } else if reqs.not_have_tag_by_name(name, coll) {
-                text = text.background_color(Color32::from_rgb(100, 20, 20))
+                text = text.background_color(Color32::from_rgb(100, 20, 20));
             }
             let re = ui.add(Label::new(text).sense(Sense::click()));
             re.context_menu(|ui| {
@@ -209,7 +209,7 @@ pub(super) fn do_frame(
                     }
                 }
             } else {
-                format!("{} entries", n_entries)
+                format!("{n_entries} entries")
             }
         };
         let esc_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Escape));
@@ -229,7 +229,7 @@ pub(super) fn do_frame(
                         let n_visible_entries = n_entries.min(64);
                         for &id in win.ids.iter().take(n_visible_entries) {
                             if !coll.entries.contains_key(&id) {
-                                ui.label(format!("No entry for id {:?}", id));
+                                ui.label(format!("No entry for id {id:?}"));
                                 continue;
                             }
                             let tex_size = get_tex_for_entry(
@@ -592,7 +592,7 @@ pub(super) fn do_frame(
                                     coll.entries[&del_uids[0]].path.display()
                                 )
                             } else {
-                                format!("About to delete {} entries", del_len)
+                                format!("About to delete {del_len} entries")
                             };
                             ui.label(&label_string);
                             ui.horizontal(|ui| {
@@ -648,7 +648,7 @@ pub(super) fn do_frame(
                                                 img_id,
                                                 &coll.entries,
                                                 &mut db.preferences,
-                                            )
+                                            );
                                         }
                                     }
                                 }

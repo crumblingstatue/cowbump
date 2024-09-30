@@ -159,15 +159,15 @@ impl ViewerState {
     }
 
     pub(in crate::gui) fn zoom_out(&mut self) {
-        self.scale -= 0.1
+        self.scale -= 0.1;
     }
 
     pub(in crate::gui) fn original_scale(&mut self) {
-        self.scale = 1.0
+        self.scale = 1.0;
     }
 
     pub(in crate::gui) fn zoom_in(&mut self) {
-        self.scale += 0.1
+        self.scale += 0.1;
     }
 
     pub(in crate::gui) fn next(&mut self, window: &RenderWindow) {

@@ -50,7 +50,7 @@ pub(super) fn do_frame(
                 state.wipe_search();
                 text_changed = true;
             }
-            ui.label(format!("{} results", count));
+            ui.label(format!("{count} results"));
             popup.string.make_ascii_lowercase();
             let enter_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Enter));
             if enter_pressed || egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {
@@ -63,7 +63,7 @@ pub(super) fn do_frame(
                         success = true;
                     }
                     Err(e) => {
-                        popup.err_string = format!("Error: {}", e);
+                        popup.err_string = format!("Error: {e}");
                         success = false;
                     }
                 }
@@ -71,7 +71,7 @@ pub(super) fn do_frame(
                 state.wipe_search();
                 text_changed = true;
             }
-            ui.memory_mut(|mem| mem.request_focus(re.id))
+            ui.memory_mut(|mem| mem.request_focus(re.id));
         });
     text_changed && success
 }

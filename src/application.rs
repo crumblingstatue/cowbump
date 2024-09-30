@@ -34,7 +34,7 @@ impl Application {
     pub(crate) fn load_last(&mut self) -> anyhow::Result<FolderChanges> {
         if let Some(&id) = self.database.recent.most_recent() {
             self.load_collection(id)
-                .with_context(|| format!("Loading collection {:?}", id))
+                .with_context(|| format!("Loading collection {id:?}"))
         } else {
             Ok(FolderChanges::default())
         }
@@ -69,7 +69,7 @@ impl Application {
         callback: impl FnMut(&Path, entry::Id),
     ) {
         if let Some((_id, coll)) = self.active_collection.as_mut() {
-            coll.apply_changes(changes, &mut self.database.uid_counter, callback)
+            coll.apply_changes(changes, &mut self.database.uid_counter, callback);
         }
     }
     pub fn save_active_collection(&self) -> anyhow::Result<()> {

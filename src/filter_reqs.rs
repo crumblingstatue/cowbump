@@ -46,43 +46,43 @@ impl Requirements {
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     pub fn toggle_have_tag(&mut self, id: tag::Id) {
-        self.set_have_tag(id, !self.have_tag(id))
+        self.set_have_tag(id, !self.have_tag(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     fn add_tag(&mut self, id: tag::Id) {
-        self.reqs.push(Req::Tag(id))
+        self.reqs.push(Req::Tag(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     fn remove_tag(&mut self, id: tag::Id) {
-        self.reqs.retain(|req| req != &Req::Tag(id))
+        self.reqs.retain(|req| req != &Req::Tag(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     fn add_not_tag(&mut self, id: tag::Id) {
-        self.reqs.push(Req::Not(Box::new(Req::Tag(id))))
+        self.reqs.push(Req::Not(Box::new(Req::Tag(id))));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     fn remove_not_tag(&mut self, id: tag::Id) {
         self.reqs
-            .retain(|req| req != &Req::Not(Box::new(Req::Tag(id))))
+            .retain(|req| req != &Req::Not(Box::new(Req::Tag(id))));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     pub fn set_have_tag(&mut self, id: tag::Id, have: bool) {
         if have {
-            self.add_tag(id)
+            self.add_tag(id);
         } else {
-            self.remove_tag(id)
+            self.remove_tag(id);
         }
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     pub fn toggle_not_have_tag(&mut self, id: tag::Id) {
-        self.set_not_have_tag(id, !self.not_have_tag(id))
+        self.set_not_have_tag(id, !self.not_have_tag(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     pub fn set_not_have_tag(&mut self, id: tag::Id, not_have: bool) {
         if not_have {
-            self.add_not_tag(id)
+            self.add_not_tag(id);
         } else {
-            self.remove_not_tag(id)
+            self.remove_not_tag(id);
         }
     }
     pub fn to_string(&self, tags: &Tags) -> String {
@@ -202,7 +202,7 @@ impl Req {
             Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)),
             Req::Tag(id) => tags[id].names[0].clone(),
             Req::Not(req) => format!("!{}", req.to_string(tags)),
-            Req::FilenameSub(substr) => format!("@f[{}]", substr),
+            Req::FilenameSub(substr) => format!("@f[{substr}]"),
             Req::PartOfSeq => "@seq".into(),
             Req::Untagged => "@untagged".into(),
         }

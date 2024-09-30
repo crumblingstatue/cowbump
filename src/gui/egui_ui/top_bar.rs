@@ -40,7 +40,7 @@ pub(super) fn do_frame(
                     if n_selected > 0 {
                         ui.separator();
                         ui.add(Label::new(
-                            RichText::new(format!("{} entries selected", n_selected))
+                            RichText::new(format!("{n_selected} entries selected"))
                                 .color(Color32::GREEN),
                         ));
                         if ui
@@ -268,7 +268,7 @@ fn file_menu(
                 "Quit without saving",
                 "Warning: All changes made this session will be lost.",
                 PromptAction::QuitNoSave,
-            )
+            );
         }
         ui.separator();
         if ui.button("⎆ Quit").clicked() {

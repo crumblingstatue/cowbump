@@ -199,7 +199,7 @@ impl Collection {
             let dir_entry_path = match dir_entry_path.strip_prefix(root) {
                 Ok(stripped) => stripped,
                 Err(e) => {
-                    eprintln!("Failed to add entry {:?}: {}", dir_entry_path, e);
+                    eprintln!("Failed to add entry {dir_entry_path:?}: {e}");
                     continue;
                 }
             };
@@ -249,7 +249,7 @@ fn slice_contains_any_of<T: PartialEq>(haystack: &[T], needles: &[T]) -> bool {
 
 fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: tag::Id) {
     for en in entries.values_mut() {
-        en.tags.retain(|&tag| tag != tag_to_cleanse)
+        en.tags.retain(|&tag| tag != tag_to_cleanse);
     }
 }
 

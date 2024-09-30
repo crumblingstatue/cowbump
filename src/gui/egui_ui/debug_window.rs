@@ -48,7 +48,7 @@ pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &Context) {
                             });
                         }
                         if win.auto_scroll {
-                            ui.scroll_to_cursor(Some(Align::BOTTOM))
+                            ui.scroll_to_cursor(Some(Align::BOTTOM));
                         }
                     });
                 });

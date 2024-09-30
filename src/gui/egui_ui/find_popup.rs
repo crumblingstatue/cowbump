@@ -60,7 +60,7 @@ pub(super) fn do_frame(
                         }
                     }
                     Err(e) => {
-                        popup.err_string = format!("Error: {}", e);
+                        popup.err_string = format!("Error: {e}");
                     }
                 }
                 popup.ac_state.input_changed = true;

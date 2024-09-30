@@ -5,7 +5,9 @@
     single_use_lifetimes,
     redundant_imports,
     trivial_casts,
-    clippy::unnecessary_wraps
+    clippy::unnecessary_wraps,
+    clippy::uninlined_format_args,
+    clippy::semicolon_if_nothing_returned
 )]
 
 mod application;
@@ -33,6 +35,6 @@ fn try_main() -> anyhow::Result<()> {
 fn main() {
     env_logger::init();
     if let Err(e) = try_main() {
-        gui::native_dialog::error_blocking("Fatal runtime error", e)
+        gui::native_dialog::error_blocking("Fatal runtime error", e);
     }
 }

@@ -169,7 +169,7 @@ pub(super) fn do_frame(
                                     if n == 1 {
                                         ""
                                     } else {
-                                        fstring = format!("{} ", n);
+                                        fstring = format!("{n} ");
                                         &fstring
                                     },
                                     if n == 1 { "" } else { "s" }
@@ -181,7 +181,7 @@ pub(super) fn do_frame(
                                     PromptAction::DeleteTags(
                                         selected_uids.iter().cloned().collect(),
                                     ),
-                                )
+                                );
                             }
                             if ui.button("Clear selection").clicked() {
                                 selected_uids.clear();

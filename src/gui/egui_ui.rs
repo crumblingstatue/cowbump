@@ -186,7 +186,7 @@ fn info_message(
     info_messages.push(InfoMessage {
         title: title.into(),
         message: message.into(),
-    })
+    });
 }
 
 struct InfoMessage {
@@ -361,7 +361,7 @@ fn prompt(
             title: title.into(),
         },
         action,
-    })
+    });
 }
 
 impl EguiState {
