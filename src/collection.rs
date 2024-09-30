@@ -253,7 +253,7 @@ fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: tag::Id) {
     }
 }
 
-/// Rename the last component (filename) of a PathBuf, and rename it on the filesystem too.
+/// Rename the last component (filename) of a `PathBuf`, and rename it on the filesystem too.
 fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) -> io::Result<()> {
     let mut new_buf = buf.clone();
     new_buf.pop();

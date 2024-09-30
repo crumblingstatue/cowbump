@@ -7,7 +7,8 @@
     trivial_casts,
     clippy::unnecessary_wraps,
     clippy::uninlined_format_args,
-    clippy::semicolon_if_nothing_returned
+    clippy::semicolon_if_nothing_returned,
+    clippy::doc_markdown
 )]
 
 mod application;
