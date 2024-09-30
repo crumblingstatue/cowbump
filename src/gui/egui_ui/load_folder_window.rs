@@ -184,8 +184,7 @@ pub(super) fn do_frame(
                                 Err(_) => None,
                             })
                             .collect::<Vec<_>>();
-                        let coll =
-                            Collection::make_new(&mut app.database.uid_counter, &paths).unwrap();
+                        let coll = Collection::make_new(&mut app.database.uid_counter, &paths);
                         let id = app.add_collection(coll, (*win.root).clone());
                         crate::gui::set_active_collection(
                             &mut state.thumbs_view,

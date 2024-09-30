@@ -40,24 +40,17 @@ pub struct Collection {
 pub struct Id(pub Uid);
 
 impl Collection {
-    pub fn make_new(
-        uid_counter: &mut UidCounter,
-        paths: &[impl AsRef<Path>],
-    ) -> anyhow::Result<Self> {
+    pub fn make_new(uid_counter: &mut UidCounter, paths: &[impl AsRef<Path>]) -> Self {
         let mut coll = Collection {
             entries: Entries::default(),
             tags: Tags::default(),
             sequences: Sequences::default(),
             tag_specific_apps: TagSpecificApps::default(),
         };
-        coll.update_from_paths(uid_counter, paths)?;
-        Ok(coll)
+        coll.update_from_paths(uid_counter, paths);
+        coll
     }
-    pub fn update_from_paths(
-        &mut self,
-        uid_counter: &mut UidCounter,
-        paths: &[impl AsRef<Path>],
-    ) -> anyhow::Result<()> {
+    pub fn update_from_paths(&mut self, uid_counter: &mut UidCounter, paths: &[impl AsRef<Path>]) {
         // Indices in the entries vector that correspond to valid entries that exist
         let mut valid_uids = EntrySet::default();
 
@@ -86,7 +79,6 @@ impl Collection {
             }
             keep
         });
-        Ok(())
     }
     pub fn add_tag_for(&mut self, entry: entry::Id, tag: tag::Id) {
         let tags = &mut self.entries.get_mut(&entry).unwrap().tags;

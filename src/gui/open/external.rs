@@ -69,7 +69,7 @@ pub fn open(
     candidates: &[OpenExternCandidate],
     preferences: &mut Preferences,
 ) -> anyhow::Result<()> {
-    let built_tasks = build_tasks(candidates, preferences)?;
+    let built_tasks = build_tasks(candidates, preferences);
     for task in built_tasks.tasks {
         let app = &preferences.applications[&task.app];
         let mut cmd = Command::new(&app.path);
@@ -104,7 +104,7 @@ struct BuiltTasks<'p> {
 fn build_tasks<'p>(
     candidates: &[OpenExternCandidate<'p>],
     preferences: &mut Preferences,
-) -> anyhow::Result<BuiltTasks<'p>> {
+) -> BuiltTasks<'p> {
     let mut tasks: Vec<Task> = Vec::new();
     let mut remainder = Vec::new();
     for candidate in candidates {
@@ -141,7 +141,7 @@ fn build_tasks<'p>(
             }
         }
     }
-    Ok(BuiltTasks { tasks, remainder })
+    BuiltTasks { tasks, remainder }
 }
 
 #[derive(Debug)]

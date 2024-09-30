@@ -4,7 +4,8 @@
     unused_qualifications,
     single_use_lifetimes,
     redundant_imports,
-    trivial_casts
+    trivial_casts,
+    clippy::unnecessary_wraps
 )]
 
 mod application;
