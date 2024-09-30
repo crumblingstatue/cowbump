@@ -36,7 +36,7 @@ use {
     egui_file_dialog::FileDialog,
     egui_modal::Modal,
     egui_sfml::{
-        egui::{Context, FontFamily, FontId, TextStyle, Window},
+        egui::{self, Context, FontFamily, FontId, TextStyle, Window},
         sfml::{
             self,
             graphics::{RenderTarget, RenderWindow, Texture},
@@ -139,24 +139,24 @@ enum OkCancel {
     Cancel,
 }
 
-fn ok_cancel_prompt(ctx: &Context, title: &str, msg: &str) -> Option<OkCancel> {
+fn ok_cancel_prompt(modal: &Modal, title: &str, msg: &str) -> Option<OkCancel> {
     let mut clicked = None;
-    Window::new(title)
-        .collapsible(false)
-        .resizable(false)
-        .show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
+    modal.show(|ui| {
+        ui.with_layout(
+            egui::Layout::top_down_justified(egui::Align::Center),
+            |ui| {
+                ui.heading(title);
                 ui.label(msg);
-                ui.horizontal(|ui| {
-                    if ui.button("Ok").clicked() {
-                        clicked = Some(OkCancel::Ok);
-                    }
-                    if ui.button("Cancel").clicked() {
-                        clicked = Some(OkCancel::Cancel);
-                    }
-                })
-            })
-        });
+                if ui.button([icons::CHECK, " Ok"].concat()).clicked() {
+                    clicked = Some(OkCancel::Ok);
+                }
+                if ui.button(icons::CANCEL_TEXT).clicked() {
+                    clicked = Some(OkCancel::Cancel);
+                }
+            },
+        );
+    });
+    modal.open();
     clicked
 }
 
@@ -315,7 +315,7 @@ pub(super) fn do_ui(
         egui_state.file_op = None;
     }
     do_info_messages(egui_state, egui_ctx);
-    do_prompts(egui_state, egui_ctx, app);
+    do_prompts(egui_state, app);
     egui_state.file_dialog.update(egui_ctx);
     egui_state.modal.show_dialog();
     Ok(())
@@ -327,9 +327,9 @@ fn do_info_messages(egui_state: &mut EguiState, egui_ctx: &Context) {
         .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
 }
 
-fn do_prompts(egui_state: &mut EguiState, egui_ctx: &Context, app: &mut Application) {
+fn do_prompts(egui_state: &mut EguiState, app: &mut Application) {
     egui_state.prompts.retain(|prompt| {
-        match ok_cancel_prompt(egui_ctx, &prompt.msg.title, &prompt.msg.message) {
+        match ok_cancel_prompt(&egui_state.modal, &prompt.msg.title, &prompt.msg.message) {
             Some(OkCancel::Ok) => match prompt.action {
                 PromptAction::QuitNoSave => {
                     egui_state.action = Some(Action::QuitNoSave);
