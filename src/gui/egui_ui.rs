@@ -14,6 +14,7 @@ mod sequences;
 mod tag_autocomplete;
 mod tag_list;
 mod top_bar;
+mod ui_ext;
 
 use {
     self::{

@@ -1,5 +1,5 @@
 use {
-    super::{icons, EguiState},
+    super::{icons, ui_ext::UiExt, EguiState},
     crate::{
         collection::Collection,
         db::{TagSet, UidCounter},
@@ -124,7 +124,7 @@ pub(super) fn do_frame(
                                     }
                                     let has_this_tag = reqs.have_tag(*tag_uid);
                                     let doesnt_have_this_tag = reqs.not_have_tag(*tag_uid);
-                                    let button = Button::new("✔").fill(if has_this_tag {
+                                    let button = Button::new(icons::CHECK).fill(if has_this_tag {
                                         Color32::from_rgb(43, 109, 57)
                                     } else {
                                         Color32::from_rgb(45, 45, 45)
@@ -215,9 +215,38 @@ pub(super) fn do_frame(
                             }
                             ui.heading(format!("Tag {} (#{})", coll.tags[id].names[0], id.0));
                             ui.separator();
-                            ui.label("Names");
-                            ui.add_space(4.0);
                             let tag = coll.tags.get_mut(id).unwrap();
+                            ui.horizontal(|ui| {
+                                ui.label("Names");
+                                ui.rtl(|ui| {
+                                    let mut confirm = false;
+                                    match new_name {
+                                        Some(_) => {
+                                            if ui.button(icons::CANCEL).clicked() {
+                                                *new_name = None;
+                                            }
+                                            if ui.button(icons::CHECK).clicked() {
+                                                confirm = true;
+                                            }
+                                        }
+                                        None => {
+                                            if ui.button(icons::ADD).clicked() {
+                                                *new_name = Some(String::new());
+                                            }
+                                        }
+                                    }
+                                    if let Some(new) = new_name.take_if(|name| {
+                                        let re = ui
+                                            .add(TextEdit::singleline(name).hint_text("New alias"));
+                                        (re.lost_focus()
+                                            && ui.input(|inp| inp.key_pressed(Key::Enter)))
+                                            | confirm
+                                    }) {
+                                        tag.names.push(new);
+                                    };
+                                });
+                            });
+                            ui.add_space(4.0);
                             let only_one = tag.names.len() == 1;
                             tag.names.retain_mut(|name| {
                                 let mut retain = true;
@@ -232,29 +261,42 @@ pub(super) fn do_frame(
                                 });
                                 retain
                             });
-                            ui.horizontal(|ui| {
-                                match new_name {
-                                    Some(_) => {
-                                        if ui.button(icons::CANCEL).clicked() {
-                                            *new_name = None;
-                                        }
-                                    }
-                                    None => {
-                                        if ui.button(icons::ADD).clicked() {
-                                            *new_name = Some(String::new());
-                                        }
-                                    }
-                                }
-                                if let Some(new) = new_name.take_if(|name| {
-                                    ui.add(TextEdit::singleline(name).hint_text("New alias"))
-                                        .lost_focus()
-                                        && ui.input(|inp| inp.key_pressed(Key::Enter))
-                                }) {
-                                    tag.names.push(new);
-                                };
-                            });
                             ui.add_space(12.0);
-                            ui.label("Implies");
+                            ui.horizontal(|ui| {
+                                ui.label("Implies");
+                                ui.rtl(|ui| {
+                                    let mut confirm = false;
+                                    match new_imply {
+                                        Some(_) => {
+                                            if ui.button(icons::CANCEL).clicked() {
+                                                *new_imply = None;
+                                            }
+                                            if ui.button(icons::CHECK).clicked() {
+                                                confirm = true;
+                                            }
+                                        }
+                                        None => {
+                                            if ui.button(icons::ADD).clicked() {
+                                                *new_imply = Some(String::new());
+                                            }
+                                        }
+                                    }
+                                    if let Some(imply) = new_imply.take_if(|imply| {
+                                        let re = ui.add(
+                                            TextEdit::singleline(imply)
+                                                .hint_text("New implication"),
+                                        );
+                                        (re.lost_focus()
+                                            && ui.input(|inp| inp.key_pressed(Key::Enter)))
+                                            | confirm
+                                    }) {
+                                        if let Some(resolved_id) = coll.resolve_tag(&imply) {
+                                            let tag = coll.tags.get_mut(id).unwrap();
+                                            tag.implies.insert(resolved_id);
+                                        }
+                                    }
+                                })
+                            });
                             ui.add_space(4.0);
                             let mut remove = None;
                             for imply_id in &coll.tags[id].implies {
@@ -268,30 +310,6 @@ pub(super) fn do_frame(
                             if let Some(imply_id) = remove {
                                 coll.tags.get_mut(id).unwrap().implies.remove(&imply_id);
                             }
-                            ui.horizontal(|ui| {
-                                match new_imply {
-                                    Some(_) => {
-                                        if ui.button(icons::CANCEL).clicked() {
-                                            *new_imply = None;
-                                        }
-                                    }
-                                    None => {
-                                        if ui.button(icons::ADD).clicked() {
-                                            *new_imply = Some(String::new());
-                                        }
-                                    }
-                                }
-                                if let Some(imply) = new_imply.take_if(|imply| {
-                                    ui.add(TextEdit::singleline(imply).hint_text("New implication"))
-                                        .lost_focus()
-                                        && ui.input(|inp| inp.key_pressed(Key::Enter))
-                                }) {
-                                    if let Some(resolved_id) = coll.resolve_tag(&imply) {
-                                        let tag = coll.tags.get_mut(id).unwrap();
-                                        tag.implies.insert(resolved_id);
-                                    }
-                                }
-                            });
                         }
                     }
                 });

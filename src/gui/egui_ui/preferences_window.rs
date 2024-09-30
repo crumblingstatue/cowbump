@@ -129,7 +129,7 @@ pub(in crate::gui) fn do_frame(
                                 ui,
                                 &mut egui_state.file_dialog,
                             );
-                            let butt = Button::new("✔ Add new application");
+                            let butt = Button::new([icons::CHECK, " Add new application"].concat());
                             if ui
                                 .add_enabled(
                                     !win.new_app.name.is_empty()
