@@ -3,7 +3,6 @@ use {
     crate::{
         collection::Collection,
         db::{TagSet, UidCounter},
-        dlog,
         gui::{
             egui_ui::{prompt, PromptAction},
             State,
@@ -11,7 +10,6 @@ use {
         tag,
     },
     egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit},
-    std::mem,
 };
 
 #[derive(Default)]
@@ -20,12 +18,9 @@ pub struct TagWindow {
     pub filter_string: String,
     pub selected_uids: TagSet,
     pub prop_active: Option<tag::Id>,
-    pub new_name: String,
-    pub new_name_add: bool,
-    pub new_imply: String,
-    pub new_imply_add: bool,
-    pub new_tag_buf: String,
-    pub new_tag_add: bool,
+    pub new_name: Option<String>,
+    pub new_imply: Option<String>,
+    pub new_tag: Option<String>,
 }
 
 impl TagWindow {
@@ -53,11 +48,8 @@ pub(super) fn do_frame(
     let selected_uids = &mut egui_state.tag_window.selected_uids;
     let active = &mut egui_state.tag_window.prop_active;
     let new_name = &mut egui_state.tag_window.new_name;
-    let new_name_add = &mut egui_state.tag_window.new_name_add;
     let new_imply = &mut egui_state.tag_window.new_imply;
-    let new_imply_add = &mut egui_state.tag_window.new_imply_add;
-    let new_tag_buf = &mut egui_state.tag_window.new_tag_buf;
-    let new_tag_add = &mut egui_state.tag_window.new_tag_add;
+    let new_tag = &mut egui_state.tag_window.new_tag;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     let prompts = &mut egui_state.prompts;
@@ -75,16 +67,15 @@ pub(super) fn do_frame(
                     entries_view.update_from_collection(coll, reqs);
                 }
                 if ui.button("Add new tag").clicked() {
-                    *new_tag_add ^= true;
+                    *new_tag = Some(String::new());
                 }
             });
-            if *new_tag_add
-                && ui
-                    .add(TextEdit::singleline(new_tag_buf).hint_text("New tag"))
+            if let Some(tag) = new_tag.take_if(|tag| {
+                ui.add(TextEdit::singleline(tag).hint_text("New tag"))
                     .lost_focus()
-                && ui.input(|inp| inp.key_pressed(Key::Enter))
-            {
-                coll.add_new_tag_from_text(mem::take(new_tag_buf), uid_counter);
+                    && ui.input(|inp| inp.key_pressed(Key::Enter))
+            }) {
+                coll.add_new_tag_from_text(tag, uid_counter);
             }
             ui.separator();
             ui.horizontal(|ui| {
@@ -227,16 +218,15 @@ pub(super) fn do_frame(
                             });
                             ui.horizontal(|ui| {
                                 if ui.button("+").clicked() {
-                                    *new_name_add = true;
+                                    *new_name = Some(String::new());
                                 }
-                                if *new_name_add
-                                    && ui
-                                        .add(TextEdit::singleline(new_name).hint_text("New alias"))
+                                if let Some(new) = new_name.take_if(|name| {
+                                    ui.add(TextEdit::singleline(name).hint_text("New alias"))
                                         .lost_focus()
-                                    && ui.input(|inp| inp.key_pressed(Key::Enter))
-                                {
-                                    tag.names.push(mem::take(new_name));
-                                }
+                                        && ui.input(|inp| inp.key_pressed(Key::Enter))
+                                }) {
+                                    tag.names.push(new);
+                                };
                             });
                             ui.add_space(12.0);
                             ui.label("Implies");
@@ -255,23 +245,16 @@ pub(super) fn do_frame(
                             }
                             ui.horizontal(|ui| {
                                 if ui.button("+").clicked() {
-                                    *new_imply_add = true;
+                                    *new_imply = Some(String::new());
                                 }
-                                if *new_imply_add
-                                    && ui
-                                        .add(
-                                            TextEdit::singleline(new_imply)
-                                                .hint_text("New implication"),
-                                        )
+                                if let Some(imply) = new_imply.take_if(|imply| {
+                                    ui.add(TextEdit::singleline(imply).hint_text("New implication"))
                                         .lost_focus()
-                                    && ui.input(|inp| inp.key_pressed(Key::Enter))
-                                {
-                                    if let Some(resolved_id) = coll.resolve_tag(new_imply) {
+                                        && ui.input(|inp| inp.key_pressed(Key::Enter))
+                                }) {
+                                    if let Some(resolved_id) = coll.resolve_tag(&imply) {
                                         let tag = coll.tags.get_mut(id).unwrap();
                                         tag.implies.insert(resolved_id);
-                                        new_imply.clear();
-                                        dlog!("Success?");
-                                        dlog!("{:?}", tag);
                                     }
                                 }
                             });
