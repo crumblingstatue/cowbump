@@ -177,7 +177,7 @@ pub(super) fn do_frame(
                     if !selected_uids.is_empty() {
                         ui.separator();
                         ui.horizontal(|ui| {
-                            if ui.button("Delete").clicked() {
+                            if ui.button([icons::REMOVE, " Delete"].concat()).clicked() {
                                 let n = selected_uids.len();
                                 let fstring;
                                 let msg = format!(
@@ -199,7 +199,10 @@ pub(super) fn do_frame(
                                     ),
                                 );
                             }
-                            if ui.button("Clear selection").clicked() {
+                            if ui
+                                .button([icons::CLEAR, " Clear selection"].concat())
+                                .clicked()
+                            {
                                 selected_uids.clear();
                             }
                         });
@@ -214,10 +217,27 @@ pub(super) fn do_frame(
                         }
                         Some(id) => {
                             if !coll.tags.contains_key(id) {
-                                // Prevent crashing if we just deleted this tag
+                                ui.label(format!("No such tag with id {id:?}"));
                                 return;
                             }
-                            ui.heading(format!("Tag {} (#{})", coll.tags[id].names[0], id.0));
+                            ui.horizontal(|ui| {
+                                let name = format!("Tag {} (#{})", coll.tags[id].names[0], id.0);
+                                ui.heading(&name);
+                                ui.rtl(|ui| {
+                                    if ui
+                                        .button(icons::REMOVE)
+                                        .on_hover_text("Delete tag")
+                                        .clicked()
+                                    {
+                                        prompt(
+                                            prompts,
+                                            "Tag deletion",
+                                            format!("Really delete the tag \"{name}\"?"),
+                                            PromptAction::DeleteTags([*id].to_vec()),
+                                        );
+                                    }
+                                });
+                            });
                             ui.separator();
                             let tag = coll.tags.get_mut(id).unwrap();
                             ui.horizontal(|ui| {
