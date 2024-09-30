@@ -297,9 +297,9 @@ fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
             ui.close_menu();
             egui_state.changes_window.open ^= true;
         }
-        if ui.button("Tag specific applications").clicked() {
+        if ui.button("Preferences").clicked() {
             ui.close_menu();
-            egui_state.tag_specific_apps_window.open ^= true;
+            egui_state.coll_prefs_window.open ^= true;
         }
     });
 }

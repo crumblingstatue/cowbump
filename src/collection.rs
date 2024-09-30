@@ -12,6 +12,7 @@ use {
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
     std::{
+        ffi::OsStr,
         io,
         path::{Path, PathBuf},
     },
@@ -34,6 +35,9 @@ pub struct Collection {
     pub sequences: Sequences,
     #[serde(default)]
     pub tag_specific_apps: TagSpecificApps,
+    /// Extensions that are ignored when updating from folder contents
+    #[serde(default)]
+    pub ignored_extensions: Vec<String>,
 }
 
 #[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
@@ -46,6 +50,7 @@ impl Collection {
             tags: Tags::default(),
             sequences: Sequences::default(),
             tag_specific_apps: TagSpecificApps::default(),
+            ignored_extensions: Vec::new(),
         };
         coll.update_from_paths(uid_counter, paths);
         coll
@@ -193,6 +198,14 @@ impl Collection {
         for dir_entry in wd {
             let dir_entry = dir_entry?;
             if dir_entry.file_type().is_dir() {
+                continue;
+            }
+            let ignored_ext = dir_entry.path().extension().is_some_and(|ext| {
+                self.ignored_extensions
+                    .iter()
+                    .any(|ign_ext| ext == AsRef::<OsStr>::as_ref(ign_ext))
+            });
+            if ignored_ext {
                 continue;
             }
             let dir_entry_path = dir_entry.into_path();

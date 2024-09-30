@@ -1,5 +1,6 @@
 mod batch_rename_window;
 mod changes_window;
+mod coll_prefs_window;
 mod collections_window;
 mod debug_window;
 mod entries_window;
@@ -11,13 +12,13 @@ mod query_popup;
 mod sequences;
 mod tag_autocomplete;
 mod tag_list;
-mod tag_specific_apps_window;
 mod top_bar;
 
 use {
     self::{
         batch_rename_window::BatchRenameWindow,
         changes_window::ChangesWindow,
+        coll_prefs_window::CollPrefsWindow,
         collections_window::CollectionsDbWindow,
         debug_window::DebugWindow,
         entries_window::EntriesWindow,
@@ -26,7 +27,6 @@ use {
         query_popup::QueryPopup,
         sequences::{SequenceWindow, SequencesWindow},
         tag_list::TagWindow,
-        tag_specific_apps_window::TagSpecificAppsWindow,
     },
     super::{get_tex_for_entry, resources::Resources},
     crate::{application::Application, collection::Collection, entry, gui::State, tag},
@@ -61,7 +61,7 @@ pub(crate) struct EguiState {
     pub filter_popup: QueryPopup,
     /// Uid counter for egui entities like windows
     egui_uid_counter: u64,
-    pub(crate) tag_specific_apps_window: TagSpecificAppsWindow,
+    pub(crate) coll_prefs_window: CollPrefsWindow,
     pub(crate) batch_rename_window: BatchRenameWindow,
     pub(crate) collections_db_window: CollectionsDbWindow,
     pub(crate) file_dialog: FileDialog,
@@ -96,7 +96,7 @@ impl EguiState {
             find_popup: Default::default(),
             filter_popup: Default::default(),
             egui_uid_counter: 0,
-            tag_specific_apps_window: Default::default(),
+            coll_prefs_window: Default::default(),
             batch_rename_window: Default::default(),
             collections_db_window: Default::default(),
             file_dialog: FileDialog::new(),
@@ -240,12 +240,7 @@ pub(super) fn do_ui(
             &mut app.database.preferences,
             win,
         );
-        tag_specific_apps_window::do_frame(
-            egui_state,
-            coll,
-            egui_ctx,
-            &mut app.database.preferences,
-        );
+        coll_prefs_window::do_frame(egui_state, coll, egui_ctx, &mut app.database.preferences);
         entries_window::do_frame(
             state,
             egui_state,

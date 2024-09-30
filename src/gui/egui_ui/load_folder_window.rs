@@ -14,6 +14,7 @@ use {
         sfml::{graphics::Texture, SfBox},
     },
     std::{
+        ffi::OsStr,
         io, mem,
         path::{Path, PathBuf},
         sync::{
@@ -34,6 +35,7 @@ pub struct LoadFolderWindow {
     res_select: Option<usize>,
     res_hover: Option<usize>,
     pub texture: Option<SfBox<Texture>>,
+    ign_ext_buf: String,
 }
 
 struct PathAdd {
@@ -163,12 +165,34 @@ pub(super) fn do_frame(
             };
             ui.separator();
             ui.horizontal(|ui| {
-                if ui.button("Cancel").clicked() {
+                ui.label("Ignored extensions (comma separated)");
+                ui.text_edit_singleline(&mut win.ign_ext_buf);
+                if ui.button("✔ Apply").clicked() {
+                    let ign_exts = win.ign_ext_buf.to_ignore_vec();
+                    win.results.retain(|res| {
+                        let mut retain = true;
+                        if let Ok(en) = res {
+                            let ext_matches = en.path.extension().is_some_and(|ext| {
+                                ign_exts
+                                    .iter()
+                                    .any(|block_ext| ext == AsRef::<OsStr>::as_ref(block_ext))
+                            });
+                            if ext_matches {
+                                retain = false;
+                            }
+                        }
+                        retain
+                    });
+                }
+            });
+            ui.separator();
+            ui.horizontal(|ui| {
+                if ui.button("🗙 Cancel").clicked() {
                     cancel = true;
                 }
                 let button;
                 if win.state.is_some() {
-                    button = Button::new("Create new collection");
+                    button = Button::new("🗋 Create new collection");
                     if ui.add_enabled(done, button).clicked() {
                         let paths = win
                             .results
@@ -184,7 +208,13 @@ pub(super) fn do_frame(
                                 Err(_) => None,
                             })
                             .collect::<Vec<_>>();
-                        let coll = Collection::make_new(&mut app.database.uid_counter, &paths);
+                        let mut coll = Collection::make_new(&mut app.database.uid_counter, &paths);
+                        coll.ignored_extensions = win
+                            .ign_ext_buf
+                            .to_ignore_vec()
+                            .into_iter()
+                            .map(ToOwned::to_owned)
+                            .collect();
                         let id = app.add_collection(coll, (*win.root).clone());
                         crate::gui::set_active_collection(
                             &mut state.thumbs_view,
@@ -251,5 +281,15 @@ fn read_dir_entries(root: &Path, sender: Sender<PathResult>) {
             }
         };
         sender.send(Ok(dir_entry_path.to_owned())).unwrap();
+    }
+}
+
+trait IgnoreStrExt {
+    fn to_ignore_vec(&self) -> Vec<&str>;
+}
+
+impl IgnoreStrExt for str {
+    fn to_ignore_vec(&self) -> Vec<&str> {
+        self.split(',').map(|seg| seg.trim()).collect()
     }
 }
