@@ -1,6 +1,6 @@
 use {
     crate::{collection::Collection, tag},
-    egui_sfml::egui::{popup_below_widget, Key, PopupCloseBehavior, Ui},
+    egui_sfml::egui::{self, popup_below_widget, Key, PopupCloseBehavior, Ui},
     std::ops::Range,
 };
 
@@ -31,7 +31,7 @@ pub(super) fn tag_autocomplete_popup(
     state: &mut AcState,
     coll: &mut Collection,
     ui: &mut Ui,
-    response: &egui_sfml::egui::Response,
+    response: &egui::Response,
     up_pressed: bool,
     down_pressed: bool,
 ) -> bool {
@@ -90,7 +90,18 @@ pub(super) fn tag_autocomplete_popup(
             Some(idx) if state.input_changed => state.select = Some(idx),
             _ => {}
         }
-        let specials = ["@any", "@all", "@none", "@f", "@seq", "@untagged"];
+        let specials = [
+            ("@any", "@any[tag1 tag2 ...]", "Any of the provided tags"),
+            ("@all", "@all[tag1 tag2 ...]", "All of the provided tags"),
+            ("@none", "@none[tag1 tag2 ...]", "None of the provided tags"),
+            (
+                "@f",
+                "@f[path-segment]",
+                "Entries matching a filename or path segment",
+            ),
+            ("@seq", "@seq", "Part of a sequence"),
+            ("@untagged", "@untagged", "Entries that don't have any tags"),
+        ];
         let last_is_special = last.bytes().next() == Some(b'@');
         if last_is_special {
             len += specials.len();
@@ -114,18 +125,26 @@ pub(super) fn tag_autocomplete_popup(
                 PopupCloseBehavior::CloseOnClickOutside,
                 |ui| {
                     if last_is_special {
-                        for (i, special) in specials.into_iter().enumerate() {
-                            if ui
-                                .selectable_label(state.select == Some(i), special)
-                                .clicked()
-                            {
-                                complete = C::Special(special);
+                        for (i, (ident, usage, desc)) in specials.into_iter().enumerate() {
+                            let selected = state.select == Some(i);
+                            let re = ui.selectable_label(selected, usage);
+                            if selected {
+                                egui::Area::new(egui::Id::new("suggestion_popup").with(i))
+                                    .fixed_pos(re.rect.right_top() + egui::vec2(16.0, 0.0))
+                                    .show(ui.ctx(), |ui| {
+                                        egui::Frame::window(ui.style()).show(ui, |ui| {
+                                            ui.label(["ℹ ", desc].concat());
+                                        });
+                                    });
+                            }
+                            if re.clicked() {
+                                complete = C::Special(ident);
                             }
                             if state.select == Some(i)
                                 && (ui.input(|inp| inp.key_pressed(Key::Tab))
                                     || ui.input(|inp| inp.key_pressed(Key::Enter)))
                             {
-                                complete = C::Special(special);
+                                complete = C::Special(ident);
                             }
                         }
                     } else {
