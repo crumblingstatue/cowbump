@@ -73,7 +73,7 @@ pub struct App {
 pub struct AppId(pub Uid);
 
 pub trait ValuePref {
-    type Type: Numeric = f32;
+    type Type: Numeric;
     const DEFAULT: Self::Type;
     const RANGE: RangeInclusive<Self::Type>;
     const NAME: &'static str;
@@ -84,6 +84,7 @@ pub trait ValuePref {
 
 pub enum ScrollWheelMultiplier {}
 impl ValuePref for ScrollWheelMultiplier {
+    type Type = f32;
     const DEFAULT: f32 = 64.0;
     const RANGE: RangeInclusive<f32> = 2.0..=512.0;
     const NAME: &'static str = "Mouse wheel scrolling multiplier";
@@ -91,6 +92,7 @@ impl ValuePref for ScrollWheelMultiplier {
 
 pub enum UpDownArrowScrollSpeed {}
 impl ValuePref for UpDownArrowScrollSpeed {
+    type Type = f32;
     const DEFAULT: f32 = 8.0;
     const RANGE: RangeInclusive<f32> = 1.0..=64.0;
     const NAME: &'static str = "Up/Down arrow key scroll speed";
