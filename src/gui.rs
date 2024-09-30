@@ -377,7 +377,7 @@ fn get_tex_for_entry<'t>(
 ) -> (bool, &'t Texture) {
     let (has_img, texture) = match thumbnail_cache.get(&id) {
         Some(opt_texture) => match *opt_texture {
-            Some(ref tex) => (true, tex as &Texture),
+            Some(ref tex) => (true, &**tex),
             None => (false, &*res.error_texture),
         },
         None => {

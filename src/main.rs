@@ -1,6 +1,11 @@
 #![feature(try_blocks, let_chains)]
 #![windows_subsystem = "windows"]
-#![warn(unused_qualifications, single_use_lifetimes, redundant_imports)]
+#![warn(
+    unused_qualifications,
+    single_use_lifetimes,
+    redundant_imports,
+    trivial_casts
+)]
 
 mod application;
 mod collection;
