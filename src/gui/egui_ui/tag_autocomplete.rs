@@ -35,9 +35,11 @@ pub(super) fn tag_autocomplete_popup(
     up_pressed: bool,
     down_pressed: bool,
 ) -> bool {
-    macro ret($x:expr) {
-        state.input_changed = false;
-        return $x;
+    macro_rules! ret {
+        ($x:expr) => {
+            state.input_changed = false;
+            return $x;
+        };
     }
     state.applied = false;
     let popup_id = ui.make_persistent_id("tag_completion");
@@ -63,8 +65,10 @@ pub(super) fn tag_autocomplete_popup(
     }
     if !string.is_empty() && !last.is_empty() {
         let mut exact_match = None;
-        macro filt_predicate($tag:expr) {
-            $tag.names.iter().any(|tag| tag.contains(last))
+        macro_rules! filt_predicate {
+            ($tag:expr) => {
+                $tag.names.iter().any(|tag| tag.contains(last))
+            };
         }
         // Get length of list and also whether there is an exact match
         let mut i = 0;

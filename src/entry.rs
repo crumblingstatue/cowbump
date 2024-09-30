@@ -2,9 +2,8 @@ use {
     crate::{
         collection::{Sequences, Tags},
         db::{TagSet, Uid},
-        entry,
+        dlog, entry,
         filter_reqs::{Req, Requirements},
-        gui::debug_log::dlog,
         tag,
     },
     serde_derive::{Deserialize, Serialize},

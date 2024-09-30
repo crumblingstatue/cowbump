@@ -3,8 +3,8 @@ use {
     crate::{
         collection::Collection,
         db::{TagSet, UidCounter},
+        dlog,
         gui::{
-            debug_log::dlog,
             egui_ui::{prompt, PromptAction},
             State,
         },

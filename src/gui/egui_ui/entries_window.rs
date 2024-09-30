@@ -7,10 +7,9 @@ use {
     crate::{
         collection::Collection,
         db::Db,
-        entry,
+        dlog, entry,
         filter_reqs::Requirements,
         gui::{
-            debug_log::dlog,
             get_tex_for_entry, native_dialog,
             open::{
                 builtin,
