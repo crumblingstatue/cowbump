@@ -104,7 +104,7 @@ pub(super) fn tag_autocomplete_popup(
                 "@f[]",
             ),
             ("@seq", "Part of a sequence", "@seq"),
-            ("@untagged", "Entries that don't have any tags", "untagged"),
+            ("@untagged", "Entries that don't have any tags", "@untagged"),
         ];
         let last_is_special = last.bytes().next() == Some(b'@');
         if last_is_special {
@@ -129,6 +129,8 @@ pub(super) fn tag_autocomplete_popup(
                 PopupCloseBehavior::CloseOnClickOutside,
                 |ui| {
                     if last_is_special {
+                        let enter =
+                            ui.input_mut(|inp| inp.consume_key(egui::Modifiers::NONE, Key::Enter));
                         for (i, (usage, desc, ins)) in specials.into_iter().enumerate() {
                             let selected = state.select == Some(i);
                             let re = ui.selectable_label(selected, usage);
@@ -141,14 +143,11 @@ pub(super) fn tag_autocomplete_popup(
                                         });
                                     });
                             }
-                            if re.clicked() {
+                            if re.clicked() || (selected && enter) {
                                 complete = C::Special(ins);
                                 state.select = Some(i);
                             }
-                            if state.select == Some(i)
-                                && (ui.input(|inp| inp.key_pressed(Key::Tab))
-                                    || ui.input(|inp| inp.key_pressed(Key::Enter)))
-                            {
+                            if selected && ui.input(|inp| inp.key_pressed(Key::Tab)) {
                                 complete = C::Special(ins);
                             }
                         }
