@@ -2,7 +2,7 @@ use {
     crate::{
         collection::{Sequences, Tags},
         db::{TagSet, Uid},
-        dlog, entry,
+        dlog,
         filter_reqs::{Req, Requirements},
         tag,
     },
@@ -82,12 +82,12 @@ fn tag_satisfies_required_tag(
 }
 
 pub fn filter_map(
-    uid: entry::Id,
+    uid: Id,
     entry: &Entry,
     reqs: &Requirements,
     tags: &Tags,
     sequences: &Sequences,
-) -> Option<entry::Id> {
+) -> Option<Id> {
     if entry.all_reqs_satisfied(uid, reqs, tags, sequences) {
         Some(uid)
     } else {

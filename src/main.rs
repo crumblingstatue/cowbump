@@ -1,5 +1,6 @@
 #![feature(try_blocks, let_chains)]
 #![windows_subsystem = "windows"]
+#![warn(unused_qualifications)]
 
 mod application;
 mod collection;

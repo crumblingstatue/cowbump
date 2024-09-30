@@ -3,10 +3,7 @@ use {
     crate::{
         application::Application,
         collection,
-        gui::{
-            native_dialog::{self, error_blocking},
-            viewer, Activity, SelectionBuf, State,
-        },
+        gui::{native_dialog::error_blocking, viewer, Activity, SelectionBuf, State},
     },
     egui_sfml::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
@@ -140,7 +137,7 @@ fn help_menu(
             ui.label("= Debug =");
         });
         if ui
-            .add(egui::Button::new("Save screenshot").shortcut_text("F11"))
+            .add(Button::new("Save screenshot").shortcut_text("F11"))
             .clicked()
         {
             ui.close_menu();
@@ -235,7 +232,7 @@ fn file_menu(
                             );
                         }
                         Err(e) => {
-                            native_dialog::error_blocking("Error loading recent collection", e);
+                            error_blocking("Error loading recent collection", e);
                         }
                     },
                     Action::Remove(id) => app.database.recent.remove(id),
@@ -283,14 +280,14 @@ fn file_menu(
 fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
     ui.menu_button("Collection", |ui| {
         if ui
-            .add(egui::Button::new("＃ Tag list").shortcut_text("T"))
+            .add(Button::new("＃ Tag list").shortcut_text("T"))
             .clicked()
         {
             ui.close_menu();
             egui_state.tag_window.toggle();
         }
         if ui
-            .add(egui::Button::new("⬌ Sequences").shortcut_text("Q"))
+            .add(Button::new("⬌ Sequences").shortcut_text("Q"))
             .clicked()
         {
             ui.close_menu();

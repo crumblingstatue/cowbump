@@ -38,7 +38,7 @@ pub(super) fn do_frame(
     state: &mut crate::gui::State,
     egui_state: &mut EguiState,
     egui_ctx: &Context,
-    app: &mut crate::application::Application,
+    app: &mut Application,
     rw: &RenderWindow,
 ) {
     let win = &mut egui_state.changes_window;

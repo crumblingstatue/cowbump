@@ -2,10 +2,7 @@ use {
     crate::{
         collection::{Collection, Entries},
         entry,
-        gui::{
-            native_dialog::{self, error_blocking},
-            State,
-        },
+        gui::{native_dialog::error_blocking, State},
         preferences::{AppId, Preferences},
         sequence::Sequence,
     },
@@ -36,7 +33,7 @@ pub(in crate::gui) fn on_enter_open(
     }
     candidates.sort_by_key(|c| c.path);
     if let Err(e) = open(&candidates, preferences) {
-        native_dialog::error_blocking("Failed to open file", e);
+        error_blocking("Failed to open file", e);
     }
 }
 
@@ -58,7 +55,7 @@ pub fn open_single_with_others(
         },
         preferences,
     ) {
-        native_dialog::error_blocking("Failed to open file", e);
+        error_blocking("Failed to open file", e);
     }
 }
 
@@ -167,7 +164,7 @@ pub(crate) fn open_sequence(
         });
     }
     if let Err(e) = open(&candidates, prefs) {
-        native_dialog::error_blocking("Failed to open file", e);
+        error_blocking("Failed to open file", e);
     }
 }
 

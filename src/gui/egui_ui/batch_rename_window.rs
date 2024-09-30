@@ -21,7 +21,7 @@ pub(crate) fn do_frame(
     state: &mut State,
     egui_state: &mut super::EguiState,
     coll: &mut crate::collection::Collection,
-    egui_ctx: &egui_sfml::egui::Context,
+    egui_ctx: &egui::Context,
     rw: &RenderWindow,
 ) {
     if !egui_state.batch_rename_window.open {

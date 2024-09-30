@@ -34,7 +34,7 @@ use {
     egui_file_dialog::FileDialog,
     egui_modal::Modal,
     egui_sfml::{
-        egui::{self, Context, FontFamily, FontId, TextStyle, Window},
+        egui::{Context, FontFamily, FontId, TextStyle, Window},
         sfml::{
             self,
             graphics::{RenderTarget, RenderWindow, Texture},
@@ -78,7 +78,7 @@ pub(crate) enum FileOp {
 }
 
 impl EguiState {
-    pub(crate) fn new(ctx: &egui::Context) -> Self {
+    pub(crate) fn new(ctx: &Context) -> Self {
         Self {
             entries_windows: Default::default(),
             sequences_window: Default::default(),

@@ -123,7 +123,7 @@ impl Collection {
     }
     pub fn filter<'a>(&'a self, reqs: &'a Requirements) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries.iter().filter_map(move |(&uid, en)| {
-            crate::entry::filter_map(uid, en, reqs, &self.tags, &self.sequences)
+            entry::filter_map(uid, en, reqs, &self.tags, &self.sequences)
         })
     }
     pub fn rename(&mut self, uid: entry::Id, new: &str) -> anyhow::Result<()> {

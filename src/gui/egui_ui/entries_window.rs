@@ -464,10 +464,7 @@ pub(super) fn do_frame(
                             let re = ui.text_edit_singleline(&mut win.cmd_buffer);
                             ui.label("Args (use {} for entry path, or leave empty)");
                             ui.text_edit_singleline(&mut win.args_buffer);
-                            if re
-                                .ctx
-                                .input(|inp| inp.key_pressed(egui_sfml::egui::Key::Enter))
-                            {
+                            if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
                                 let mut cmd = Command::new(&win.cmd_buffer);
                                 cmd.stderr(Stdio::piped());
                                 cmd.stdin(Stdio::piped());
@@ -563,10 +560,7 @@ pub(super) fn do_frame(
                         }
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
-                            if re
-                                .ctx
-                                .input(|inp| inp.key_pressed(egui_sfml::egui::Key::Enter))
-                            {
+                            if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
                                 if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
                                     native_dialog::error_blocking("File rename error", e);
                                 }
