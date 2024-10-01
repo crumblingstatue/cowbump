@@ -3,10 +3,10 @@ use {
         icons,
         sequences::SequenceWindow,
         tag_autocomplete::{tag_autocomplete_popup, AcState},
-        EguiState,
+        EguiModalExt, EguiState,
     },
     crate::{
-        collection::Collection,
+        collection::{AddTagError, Collection},
         db::Db,
         dlog, entry,
         filter_reqs::Requirements,
@@ -382,7 +382,11 @@ pub(super) fn do_frame(
                                 for tag in tags {
                                     match coll.resolve_tag(tag) {
                                         Some(tag_uid) => {
-                                            coll.add_tag_for_multi(entry_uids, tag_uid);
+                                            if let Err(AddTagError) =
+                                                coll.add_tag_for_multi(entry_uids, tag_uid)
+                                            {
+                                                egui_state.modal.err("Failed to add tags");
+                                            }
                                         }
                                         None => {
                                             win.new_tags.push(tag.to_owned());
@@ -412,7 +416,11 @@ pub(super) fn do_frame(
                                         .add_new_tag_from_text(tag.to_owned(), &mut db.uid_counter)
                                     {
                                         Some(id) => {
-                                            coll.add_tag_for_multi(&win.ids, id);
+                                            if let Err(AddTagError) =
+                                                coll.add_tag_for_multi(&win.ids, id)
+                                            {
+                                                egui_state.modal.err("Failed to add tags");
+                                            }
                                             retain = false;
                                         }
                                         None => native_dialog::error_blocking(

@@ -16,6 +16,7 @@ use {
         io,
         path::{Path, PathBuf},
     },
+    thiserror::Error,
 };
 
 pub type Entries = EntryMap<Entry>;
@@ -85,14 +86,24 @@ impl Collection {
             keep
         });
     }
-    pub fn add_tag_for(&mut self, entry: entry::Id, tag: tag::Id) {
-        let tags = &mut self.entries.get_mut(&entry).unwrap().tags;
-        tags.insert(tag);
-    }
-    pub fn add_tag_for_multi(&mut self, entries: &[entry::Id], tag: tag::Id) {
-        for img in entries {
-            self.add_tag_for(*img, tag);
+    pub fn add_tag_for(&mut self, entry: entry::Id, tag: tag::Id) -> Result<(), AddTagError> {
+        match self.entries.get_mut(&entry) {
+            Some(en) => {
+                en.tags.insert(tag);
+                Ok(())
+            }
+            None => Err(AddTagError),
         }
+    }
+    pub fn add_tag_for_multi(
+        &mut self,
+        entries: &[entry::Id],
+        tag: tag::Id,
+    ) -> Result<(), AddTagError> {
+        for img in entries {
+            self.add_tag_for(*img, tag)?;
+        }
+        Ok(())
     }
     fn add_new_tag(&mut self, tag: Tag, uid_counter: &mut UidCounter) -> tag::Id {
         let uid = tag::Id(uid_counter.next());
@@ -255,6 +266,10 @@ impl Collection {
             .any(|tag| tag.names.iter().any(|text| text == tag_text))
     }
 }
+
+#[derive(Debug, Error)]
+#[error("Failed to add tag")]
+pub struct AddTagError;
 
 fn slice_contains_any_of<T: PartialEq>(haystack: &[T], needles: &[T]) -> bool {
     needles.iter().any(|needle| haystack.contains(needle))

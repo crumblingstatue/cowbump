@@ -160,6 +160,20 @@ fn ok_cancel_prompt(modal: &Modal, title: &str, msg: &str) -> Option<OkCancel> {
     clicked
 }
 
+pub trait EguiModalExt {
+    fn err(&self, body: impl std::fmt::Display);
+}
+
+impl EguiModalExt for Modal {
+    fn err(&self, body: impl std::fmt::Display) {
+        self.dialog()
+            .with_title("Error")
+            .with_icon(egui_modal::Icon::Error)
+            .with_body(body)
+            .open();
+    }
+}
+
 pub(crate) enum Action {
     Quit,
     QuitNoSave,
