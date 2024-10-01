@@ -22,14 +22,15 @@ use {
         },
         tag,
     },
+    anyhow::Context as _,
     egui_sfml::{
         egui::{
+            self,
             epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
             load::SizedTexture,
             text_selection::CursorRange,
-            vec2, Button, Color32, Context, ImageButton, Key, Label, Modifiers, PointerButton,
-            Response, Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
-            Widget,
+            vec2, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
+            Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui, Widget,
         },
         sfml::graphics::{RenderTarget, RenderWindow},
     },
@@ -165,7 +166,7 @@ fn tag<'a>(
     }
 }
 
-pub fn text_edit_cursor_set_to_end(ui: &mut Ui, te_id: egui_sfml::egui::Id) {
+pub fn text_edit_cursor_set_to_end(ui: &mut Ui, te_id: egui::Id) {
     let Some(mut state) = TextEdit::load_state(ui.ctx(), te_id) else {
         dlog!("Failed to set text edit cursor to end");
         return;
@@ -189,7 +190,7 @@ pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
     coll: &mut Collection,
-    egui_ctx: &Context,
+    egui_ctx: &egui::Context,
     rend_win: &RenderWindow,
     db: &mut Db,
     res: &Resources,
@@ -218,8 +219,8 @@ pub(super) fn do_frame(
         };
         let esc_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Escape));
         let mut close = esc_pressed;
-        egui_sfml::egui::Window::new(title)
-            .id(egui_sfml::egui::Id::new("en_window").with(win.window_id))
+        egui::Window::new(title)
+            .id(egui::Id::new("en_window").with(win.window_id))
             .open(&mut open)
             .min_width(960.)
             .show(egui_ctx, |ui| {
@@ -302,15 +303,26 @@ pub(super) fn do_frame(
                                         &mut state.thumbs_view,
                                     ));
                                     if del {
-                                        // TODO: This only works for 1 item windows
-                                        coll.entries
-                                            .get_mut(&win.ids[0])
-                                            .unwrap()
-                                            .tags
-                                            .retain(|&t| t != tagid);
-                                        state
-                                            .thumbs_view
-                                            .update_from_collection(coll, &state.filter);
+                                        let result: anyhow::Result<()> = try {
+                                            // TODO: This only works for 1 item windows
+                                            coll.entries
+                                                .get_mut(
+                                                    win.ids
+                                                        .first()
+                                                        .context("Failed to get tag id")?,
+                                                )
+                                                .context("Failed to get tag")?
+                                                .tags
+                                                .retain(|&t| t != tagid);
+                                            state
+                                                .thumbs_view
+                                                .update_from_collection(coll, &state.filter);
+                                        };
+                                        if let Err(e) = result {
+                                            egui_state
+                                                .modal
+                                                .err(format!("Failed to delete tag(s): {e}"));
+                                        }
                                     }
                                 } else {
                                     ui.add(tag(
