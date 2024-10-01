@@ -355,7 +355,11 @@ fn do_prompts(egui_state: &mut EguiState, app: &mut Application) {
                     false
                 }
                 PromptAction::DeleteTags(ref uids) => {
-                    app.active_collection.as_mut().unwrap().1.remove_tags(uids);
+                    let Some((_, coll)) = &mut app.active_collection else {
+                        egui_state.modal.err("No active collection");
+                        return false;
+                    };
+                    coll.remove_tags(uids);
                     false
                 }
             },
