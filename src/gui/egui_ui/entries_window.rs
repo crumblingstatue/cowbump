@@ -166,7 +166,10 @@ fn tag<'a>(
 }
 
 pub fn text_edit_cursor_set_to_end(ui: &mut Ui, te_id: egui_sfml::egui::Id) {
-    let mut state = TextEdit::load_state(ui.ctx(), te_id).unwrap();
+    let Some(mut state) = TextEdit::load_state(ui.ctx(), te_id) else {
+        dlog!("Failed to set text edit cursor to end");
+        return;
+    };
     state.cursor.set_range(Some(CursorRange::one(Cursor {
         ccursor: CCursor {
             index: 0,
