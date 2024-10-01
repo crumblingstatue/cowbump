@@ -10,3 +10,4 @@ pub const TAG: &str = "🏷";
 pub const EDIT: &str = "🖊";
 pub const TERM: &str = "🖳";
 pub const COPY: &str = "🖹";
+pub const WARN: &str = "⚠";
