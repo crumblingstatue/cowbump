@@ -221,13 +221,11 @@ pub(super) fn do_frame(
                                 return;
                             }
                             ui.horizontal(|ui| {
-                                let name = format!(
-                                    "{} {} (#{})",
-                                    icons::TAG,
-                                    coll.tags[id].names[0],
-                                    id.0
-                                );
+                                let name = format!("{} {}", icons::TAG, coll.tags[id].names[0]);
                                 ui.heading(&name);
+                                ui.label(
+                                    RichText::new(format!("#{}", id.0)).color(Color32::DARK_GRAY),
+                                );
                                 ui.rtl(|ui| {
                                     if ui
                                         .button(icons::REMOVE)
