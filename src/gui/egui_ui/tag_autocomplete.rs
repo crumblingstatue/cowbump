@@ -146,6 +146,21 @@ pub(super) fn tag_autocomplete_popup(
                             if re.clicked() || (selected && enter) {
                                 complete = C::Special(ins);
                                 state.select = Some(i);
+                                if usage == ins {
+                                    // For a "simple" special, we have nothing to edit
+                                    // after completion, so let's close the popup
+                                    //
+                                    // Hack: "Put back" enter key into input
+                                    ui.input_mut(|inp| {
+                                        inp.events.push(egui::Event::Key {
+                                            key: Key::Enter,
+                                            physical_key: None,
+                                            pressed: true,
+                                            repeat: false,
+                                            modifiers: egui::Modifiers::NONE,
+                                        });
+                                    })
+                                }
                             }
                             if selected && ui.input(|inp| inp.key_pressed(Key::Tab)) {
                                 complete = C::Special(ins);
