@@ -10,7 +10,7 @@ pub struct Sequence {
     pub entries: Vec<entry::Id>,
 }
 
-#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct Id(pub Uid);
 
 impl Sequence {

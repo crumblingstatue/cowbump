@@ -3,7 +3,7 @@ use {
     crate::{
         collection::Collection,
         db::UidCounter,
-        entry,
+        dlog, entry,
         gui::{
             open::{
                 builtin,
@@ -33,7 +33,10 @@ pub(super) fn do_sequence_windows(
 ) {
     egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
-        let seq = coll.sequences.get_mut(&win.uid).unwrap();
+        let Some(seq) = coll.sequences.get_mut(&win.uid) else {
+            dlog!("Can't get sequence {:?}", win.uid);
+            return false;
+        };
         let name = &seq.name;
         enum Action {
             SwapLeft,
