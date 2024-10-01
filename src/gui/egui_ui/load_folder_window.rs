@@ -245,6 +245,10 @@ fn path_result_conv(src: PathResult) -> PathAddResult {
 }
 
 /// Returns whether we're finished
+///
+/// # Panics
+///
+/// Some weird thread shenanigans might cause a panic
 fn update(load_state: &mut LoadingState, result_vec: &mut Vec<Result<PathAdd, io::Error>>) -> bool {
     const UPDATE_CHUNK: usize = 128;
     for _ in 0..UPDATE_CHUNK {
