@@ -286,7 +286,10 @@ fn file_menu(
             );
         }
         ui.separator();
-        if ui.button("⎆ Quit").clicked() {
+        if ui
+            .add(Button::new("⎆ Quit").shortcut_text("Ctrl+Q"))
+            .clicked()
+        {
             egui_state.action = Some(Action::Quit);
         }
     });

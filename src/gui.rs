@@ -107,6 +107,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     Key::F1 => egui_state.top_bar ^= true,
                     Key::F11 => util::take_and_save_screenshot(&window, &mut egui_state),
                     Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
+                    Key::Q if ctrl => window.close(),
                     _ => {}
                 },
                 Event::Resized { width, height } => {
