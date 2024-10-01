@@ -39,6 +39,7 @@ use {
         },
         SfEgui,
     },
+    native_dialog::error_blocking,
     rand::seq::SliceRandom,
 };
 
@@ -75,7 +76,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 std::env::set_current_dir(root_path)?;
             }
             Err(e) => {
-                native_dialog::error_blocking("Error loading most recent collection", e);
+                error_blocking("Error loading most recent collection", e);
             }
         }
     }
@@ -99,10 +100,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         while let Some(event) = window.poll_event() {
             sf_egui.add_event(&event);
             match event {
-                Event::Closed => match app.save_active_collection() {
-                    Ok(()) => window.close(),
-                    Err(e) => native_dialog::error_blocking("Failed to save collection", e),
-                },
+                Event::Closed => window.close(),
                 Event::KeyPressed {
                     code, ctrl, shift, ..
                 } => match code {
@@ -155,7 +153,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         );
         sf_egui.end_pass(&mut window)?;
         if let Err(e) = result {
-            native_dialog::error_blocking("Error", e);
+            error_blocking("Error", e);
         }
         let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &egui_state.action {
@@ -251,6 +249,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         load_anim_rotation += 2.0;
     }
     if !app.no_save {
+        if let Err(e) = app.save_active_collection() {
+            error_blocking("Error saving collection", e);
+        }
         app.database.save()?;
     }
     Ok(())
