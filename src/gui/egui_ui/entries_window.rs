@@ -350,7 +350,7 @@ pub(super) fn do_frame(
                                 inp.consume_key(Modifiers::default(), Key::ArrowDown)
                             });
                             let te = TextEdit::singleline(&mut win.add_tag_buffer)
-                                .hint_text("New tags")
+                                .hint_text("New tags (tag1 tag2 tag3 ...)")
                                 .id(te_id);
                             if win.ac_state.applied {
                                 text_edit_cursor_set_to_end(ui, te_id);
