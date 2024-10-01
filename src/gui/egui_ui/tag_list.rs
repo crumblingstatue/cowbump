@@ -3,6 +3,7 @@ use {
     crate::{
         collection::Collection,
         db::{TagSet, UidCounter},
+        dlog,
         gui::{
             egui_ui::{prompt, PromptAction},
             State,
@@ -242,7 +243,10 @@ pub(super) fn do_frame(
                                 });
                             });
                             ui.separator();
-                            let tag = coll.tags.get_mut(id).unwrap();
+                            let Some(tag) = coll.tags.get_mut(id) else {
+                                ui.label(format!("<Error: Couldn't get tag with id {id:?}>"));
+                                return;
+                            };
                             ui.horizontal(|ui| {
                                 ui.label("Names");
                                 ui.rtl(|ui| {
@@ -318,7 +322,10 @@ pub(super) fn do_frame(
                                             | confirm
                                     }) {
                                         if let Some(resolved_id) = coll.resolve_tag(&imply) {
-                                            let tag = coll.tags.get_mut(id).unwrap();
+                                            let Some(tag) = coll.tags.get_mut(id) else {
+                                                dlog!("Couldn't get tag with id {id:?}");
+                                                return;
+                                            };
                                             tag.implies.insert(resolved_id);
                                         }
                                     }
@@ -348,7 +355,11 @@ pub(super) fn do_frame(
                                 });
                             }
                             if let Some(imply_id) = remove {
-                                coll.tags.get_mut(id).unwrap().implies.remove(&imply_id);
+                                let Some(tag) = coll.tags.get_mut(id) else {
+                                    dlog!("Failed to get tag with id {id:?}");
+                                    return;
+                                };
+                                tag.implies.remove(&imply_id);
                             }
                             if let Some(sel) = sel {
                                 *active = Some(sel);
