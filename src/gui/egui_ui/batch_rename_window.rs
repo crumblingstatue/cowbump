@@ -35,7 +35,7 @@ fn do_batch_rename(
     let new_names: Vec<String> = extensions
         .into_iter()
         .enumerate()
-        .map(|(i, ext)| format!("{}{i:04}.{ext}", prefix))
+        .map(|(i, ext)| format!("{prefix}{i:04}.{ext}"))
         .collect();
     for path in &new_names {
         if std::fs::exists(path)? {
