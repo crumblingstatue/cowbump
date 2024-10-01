@@ -130,7 +130,7 @@ fn help_menu(
     egui_state: &mut EguiState,
 ) {
     ui.menu_button("Help", |ui| {
-        if ui.button("About").clicked() {
+        if ui.button([icons::QUESTION, "About"].concat()).clicked() {
             ui.close_menu();
             egui_state
                 .modal
@@ -145,19 +145,22 @@ fn help_menu(
             ui.label("= Debug =");
         });
         if ui
-            .add(Button::new("Save screenshot").shortcut_text("F11"))
+            .add(Button::new([icons::CAMERA, " Save screenshot"].concat()).shortcut_text("F11"))
             .clicked()
         {
             ui.close_menu();
             crate::gui::util::take_and_save_screenshot(win, egui_state);
         }
-        if ui.button("Open data dir").clicked() {
+        if ui
+            .button([icons::FOLDER, " Open data dir"].concat())
+            .clicked()
+        {
             ui.close_menu();
             if let Err(e) = open::that(&app.database.data_dir) {
                 error_blocking("Error opening", e);
             }
         }
-        if ui.button("Debug window").clicked() {
+        if ui.button([icons::TERM, " Debug window"].concat()).clicked() {
             ui.close_menu();
             egui_state.debug_window.toggle();
         }
@@ -173,7 +176,10 @@ fn file_menu(
     window_width: u32,
 ) {
     ui.menu_button("File", |ui| {
-        if ui.button("🗁 Load folder").clicked() {
+        if ui
+            .button([icons::FOLDER, " Load folder"].concat())
+            .clicked()
+        {
             ui.close_menu();
             egui_state.file_op = Some(FileOp::OpenDirectory);
             egui_state.file_dialog.select_directory();
@@ -252,7 +258,10 @@ fn file_menu(
                 }
             });
         });
-        if ui.button("Collections database...").clicked() {
+        if ui
+            .button([icons::CABINET, " Collections database..."].concat())
+            .clicked()
+        {
             egui_state.collections_db_window.open = true;
             ui.close_menu();
         }
@@ -268,7 +277,10 @@ fn file_menu(
             egui_state.file_op = Some(FileOp::RestoreBackup);
         }
         ui.separator();
-        if ui.button("☰ Preferences").clicked() {
+        if ui
+            .button([icons::HAMBURGER, " Preferences"].concat())
+            .clicked()
+        {
             ui.close_menu();
             egui_state.preferences_window.toggle();
         }
@@ -311,11 +323,14 @@ fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
             ui.close_menu();
             egui_state.sequences_window.on ^= true;
         }
-        if ui.button("Changes").clicked() {
+        if ui.button([icons::QUESTION, " Changes"].concat()).clicked() {
             ui.close_menu();
             egui_state.changes_window.open ^= true;
         }
-        if ui.button("Preferences").clicked() {
+        if ui
+            .button([icons::HAMBURGER, " Preferences"].concat())
+            .clicked()
+        {
             ui.close_menu();
             egui_state.coll_prefs_window.open ^= true;
         }
@@ -413,7 +428,10 @@ fn actions_menu(
             egui_state.action = Some(Action::SortById);
         }
         if ui
-            .add_enabled(active_coll, Button::new("Shuffle"))
+            .add_enabled(
+                active_coll,
+                Button::new([icons::QUESTION, "Shuffle"].concat()),
+            )
             .clicked()
         {
             ui.close_menu();
