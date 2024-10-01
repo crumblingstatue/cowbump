@@ -1,8 +1,6 @@
 use {
-    crate::{
-        entry,
-        gui::{native_dialog, State},
-    },
+    super::EguiModalExt,
+    crate::{entry, gui::State},
     egui_sfml::{
         egui::{self, PointerButton, TextureId},
         sfml::graphics::RenderWindow,
@@ -15,6 +13,38 @@ pub struct BatchRenameWindow {
     pub ids: Vec<entry::Id>,
     pub sel_idx: Option<usize>,
     pub prefix: String,
+}
+
+fn do_batch_rename(
+    ids: &[entry::Id],
+    coll: &mut crate::collection::Collection,
+    prefix: &str,
+) -> anyhow::Result<()> {
+    let extensions: Vec<String> = ids
+        .iter()
+        .map(|id| {
+            coll.entries[id]
+                .path
+                .extension()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    let new_names: Vec<String> = extensions
+        .into_iter()
+        .enumerate()
+        .map(|(i, ext)| format!("{}{i:04}.{ext}", prefix))
+        .collect();
+    for path in &new_names {
+        if std::fs::exists(path)? {
+            anyhow::bail!("One ore more files already exist under a target name");
+        }
+    }
+    for (id, path) in ids.iter().zip(&new_names) {
+        coll.rename(*id, path)?;
+    }
+    Ok(())
 }
 
 pub(crate) fn do_frame(
@@ -34,37 +64,12 @@ pub(crate) fn do_frame(
                 ui.label("Common prefix");
                 ui.text_edit_singleline(&mut egui_state.batch_rename_window.prefix);
                 if ui.button("Do it").clicked() {
-                    let extensions: Vec<String> = egui_state
-                        .batch_rename_window
-                        .ids
-                        .iter()
-                        .map(|id| {
-                            coll.entries[id]
-                                .path
-                                .extension()
-                                .unwrap()
-                                .to_string_lossy()
-                                .into_owned()
-                        })
-                        .collect();
-                    let new_names: Vec<String> = extensions
-                        .into_iter()
-                        .enumerate()
-                        .map(|(i, ext)| {
-                            format!("{}{i:04}.{ext}", egui_state.batch_rename_window.prefix)
-                        })
-                        .collect();
-                    for path in &new_names {
-                        if std::fs::exists(path).unwrap() {
-                            native_dialog::error_blocking(
-                                "Batch rename error",
-                                "One ore more files already exist under a target name",
-                            );
-                            return;
-                        }
-                    }
-                    for (id, path) in egui_state.batch_rename_window.ids.iter().zip(&new_names) {
-                        coll.rename(*id, path).unwrap();
+                    if let Err(e) = do_batch_rename(
+                        &egui_state.batch_rename_window.ids,
+                        coll,
+                        &egui_state.batch_rename_window.prefix,
+                    ) {
+                        egui_state.modal.err(format!("Batch rename error: {e}"));
                     }
                 }
                 if ui.button("Sort by filename").clicked() {
