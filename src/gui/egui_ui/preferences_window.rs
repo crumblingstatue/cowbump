@@ -98,9 +98,14 @@ pub(in crate::gui) fn do_frame(
                     style_changed |= font_slider(ui, "Body", &mut prefs.style.body_size);
                     style_changed |= font_slider(ui, "Button", &mut prefs.style.button_size);
                     style_changed |= font_slider(ui, "Monospace", &mut prefs.style.monospace_size);
+                    if ui.button("Restore default sizes").clicked() {
+                        prefs.style = crate::preferences::Style::default();
+                        style_changed = true;
+                    }
                     if style_changed {
                         crate::gui::egui_ui::set_up_style(egui_ctx, &prefs.style);
                     }
+                    ui.separator();
                     ui.heading("Opening");
                     ui.checkbox(
                         &mut prefs.use_built_in_viewer,
