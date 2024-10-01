@@ -1,6 +1,7 @@
 use {
     super::EguiModalExt,
     crate::{entry, gui::State},
+    anyhow::Context,
     egui_sfml::{
         egui::{self, PointerButton, TextureId},
         sfml::graphics::RenderWindow,
@@ -23,14 +24,14 @@ fn do_batch_rename(
     let extensions: Vec<String> = ids
         .iter()
         .map(|id| {
-            coll.entries[id]
+            Ok(coll.entries[id]
                 .path
                 .extension()
-                .unwrap()
+                .context("Only filenames with extensions are supported")?
                 .to_string_lossy()
-                .into_owned()
+                .into_owned())
         })
-        .collect();
+        .collect::<anyhow::Result<_>>()?;
     let new_names: Vec<String> = extensions
         .into_iter()
         .enumerate()
