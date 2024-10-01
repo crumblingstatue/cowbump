@@ -1,5 +1,5 @@
 use {
-    super::EguiState,
+    super::{EguiModalExt, EguiState},
     crate::{
         application::Application,
         db::FolderChanges,
@@ -133,15 +133,17 @@ pub(super) fn do_frame(
                             win.added
                                 .insert(path.to_owned(), AddedInfo { id, checked: false });
                         });
-                        state.thumbs_view = ThumbnailsView::from_collection(
-                            rw.size().x,
-                            Application::active_collection(&mut app.active_collection)
-                                .unwrap()
-                                .1,
-                            &state.filter,
-                            &app.database.preferences,
-                        );
-                        win.applied = true;
+                        if let Some((_, active_coll)) = &mut app.active_collection {
+                            state.thumbs_view = ThumbnailsView::from_collection(
+                                rw.size().x,
+                                active_coll,
+                                &state.filter,
+                                &app.database.preferences,
+                            );
+                            win.applied = true;
+                        } else {
+                            egui_state.modal.err("No active collection");
+                        }
                     }
                     if ui.button("Ignore").clicked() {
                         close = true;

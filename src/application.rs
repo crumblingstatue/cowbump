@@ -62,11 +62,6 @@ impl Application {
         self.database.recent.use_(id);
         Ok(changes)
     }
-    pub(crate) fn active_collection(
-        active_collection: &mut ActiveCollection,
-    ) -> Option<(collection::Id, &mut Collection)> {
-        active_collection.as_mut().map(|c| (c.0, &mut c.1))
-    }
     pub(crate) fn apply_changes_to_active_collection(
         &mut self,
         changes: &FolderChanges,

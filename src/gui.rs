@@ -356,15 +356,13 @@ fn set_active_collection(
     window_width: u32,
 ) -> anyhow::Result<()> {
     app.save_active_collection()?;
-    *entries_view = ThumbnailsView::from_collection(
-        window_width,
-        Application::active_collection(&mut app.active_collection)
-            .as_ref()
-            .unwrap()
-            .1,
-        reqs,
-        &app.database.preferences,
-    );
+    let active_coll = &app
+        .active_collection
+        .as_ref()
+        .context("No active collection")?
+        .1;
+    *entries_view =
+        ThumbnailsView::from_collection(window_width, active_coll, reqs, &app.database.preferences);
     let root = &app.database.collections[&id];
     std::env::set_current_dir(root).context("failed to set directory")
 }
