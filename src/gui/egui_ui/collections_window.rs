@@ -1,4 +1,4 @@
-use {crate::application::Application, egui_sfml::egui};
+use {super::EguiModalExt, crate::application::Application, egui_sfml::egui};
 
 #[derive(Default)]
 pub struct CollectionsDbWindow {
@@ -29,10 +29,16 @@ pub(crate) fn do_frame(
                 retain
             });
         });
-    if let Some(coll_id) = &egui_state.collections_db_window.path_assign_id
+    if let Some(assign_id) = &egui_state.collections_db_window.path_assign_id
         && let Some(path) = egui_state.file_dialog.take_selected()
     {
-        *app.database.collections.get_mut(coll_id).unwrap() = path;
+        if let Some(coll_path) = app.database.collections.get_mut(assign_id) {
+            *coll_path = path;
+        } else {
+            egui_state
+                .modal
+                .err("Failed to assign path (no such collection)");
+        }
         egui_state.collections_db_window.path_assign_id = None;
     }
 }
