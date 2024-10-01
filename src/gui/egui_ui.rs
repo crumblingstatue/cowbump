@@ -101,7 +101,8 @@ impl EguiState {
             coll_prefs_window: Default::default(),
             batch_rename_window: Default::default(),
             collections_db_window: Default::default(),
-            file_dialog: FileDialog::new(),
+            file_dialog: FileDialog::new()
+                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::default()),
             file_op: None,
             modal: Modal::new(ctx, "modal_dialog"),
         }
