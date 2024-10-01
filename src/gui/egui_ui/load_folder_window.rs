@@ -1,5 +1,5 @@
 use {
-    super::{icons, EguiState},
+    super::{icons, EguiModalExt, EguiState},
     crate::{
         application::Application,
         collection::Collection,
@@ -216,14 +216,17 @@ pub(super) fn do_frame(
                             .map(ToOwned::to_owned)
                             .collect();
                         let id = app.add_collection(coll, (*win.root).clone());
-                        crate::gui::set_active_collection(
+                        if let Err(e) = crate::gui::set_active_collection(
                             &mut state.thumbs_view,
                             app,
                             id,
                             &state.filter,
                             window_width,
-                        )
-                        .unwrap();
+                        ) {
+                            egui_state
+                                .modal
+                                .err(format!("Failed to set active collection: {e}"));
+                        }
                         *win = Default::default();
                     }
                     let pb = ProgressBar::new(0.0).animate(!done).desired_width(16.0);
