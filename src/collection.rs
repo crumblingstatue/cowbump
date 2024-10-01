@@ -169,7 +169,11 @@ impl Collection {
         self.sequences.insert(uid, Sequence::new_with_name(name));
         uid
     }
-
+    /// Adds the specified entries to the specified sequence
+    ///
+    /// # Panics
+    ///
+    /// Panics if `seq` r `entries` refer to dangling ids.
     pub(crate) fn add_entries_to_sequence(&mut self, seq: sequence::Id, entries: &[entry::Id]) {
         // Do a default filename based sorting before adding
         let mut sorted = entries.to_owned();

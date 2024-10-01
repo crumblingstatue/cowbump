@@ -8,7 +8,8 @@
     clippy::unnecessary_wraps,
     clippy::uninlined_format_args,
     clippy::semicolon_if_nothing_returned,
-    clippy::doc_markdown
+    clippy::doc_markdown,
+    clippy::missing_panics_doc
 )]
 
 mod application;
