@@ -159,7 +159,7 @@ pub(super) fn tag_autocomplete_popup(
                                             repeat: false,
                                             modifiers: egui::Modifiers::NONE,
                                         });
-                                    })
+                                    });
                                 }
                             }
                             if selected && ui.input(|inp| inp.key_pressed(Key::Tab)) {
