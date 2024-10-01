@@ -25,7 +25,7 @@ mod sequence;
 mod serialization;
 mod tag;
 
-const VERSION: &str = include_str!("../version.txt");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 use crate::application::Application;
 
