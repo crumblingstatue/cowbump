@@ -10,6 +10,11 @@ use {
     std::fmt::Debug,
 };
 
+/// Show a blocking error window
+///
+/// # Panics
+///
+/// If the egui pass fails, and maybe some other catastrophic stuff
 pub fn error_blocking<E: Debug>(title: &str, err: E) {
     let mut rw = RenderWindow::new(
         (800, 600),
