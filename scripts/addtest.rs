@@ -1,3 +1,7 @@
+#!/usr/bin/env -S cargo +nightly -Zscript
+
+//! Test folder changes
+
 use std::{env, fs::File, ops::Range, path::Path};
 
 enum State {
@@ -26,12 +30,16 @@ fn main() {
     let folder = args.next().expect("Needs directory");
     let path = Path::new(&folder);
     let mut state = State::Init;
+    let mut done_anything = false;
     for arg in args {
         match state {
             State::Add => {
                 do_range(path, &arg, |path| {
-                    let _ = File::create(path);
+                    if let Err(e) = File::create(path) {
+                        eprintln!("File create error: {e}");
+                    }
                 });
+                done_anything = true;
                 state = State::Init;
             }
             State::Init => match &arg[..] {
@@ -41,10 +49,16 @@ fn main() {
             },
             State::Rm => {
                 do_range(path, &arg, |path| {
-                    let _ = std::fs::remove_file(path);
+                    if let Err(e) = std::fs::remove_file(path) {
+                        eprintln!("File remove error: {e}");
+                    }
                 });
+                done_anything = true;
                 state = State::Init;
             }
         }
+    }
+    if !done_anything {
+        eprintln!("Usage: add a..b rm a..b ...");
     }
 }
