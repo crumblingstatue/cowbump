@@ -9,8 +9,8 @@ use {
     },
     egui_sfml::{
         egui::{
-            vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea,
-            Sense, Window,
+            self, vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText,
+            ScrollArea, Sense, Window,
         },
         sfml::{graphics::Texture, SfBox},
     },
@@ -115,52 +115,70 @@ pub(super) fn do_frame(
             let mut done = false;
             if let Some(loading_state) = &mut win.state {
                 done = update(loading_state, &mut win.results);
-                ScrollArea::vertical().show(ui, |ui| {
-                    for (i, res) in win.results.iter_mut().enumerate() {
-                        match res {
-                            Ok(path) => {
-                                ui.horizontal(|ui| {
-                                    ui.checkbox(&mut path.add, "");
-                                    let mut rich_text =
-                                        RichText::new(&*path.path.to_string_lossy());
-                                    if win.res_select == Some(i) {
-                                        rich_text = rich_text
-                                            .background_color(Color32::from_rgb(100, 40, 110));
-                                    }
-                                    if win.res_hover == Some(i) {
-                                        rich_text = rich_text.color(Color32::WHITE);
-                                    }
-                                    let re = ui.add(Label::new(rich_text).sense(Sense::click()));
-                                    if re.hovered() {
-                                        win.res_hover = Some(i);
-                                    }
-                                    let mut did_select_new = false;
-                                    if re.clicked() {
-                                        win.res_select = Some(i);
-                                        did_select_new = true;
-                                    }
-                                    if new_sel == Some(i) {
-                                        re.scroll_to_me(Some(Align::Center));
-                                        did_select_new = true;
-                                    }
-                                    if did_select_new {
-                                        if let Ok(image) = image::open(win.root.join(&path.path)) {
-                                            let buf = image.to_rgba8();
-                                            let tex = thumbnail_loader::imagebuf_to_sf_tex(buf);
-                                            win.texture = Some(tex);
-                                        } else {
-                                            win.texture = Some(resources.error_texture.clone());
+                // Rough row height calc
+                let row_h = ui
+                    .vertical_centered(|ui| {
+                        ui.label("contents")
+                            .on_hover_text("Egui shenanigans, lol")
+                            .rect
+                            .height()
+                    })
+                    .inner;
+                ScrollArea::vertical().auto_shrink(false).show_rows(
+                    ui,
+                    row_h,
+                    win.results.len(),
+                    |ui: &mut egui::Ui, range| {
+                        for (i, res) in win.results[range].iter_mut().enumerate() {
+                            match res {
+                                Ok(path) => {
+                                    ui.horizontal(|ui| {
+                                        ui.checkbox(&mut path.add, "");
+                                        let mut rich_text =
+                                            RichText::new(&*path.path.to_string_lossy());
+                                        if win.res_select == Some(i) {
+                                            rich_text = rich_text
+                                                .background_color(Color32::from_rgb(100, 40, 110));
                                         }
-                                    }
-                                });
-                            }
-                            Err(e) => {
-                                let rich_text = RichText::new(e.to_string()).color(Color32::RED);
-                                ui.add(Label::new(rich_text));
+                                        if win.res_hover == Some(i) {
+                                            rich_text = rich_text.color(Color32::WHITE);
+                                        }
+                                        let re =
+                                            ui.add(Label::new(rich_text).sense(Sense::click()));
+                                        if re.hovered() {
+                                            win.res_hover = Some(i);
+                                        }
+                                        let mut did_select_new = false;
+                                        if re.clicked() {
+                                            win.res_select = Some(i);
+                                            did_select_new = true;
+                                        }
+                                        if new_sel == Some(i) {
+                                            re.scroll_to_me(Some(Align::Center));
+                                            did_select_new = true;
+                                        }
+                                        if did_select_new {
+                                            if let Ok(image) =
+                                                image::open(win.root.join(&path.path))
+                                            {
+                                                let buf = image.to_rgba8();
+                                                let tex = thumbnail_loader::imagebuf_to_sf_tex(buf);
+                                                win.texture = Some(tex);
+                                            } else {
+                                                win.texture = Some(resources.error_texture.clone());
+                                            }
+                                        }
+                                    });
+                                }
+                                Err(e) => {
+                                    let rich_text =
+                                        RichText::new(e.to_string()).color(Color32::RED);
+                                    ui.add(Label::new(rich_text));
+                                }
                             }
                         }
-                    }
-                });
+                    },
+                );
             };
             ui.separator();
             ui.horizontal(|ui| {
