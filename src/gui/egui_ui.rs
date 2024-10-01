@@ -279,14 +279,18 @@ pub(super) fn do_ui(
                     if !changes.empty() {
                         egui_state.changes_window.open(changes);
                     }
-                    crate::gui::set_active_collection(
+                    let result = crate::gui::set_active_collection(
                         &mut state.thumbs_view,
                         app,
                         id,
                         &state.filter,
                         win.size().x,
-                    )
-                    .unwrap();
+                    );
+                    if let Err(e) = result {
+                        egui_state
+                            .modal
+                            .err(format!("Failed to set active collection: {e}"));
+                    }
                 } else {
                     load_folder_window::open(&mut egui_state.load_folder_window, path);
                 }
