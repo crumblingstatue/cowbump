@@ -3,6 +3,7 @@ use {
     crate::{
         application::Application,
         collection::Collection,
+        dlog,
         folder_scan::walkdir,
         gui::{resources::Resources, thumbnail_loader, State},
     },
@@ -44,7 +45,7 @@ struct PathAdd {
 }
 
 struct LoadingState {
-    join_handle: Option<JoinHandle<()>>,
+    join_handle: Option<JoinHandle<anyhow::Result<()>>>,
     receiver: Receiver<PathResult>,
 }
 
@@ -54,9 +55,7 @@ type PathAddResult = io::Result<PathAdd>;
 fn start_loading(win: &mut LoadFolderWindow) {
     let path_clone = win.root.clone();
     let (sender, receiver) = channel();
-    let join_handle = std::thread::spawn(move || {
-        read_dir_entries(path_clone.as_ref(), sender);
-    });
+    let join_handle = std::thread::spawn(move || read_dir_entries(path_clone.as_ref(), sender));
     let loading_state = LoadingState {
         join_handle: Some(join_handle),
         receiver,
@@ -257,7 +256,10 @@ fn update(load_state: &mut LoadingState, result_vec: &mut Vec<Result<PathAdd, io
             Err(mpsc::TryRecvError::Empty) => return false,
             Err(mpsc::TryRecvError::Disconnected) => {
                 if let Some(jh) = load_state.join_handle.take() {
-                    jh.join().unwrap();
+                    let result = jh.join().unwrap();
+                    if let Err(e) = result {
+                        dlog!("Load folder update error: {e}");
+                    }
                 }
                 return true;
             }
@@ -266,13 +268,13 @@ fn update(load_state: &mut LoadingState, result_vec: &mut Vec<Result<PathAdd, io
     false
 }
 
-fn read_dir_entries(root: &Path, sender: Sender<PathResult>) {
+fn read_dir_entries(root: &Path, sender: Sender<PathResult>) -> anyhow::Result<()> {
     let wd = walkdir(root);
     for dir_entry in wd {
         let dir_entry = match dir_entry {
             Ok(en) => en,
             Err(e) => {
-                sender.send(Err(e.into())).unwrap();
+                sender.send(Err(e.into()))?;
                 continue;
             }
         };
@@ -287,8 +289,9 @@ fn read_dir_entries(root: &Path, sender: Sender<PathResult>) {
                 continue;
             }
         };
-        sender.send(Ok(dir_entry_path.to_owned())).unwrap();
+        sender.send(Ok(dir_entry_path.to_owned()))?;
     }
+    Ok(())
 }
 
 trait IgnoreStrExt {
