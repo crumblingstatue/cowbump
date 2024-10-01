@@ -332,9 +332,9 @@ pub(super) fn do_frame(
                         // endregion
 
                         let txt = if win.editing_tags {
-                            "Stop editing"
+                            &[icons::CHECK, " Stop editing"].concat()
                         } else {
-                            "Edit tags"
+                            &[icons::EDIT, " Edit tags"].concat()
                         };
                         let plus_re = ui.button(txt);
                         if plus_re.clicked() {
@@ -427,7 +427,10 @@ pub(super) fn do_frame(
                             });
                             retain
                         });
-                        if ui.button("Add to sequence").clicked() {
+                        if ui
+                            .button([icons::ADD, " Add to sequence"].concat())
+                            .clicked()
+                        {
                             egui_state.sequences_window.on = true;
                             egui_state.sequences_window.pick_mode = true;
                         }
@@ -437,12 +440,18 @@ pub(super) fn do_frame(
                             egui_state.sequences_window.pick_result = None;
                         }
                         if ui
-                            .add(Button::new("Run custom command").wrap_mode(TextWrapMode::Extend))
+                            .add(
+                                Button::new([icons::TERM, " Run custom command"].concat())
+                                    .wrap_mode(TextWrapMode::Extend),
+                            )
                             .clicked()
                         {
                             win.custom_command_prompt ^= true;
                         }
-                        if ui.button("Copy filenames to clipboard").clicked() {
+                        if ui
+                            .button([icons::COPY, " Copy filenames to clipboard"].concat())
+                            .clicked()
+                        {
                             let res: anyhow::Result<()> = try {
                                 let mut out = String::new();
                                 for uid in &win.ids {
@@ -550,12 +559,18 @@ pub(super) fn do_frame(
                         // region: Rename button
                         if win.ids.len() == 1 {
                             if ui
-                                .add(Button::new("Rename file").wrap_mode(TextWrapMode::Extend))
+                                .add(
+                                    Button::new([icons::EDIT, " Rename file"].concat())
+                                        .wrap_mode(TextWrapMode::Extend),
+                                )
                                 .clicked()
                             {
                                 win.renaming ^= true;
                             }
-                        } else if ui.button("Batch rename...").clicked() {
+                        } else if ui
+                            .button([icons::EDIT, " Batch rename..."].concat())
+                            .clicked()
+                        {
                             egui_state.batch_rename_window.open = true;
                             egui_state.batch_rename_window.ids.clone_from(&win.ids);
                         }
@@ -578,7 +593,8 @@ pub(super) fn do_frame(
                         if !win.delete_confirm {
                             if ui
                                 .add(
-                                    Button::new("Delete from disk").wrap_mode(TextWrapMode::Extend),
+                                    Button::new([icons::REMOVE, " Delete from disk"].concat())
+                                        .wrap_mode(TextWrapMode::Extend),
                                 )
                                 .clicked()
                             {
