@@ -329,7 +329,17 @@ pub(super) fn do_frame(
                             let mut sel = None;
                             for imply_id in &coll.tags[id].implies {
                                 ui.horizontal(|ui| {
-                                    if ui.link(&coll.tags[imply_id].names[0]).clicked() {
+                                    if ui
+                                        .link(
+                                            coll.tags
+                                                .get(imply_id)
+                                                .map(|tag| &tag.names[0])
+                                                .unwrap_or(&format!(
+                                                    "[dangling tag (#{imply_id:?})]"
+                                                )),
+                                        )
+                                        .clicked()
+                                    {
                                         sel = Some(*imply_id);
                                     }
                                     if ui.button(icons::REMOVE).clicked() {
