@@ -326,9 +326,12 @@ pub(super) fn do_frame(
                             });
                             ui.add_space(4.0);
                             let mut remove = None;
+                            let mut sel = None;
                             for imply_id in &coll.tags[id].implies {
                                 ui.horizontal(|ui| {
-                                    ui.label(&coll.tags[imply_id].names[0]);
+                                    if ui.link(&coll.tags[imply_id].names[0]).clicked() {
+                                        sel = Some(*imply_id);
+                                    }
                                     if ui.button(icons::REMOVE).clicked() {
                                         remove = Some(*imply_id);
                                     }
@@ -336,6 +339,9 @@ pub(super) fn do_frame(
                             }
                             if let Some(imply_id) = remove {
                                 coll.tags.get_mut(id).unwrap().implies.remove(&imply_id);
+                            }
+                            if let Some(sel) = sel {
+                                *active = Some(sel);
                             }
                         }
                     }
