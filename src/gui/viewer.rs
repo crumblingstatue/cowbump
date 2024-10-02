@@ -236,7 +236,7 @@ pub(crate) fn update(state: &mut State, win: &RenderWindow) {
             .viewer_state
             .last_slideshow_instant
             .get_or_insert(Instant::now());
-        if last.elapsed().as_millis() >= state.viewer_state.slideshow_timer_ms as u128 {
+        if last.elapsed().as_millis() >= u128::from(state.viewer_state.slideshow_timer_ms) {
             state.viewer_state.next(win);
             state.viewer_state.last_slideshow_instant = Some(Instant::now());
         }

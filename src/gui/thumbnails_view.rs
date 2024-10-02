@@ -38,7 +38,7 @@ pub enum SortBy {
 
 fn thumbs_per_row_and_size(window_width: u32, preferences: &Preferences) -> (u8, u32) {
     let thumbnails_per_row = preferences.thumbs_per_row;
-    let thumbnail_size = window_width / thumbnails_per_row as u32;
+    let thumbnail_size = window_width / u32::from(thumbnails_per_row);
     (thumbnails_per_row, thumbnail_size)
 }
 
@@ -98,13 +98,13 @@ impl ThumbnailsView {
         let thumbnails_per_screen =
             usize::from(self.thumbs_per_row) * usize::from(thumbnails_per_column);
         let row_offset = self.y_offset as u32 / thumb_size;
-        let skip = row_offset * self.thumbs_per_row as u32;
+        let skip = row_offset * u32::from(self.thumbs_per_row);
         (skip as usize, thumbnails_per_screen)
     }
     fn find_bottom(&self, window: &RenderWindow) -> f32 {
         let n_pics = self.iter().count();
-        let mut rows = n_pics as u32 / self.thumbs_per_row as u32;
-        if n_pics as u32 % self.thumbs_per_row as u32 != 0 {
+        let mut rows = n_pics as u32 / u32::from(self.thumbs_per_row);
+        if n_pics as u32 % u32::from(self.thumbs_per_row) != 0 {
             rows += 1;
         }
         let bottom = rows * self.thumb_size;
@@ -135,7 +135,7 @@ impl ThumbnailsView {
     fn abs_thumb_index_at_xy(&self, x: i32, y: i32) -> usize {
         let thumb_x = x as u32 / self.thumb_size;
         let thumb_y = (y as u32 + self.y_offset as u32) / self.thumb_size;
-        let thumb_index = thumb_y * self.thumbs_per_row as u32 + thumb_x;
+        let thumb_index = thumb_y * u32::from(self.thumbs_per_row) + thumb_x;
         thumb_index as usize
     }
     fn entry_at_xy(&self, x: i32, y: i32) -> Option<entry::Id> {
@@ -199,8 +199,8 @@ pub(super) fn draw_thumbnails(
         .take(take)
         .enumerate()
     {
-        let column = (rel_idx as u32) % state.thumbs_view.thumbs_per_row as u32;
-        let row = (rel_idx as u32) / state.thumbs_view.thumbs_per_row as u32;
+        let column = (rel_idx as u32) % u32::from(state.thumbs_view.thumbs_per_row);
+        let row = (rel_idx as u32) / u32::from(state.thumbs_view.thumbs_per_row);
         let x = (column * thumb_size) as f32;
         let y = (row * thumb_size) as f32 - (state.thumbs_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
