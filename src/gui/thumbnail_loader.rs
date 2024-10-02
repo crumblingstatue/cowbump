@@ -62,6 +62,11 @@ impl ThumbnailLoader {
     }
 }
 
+/// Convert an `image` crate image to SFML `Texture`
+///
+/// # Panics
+///
+/// If the texture can't be created, it will panic. Shouldn't happen normally.
 pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> egui_sfml::sfml::SfBox<Texture> {
     let (w, h) = buf.dimensions();
     let mut tex = Texture::new().unwrap();
