@@ -331,7 +331,7 @@ pub(super) fn do_frame(
                             let mut sel = None;
                             for imply_id in &coll.tags[id].implies {
                                 ui.horizontal(|ui| {
-                                    if ui.link(coll.tags.first_name_of(&imply_id)).clicked() {
+                                    if ui.link(coll.tags.first_name_of(imply_id)).clicked() {
                                         sel = Some(*imply_id);
                                     }
                                     if ui.button(icons::REMOVE).clicked() {

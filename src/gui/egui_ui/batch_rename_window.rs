@@ -23,7 +23,10 @@ fn do_batch_rename(
     let extensions: Vec<String> = ids
         .iter()
         .map(|id| {
-            Ok(coll.entries[id]
+            Ok(coll
+                .entries
+                .get(id)
+                .context("Dangling entry id")?
                 .path
                 .extension()
                 .context("Only filenames with extensions are supported")?
@@ -76,7 +79,7 @@ pub(crate) fn do_frame(
                     egui_state
                         .batch_rename_window
                         .ids
-                        .sort_by_key(|id| &coll.entries[id].path);
+                        .sort_by_key(|id| coll.entries.get(id).map(|en| &en.path));
                 }
             });
             ui.label("lmb: swap, rmb: insert before, alt+lmb: view image");
