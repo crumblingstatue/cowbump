@@ -34,7 +34,7 @@ impl Application {
     pub(crate) fn load_last(&mut self) -> anyhow::Result<FolderChanges> {
         if let Some(&id) = self.database.recent.most_recent() {
             self.load_collection(id)
-                .with_context(|| format!("Loading collection {id:?}"))
+                .with_context(|| format!("Error loading collection {id:?}"))
         } else {
             Ok(FolderChanges::default())
         }
@@ -56,7 +56,7 @@ impl Application {
         let coll_dir = collections_dir_name(&self.database.data_dir);
         let filename = collection_filename(&coll_dir, id);
         let coll: Collection = serialization::read_from_file(&filename)
-            .with_context(move || filename.display().to_string())?;
+            .with_context(move || format!("Deserialization error for: {}", filename.display()))?;
         let changes = coll.scan_changes(path)?;
         self.active_collection = Some((id, coll));
         self.database.recent.use_(id);
