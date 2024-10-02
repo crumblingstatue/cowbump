@@ -332,14 +332,10 @@ pub(super) fn do_frame(
                             for imply_id in &coll.tags[id].implies {
                                 ui.horizontal(|ui| {
                                     if ui
-                                        .link(
-                                            coll.tags
-                                                .get(imply_id)
-                                                .map(|tag| &tag.names[0])
-                                                .unwrap_or(&format!(
-                                                    "[dangling tag (#{imply_id:?})]"
-                                                )),
-                                        )
+                                        .link(coll.tags.get(imply_id).map_or(
+                                            &format!("[dangling tag (#{imply_id:?})]"),
+                                            |tag| &tag.names[0],
+                                        ))
                                         .clicked()
                                     {
                                         sel = Some(*imply_id);

@@ -126,8 +126,7 @@ fn build_tasks<'p>(
         let ext = candidate
             .path
             .extension()
-            .map(|ext| ext.to_str().unwrap())
-            .unwrap_or("")
+            .map_or("", |ext| ext.to_str().unwrap())
             .to_ascii_lowercase();
         match preferences.associations.get(&ext) {
             Some(Some(app_id)) => {

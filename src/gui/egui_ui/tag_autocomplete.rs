@@ -217,8 +217,7 @@ pub(super) fn tag_autocomplete_popup(
 fn find_word_to_complete(string: &str) -> &str {
     let last_begin = string
         .rfind(|c: char| matches!(c, '[' | ']' | '!') || c.is_whitespace())
-        .map(|pos| pos + 1)
-        .unwrap_or(0);
+        .map_or(0, |pos| pos + 1);
     &string[last_begin..]
 }
 
