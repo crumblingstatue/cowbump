@@ -53,7 +53,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
     let res = Resources::load()?;
-    let mut state = State::new(window.size().x, &app.database.preferences);
+    let mut state = State::new(window.size().x, &app.database.preferences)?;
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
     egui_ui::set_up_style(sf_egui.context(), &app.database.preferences.style);
@@ -399,21 +399,21 @@ fn get_tex_for_entry<'t>(
 }
 
 impl State {
-    fn new(window_width: u32, prefs: &Preferences) -> Self {
-        Self {
+    fn new(window_width: u32, prefs: &Preferences) -> anyhow::Result<Self> {
+        Ok(Self {
             filter: Requirements::default(),
             thumbnail_cache: Default::default(),
             thumbnail_loader: Default::default(),
             search_cursor: 0,
             search_success: false,
-            clipboard_ctx: Clipboard::new().unwrap(),
+            clipboard_ctx: Clipboard::new()?,
             thumbs_view: ThumbnailsView::new(window_width, prefs),
             find_reqs: Requirements::default(),
             sel: SelectionBufs::new(),
             select_a: None,
             activity: Activity::Thumbnails,
             viewer_state: ViewerState::default(),
-        }
+        })
     }
     fn wipe_search(&mut self) {
         self.search_cursor = 0;
