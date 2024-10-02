@@ -674,7 +674,7 @@ pub(super) fn do_frame(
                         });
                         ui.horizontal(|ui| {
                             ScrollArea::horizontal().show(ui, |ui| {
-                                for &img_id in seq.entries.iter() {
+                                for &img_id in &seq.entries {
                                     let img_but = ImageButton::new(SizedTexture::new(
                                         TextureId::User(img_id.0),
                                         (128., 128.),

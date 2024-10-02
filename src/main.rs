@@ -9,7 +9,8 @@
     clippy::uninlined_format_args,
     clippy::semicolon_if_nothing_returned,
     clippy::doc_markdown,
-    clippy::missing_panics_doc
+    clippy::missing_panics_doc,
+    clippy::explicit_iter_loop
 )]
 
 mod application;
