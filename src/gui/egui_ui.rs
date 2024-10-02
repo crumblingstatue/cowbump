@@ -168,10 +168,10 @@ impl ModalDialog {
     }
     pub fn show_payload(&mut self, ctx: &Context) -> Option<PromptAction> {
         let mut action = None;
-        let (key_enter, key_esc) = ctx.input(|inp| {
+        let (key_enter, key_esc) = ctx.input_mut(|inp| {
             (
-                inp.key_pressed(egui::Key::Enter),
-                inp.key_pressed(egui::Key::Escape),
+                inp.consume_key(egui::Modifiers::NONE, egui::Key::Enter),
+                inp.consume_key(egui::Modifiers::NONE, egui::Key::Escape),
             )
         });
         if let Some(payload) = &self.payload {
@@ -219,11 +219,11 @@ impl ModalDialog {
                         |ui| {
                             ui.heading(title);
                             ui.label(message);
-                            if ui.button([icons::CHECK, " Ok"].concat()).clicked() {
+                            if ui.button([icons::CHECK, " Ok"].concat()).clicked() || key_enter {
                                 action = Some(prompt_action.clone());
                                 close = true;
                             }
-                            if ui.button(icons::CANCEL_TEXT).clicked() {
+                            if ui.button(icons::CANCEL_TEXT).clicked() || key_esc {
                                 close = true;
                             }
                         },
@@ -308,6 +308,20 @@ pub(super) fn do_ui(
     res: &Resources,
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
+    // Do the modal handling first, so it can steal Esc/Enter inputs
+    if let Some(action) = egui_state.modal.show_payload(egui_ctx) {
+        match action {
+            PromptAction::QuitNoSave => {
+                egui_state.action = Some(Action::QuitNoSave);
+            }
+            PromptAction::DeleteTags(ref uids) => {
+                let Some((_, coll)) = &mut app.active_collection else {
+                    anyhow::bail!("No active collection");
+                };
+                coll.remove_tags(uids);
+            }
+        }
+    }
     top_bar::do_frame(state, egui_state, egui_ctx, app, win)?;
     preferences_window::do_frame(state, egui_state, app, egui_ctx, win);
     load_folder_window::do_frame(state, egui_state, egui_ctx, res, app, win.size().x);
@@ -419,19 +433,6 @@ pub(super) fn do_ui(
     }
     do_info_messages(egui_state, egui_ctx);
     egui_state.file_dialog.update(egui_ctx);
-    if let Some(action) = egui_state.modal.show_payload(egui_ctx) {
-        match action {
-            PromptAction::QuitNoSave => {
-                egui_state.action = Some(Action::QuitNoSave);
-            }
-            PromptAction::DeleteTags(ref uids) => {
-                let Some((_, coll)) = &mut app.active_collection else {
-                    anyhow::bail!("No active collection");
-                };
-                coll.remove_tags(uids);
-            }
-        }
-    }
     Ok(())
 }
 
