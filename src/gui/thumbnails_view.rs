@@ -220,7 +220,7 @@ pub(super) fn draw_thumbnails(
             thumb_size,
             &mut sprite,
             res,
-            &mut state.thumbnail_loader,
+            &state.thumbnail_loader,
             load_anim_rotation,
         );
         if mouse_over && pointer_active {
@@ -251,7 +251,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     thumb_size: u32,
     sprite: &mut Sprite<'b>,
     res: &'a Resources,
-    thumbnail_loader: &mut ThumbnailLoader,
+    thumbnail_loader: &ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
     let (has_img, texture) =
@@ -290,7 +290,7 @@ pub(in crate::gui) fn handle_event(
     event: Event,
     state: &mut State,
     egui_state: &mut EguiState,
-    coll: &mut Collection,
+    coll: &Collection,
     window: &RenderWindow,
     egui_ctx: &Context,
     preferences: &mut Preferences,
@@ -421,7 +421,7 @@ pub(in crate::gui) fn handle_event(
 
 fn copy_image_to_clipboard(
     state: &mut State,
-    coll: &mut Collection,
+    coll: &Collection,
     uid: entry::Id,
 ) -> anyhow::Result<()> {
     use arboard::ImageData;
@@ -447,14 +447,14 @@ pub(in crate::gui) fn select_all(state: &mut State, coll: &Collection) {
     }
 }
 
-pub(in crate::gui) fn search_prev(state: &mut State, coll: &mut Collection, view_height: u32) {
+pub(in crate::gui) fn search_prev(state: &mut State, coll: &Collection, view_height: u32) {
     if state.search_cursor > 0 {
         state.search_cursor -= 1;
     }
     search_goto_cursor(state, coll, view_height);
 }
 
-pub(in crate::gui) fn search_next(state: &mut State, coll: &mut Collection, view_height: u32) {
+pub(in crate::gui) fn search_next(state: &mut State, coll: &Collection, view_height: u32) {
     state.search_cursor += 1;
     search_goto_cursor(state, coll, view_height);
     if !state.search_success {

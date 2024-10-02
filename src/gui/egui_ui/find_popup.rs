@@ -17,7 +17,7 @@ pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
     egui_ctx: &Context,
-    coll: &mut Collection,
+    coll: &Collection,
     win: &RenderWindow,
 ) {
     egui_state

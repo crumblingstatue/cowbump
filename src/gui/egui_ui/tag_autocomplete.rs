@@ -29,8 +29,8 @@ impl Default for AcState {
 pub(super) fn tag_autocomplete_popup(
     string: &mut String,
     state: &mut AcState,
-    coll: &mut Collection,
-    ui: &mut Ui,
+    coll: &Collection,
+    ui: &Ui,
     response: &egui::Response,
     up_pressed: bool,
     down_pressed: bool,

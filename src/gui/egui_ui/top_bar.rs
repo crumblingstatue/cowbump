@@ -123,12 +123,7 @@ pub(super) fn do_frame(
     result
 }
 
-fn help_menu(
-    ui: &mut egui::Ui,
-    win: &RenderWindow,
-    app: &mut Application,
-    egui_state: &mut EguiState,
-) {
+fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_state: &mut EguiState) {
     ui.menu_button("Help", |ui| {
         if ui.button([icons::QUESTION, "About"].concat()).clicked() {
             ui.close_menu();
@@ -336,7 +331,7 @@ fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
 
 fn actions_menu(
     ui: &mut egui::Ui,
-    app: &mut Application,
+    app: &Application,
     egui_state: &mut EguiState,
     n_selected: usize,
 ) {

@@ -166,7 +166,7 @@ fn tag<'a>(
     }
 }
 
-pub fn text_edit_cursor_set_to_end(ui: &mut Ui, te_id: egui::Id) {
+pub fn text_edit_cursor_set_to_end(ui: &Ui, te_id: egui::Id) {
     let Some(mut state) = TextEdit::load_state(ui.ctx(), te_id) else {
         dlog!("Failed to set text edit cursor to end");
         return;
@@ -241,7 +241,7 @@ pub(super) fn do_frame(
                                 &state.thumbnail_cache,
                                 id,
                                 coll,
-                                &mut state.thumbnail_loader,
+                                &state.thumbnail_loader,
                                 state.thumbs_view.thumb_size,
                                 res,
                             )

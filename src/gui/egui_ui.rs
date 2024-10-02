@@ -332,7 +332,7 @@ pub(super) fn do_ui(
             &mut app.database.preferences,
             win,
         );
-        coll_prefs_window::do_frame(egui_state, coll, egui_ctx, &mut app.database.preferences);
+        coll_prefs_window::do_frame(egui_state, coll, egui_ctx, &app.database.preferences);
         entries_window::do_frame(
             state,
             egui_state,
@@ -448,7 +448,7 @@ impl<'state, 'res, 'db> TexSrc<'state, 'res, 'db> {
     pub(super) fn new(
         state: &'state mut State,
         res: &'res Resources,
-        app: &'db mut Application,
+        app: &'db Application,
     ) -> Self {
         TexSrc {
             state,
@@ -466,7 +466,7 @@ impl egui_sfml::UserTexSource for TexSrc<'_, '_, '_> {
                     &self.state.thumbnail_cache,
                     entry::Id(id),
                     coll,
-                    &mut self.state.thumbnail_loader,
+                    &self.state.thumbnail_loader,
                     self.state.thumbs_view.thumb_size,
                     self.res,
                 )

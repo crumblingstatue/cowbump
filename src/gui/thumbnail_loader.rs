@@ -15,7 +15,7 @@ pub struct ThumbnailLoader {
 }
 
 impl ThumbnailLoader {
-    pub fn request(&mut self, name: &Path, size: u32, uid: entry::Id) {
+    pub fn request(&self, name: &Path, size: u32, uid: entry::Id) {
         let mut slots = self.image_slots.lock();
         if let hash_map::Entry::Vacant(e) = slots.entry(uid) {
             e.insert(None);
@@ -38,7 +38,7 @@ impl ThumbnailLoader {
             });
         }
     }
-    pub fn write_to_cache(&mut self, cache: &mut ThumbnailCache) {
+    pub fn write_to_cache(&self, cache: &mut ThumbnailCache) {
         let mut slots = self.image_slots.lock();
         slots.retain(|&uid, slot| {
             if let Some(result) = slot.take() {

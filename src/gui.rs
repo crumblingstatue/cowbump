@@ -142,7 +142,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 Activity::Viewer => {
                     if !sf_egui.context().wants_pointer_input() {
-                        viewer::handle_event(&mut state, &event, &mut window);
+                        viewer::handle_event(&mut state, &event, &window);
                     }
                 }
             }
@@ -368,7 +368,7 @@ enum Activity {
 
 fn set_active_collection(
     entries_view: &mut ThumbnailsView,
-    app: &mut Application,
+    app: &Application,
     id: collection::Id,
     reqs: &Requirements,
     window_width: u32,
@@ -389,7 +389,7 @@ fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
     coll: &Collection,
-    thumbnail_loader: &mut ThumbnailLoader,
+    thumbnail_loader: &ThumbnailLoader,
     thumb_size: u32,
     res: &'t Resources,
 ) -> (bool, &'t Texture) {

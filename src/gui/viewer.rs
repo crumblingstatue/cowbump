@@ -66,7 +66,7 @@ pub(super) fn draw(
     }
 }
 
-pub(super) fn handle_event(state: &mut State, event: &Event, window: &mut RenderWindow) {
+pub(super) fn handle_event(state: &mut State, event: &Event, window: &RenderWindow) {
     match *event {
         Event::KeyPressed { code, shift, .. } => match code {
             Key::Left => state.viewer_state.prev(window),

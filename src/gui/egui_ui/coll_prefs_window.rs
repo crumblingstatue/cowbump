@@ -28,7 +28,7 @@ pub(super) fn do_frame(
     egui_state: &mut EguiState,
     coll: &mut Collection,
     egui_ctx: &egui::Context,
-    prefs: &mut Preferences,
+    prefs: &Preferences,
 ) {
     let win = &mut egui_state.coll_prefs_window;
     egui::Window::new("Collection preferences")

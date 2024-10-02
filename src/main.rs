@@ -17,7 +17,8 @@
     clippy::map_unwrap_or,
     clippy::items_after_statements,
     clippy::manual_let_else,
-    clippy::needless_pass_by_value
+    clippy::needless_pass_by_value,
+    clippy::needless_pass_by_ref_mut
 )]
 
 mod application;

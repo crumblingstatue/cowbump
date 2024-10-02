@@ -13,7 +13,7 @@ use {
 /// Open functionality when enter is pressed in thumbnails view
 pub(in crate::gui) fn on_enter_open(
     state: &mut State,
-    coll: &mut Collection,
+    coll: &Collection,
     preferences: &mut Preferences,
 ) {
     let mut candidates: Vec<OpenExternCandidate> = Vec::new();
@@ -37,11 +37,7 @@ pub(in crate::gui) fn on_enter_open(
     }
 }
 
-pub fn open_single_with_others(
-    coll: &mut Collection,
-    uid: entry::Id,
-    preferences: &mut Preferences,
-) {
+pub fn open_single_with_others(coll: &Collection, uid: entry::Id, preferences: &mut Preferences) {
     if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
         let seq = &coll.sequences[&seq_id];
         open_sequence(seq, uid, &coll.entries, preferences);
