@@ -3,10 +3,7 @@ use {
     crate::{
         application::Application,
         collection,
-        gui::{
-            egui_ui::EguiModalExt, native_dialog::error_blocking, viewer, Activity, SelectionBuf,
-            State,
-        },
+        gui::{egui_ui::EguiModalExt, viewer, Activity, SelectionBuf, State},
     },
     egui_sfml::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
@@ -160,7 +157,9 @@ fn help_menu(
         {
             ui.close_menu();
             if let Err(e) = open::that(&app.database.data_dir) {
-                error_blocking("Error opening", e);
+                egui_state
+                    .modal
+                    .err(format!("Error opening database dir: {e}"));
             }
         }
         if ui.button([icons::TERM, " Debug window"].concat()).clicked() {
