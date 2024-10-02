@@ -3,7 +3,10 @@ use {
     crate::{
         application::Application,
         collection,
-        gui::{native_dialog::error_blocking, viewer, Activity, SelectionBuf, State},
+        gui::{
+            egui_ui::EguiModalExt, native_dialog::error_blocking, viewer, Activity, SelectionBuf,
+            State,
+        },
     },
     egui_sfml::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
@@ -250,7 +253,9 @@ fn file_menu(
                             );
                         }
                         Err(e) => {
-                            error_blocking("Error loading recent collection", e);
+                            egui_state
+                                .modal
+                                .err(format!("Error loading recent collection: {e:?}"));
                         }
                     },
                     Action::Remove(id) => app.database.recent.remove(id),

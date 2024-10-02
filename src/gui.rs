@@ -39,6 +39,7 @@ use {
         },
         SfEgui,
     },
+    egui_ui::EguiModalExt,
     native_dialog::error_blocking,
     rand::seq::SliceRandom,
 };
@@ -76,7 +77,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 std::env::set_current_dir(root_path)?;
             }
             Err(e) => {
-                error_blocking("Error loading most recent collection", e);
+                egui_state
+                    .modal
+                    .err(format!("Error loading most recent collection: {e:?}"));
             }
         }
     }
