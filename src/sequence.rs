@@ -21,38 +21,45 @@ impl Sequence {
         }
     }
     pub(crate) fn reinsert_first(&mut self, id: entry::Id) {
-        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
-        self.entries.remove(pos);
-        self.entries.insert(0, id);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == id) {
+            self.entries.remove(pos);
+            self.entries.insert(0, id);
+        }
     }
     pub(crate) fn reinsert_last(&mut self, id: entry::Id) {
-        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
-        self.entries.remove(pos);
-        self.entries.push(id);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == id) {
+            self.entries.remove(pos);
+            self.entries.push(id);
+        }
     }
     pub(crate) fn reinsert_at(&mut self, id: entry::Id, at: usize) {
-        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
-        self.entries.remove(pos);
-        self.entries.insert(at, id);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == id) {
+            self.entries.remove(pos);
+            self.entries.insert(at, id);
+        }
     }
     pub(crate) fn swap_entry_left(&mut self, id: entry::Id) {
-        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
-        self.entries.swap(pos - 1, pos);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == id) {
+            self.entries.swap(pos - 1, pos);
+        }
     }
     pub(crate) fn swap_entry_right(&mut self, id: entry::Id) {
-        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
-        self.entries.swap(pos + 1, pos);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == id) {
+            self.entries.swap(pos + 1, pos);
+        }
     }
     pub(crate) fn remove_entry(&mut self, id: entry::Id) {
-        let pos = self.entries.iter().position(|&uid| uid == id).unwrap();
-        self.entries.remove(pos);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == id) {
+            self.entries.remove(pos);
+        }
     }
 
     pub(crate) fn entry_uids_wrapped_from(&self, img_uid: entry::Id) -> Vec<entry::Id> {
-        let pos = self.entries.iter().position(|&uid| uid == img_uid).unwrap();
         let mut uids = Vec::new();
-        uids.extend_from_slice(&self.entries[pos..]);
-        uids.extend_from_slice(&self.entries[..pos]);
+        if let Some(pos) = self.entries.iter().position(|&uid| uid == img_uid) {
+            uids.extend_from_slice(&self.entries[pos..]);
+            uids.extend_from_slice(&self.entries[..pos]);
+        }
         uids
     }
     pub(crate) fn contains_entry(&self, id: entry::Id) -> bool {
