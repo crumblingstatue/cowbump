@@ -14,7 +14,8 @@
     clippy::redundant_closure_for_method_calls,
     clippy::cast_lossless,
     clippy::cloned_instead_of_copied,
-    clippy::map_unwrap_or
+    clippy::map_unwrap_or,
+    clippy::items_after_statements
 )]
 
 mod application;

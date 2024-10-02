@@ -31,6 +31,16 @@ pub(super) fn do_sequence_windows(
     prefs: &mut Preferences,
     window: &RenderWindow,
 ) {
+    enum Action {
+        SwapLeft,
+        SwapRight,
+        SwapFirst,
+        SwapLast,
+        SwapAt(usize),
+        Remove,
+        Open,
+    }
+
     egui_state.sequence_windows.retain_mut(|win| {
         let mut open = true;
         let Some(seq) = coll.sequences.get_mut(&win.uid) else {
@@ -38,15 +48,6 @@ pub(super) fn do_sequence_windows(
             return false;
         };
         let name = &seq.name;
-        enum Action {
-            SwapLeft,
-            SwapRight,
-            SwapFirst,
-            SwapLast,
-            SwapAt(usize),
-            Remove,
-            Open,
-        }
         let mut action = Action::SwapLeft;
         let mut subject = None;
         if egui_ctx.input(|inp| inp.key_pressed(Key::Escape)) {

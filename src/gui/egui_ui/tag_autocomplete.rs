@@ -111,15 +111,16 @@ pub(super) fn tag_autocomplete_popup(
             len += specials.len();
         }
         if len > 0 {
-            if let Some(selection) = &mut state.select {
-                if *selection >= len {
-                    *selection = len - 1;
-                }
-            }
             enum C {
                 Id(tag::Id),
                 Special(&'static str),
                 Nothing,
+            }
+
+            if let Some(selection) = &mut state.select {
+                if *selection >= len {
+                    *selection = len - 1;
+                }
             }
             let mut complete = C::Nothing;
             popup_below_widget(
