@@ -1,6 +1,6 @@
 use {
     super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State},
-    crate::{collection::Collection, entry},
+    crate::{collection::Collection, dlog, entry},
     egui_sfml::{
         egui,
         sfml::{
@@ -42,7 +42,13 @@ pub(super) fn draw(
             }
         },
         None => {
-            let data = std::fs::read(&entry.path).unwrap();
+            let data = match std::fs::read(&entry.path) {
+                Ok(data) => data,
+                Err(e) => {
+                    dlog!("Error loading image: {e}");
+                    return;
+                }
+            };
             match image::load_from_memory(&data) {
                 Ok(img) => {
                     let tex = imagebuf_to_sf_tex(img.to_rgba8());
