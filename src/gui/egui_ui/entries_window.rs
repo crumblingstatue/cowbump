@@ -475,9 +475,15 @@ pub(super) fn do_frame(
                             let res: anyhow::Result<()> = try {
                                 let mut out = String::new();
                                 for uid in &win.ids {
-                                    let en = &coll.entries[uid];
-                                    let canonical = std::fs::canonicalize(&en.path)?;
-                                    writeln!(&mut out, "{}", canonical.display())?;
+                                    match coll.entries.get(uid) {
+                                        Some(en) => {
+                                            let canonical = std::fs::canonicalize(&en.path)?;
+                                            writeln!(&mut out, "{}", canonical.display())?;
+                                        }
+                                        None => {
+                                            writeln!(&mut out, "<Dangling id {uid:?}>")?;
+                                        }
+                                    }
                                 }
                                 state.clipboard_ctx.set_text(out)?;
                             };
