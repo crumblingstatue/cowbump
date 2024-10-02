@@ -381,7 +381,11 @@ fn set_active_collection(
         .1;
     *entries_view =
         ThumbnailsView::from_collection(window_width, active_coll, reqs, &app.database.preferences);
-    let root = &app.database.collections[&id];
+    let root = app
+        .database
+        .collections
+        .get(&id)
+        .context("dangling collection id")?;
     std::env::set_current_dir(root).context("failed to set directory")
 }
 
