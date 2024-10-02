@@ -1,6 +1,5 @@
 use {
-    super::egui_ui::{EguiState, FileOp},
-    crate::gui::native_dialog,
+    super::egui_ui::{EguiModalExt, EguiState, FileOp},
     anyhow::Context,
     egui_sfml::sfml::{
         graphics::{Image, RenderTarget, RenderWindow, Texture},
@@ -28,6 +27,8 @@ pub fn take_and_save_screenshot(win: &RenderWindow, egui_state: &mut EguiState) 
         egui_state.file_op = Some(FileOp::SaveScreenshot(ss));
     };
     if let Err(e) = result {
-        native_dialog::error_blocking("Failed to take screenshot", e);
+        egui_state
+            .modal
+            .err(format!("Failed to take screenshot: {e}"));
     }
 }

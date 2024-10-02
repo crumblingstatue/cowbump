@@ -157,7 +157,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         );
         sf_egui.end_pass(&mut window)?;
         if let Err(e) = result {
-            error_blocking("Error", e);
+            // Note: These are not egui errors. Egui is doing fine when these errors
+            // happen, so we can use the egui modal dialog to display them.
+            egui_state.modal.err(format!("{e:?}"));
         }
         let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &egui_state.action {
