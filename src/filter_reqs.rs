@@ -200,7 +200,11 @@ impl Req {
             Req::Any(reqs) => format!("@any[{}]", reqs.to_string(tags)),
             Req::All(reqs) => format!("@all[{}]", reqs.to_string(tags)),
             Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)),
-            Req::Tag(id) => tags[id].names[0].clone(),
+            Req::Tag(id) => tags
+                .get(id)
+                .and_then(|tag| tag.names.first())
+                .cloned()
+                .unwrap_or_else(|| format!("<dangling:{id:?}>")),
             Req::Not(req) => format!("!{}", req.to_string(tags)),
             Req::FilenameSub(substr) => format!("@f[{substr}]"),
             Req::PartOfSeq => "@seq".into(),
