@@ -1,12 +1,8 @@
 use {
     crate::{db::EntryMap, entry, gui::ThumbnailCache},
-    egui_sfml::sfml::graphics::Texture,
+    egui_sfml::{egui::mutex::Mutex, sfml::graphics::Texture},
     image::{imageops::FilterType, ImageBuffer, ImageResult, Rgba},
-    std::{
-        collections::hash_map,
-        path::Path,
-        sync::{Arc, Mutex},
-    },
+    std::{collections::hash_map, path::Path, sync::Arc},
 };
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
@@ -20,7 +16,7 @@ pub struct ThumbnailLoader {
 
 impl ThumbnailLoader {
     pub fn request(&mut self, name: &Path, size: u32, uid: entry::Id) {
-        let mut slots = self.image_slots.lock().unwrap();
+        let mut slots = self.image_slots.lock();
         if let hash_map::Entry::Vacant(e) = slots.entry(uid) {
             e.insert(None);
             let slots_clone = Arc::clone(&self.image_slots);
@@ -31,7 +27,6 @@ impl ThumbnailLoader {
                     Err(e) => {
                         slots_clone
                             .lock()
-                            .unwrap()
                             .insert(uid, Some(Err(image::ImageError::IoError(e))));
                         return;
                     }
@@ -39,12 +34,12 @@ impl ThumbnailLoader {
                 let image_result = image::load_from_memory(&data);
                 let result =
                     image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba8());
-                slots_clone.lock().unwrap().insert(uid, Some(result));
+                slots_clone.lock().insert(uid, Some(result));
             });
         }
     }
     pub fn write_to_cache(&mut self, cache: &mut ThumbnailCache) {
-        let mut slots = self.image_slots.lock().unwrap();
+        let mut slots = self.image_slots.lock();
         slots.retain(|&uid, slot| {
             if let Some(result) = slot.take() {
                 match result {
@@ -63,7 +58,7 @@ impl ThumbnailLoader {
         });
     }
     pub fn busy_with(&self) -> Vec<entry::Id> {
-        self.image_slots.lock().unwrap().keys().cloned().collect()
+        self.image_slots.lock().keys().cloned().collect()
     }
 }
 
