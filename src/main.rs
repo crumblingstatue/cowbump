@@ -16,7 +16,8 @@
     clippy::cloned_instead_of_copied,
     clippy::map_unwrap_or,
     clippy::items_after_statements,
-    clippy::manual_let_else
+    clippy::manual_let_else,
+    clippy::needless_pass_by_value
 )]
 
 mod application;

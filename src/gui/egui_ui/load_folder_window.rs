@@ -55,7 +55,7 @@ type PathAddResult = io::Result<PathAdd>;
 fn start_loading(win: &mut LoadFolderWindow) {
     let path_clone = win.root.clone();
     let (sender, receiver) = channel();
-    let join_handle = std::thread::spawn(move || read_dir_entries(path_clone.as_ref(), sender));
+    let join_handle = std::thread::spawn(move || read_dir_entries(path_clone.as_ref(), &sender));
     let loading_state = LoadingState {
         join_handle: Some(join_handle),
         receiver,
@@ -286,7 +286,7 @@ fn update(load_state: &mut LoadingState, result_vec: &mut Vec<Result<PathAdd, io
     false
 }
 
-fn read_dir_entries(root: &Path, sender: Sender<PathResult>) -> anyhow::Result<()> {
+fn read_dir_entries(root: &Path, sender: &Sender<PathResult>) -> anyhow::Result<()> {
     let wd = walkdir(root);
     for dir_entry in wd {
         let dir_entry = match dir_entry {
