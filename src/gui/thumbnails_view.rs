@@ -300,9 +300,8 @@ pub(in crate::gui) fn handle_event(
             if egui_ctx.wants_pointer_input() {
                 return;
             }
-            let uid = match state.thumbs_view.entry_at_xy(x, y) {
-                Some(uid) => uid,
-                None => return,
+            let Some(uid) = state.thumbs_view.entry_at_xy(x, y) else {
+                return;
             };
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
@@ -375,9 +374,8 @@ pub(in crate::gui) fn handle_event(
                 egui_state.filter_popup.on = true;
             } else if code == Key::C {
                 let mp = window.mouse_position();
-                let uid = match state.thumbs_view.entry_at_xy(mp.x, mp.y) {
-                    Some(uid) => uid,
-                    None => return,
+                let Some(uid) = state.thumbs_view.entry_at_xy(mp.x, mp.y) else {
+                    return;
                 };
                 if let Err(e) = copy_image_to_clipboard(state, coll, uid) {
                     native_dialog::error_blocking("Clipboard copy failed", e);

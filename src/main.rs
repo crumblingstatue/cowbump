@@ -15,7 +15,8 @@
     clippy::cast_lossless,
     clippy::cloned_instead_of_copied,
     clippy::map_unwrap_or,
-    clippy::items_after_statements
+    clippy::items_after_statements,
+    clippy::manual_let_else
 )]
 
 mod application;
