@@ -201,7 +201,7 @@ impl Collection {
     pub(crate) fn get_first_related_sequence_of(&self, id: entry::Id) -> Option<&Sequence> {
         self.related_seqs_of(&[id])
             .next()
-            .map(|id| &self.sequences[&id])
+            .and_then(|id| self.sequences.get(&id))
     }
 
     pub(crate) fn scan_changes(&self, root: &Path) -> anyhow::Result<FolderChanges> {
