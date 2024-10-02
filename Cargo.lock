@@ -477,8 +477,9 @@ dependencies = [
 
 [[package]]
 name = "egui-file-dialog"
-version = "0.6.1"
-source = "git+https://github.com/fluxxcode/egui-file-dialog.git?branch=develop#ad8bb8c940e3c6e6f860cfa8295b5a1a81725366"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09999eebe148a045df9e0d38f32b4ac03ac51bbf136d96fc4ff5e05f73a19ec5"
 dependencies = [
  "directories",
  "egui",
@@ -488,8 +489,9 @@ dependencies = [
 
 [[package]]
 name = "egui-modal"
-version = "0.4.0"
-source = "git+https://github.com/crumblingstatue/egui-modal.git?branch=egui-0.29#2f6fa31c78f6256270f2bfeea5635b002ac145c1"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "297fa5697b1048198cc12f5f101312a6fcae42e55a637c861a316d6028797e42"
 dependencies = [
  "egui",
 ]
