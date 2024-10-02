@@ -168,6 +168,12 @@ impl ModalDialog {
     }
     pub fn show_payload(&mut self, ctx: &Context) -> Option<PromptAction> {
         let mut action = None;
+        let (key_enter, key_esc) = ctx.input(|inp| {
+            (
+                inp.key_pressed(egui::Key::Enter),
+                inp.key_pressed(egui::Key::Escape),
+            )
+        });
         if let Some(payload) = &self.payload {
             let mut close = false;
             show_modal_ui(ctx, |ui| match payload {
@@ -186,7 +192,7 @@ impl ModalDialog {
                                         .desired_width(ui.available_width()),
                                 );
                             });
-                        if ui.button("Ok").clicked() {
+                        if ui.button("Ok").clicked() || key_enter || key_esc {
                             close = true;
                         }
                     });
@@ -195,10 +201,13 @@ impl ModalDialog {
                     ui.label(s);
                 }
                 ModalPayload::About => {
-                    ui.label(["Cowbump version ", crate::VERSION].concat());
-                    if ui.button("Close").clicked() {
-                        close = true;
-                    }
+                    ui.vertical_centered(|ui| {
+                        ui.label(["Cowbump version ", crate::VERSION].concat());
+                        ui.add_space(16.0);
+                        if ui.button("Close").clicked() || key_enter || key_esc {
+                            close = true;
+                        }
+                    });
                 }
                 ModalPayload::Prompt {
                     title,
