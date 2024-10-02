@@ -373,6 +373,9 @@ pub(super) fn do_ui(
             FileOp::SaveScreenshot(ss) => {
                 let path_str = path.to_str().context("Failed to convert path to str")?;
                 ss.save_to_file(path_str).context("Failed to save image")?;
+                egui_state
+                    .modal
+                    .success(format!("Saved screenshot to {path_str}"));
             }
             FileOp::CreateBackup => {
                 let result: anyhow::Result<()> = try {
