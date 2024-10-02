@@ -428,7 +428,7 @@ fn copy_image_to_clipboard(
 ) -> anyhow::Result<()> {
     use arboard::ImageData;
     let imgpath = &coll.entries[&uid].path;
-    let buf = std::fs::read(imgpath).unwrap();
+    let buf = std::fs::read(imgpath)?;
     let img = image::load_from_memory(&buf).context("Failed to load image from memory")?;
     let rgba = img.to_rgba8();
     let img_data = ImageData {

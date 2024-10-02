@@ -65,7 +65,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 if !changes.empty() {
                     egui_state.changes_window.open(changes);
                 }
-                let coll = app.active_collection.as_ref().unwrap();
+                let coll = app
+                    .active_collection
+                    .as_ref()
+                    .context("Can't get active collection")?;
                 state.thumbs_view = ThumbnailsView::from_collection(
                     window.size().x,
                     &coll.1,
