@@ -101,6 +101,13 @@ struct BuiltTasks<'p> {
     remainder: Vec<&'p Path>,
 }
 
+/// Build tasks to open the files with external programs
+///
+/// # Panics
+///
+/// Panics if one of the paths has invalid UTF-8.
+/// There is not much that can be done about this as serde doesn't support
+/// serializing Non-UTF8 paths.
 fn build_tasks<'p>(
     candidates: &[OpenExternCandidate<'p>],
     preferences: &mut Preferences,
