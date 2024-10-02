@@ -53,7 +53,6 @@ pub(crate) struct EguiState {
     pub top_bar: bool,
     pub load_folder_window: LoadFolderWindow,
     pub(crate) changes_window: ChangesWindow,
-    info_messages: Vec<InfoMessage>,
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
     pub debug_window: DebugWindow,
@@ -89,7 +88,6 @@ impl EguiState {
             top_bar: true,
             load_folder_window: Default::default(),
             changes_window: Default::default(),
-            info_messages: Default::default(),
             just_closed_window_with_esc: Default::default(),
             debug_window: Default::default(),
             find_popup: Default::default(),
@@ -110,22 +108,6 @@ impl EguiState {
 pub enum PromptAction {
     QuitNoSave,
     DeleteTags(Vec<tag::Id>),
-}
-
-fn ok_prompt(ctx: &Context, title: &str, msg: &str) -> bool {
-    let mut clicked = false;
-    Window::new(title)
-        .collapsible(false)
-        .resizable(false)
-        .show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(msg);
-                if ui.button("Ok").clicked() {
-                    clicked = true;
-                }
-            })
-        });
-    clicked
 }
 
 #[derive(Default)]
@@ -168,13 +150,13 @@ impl ModalDialog {
     }
     pub fn show_payload(&mut self, ctx: &Context) -> Option<PromptAction> {
         let mut action = None;
-        let (key_enter, key_esc) = ctx.input_mut(|inp| {
-            (
-                inp.consume_key(egui::Modifiers::NONE, egui::Key::Enter),
-                inp.consume_key(egui::Modifiers::NONE, egui::Key::Escape),
-            )
-        });
         if let Some(payload) = &self.payload {
+            let (key_enter, key_esc) = ctx.input_mut(|inp| {
+                (
+                    inp.consume_key(egui::Modifiers::NONE, egui::Key::Enter),
+                    inp.consume_key(egui::Modifiers::NONE, egui::Key::Escape),
+                )
+            });
             let mut close = false;
             show_modal_ui(ctx, |ui| match payload {
                 ModalPayload::Err(s) => {
@@ -198,7 +180,13 @@ impl ModalDialog {
                     });
                 }
                 ModalPayload::Success(s) => {
-                    ui.label(s);
+                    ui.vertical_centered(|ui| {
+                        ui.label(s);
+                        ui.add_space(16.0);
+                        if ui.button("Close").clicked() || key_enter || key_esc {
+                            close = true;
+                        }
+                    });
                 }
                 ModalPayload::About => {
                     ui.vertical_centered(|ui| {
@@ -282,22 +270,6 @@ impl EguiState {
         self.just_closed_window_with_esc = false;
         self.action = None;
     }
-}
-
-fn info_message(
-    info_messages: &mut Vec<InfoMessage>,
-    title: impl Into<String>,
-    message: impl Into<String>,
-) {
-    info_messages.push(InfoMessage {
-        title: title.into(),
-        message: message.into(),
-    });
-}
-
-struct InfoMessage {
-    title: String,
-    message: String,
 }
 
 pub(super) fn do_ui(
@@ -409,14 +381,10 @@ pub(super) fn do_ui(
                 };
                 match result {
                     Ok(_) => {
-                        info_message(
-                            &mut egui_state.info_messages,
-                            "Success",
-                            "Backup successfully created.",
-                        );
+                        egui_state.modal.success("Backup successfully created.");
                     }
                     Err(e) => {
-                        info_message(&mut egui_state.info_messages, "Error", e.to_string());
+                        egui_state.modal.err(format!("Error creating backup: {e}"));
                     }
                 }
             }
@@ -431,15 +399,8 @@ pub(super) fn do_ui(
         }
         egui_state.file_op = None;
     }
-    do_info_messages(egui_state, egui_ctx);
     egui_state.file_dialog.update(egui_ctx);
     Ok(())
-}
-
-fn do_info_messages(egui_state: &mut EguiState, egui_ctx: &Context) {
-    egui_state
-        .info_messages
-        .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
 }
 
 impl EguiState {
