@@ -163,7 +163,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             // happen, so we can use the egui modal dialog to display them.
             egui_state.modal.err(format!("{e:?}"));
         }
-        let mut coll = app.active_collection.as_mut().map(|(_id, coll)| coll);
         if let Some(action) = &egui_state.action {
             match action {
                 Action::Quit => window.close(),
@@ -173,23 +172,35 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
                 Action::SelectNone => state.sel.current_mut().clear(),
                 Action::FindNext => {
-                    search_next(&mut state, coll.as_mut().unwrap(), window.size().y);
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        search_next(&mut state, coll, window.size().y);
+                    }
                 }
                 Action::FindPrev => {
-                    search_prev(&mut state, coll.as_mut().unwrap(), window.size().y);
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        search_prev(&mut state, coll, window.size().y);
+                    }
                 }
-                Action::SelectAll => select_all(&mut state, coll.as_mut().unwrap()),
+                Action::SelectAll => {
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        select_all(&mut state, coll);
+                    }
+                }
                 Action::SortByPath => {
                     state.thumbs_view.sort_by = SortBy::Path;
-                    state
-                        .thumbs_view
-                        .update_from_collection(coll.as_ref().unwrap(), &state.filter);
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        state
+                            .thumbs_view
+                            .update_from_collection(coll, &state.filter);
+                    }
                 }
                 Action::SortById => {
                     state.thumbs_view.sort_by = SortBy::Id;
-                    state
-                        .thumbs_view
-                        .update_from_collection(coll.as_ref().unwrap(), &state.filter);
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        state
+                            .thumbs_view
+                            .update_from_collection(coll, &state.filter);
+                    }
                 }
                 Action::Shuffle => {
                     state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
@@ -200,21 +211,21 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             }
         }
         window.clear(Color::BLACK);
-        match &mut coll {
-            Some(db) => match state.activity {
+        match &mut app.active_collection {
+            Some((_, coll)) => match state.activity {
                 Activity::Thumbnails => {
                     thumbnails_view::draw_thumbnails(
                         &mut state,
                         &res,
                         &mut window,
-                        db,
+                        coll,
                         load_anim_rotation,
                         !sf_egui.context().wants_pointer_input(),
                     );
                 }
                 Activity::Viewer => {
                     viewer::update(&mut state, &window);
-                    viewer::draw(&mut state, &mut window, db, &res);
+                    viewer::draw(&mut state, &mut window, coll, &res);
                 }
             },
             None => {
