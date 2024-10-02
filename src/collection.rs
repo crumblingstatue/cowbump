@@ -24,6 +24,19 @@ pub type Tags = FnvHashMap<tag::Id, Tag>;
 pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
 pub type TagSpecificApps = FnvHashMap<tag::Id, preferences::AppId>;
 
+pub trait TagsExt {
+    fn first_name_of(&self, id: &tag::Id) -> String;
+}
+
+impl TagsExt for Tags {
+    fn first_name_of(&self, id: &tag::Id) -> String {
+        match self.get(id) {
+            Some(tag) => tag.first_name().into(),
+            None => format!("<dangling:{id:?}>"),
+        }
+    }
+}
+
 /// A collection of entries.
 ///
 /// Each collection has a root that all the entries stem from.

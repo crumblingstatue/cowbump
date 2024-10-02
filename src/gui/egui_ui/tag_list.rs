@@ -1,7 +1,7 @@
 use {
     super::{icons, ui_ext::UiExt, EguiState},
     crate::{
-        collection::Collection,
+        collection::{Collection, TagsExt},
         db::{TagSet, UidCounter},
         dlog,
         gui::{egui_ui::PromptAction, State},
@@ -107,14 +107,13 @@ pub(super) fn do_frame(
                             .num_columns(4)
                             .show(ui, |ui| {
                                 let mut uids: Vec<tag::Id> = coll.tags.keys().copied().collect();
-                                uids.sort_by_key(|uid| coll.tags[uid].first_name());
+                                uids.sort_by_key(|uid| coll.tags.first_name_of(uid));
                                 for tag_uid in &uids {
-                                    let tag = &coll.tags[tag_uid];
-                                    let name = tag.first_name();
+                                    let name = coll.tags.first_name_of(tag_uid);
                                     if !name.contains(&tag_filter_string[..]) {
                                         continue;
                                     }
-                                    let mut button = Button::new(name);
+                                    let mut button = Button::new(&name);
                                     let mut checked = selected_uids.contains(tag_uid);
                                     if active == &Some(*tag_uid) {
                                         button = button.fill(Color32::from_rgb(95, 69, 8));
@@ -218,7 +217,8 @@ pub(super) fn do_frame(
                                 return;
                             }
                             ui.horizontal(|ui| {
-                                let name = format!("{} {}", icons::TAG, coll.tags[id].first_name());
+                                let name =
+                                    format!("{} {}", icons::TAG, coll.tags.first_name_of(id));
                                 ui.heading(&name);
                                 ui.label(
                                     RichText::new(format!("#{}", id.0)).color(Color32::DARK_GRAY),
@@ -331,13 +331,7 @@ pub(super) fn do_frame(
                             let mut sel = None;
                             for imply_id in &coll.tags[id].implies {
                                 ui.horizontal(|ui| {
-                                    if ui
-                                        .link(coll.tags.get(imply_id).map_or(
-                                            &format!("[dangling tag (#{imply_id:?})]")[..],
-                                            |tag| tag.first_name(),
-                                        ))
-                                        .clicked()
-                                    {
+                                    if ui.link(coll.tags.first_name_of(&imply_id)).clicked() {
                                         sel = Some(*imply_id);
                                     }
                                     if ui.button(icons::REMOVE).clicked() {

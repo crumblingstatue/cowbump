@@ -6,7 +6,7 @@ use {
         EguiState,
     },
     crate::{
-        collection::{AddTagError, Collection},
+        collection::{AddTagError, Collection, TagsExt},
         db::Db,
         dlog, entry,
         filter_reqs::Requirements,
@@ -284,16 +284,13 @@ pub(super) fn do_frame(
                         // region: Tags
                         ui.horizontal_wrapped(|ui| {
                             for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
-                                let tag_name = match coll.tags.get(&tagid) {
-                                    Some(tag) => tag.first_name(),
-                                    None => "<unknown tag>",
-                                };
+                                let tag_name = coll.tags.first_name_of(&tagid);
                                 let mut changed_filter = false;
 
                                 if win.editing_tags {
                                     let mut del = false;
                                     ui.add(tag(
-                                        tag_name,
+                                        &tag_name,
                                         tagid,
                                         Some(&mut del),
                                         &mut state.filter,
@@ -326,7 +323,7 @@ pub(super) fn do_frame(
                                     }
                                 } else {
                                     ui.add(tag(
-                                        tag_name,
+                                        &tag_name,
                                         tagid,
                                         None,
                                         &mut state.filter,

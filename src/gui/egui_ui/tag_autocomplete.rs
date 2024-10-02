@@ -1,5 +1,8 @@
 use {
-    crate::{collection::Collection, tag},
+    crate::{
+        collection::{Collection, TagsExt},
+        tag,
+    },
     egui_sfml::egui::{self, popup_below_widget, Key, PopupCloseBehavior, Ui},
     std::ops::Range,
 };
@@ -193,7 +196,7 @@ pub(super) fn tag_autocomplete_popup(
             match complete {
                 C::Id(id) => {
                     let range = str_range(string, last);
-                    string.replace_range(range, coll.tags[&id].first_name());
+                    string.replace_range(range, &coll.tags.first_name_of(&id));
                     state.applied = true;
                     ret!(true);
                 }

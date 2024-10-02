@@ -1,6 +1,6 @@
 use {
     crate::{
-        collection::{Sequences, Tags},
+        collection::{Sequences, Tags, TagsExt},
         db::{TagSet, Uid},
         dlog,
         filter_reqs::{Req, Requirements},
@@ -66,8 +66,8 @@ fn tag_satisfies_required_tag(
     if *depth == 10 {
         dlog!(
             "Tag satisfies depth limit exceeded. Aborting [tag: {:?}, required: {:?}]",
-            tags.get(&tag_id).map(tag::Tag::first_name),
-            tags.get(&required_tag_id).map(tag::Tag::first_name),
+            tags.first_name_of(&tag_id),
+            tags.first_name_of(&required_tag_id),
         );
         return false;
     }
