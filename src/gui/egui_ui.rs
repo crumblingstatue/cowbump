@@ -164,7 +164,7 @@ impl ModalDialog {
             title: title.into(),
             message: message.into(),
             action,
-        })
+        });
     }
     pub fn show_payload(&mut self, ctx: &Context) -> Option<PromptAction> {
         let mut action = None;
@@ -400,7 +400,7 @@ pub(super) fn do_ui(
                 if let Err(e) = app.database.restore_backups_from(&path) {
                     crate::gui::native_dialog::error_blocking("Failed to restore backup", e);
                 } else {
-                    egui_state.modal.success("Backup restored")
+                    egui_state.modal.success("Backup restored");
                 }
             }
         }

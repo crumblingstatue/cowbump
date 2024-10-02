@@ -132,7 +132,7 @@ fn help_menu(
     ui.menu_button("Help", |ui| {
         if ui.button([icons::QUESTION, "About"].concat()).clicked() {
             ui.close_menu();
-            egui_state.modal.about()
+            egui_state.modal.about();
         }
         ui.separator();
         ui.vertical_centered(|ui| {
