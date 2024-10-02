@@ -193,7 +193,7 @@ pub(super) fn tag_autocomplete_popup(
             match complete {
                 C::Id(id) => {
                     let range = str_range(string, last);
-                    string.replace_range(range, &coll.tags[&id].first_name());
+                    string.replace_range(range, coll.tags[&id].first_name());
                     state.applied = true;
                     ret!(true);
                 }

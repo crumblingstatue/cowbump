@@ -66,8 +66,8 @@ fn tag_satisfies_required_tag(
     if *depth == 10 {
         dlog!(
             "Tag satisfies depth limit exceeded. Aborting [tag: {:?}, required: {:?}]",
-            tags.get(&tag_id).map(|tag| tag.first_name()),
-            tags.get(&required_tag_id).map(|tag| tag.first_name()),
+            tags.get(&tag_id).map(tag::Tag::first_name),
+            tags.get(&required_tag_id).map(tag::Tag::first_name),
         );
         return false;
     }
