@@ -10,7 +10,8 @@
     clippy::semicolon_if_nothing_returned,
     clippy::doc_markdown,
     clippy::missing_panics_doc,
-    clippy::explicit_iter_loop
+    clippy::explicit_iter_loop,
+    clippy::redundant_closure_for_method_calls
 )]
 
 mod application;

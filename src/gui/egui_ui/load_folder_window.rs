@@ -318,6 +318,6 @@ trait IgnoreStrExt {
 
 impl IgnoreStrExt for str {
     fn to_ignore_vec(&self) -> Vec<&str> {
-        self.split(',').map(|seg| seg.trim()).collect()
+        self.split(',').map(str::trim).collect()
     }
 }

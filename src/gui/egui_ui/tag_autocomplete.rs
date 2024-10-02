@@ -207,7 +207,7 @@ pub(super) fn tag_autocomplete_popup(
             if !string.is_empty() {
                 ui.memory_mut(|mem| mem.open_popup(popup_id));
             } else {
-                ui.memory_mut(|mem| mem.close_popup());
+                ui.memory_mut(egui::Memory::close_popup);
             }
         }
     }
