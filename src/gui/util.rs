@@ -1,5 +1,5 @@
 use {
-    super::egui_ui::{EguiModalExt, EguiState, FileOp},
+    super::egui_ui::{EguiState, FileOp},
     anyhow::Context,
     egui_sfml::sfml::{
         graphics::{Image, RenderTarget, RenderWindow, Texture},
@@ -29,6 +29,6 @@ pub fn take_and_save_screenshot(win: &RenderWindow, egui_state: &mut EguiState) 
     if let Err(e) = result {
         egui_state
             .modal
-            .err(format!("Failed to take screenshot: {e}"));
+            .err(format!("Failed to take screenshot: {e:?}"));
     }
 }

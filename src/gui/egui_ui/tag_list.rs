@@ -4,10 +4,7 @@ use {
         collection::Collection,
         db::{TagSet, UidCounter},
         dlog,
-        gui::{
-            egui_ui::{prompt, PromptAction},
-            State,
-        },
+        gui::{egui_ui::PromptAction, State},
         tag,
     },
     egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit},
@@ -51,9 +48,9 @@ pub(super) fn do_frame(
     let new_name = &mut egui_state.tag_window.new_name;
     let new_imply = &mut egui_state.tag_window.new_imply;
     let new_tag = &mut egui_state.tag_window.new_tag;
+    let modal = &mut egui_state.modal;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
-    let prompts = &mut egui_state.prompts;
     egui_sfml::egui::Window::new([icons::TAG, " Tag list"].concat())
         .open(&mut egui_state.tag_window.on)
         .show(egui_ctx, move |ui| {
@@ -191,8 +188,7 @@ pub(super) fn do_frame(
                                     },
                                     if n == 1 { "" } else { "s" }
                                 );
-                                prompt(
-                                    prompts,
+                                modal.prompt(
                                     "Tag deletion",
                                     msg,
                                     PromptAction::DeleteTags(
@@ -233,8 +229,7 @@ pub(super) fn do_frame(
                                         .on_hover_text("Delete tag")
                                         .clicked()
                                     {
-                                        prompt(
-                                            prompts,
+                                        modal.prompt(
                                             "Tag deletion",
                                             format!("Really delete the tag \"{name}\"?"),
                                             PromptAction::DeleteTags([*id].to_vec()),

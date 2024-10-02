@@ -1,5 +1,5 @@
 use {
-    super::{EguiModalExt, EguiState},
+    super::EguiState,
     crate::{
         application::Application,
         db::FolderChanges,

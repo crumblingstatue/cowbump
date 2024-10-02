@@ -1,9 +1,9 @@
 use {
-    super::{icons, prompt, Action, EguiState, FileOp, PromptAction},
+    super::{icons, Action, EguiState, FileOp, PromptAction},
     crate::{
         application::Application,
         collection,
-        gui::{egui_ui::EguiModalExt, viewer, Activity, SelectionBuf, State},
+        gui::{viewer, Activity, SelectionBuf, State},
     },
     egui_sfml::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
@@ -132,13 +132,7 @@ fn help_menu(
     ui.menu_button("Help", |ui| {
         if ui.button([icons::QUESTION, "About"].concat()).clicked() {
             ui.close_menu();
-            egui_state
-                .modal
-                .dialog()
-                .with_title("About Cowbump")
-                .with_icon(egui_modal::Icon::Info)
-                .with_body(format!("Cowbump version {}", crate::VERSION))
-                .open();
+            egui_state.modal.about()
         }
         ui.separator();
         ui.vertical_centered(|ui| {
@@ -159,7 +153,7 @@ fn help_menu(
             if let Err(e) = open::that(&app.database.data_dir) {
                 egui_state
                     .modal
-                    .err(format!("Error opening database dir: {e}"));
+                    .err(format!("Error opening database dir: {e:?}"));
             }
         }
         if ui.button([icons::TERM, " Debug window"].concat()).clicked() {
@@ -294,8 +288,7 @@ fn file_menu(
             .clicked()
         {
             ui.close_menu();
-            prompt(
-                &mut egui_state.prompts,
+            egui_state.modal.prompt(
                 "Quit without saving",
                 "Warning: All changes made this session will be lost.",
                 PromptAction::QuitNoSave,

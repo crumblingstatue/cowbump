@@ -34,7 +34,6 @@ use {
     crate::{application::Application, collection::Collection, entry, gui::State, tag},
     anyhow::Context as _,
     egui_file_dialog::FileDialog,
-    egui_modal::Modal,
     egui_sfml::{
         egui::{self, Context, FontFamily, FontId, TextStyle, Window},
         sfml::{
@@ -55,7 +54,6 @@ pub(crate) struct EguiState {
     pub load_folder_window: LoadFolderWindow,
     pub(crate) changes_window: ChangesWindow,
     info_messages: Vec<InfoMessage>,
-    prompts: Vec<Prompt>,
     // We just closed window with esc, ignore the esc press outside of egui
     pub just_closed_window_with_esc: bool,
     pub debug_window: DebugWindow,
@@ -69,7 +67,7 @@ pub(crate) struct EguiState {
     pub(crate) file_dialog: FileDialog,
     /// If `Some`, save this screenshot to the selected path of the file dialog
     pub(crate) file_op: Option<FileOp>,
-    pub(crate) modal: Modal,
+    pub(crate) modal: ModalDialog,
 }
 
 pub(crate) enum FileOp {
@@ -80,7 +78,7 @@ pub(crate) enum FileOp {
 }
 
 impl EguiState {
-    pub(crate) fn new(ctx: &Context) -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             entries_windows: Default::default(),
             sequences_window: Default::default(),
@@ -92,7 +90,6 @@ impl EguiState {
             load_folder_window: Default::default(),
             changes_window: Default::default(),
             info_messages: Default::default(),
-            prompts: Default::default(),
             just_closed_window_with_esc: Default::default(),
             debug_window: Default::default(),
             find_popup: Default::default(),
@@ -104,17 +101,13 @@ impl EguiState {
             file_dialog: FileDialog::new()
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::default()),
             file_op: None,
-            modal: Modal::new(ctx, "modal_dialog"),
+            modal: ModalDialog::default(),
         }
     }
 }
 
-struct Prompt {
-    msg: InfoMessage,
-    action: PromptAction,
-}
-
-enum PromptAction {
+#[derive(Clone)]
+pub enum PromptAction {
     QuitNoSave,
     DeleteTags(Vec<tag::Id>),
 }
@@ -135,43 +128,128 @@ fn ok_prompt(ctx: &Context, title: &str, msg: &str) -> bool {
     clicked
 }
 
-enum OkCancel {
-    Ok,
-    Cancel,
+#[derive(Default)]
+pub struct ModalDialog {
+    payload: Option<ModalPayload>,
 }
 
-fn ok_cancel_prompt(modal: &Modal, title: &str, msg: &str) -> Option<OkCancel> {
-    let mut clicked = None;
-    modal.show(|ui| {
-        ui.with_layout(
-            egui::Layout::top_down_justified(egui::Align::Center),
-            |ui| {
-                ui.heading(title);
-                ui.label(msg);
-                if ui.button([icons::CHECK, " Ok"].concat()).clicked() {
-                    clicked = Some(OkCancel::Ok);
+enum ModalPayload {
+    Err(String),
+    Success(String),
+    About,
+    Prompt {
+        title: String,
+        message: String,
+        action: PromptAction,
+    },
+}
+
+impl ModalDialog {
+    pub fn err(&mut self, body: impl std::fmt::Display) {
+        self.payload = Some(ModalPayload::Err(body.to_string()));
+    }
+    pub fn about(&mut self) {
+        self.payload = Some(ModalPayload::About);
+    }
+    pub fn success(&mut self, msg: impl std::fmt::Display) {
+        self.payload = Some(ModalPayload::Success(msg.to_string()));
+    }
+    pub fn prompt(
+        &mut self,
+        title: impl Into<String>,
+        message: impl Into<String>,
+        action: PromptAction,
+    ) {
+        self.payload = Some(ModalPayload::Prompt {
+            title: title.into(),
+            message: message.into(),
+            action,
+        })
+    }
+    pub fn show_payload(&mut self, ctx: &Context) -> Option<PromptAction> {
+        let mut action = None;
+        if let Some(payload) = &self.payload {
+            let mut close = false;
+            show_modal_ui(ctx, |ui| match payload {
+                ModalPayload::Err(s) => {
+                    let rect = ui.ctx().screen_rect();
+                    ui.set_width(rect.width() - 128.0);
+                    ui.vertical_centered(|ui| {
+                        ui.heading("Error");
+                        egui::ScrollArea::vertical()
+                            .max_height(rect.height() - 128.0)
+                            .auto_shrink(false)
+                            .show(ui, |ui| {
+                                ui.add(
+                                    egui::TextEdit::multiline(&mut s.as_str())
+                                        .code_editor()
+                                        .desired_width(ui.available_width()),
+                                );
+                            });
+                        if ui.button("Ok").clicked() {
+                            close = true;
+                        }
+                    });
                 }
-                if ui.button(icons::CANCEL_TEXT).clicked() {
-                    clicked = Some(OkCancel::Cancel);
+                ModalPayload::Success(s) => {
+                    ui.label(s);
                 }
-            },
-        );
-    });
-    modal.open();
-    clicked
+                ModalPayload::About => {
+                    ui.label(["Cowbump version ", crate::VERSION].concat());
+                    if ui.button("Close").clicked() {
+                        close = true;
+                    }
+                }
+                ModalPayload::Prompt {
+                    title,
+                    message,
+                    action: prompt_action,
+                } => {
+                    ui.with_layout(
+                        egui::Layout::top_down_justified(egui::Align::Center),
+                        |ui| {
+                            ui.heading(title);
+                            ui.label(message);
+                            if ui.button([icons::CHECK, " Ok"].concat()).clicked() {
+                                action = Some(prompt_action.clone());
+                                close = true;
+                            }
+                            if ui.button(icons::CANCEL_TEXT).clicked() {
+                                close = true;
+                            }
+                        },
+                    );
+                }
+            });
+            if close {
+                self.payload = None;
+            }
+        }
+        action
+    }
 }
 
-pub trait EguiModalExt {
-    fn err(&self, body: impl std::fmt::Display);
-}
-
-impl EguiModalExt for Modal {
-    fn err(&self, body: impl std::fmt::Display) {
-        self.dialog()
-            .with_title("Error")
-            .with_icon(egui_modal::Icon::Error)
-            .with_body(body)
-            .open();
+fn show_modal_ui(ctx: &Context, ui_fn: impl FnOnce(&mut egui::Ui)) {
+    let re = egui::Area::new(egui::Id::new("modal_area"))
+        .fixed_pos(egui::Pos2::ZERO)
+        .show(ctx, |ui| {
+            let screen_rect = ui.ctx().input(|inp| inp.screen_rect);
+            ui.allocate_response(screen_rect.size(), egui::Sense::click());
+            ui.painter().rect_filled(
+                screen_rect,
+                egui::Rounding::ZERO,
+                egui::Color32::from_rgba_premultiplied(0, 0, 0, 200),
+            );
+        });
+    ctx.move_to_top(re.response.layer_id);
+    let re = Window::new("egui_modal_popup")
+        .title_bar(false)
+        .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
+        .show(ctx, |ui| {
+            ui_fn(ui);
+        });
+    if let Some(re) = re {
+        ctx.move_to_top(re.response.layer_id);
     }
 }
 
@@ -289,7 +367,7 @@ pub(super) fn do_ui(
                     if let Err(e) = result {
                         egui_state
                             .modal
-                            .err(format!("Failed to set active collection: {e}"));
+                            .err(format!("Failed to set active collection: {e:?}"));
                     }
                 } else {
                     load_folder_window::open(&mut egui_state.load_folder_window, path);
@@ -322,21 +400,27 @@ pub(super) fn do_ui(
                 if let Err(e) = app.database.restore_backups_from(&path) {
                     crate::gui::native_dialog::error_blocking("Failed to restore backup", e);
                 } else {
-                    egui_state
-                        .modal
-                        .dialog()
-                        .with_title("Backup restored")
-                        .with_icon(egui_modal::Icon::Success)
-                        .open();
+                    egui_state.modal.success("Backup restored")
                 }
             }
         }
         egui_state.file_op = None;
     }
     do_info_messages(egui_state, egui_ctx);
-    do_prompts(egui_state, app);
     egui_state.file_dialog.update(egui_ctx);
-    egui_state.modal.show_dialog();
+    if let Some(action) = egui_state.modal.show_payload(egui_ctx) {
+        match action {
+            PromptAction::QuitNoSave => {
+                egui_state.action = Some(Action::QuitNoSave);
+            }
+            PromptAction::DeleteTags(ref uids) => {
+                let Some((_, coll)) = &mut app.active_collection else {
+                    anyhow::bail!("No active collection");
+                };
+                coll.remove_tags(uids);
+            }
+        }
+    }
     Ok(())
 }
 
@@ -344,44 +428,6 @@ fn do_info_messages(egui_state: &mut EguiState, egui_ctx: &Context) {
     egui_state
         .info_messages
         .retain_mut(|msg| !ok_prompt(egui_ctx, &msg.title, &msg.message));
-}
-
-fn do_prompts(egui_state: &mut EguiState, app: &mut Application) {
-    egui_state.prompts.retain(|prompt| {
-        match ok_cancel_prompt(&egui_state.modal, &prompt.msg.title, &prompt.msg.message) {
-            Some(OkCancel::Ok) => match prompt.action {
-                PromptAction::QuitNoSave => {
-                    egui_state.action = Some(Action::QuitNoSave);
-                    false
-                }
-                PromptAction::DeleteTags(ref uids) => {
-                    let Some((_, coll)) = &mut app.active_collection else {
-                        egui_state.modal.err("No active collection");
-                        return false;
-                    };
-                    coll.remove_tags(uids);
-                    false
-                }
-            },
-            Some(OkCancel::Cancel) => false,
-            None => true,
-        }
-    });
-}
-
-fn prompt(
-    prompts: &mut Vec<Prompt>,
-    title: impl Into<String>,
-    message: impl Into<String>,
-    action: PromptAction,
-) {
-    prompts.push(Prompt {
-        msg: InfoMessage {
-            message: message.into(),
-            title: title.into(),
-        },
-        action,
-    });
 }
 
 impl EguiState {

@@ -3,7 +3,7 @@ use {
         icons,
         sequences::SequenceWindow,
         tag_autocomplete::{tag_autocomplete_popup, AcState},
-        EguiModalExt, EguiState,
+        EguiState,
     },
     crate::{
         collection::{AddTagError, Collection},
@@ -321,7 +321,7 @@ pub(super) fn do_frame(
                                         if let Err(e) = result {
                                             egui_state
                                                 .modal
-                                                .err(format!("Failed to delete tag(s): {e}"));
+                                                .err(format!("Failed to delete tag(s): {e:?}"));
                                         }
                                     }
                                 } else {

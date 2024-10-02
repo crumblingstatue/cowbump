@@ -1,5 +1,5 @@
 use {
-    super::{icons, EguiModalExt, EguiState},
+    super::{icons, EguiState},
     crate::{
         application::Application,
         collection::Collection,
@@ -242,7 +242,7 @@ pub(super) fn do_frame(
                         ) {
                             egui_state
                                 .modal
-                                .err(format!("Failed to set active collection: {e}"));
+                                .err(format!("Failed to set active collection: {e:?}"));
                         }
                         *win = Default::default();
                     }

@@ -1,5 +1,4 @@
 use {
-    super::EguiModalExt,
     crate::{entry, gui::State},
     anyhow::Context,
     egui_sfml::{
@@ -70,7 +69,7 @@ pub(crate) fn do_frame(
                         coll,
                         &egui_state.batch_rename_window.prefix,
                     ) {
-                        egui_state.modal.err(format!("Batch rename error: {e}"));
+                        egui_state.modal.err(format!("Batch rename error: {e:?}"));
                     }
                 }
                 if ui.button("Sort by filename").clicked() {
