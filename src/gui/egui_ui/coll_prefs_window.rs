@@ -80,7 +80,7 @@ pub(super) fn do_frame(
                     ui.separator();
                     for (tag_id, app_id) in &coll.tag_specific_apps {
                         ui.horizontal(|ui| {
-                            ui.label(&coll.tags[tag_id].names[0]);
+                            ui.label(coll.tags[tag_id].first_name());
                             ui.label(&prefs.applications[app_id].name);
                         });
                     }

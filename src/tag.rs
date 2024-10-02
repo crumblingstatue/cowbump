@@ -17,5 +17,14 @@ pub struct Tag {
     pub implies: TagSet,
 }
 
+impl Tag {
+    pub fn first_name(&self) -> &str {
+        match self.names.first() {
+            Some(name) => name,
+            None => "<unnamed>",
+        }
+    }
+}
+
 #[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct Id(pub Uid);

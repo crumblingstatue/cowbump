@@ -285,7 +285,7 @@ pub(super) fn do_frame(
                         ui.horizontal_wrapped(|ui| {
                             for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
                                 let tag_name = match coll.tags.get(&tagid) {
-                                    Some(tag) => &tag.names[0],
+                                    Some(tag) => tag.first_name(),
                                     None => "<unknown tag>",
                                 };
                                 let mut changed_filter = false;

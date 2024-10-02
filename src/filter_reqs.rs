@@ -202,8 +202,7 @@ impl Req {
             Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)),
             Req::Tag(id) => tags
                 .get(id)
-                .and_then(|tag| tag.names.first())
-                .cloned()
+                .map(|tag| tag.first_name().to_string())
                 .unwrap_or_else(|| format!("<dangling:{id:?}>")),
             Req::Not(req) => format!("!{}", req.to_string(tags)),
             Req::FilenameSub(substr) => format!("@f[{substr}]"),

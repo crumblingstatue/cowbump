@@ -107,10 +107,10 @@ pub(super) fn do_frame(
                             .num_columns(4)
                             .show(ui, |ui| {
                                 let mut uids: Vec<tag::Id> = coll.tags.keys().copied().collect();
-                                uids.sort_by_key(|uid| &coll.tags[uid].names[0]);
+                                uids.sort_by_key(|uid| coll.tags[uid].first_name());
                                 for tag_uid in &uids {
                                     let tag = &coll.tags[tag_uid];
-                                    let name = &tag.names[0];
+                                    let name = tag.first_name();
                                     if !name.contains(&tag_filter_string[..]) {
                                         continue;
                                     }
@@ -218,7 +218,7 @@ pub(super) fn do_frame(
                                 return;
                             }
                             ui.horizontal(|ui| {
-                                let name = format!("{} {}", icons::TAG, coll.tags[id].names[0]);
+                                let name = format!("{} {}", icons::TAG, coll.tags[id].first_name());
                                 ui.heading(&name);
                                 ui.label(
                                     RichText::new(format!("#{}", id.0)).color(Color32::DARK_GRAY),
@@ -333,8 +333,8 @@ pub(super) fn do_frame(
                                 ui.horizontal(|ui| {
                                     if ui
                                         .link(coll.tags.get(imply_id).map_or(
-                                            &format!("[dangling tag (#{imply_id:?})]"),
-                                            |tag| &tag.names[0],
+                                            &format!("[dangling tag (#{imply_id:?})]")[..],
+                                            |tag| tag.first_name(),
                                         ))
                                         .clicked()
                                     {

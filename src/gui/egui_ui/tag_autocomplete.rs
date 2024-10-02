@@ -175,7 +175,7 @@ pub(super) fn tag_autocomplete_popup(
                             .enumerate()
                         {
                             if ui
-                                .selectable_label(state.select == Some(i), &tag.names[0])
+                                .selectable_label(state.select == Some(i), tag.first_name())
                                 .clicked()
                             {
                                 complete = C::Id(id);
@@ -193,7 +193,7 @@ pub(super) fn tag_autocomplete_popup(
             match complete {
                 C::Id(id) => {
                     let range = str_range(string, last);
-                    string.replace_range(range, &coll.tags[&id].names[0]);
+                    string.replace_range(range, &coll.tags[&id].first_name());
                     state.applied = true;
                     ret!(true);
                 }
