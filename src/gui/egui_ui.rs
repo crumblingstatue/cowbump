@@ -249,6 +249,8 @@ fn show_modal_ui(ctx: &Context, ui_fn: impl FnOnce(&mut egui::Ui)) {
             ui_fn(ui);
         });
     if let Some(re) = re {
+        // This helps steal keyboard focus from underlying ui and app
+        re.response.request_focus();
         ctx.move_to_top(re.response.layer_id);
     }
 }
