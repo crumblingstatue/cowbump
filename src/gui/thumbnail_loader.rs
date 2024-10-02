@@ -58,7 +58,7 @@ impl ThumbnailLoader {
         });
     }
     pub fn busy_with(&self) -> Vec<entry::Id> {
-        self.image_slots.lock().keys().cloned().collect()
+        self.image_slots.lock().keys().copied().collect()
     }
 }
 

@@ -106,7 +106,7 @@ pub(super) fn do_frame(
                             .striped(true)
                             .num_columns(4)
                             .show(ui, |ui| {
-                                let mut uids: Vec<tag::Id> = coll.tags.keys().cloned().collect();
+                                let mut uids: Vec<tag::Id> = coll.tags.keys().copied().collect();
                                 uids.sort_by_key(|uid| &coll.tags[uid].names[0]);
                                 for tag_uid in &uids {
                                     let tag = &coll.tags[tag_uid];
@@ -192,7 +192,7 @@ pub(super) fn do_frame(
                                     "Tag deletion",
                                     msg,
                                     PromptAction::DeleteTags(
-                                        selected_uids.iter().cloned().collect(),
+                                        selected_uids.iter().copied().collect(),
                                     ),
                                 );
                             }

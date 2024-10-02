@@ -93,7 +93,7 @@ pub fn open(
 fn find_open_with_for_entry(en: &entry::Entry, coll: &Collection) -> Option<AppId> {
     en.tags
         .iter()
-        .find_map(|tag_id| coll.tag_specific_apps.get(tag_id).cloned())
+        .find_map(|tag_id| coll.tag_specific_apps.get(tag_id).copied())
 }
 
 struct BuiltTasks<'p> {

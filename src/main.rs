@@ -12,7 +12,8 @@
     clippy::missing_panics_doc,
     clippy::explicit_iter_loop,
     clippy::redundant_closure_for_method_calls,
-    clippy::cast_lossless
+    clippy::cast_lossless,
+    clippy::cloned_instead_of_copied
 )]
 
 mod application;

@@ -668,7 +668,7 @@ pub(super) fn do_frame(
                             if ui.button("Select all").clicked() {
                                 let sel = state.sel.current_mut();
                                 sel.clear();
-                                sel.extend(seq.entries.iter().cloned());
+                                sel.extend(seq.entries.iter().copied());
                                 win.ids.clone_from(sel.as_vec());
                             }
                         });

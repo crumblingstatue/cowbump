@@ -78,7 +78,7 @@ impl ThumbnailsView {
         }
     }
     pub fn iter(&self) -> impl Iterator<Item = entry::Id> + '_ {
-        self.uids.iter().cloned()
+        self.uids.iter().copied()
     }
     pub fn entry_position(&self, id: entry::Id) -> Option<usize> {
         self.iter().position(|id2| id2 == id)
