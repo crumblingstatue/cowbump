@@ -242,7 +242,7 @@ pub(super) fn draw_thumbnails(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
     coll: &Collection,
