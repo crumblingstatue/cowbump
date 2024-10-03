@@ -6,7 +6,7 @@ use {
         preferences::{AppId, Preferences},
         sequence::Sequence,
     },
-    anyhow::bail,
+    anyhow::{bail, Context},
     std::{path::Path, process::Command},
 };
 
@@ -72,7 +72,8 @@ pub fn open(
         let app = &preferences.applications[&task.app];
         let mut cmd = Command::new(&app.path);
         feed_args(&app.args_string, &task.args, &mut cmd);
-        cmd.spawn()?;
+        cmd.spawn()
+            .with_context(|| format!("Failed to spawn command {:?}", app.path))?;
     }
     if built_tasks.remainder.len() >= 5 {
         let msg = "\
