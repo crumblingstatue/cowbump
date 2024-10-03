@@ -156,7 +156,12 @@ pub(super) fn do_frame(
     if let Some(action) = action {
         match action {
             Action::RemFile { idx } => {
-                let path = &changes.add[idx];
+                let Some(path) = changes.add.get(idx) else {
+                    egui_state
+                        .modal
+                        .err(format!("Dangling change index ({idx})"));
+                    return;
+                };
                 if let Err(e) = std::fs::remove_file(path) {
                     native_dialog::error_blocking("Failed to remove file", e);
                 }
