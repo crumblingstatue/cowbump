@@ -221,9 +221,8 @@ pub(super) fn do_frame(
                                 return;
                             }
                             ui.horizontal(|ui| {
-                                let name =
-                                    format!("{} {}", icons::TAG, coll.tags.first_name_of(id));
-                                ui.heading(&name);
+                                let name = coll.tags.first_name_of(id);
+                                ui.heading(format!("{} {name}", icons::TAG));
                                 ui.label(
                                     RichText::new(format!("#{}", id.0)).color(Color32::DARK_GRAY),
                                 );
