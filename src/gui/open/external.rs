@@ -12,12 +12,12 @@ use {
 
 /// Open functionality when enter is pressed in thumbnails view
 pub(in crate::gui) fn on_enter_open(
-    state: &mut State,
+    state: &State,
     coll: &Collection,
     preferences: &mut Preferences,
 ) {
     let mut candidates: Vec<OpenExternCandidate> = Vec::new();
-    for &uid in state.sel.current_mut().iter() {
+    for &uid in state.sel.selected_ids_iter() {
         candidates.push(OpenExternCandidate {
             path: &coll.entries[&uid].path,
             open_with: None,

@@ -669,7 +669,10 @@ pub(super) fn do_frame(
                                     .push(SequenceWindow::new(seq_id, None));
                             }
                             if ui.button("Select all").clicked() {
-                                let sel = state.sel.current_mut();
+                                let Some(sel) = state.sel.current_mut() else {
+                                    dlog!("Couldn't get selection buffer");
+                                    return;
+                                };
                                 sel.clear();
                                 sel.extend(seq.entries.iter().copied());
                                 win.ids.clone_from(sel.as_vec());

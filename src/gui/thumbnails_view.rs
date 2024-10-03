@@ -7,7 +7,9 @@ use {
         thumbnail_loader::ThumbnailLoader,
         State, ThumbnailCache,
     },
-    crate::{collection::Collection, entry, filter_reqs::Requirements, preferences::Preferences},
+    crate::{
+        collection::Collection, dlog, entry, filter_reqs::Requirements, preferences::Preferences,
+    },
     anyhow::Context as _,
     egui_sfml::{
         egui::Context,
@@ -205,7 +207,7 @@ pub(super) fn draw_thumbnails(
         let y = (row * thumb_size) as f32 - (state.thumbs_view.y_offset % thumb_size as f32);
         let image_rect = Rect::new(x, y, thumb_size as f32, thumb_size as f32);
         let mouse_over = image_rect.contains(Vector2f::new(mouse_pos.x as f32, mouse_pos.y as f32));
-        if state.sel.current_mut().contains(&uid) {
+        if state.sel.current_contains(&uid) {
             sprite.set_color(Color::GREEN);
         } else {
             sprite.set_color(Color::WHITE);
@@ -305,18 +307,26 @@ pub(in crate::gui) fn handle_event(
             };
             if button == mouse::Button::Left {
                 if Key::LShift.is_pressed() {
-                    if state.sel.current_mut().contains(&uid) {
-                        state.sel.current_mut().buf.retain(|&rhs| rhs != uid);
+                    let Some(sel_buf) = state.sel.current_mut() else {
+                        egui_state.modal.err("Selection buffer is not accessible");
+                        return;
+                    };
+                    if sel_buf.contains(&uid) {
+                        sel_buf.buf.retain(|&rhs| rhs != uid);
                     } else {
-                        state.sel.current_mut().buf.push(uid);
+                        sel_buf.buf.push(uid);
                     }
                 } else if Key::LControl.is_pressed() {
                     let curr_thumb_idx = state.thumbs_view.abs_thumb_index_at_xy(x, y);
                     match state.select_a {
                         Some(a) => {
+                            let Some(sel_buf) = state.sel.current_mut() else {
+                                egui_state.modal.err("Selection buffer is not accessible");
+                                return;
+                            };
                             let (min, max) = (a.min(curr_thumb_idx), a.max(curr_thumb_idx));
                             for id in state.thumbs_view.iter().skip(min).take((max + 1) - min) {
-                                state.sel.current_mut().buf.push(id);
+                                sel_buf.buf.push(id);
                             }
                             state.select_a = None;
                         }
@@ -336,12 +346,12 @@ pub(in crate::gui) fn handle_event(
                     external::open_single_with_others(coll, uid, preferences);
                 }
             } else if button == mouse::Button::Right {
-                let vec = if state.sel.current_mut().contains(&uid) {
-                    state.sel.current_mut().as_vec().clone()
-                } else {
-                    vec![uid]
-                };
-                egui_state.add_entries_window(vec);
+                egui_state.add_entries_window(
+                    state
+                        .sel
+                        .current_as_id_vec()
+                        .map_or_else(|| vec![uid], Vec::to_owned),
+                );
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
@@ -397,14 +407,16 @@ pub(in crate::gui) fn handle_event(
                 // To do align the camera with a bottom edge, we need to subtract the screen
                 // height from it.
                 state.thumbs_view.go_to_bottom(window);
-            } else if code == Key::F2 && !state.sel.current_mut().is_empty() {
-                egui_state.add_entries_window(state.sel.current_mut().as_vec().clone());
+            } else if code == Key::F2
+                && let Some(id_vec) = state.sel.current_as_id_vec()
+            {
+                egui_state.add_entries_window(id_vec.clone());
             } else if code == Key::Escape
                 && !egui_ctx.wants_keyboard_input()
                 && !egui_ctx.wants_pointer_input()
                 && !egui_state.just_closed_window_with_esc
             {
-                state.sel.current_mut().clear();
+                state.sel.clear_current();
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
@@ -441,9 +453,13 @@ fn copy_image_to_clipboard(
 }
 
 pub(in crate::gui) fn select_all(state: &mut State, coll: &Collection) {
-    state.sel.current_mut().clear();
+    let Some(buf) = state.sel.current_mut() else {
+        dlog!("Current selection buffer inacessible");
+        return;
+    };
+    buf.clear();
     for uid in coll.filter(&state.filter) {
-        state.sel.current_mut().buf.push(uid);
+        buf.buf.push(uid);
     }
 }
 

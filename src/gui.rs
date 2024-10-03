@@ -170,7 +170,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     app.no_save = true;
                     window.close();
                 }
-                Action::SelectNone => state.sel.current_mut().clear(),
+                Action::SelectNone => state.sel.clear_current(),
                 Action::FindNext => {
                     if let Some((_, coll)) = &mut app.active_collection {
                         search_next(&mut state, coll, window.size().y);
@@ -206,7 +206,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
                 }
                 Action::OpenEntriesWindow => {
-                    egui_state.add_entries_window(state.sel.current_mut().as_vec().clone());
+                    let id_vec = state
+                        .sel
+                        .current_as_id_vec()
+                        .context("Selection buffer inaccessible")?;
+                    egui_state.add_entries_window(id_vec.clone());
                 }
             }
         }
@@ -315,17 +319,11 @@ impl SelectionBuf {
     pub fn as_vec(&self) -> &Vec<entry::Id> {
         &self.buf
     }
-    pub fn iter(&self) -> impl Iterator<Item = &'_ entry::Id> {
-        self.buf.iter()
-    }
     pub fn remove(&mut self, idx: usize) {
         self.buf.remove(idx);
     }
     pub fn len(&self) -> usize {
         self.buf.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.buf.is_empty()
     }
     pub fn contains(&self, id: &entry::Id) -> bool {
         self.buf.contains(id)
@@ -347,8 +345,11 @@ impl SelectionBufs {
             bufs: vec![SelectionBuf::new("Sel 1")],
         }
     }
-    pub fn current_mut(&mut self) -> &mut SelectionBuf {
-        &mut self.bufs[self.current]
+    pub fn current(&self) -> Option<&SelectionBuf> {
+        self.bufs.get(self.current)
+    }
+    pub fn current_mut(&mut self) -> Option<&mut SelectionBuf> {
+        self.bufs.get_mut(self.current)
     }
     pub fn for_each_mut(&mut self, mut f: impl FnMut(&mut SelectionBuf)) {
         for buf in &mut self.bufs {
@@ -357,6 +358,30 @@ impl SelectionBufs {
     }
     pub fn add_buf(&mut self, name: impl Into<String>) {
         self.bufs.push(SelectionBuf::new(name));
+    }
+    fn n_selected(&self) -> usize {
+        self.current().map_or(0, SelectionBuf::len)
+    }
+    fn none_selected(&self) -> bool {
+        self.n_selected() == 0
+    }
+    fn current_as_id_vec(&self) -> Option<&Vec<entry::Id>> {
+        self.current().map(SelectionBuf::as_vec)
+    }
+    fn selected_ids_iter(&self) -> impl Iterator<Item = &entry::Id> {
+        match self.current() {
+            Some(buf) => buf.buf.iter(),
+            None => [].iter(),
+        }
+    }
+    fn current_contains(&self, id: &entry::Id) -> bool {
+        self.current().map_or(false, |buf| buf.contains(id))
+    }
+
+    fn clear_current(&mut self) {
+        if let Some(current) = self.current_mut() {
+            current.clear();
+        }
     }
 }
 

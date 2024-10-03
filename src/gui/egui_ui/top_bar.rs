@@ -21,7 +21,7 @@ pub(super) fn do_frame(
     if !egui_state.top_bar {
         return Ok(());
     }
-    let n_selected = state.sel.current_mut().len();
+    let n_selected = state.sel.current_mut().map_or(0, |buf| buf.len());
     let mut result = Ok(());
     TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
         egui::menu::bar(ui, |ui| {
@@ -50,7 +50,9 @@ pub(super) fn do_frame(
                             ))
                             .clicked()
                         {
-                            state.sel.current_mut().clear();
+                            if let Some(buf) = state.sel.current_mut() {
+                                buf.clear();
+                            }
                         }
                     }
                     let mut i = 0;
