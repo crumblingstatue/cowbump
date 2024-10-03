@@ -8,13 +8,12 @@ use {
         sequence::{self, Sequence},
         tag::{self, Tag},
     },
-    anyhow::Context,
+    anyhow::{bail, Context},
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
     std::{
         borrow::Cow,
         ffi::OsStr,
-        io,
         path::{Path, PathBuf},
     },
     thiserror::Error,
@@ -300,10 +299,13 @@ fn cleanse_tag_from_entries(entries: &mut Entries, tag_to_cleanse: tag::Id) {
 }
 
 /// Rename the last component (filename) of a `PathBuf`, and rename it on the filesystem too.
-fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) -> io::Result<()> {
+fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) -> anyhow::Result<()> {
     let mut new_buf = buf.clone();
     new_buf.pop();
     new_buf.push(new_name);
+    if new_buf.exists() {
+        bail!("Destination file already exists");
+    }
     std::fs::rename(&*buf, &new_buf)?;
     *buf = new_buf;
     Ok(())
