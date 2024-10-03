@@ -35,10 +35,14 @@ pub(in crate::gui) fn on_enter_open(
     open(&candidates, preferences)
 }
 
-pub fn open_single_with_others(coll: &Collection, uid: entry::Id, preferences: &mut Preferences) {
+pub fn open_single_with_others(
+    coll: &Collection,
+    uid: entry::Id,
+    preferences: &mut Preferences,
+) -> anyhow::Result<()> {
     if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
         let seq = &coll.sequences[&seq_id];
-        open_sequence(seq, uid, &coll.entries, preferences);
+        open_sequence(seq, uid, &coll.entries, preferences)?;
     } else if let Err(e) = open(
         {
             let en = &coll.entries[&uid];
@@ -51,6 +55,7 @@ pub fn open_single_with_others(coll: &Collection, uid: entry::Id, preferences: &
     ) {
         error_blocking("Failed to open file", e);
     }
+    Ok(())
 }
 
 /// Candidate for opening with extern app
@@ -155,9 +160,12 @@ pub(crate) fn open_sequence(
     start_uid: entry::Id,
     entries: &Entries,
     prefs: &mut Preferences,
-) {
+) -> anyhow::Result<()> {
     let mut candidates = Vec::new();
-    for img_uid in seq.entry_uids_wrapped_from(start_uid) {
+    let Some(uids) = seq.entry_uids_wrapped_from(start_uid) else {
+        anyhow::bail!("Couldn't get wrapped uids");
+    };
+    for img_uid in uids {
         candidates.push(OpenExternCandidate {
             path: entries[&img_uid].path.as_ref(),
             open_with: None,
@@ -166,6 +174,7 @@ pub(crate) fn open_sequence(
     if let Err(e) = open(&candidates, prefs) {
         error_blocking("Failed to open file", e);
     }
+    Ok(())
 }
 
 pub fn feed_args(args_string: &str, paths: &[&Path], command: &mut Command) {

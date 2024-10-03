@@ -691,15 +691,24 @@ pub(super) fn do_frame(
                                         (128., 128.),
                                     ));
                                     if ui.add(img_but).clicked() {
-                                        if db.preferences.use_built_in_viewer {
-                                            builtin::open_sequence(state, seq, img_id, rend_win);
-                                        } else {
-                                            external::open_sequence(
-                                                seq,
-                                                img_id,
-                                                &coll.entries,
-                                                &mut db.preferences,
-                                            );
+                                        let result: anyhow::Result<()> = try {
+                                            if db.preferences.use_built_in_viewer {
+                                                builtin::open_sequence(
+                                                    state, seq, img_id, rend_win,
+                                                )?;
+                                            } else {
+                                                external::open_sequence(
+                                                    seq,
+                                                    img_id,
+                                                    &coll.entries,
+                                                    &mut db.preferences,
+                                                )?;
+                                            }
+                                        };
+                                        if let Err(e) = result {
+                                            egui_state
+                                                .modal
+                                                .err(format!("Error opening sequence: {e:?}"));
                                         }
                                     }
                                 }

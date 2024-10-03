@@ -42,13 +42,16 @@ pub(in crate::gui) fn open_single_with_others(
     state: &mut State,
     window: &RenderWindow,
     thumb_index: usize,
-) {
+) -> anyhow::Result<()> {
     if let Some(seq) = coll.get_first_related_sequence_of(entry_id) {
-        let image_list = seq.entry_uids_wrapped_from(entry_id);
+        let Some(image_list) = seq.entry_uids_wrapped_from(entry_id) else {
+            anyhow::bail!("Couldn't get wrapped uids");
+        };
         open_list(state, image_list, 0, window);
     } else {
         open_list(state, state.thumbs_view.uids.clone(), thumb_index, window);
     };
+    Ok(())
 }
 
 pub(in crate::gui) fn open_sequence(
@@ -56,6 +59,10 @@ pub(in crate::gui) fn open_sequence(
     seq: &Sequence,
     start_uid: entry::Id,
     window: &RenderWindow,
-) {
-    open_list(state, seq.entry_uids_wrapped_from(start_uid), 0, window);
+) -> anyhow::Result<()> {
+    let Some(uids) = seq.entry_uids_wrapped_from(start_uid) else {
+        anyhow::bail!("Couldn't get wrapped uids");
+    };
+    open_list(state, uids, 0, window);
+    Ok(())
 }

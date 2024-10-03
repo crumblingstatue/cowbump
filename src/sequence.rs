@@ -54,13 +54,13 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn entry_uids_wrapped_from(&self, img_uid: entry::Id) -> Vec<entry::Id> {
+    pub(crate) fn entry_uids_wrapped_from(&self, img_uid: entry::Id) -> Option<Vec<entry::Id>> {
         let mut uids = Vec::new();
         if let Some(pos) = self.entries.iter().position(|&uid| uid == img_uid) {
-            uids.extend_from_slice(&self.entries[pos..]);
-            uids.extend_from_slice(&self.entries[..pos]);
+            uids.extend_from_slice(self.entries.get(pos..)?);
+            uids.extend_from_slice(self.entries.get(..pos)?);
         }
-        uids
+        Some(uids)
     }
     pub(crate) fn contains_entry(&self, id: entry::Id) -> bool {
         self.entries.contains(&id)

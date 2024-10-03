@@ -341,18 +341,27 @@ pub(in crate::gui) fn handle_event(
                         }
                         None => state.select_a = Some(curr_thumb_idx),
                     }
-                } else if preferences.use_built_in_viewer {
-                    if let Some(id) = state.thumbs_view.entry_at_xy(x, y) {
-                        builtin::open_single_with_others(
-                            id,
-                            coll,
-                            state,
-                            window,
-                            state.thumbs_view.abs_thumb_index_at_xy(x, y),
-                        );
-                    }
                 } else {
-                    external::open_single_with_others(coll, uid, preferences);
+                    let result: anyhow::Result<()> = try {
+                        if preferences.use_built_in_viewer {
+                            if let Some(id) = state.thumbs_view.entry_at_xy(x, y) {
+                                builtin::open_single_with_others(
+                                    id,
+                                    coll,
+                                    state,
+                                    window,
+                                    state.thumbs_view.abs_thumb_index_at_xy(x, y),
+                                )?;
+                            }
+                        } else {
+                            external::open_single_with_others(coll, uid, preferences)?;
+                        }
+                    };
+                    if let Err(e) = result {
+                        egui_state
+                            .modal
+                            .err(format!("Error opening entries: {e:?}"));
+                    }
                 }
             } else if button == mouse::Button::Right {
                 egui_state.add_entries_window(

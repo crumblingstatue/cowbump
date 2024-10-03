@@ -151,10 +151,17 @@ pub(super) fn do_sequence_windows(
                     seq.remove_entry(uid);
                 }
                 Action::Open => {
-                    if prefs.use_built_in_viewer {
-                        builtin::open_sequence(state, seq, uid, window);
-                    } else {
-                        external::open_sequence(seq, uid, &coll.entries, prefs);
+                    let result: anyhow::Result<()> = try {
+                        if prefs.use_built_in_viewer {
+                            builtin::open_sequence(state, seq, uid, window)?;
+                        } else {
+                            external::open_sequence(seq, uid, &coll.entries, prefs)?;
+                        }
+                    };
+                    if let Err(e) = result {
+                        egui_state
+                            .modal
+                            .err(format!("Error opening sequence: {e:?}"));
                     }
                 }
             }
@@ -254,15 +261,22 @@ pub(super) fn do_sequences_window(
                                     (128., 128.),
                                 ));
                                 if ui.add(but).clicked() {
-                                    if preferences.use_built_in_viewer {
-                                        builtin::open_sequence(state, seq, *en, window);
-                                    } else {
-                                        external::open_sequence(
-                                            seq,
-                                            *en,
-                                            &coll.entries,
-                                            preferences,
-                                        );
+                                    let result: anyhow::Result<()> = try {
+                                        if preferences.use_built_in_viewer {
+                                            builtin::open_sequence(state, seq, *en, window)?;
+                                        } else {
+                                            external::open_sequence(
+                                                seq,
+                                                *en,
+                                                &coll.entries,
+                                                preferences,
+                                            )?;
+                                        }
+                                    };
+                                    if let Err(e) = result {
+                                        egui_state
+                                            .modal
+                                            .err(format!("Error opening sequence: {e:?}"));
                                     }
                                 }
                             }
