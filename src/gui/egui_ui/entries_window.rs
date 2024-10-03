@@ -609,7 +609,7 @@ pub(super) fn do_frame(
                                 if let Some(id) = win.ids.first()
                                     && let Err(e) = coll.rename(*id, &win.rename_buffer)
                                 {
-                                    native_dialog::error_blocking("File rename error", e);
+                                    egui_state.modal.err(format!("Rename error: {e:?}"));
                                 }
                                 win.renaming = false;
                             }
