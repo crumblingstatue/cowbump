@@ -667,7 +667,10 @@ pub(super) fn do_frame(
                     ui.separator();
                     ui.heading("Related sequences");
                     for seq_id in seqs {
-                        let seq = &coll.sequences[&seq_id];
+                        let Some(seq) = coll.sequences.get(&seq_id) else {
+                            ui.label(format!("<dangling seq id: {seq_id:?}>"));
+                            continue;
+                        };
                         ui.horizontal(|ui| {
                             ui.label(&seq.name);
                             if ui.button("Edit").clicked() {
