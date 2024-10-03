@@ -634,6 +634,8 @@ pub(super) fn do_frame(
                         } else {
                             let del_uids = &mut win.ids;
                             let del_len = del_uids.len();
+                            // We already know the length is 1 so it's fine
+                            #[expect(clippy::indexing_slicing)]
                             let label_string = if del_len == 1 {
                                 format!(
                                     "About to delete {}",
