@@ -301,16 +301,13 @@ pub(super) fn do_frame(
                                     ));
                                     if del {
                                         let result: anyhow::Result<()> = try {
-                                            // TODO: This only works for 1 item windows
-                                            coll.entries
-                                                .get_mut(
-                                                    win.ids
-                                                        .first()
-                                                        .context("Failed to get tag id")?,
-                                                )
-                                                .context("Failed to get tag")?
-                                                .tags
-                                                .retain(|&t| t != tagid);
+                                            for en_id in &win.ids {
+                                                coll.entries
+                                                    .get_mut(en_id)
+                                                    .context("Failed to get tag")?
+                                                    .tags
+                                                    .retain(|&t| t != tagid);
+                                            }
                                             state
                                                 .thumbs_view
                                                 .update_from_collection(coll, &state.filter);
