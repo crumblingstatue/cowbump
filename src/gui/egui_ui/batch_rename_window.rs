@@ -73,6 +73,8 @@ pub(crate) fn do_frame(
                         &egui_state.batch_rename_window.prefix,
                     ) {
                         egui_state.modal.err(format!("Batch rename error: {e:?}"));
+                    } else {
+                        egui_state.modal.success("Successful batch rename");
                     }
                 }
                 if ui.button("Sort by filename").clicked() {
