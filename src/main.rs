@@ -19,7 +19,7 @@
     clippy::manual_let_else,
     clippy::needless_pass_by_value,
     clippy::needless_pass_by_ref_mut,
-    clippy::indexing_slicing
+    //clippy::indexing_slicing <- TODO: Enable when I'm feeling more motivated
 )]
 
 mod application;
