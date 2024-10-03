@@ -233,10 +233,10 @@ pub(super) fn do_frame(
                         ui.set_max_width(512.0);
                         let n_visible_entries = n_entries.min(64);
                         for &id in win.ids.iter().take(n_visible_entries) {
-                            if !coll.entries.contains_key(&id) {
+                            let Some(entry) = coll.entries.get(&id) else {
                                 ui.label(format!("No entry for id {id:?}"));
                                 continue;
-                            }
+                            };
                             let tex_size = get_tex_for_entry(
                                 &state.thumbnail_cache,
                                 id,
@@ -271,7 +271,7 @@ pub(super) fn do_frame(
                             {
                                 // Can't find in view, open it in external instead
                                 let paths = [OpenExternCandidate {
-                                    path: &coll.entries[&id].path,
+                                    path: &entry.path,
                                     open_with: None,
                                 }];
                                 if let Err(e) = external::open(&paths, &mut db.preferences) {
