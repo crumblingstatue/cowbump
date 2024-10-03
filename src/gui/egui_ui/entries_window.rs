@@ -304,7 +304,7 @@ pub(super) fn do_frame(
                                             for en_id in &win.ids {
                                                 coll.entries
                                                     .get_mut(en_id)
-                                                    .context("Failed to get tag")?
+                                                    .context("Failed to get entry")?
                                                     .tags
                                                     .retain(|&t| t != tagid);
                                             }
