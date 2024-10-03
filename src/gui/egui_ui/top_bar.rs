@@ -432,7 +432,7 @@ fn actions_menu(
         if ui
             .add_enabled(
                 active_coll,
-                Button::new([icons::QUESTION, "Shuffle"].concat()),
+                Button::new([icons::QUESTION, " Shuffle"].concat()),
             )
             .clicked()
         {
