@@ -5,6 +5,7 @@ use {
         collection,
         gui::{viewer, Activity, SelectionBuf, State},
     },
+    anyhow::anyhow,
     egui_sfml::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
         sfml::graphics::{RenderTarget, RenderWindow},
@@ -156,6 +157,13 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
         if ui.button([icons::TERM, " Debug window"].concat()).clicked() {
             ui.close_menu();
             egui_state.debug_window.toggle();
+        }
+        ui.separator();
+        if ui.button("Simulate error popup").clicked() {
+            egui_state
+                .modal
+                .err(format!("{:?}", anyhow!("Simulated error just happened!")));
+            ui.close_menu();
         }
     });
 }

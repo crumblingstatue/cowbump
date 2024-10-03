@@ -1,3 +1,5 @@
+cargo-features = ["trim-paths"]
+
 [package]
 name = "cowbump"
 version = "0.3.0-dev"
@@ -36,6 +38,9 @@ git = "https://github.com/crumblingstatue/tagfilter-lang.git"
 codegen-units = 1
 panic = "abort"
 lto = "thin"
+
+[profile.dev]
+trim-paths = "all"
 
 [profile.dev.package."*"]
 opt-level = 2
