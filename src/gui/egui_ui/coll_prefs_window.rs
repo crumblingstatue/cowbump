@@ -2,7 +2,7 @@ use {
     super::EguiState,
     crate::{
         collection::{Collection, TagsExt},
-        preferences::Preferences,
+        preferences::{AppMapExt, Preferences},
     },
     egui_sfml::egui,
 };
@@ -84,7 +84,7 @@ pub(super) fn do_frame(
                     for (tag_id, app_id) in &coll.tag_specific_apps {
                         ui.horizontal(|ui| {
                             ui.label(coll.tags.first_name_of(tag_id));
-                            ui.label(&prefs.applications[app_id].name);
+                            ui.label(prefs.applications.name_of(app_id));
                         });
                     }
                 }

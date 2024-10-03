@@ -3,13 +3,28 @@ use {
     egui_sfml::egui::emath::Numeric,
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
-    std::{ops::RangeInclusive, path::PathBuf},
+    std::{borrow::Cow, ops::RangeInclusive, path::PathBuf},
 };
+
+type AppMap = FnvHashMap<AppId, App>;
+
+pub trait AppMapExt {
+    fn name_of(&self, id: &AppId) -> Cow<str>;
+}
+
+impl AppMapExt for AppMap {
+    fn name_of(&self, id: &AppId) -> Cow<str> {
+        self.get(id)
+            .map_or(format!("<dangling appid: {id:?}>").into(), |app| {
+                Cow::Borrowed(&app.name)
+            })
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Preferences {
     pub open_last_coll_at_start: bool,
-    pub applications: FnvHashMap<AppId, App>,
+    pub applications: AppMap,
     pub associations: FnvHashMap<String, Option<AppId>>,
     #[serde(default = "ScrollWheelMultiplier::default")]
     pub scroll_wheel_multiplier: f32,
