@@ -31,12 +31,13 @@ use {
         tag_list::TagWindow,
     },
     super::{get_tex_for_entry, resources::Resources},
-    crate::{application::Application, collection::Collection, entry, gui::State, tag},
+    crate::{application::Application, collection::Collection, dlog, entry, gui::State, tag},
     anyhow::Context as _,
+    arboard::Clipboard,
     egui_file_dialog::FileDialog,
     egui_flex::{item, Flex, FlexAlign, FlexAlignContent},
     egui_sfml::{
-        egui::{self, Context, FontFamily, FontId, TextStyle, Window},
+        egui::{self, Context, FontFamily, FontId, TextStyle, TextWrapMode, Window},
         sfml::{
             self,
             graphics::{RenderTarget, RenderWindow, Texture},
@@ -149,7 +150,11 @@ impl ModalDialog {
             action,
         });
     }
-    pub fn show_payload(&mut self, ctx: &Context) -> Option<PromptAction> {
+    pub fn show_payload(
+        &mut self,
+        ctx: &Context,
+        clipboard: &mut Clipboard,
+    ) -> Option<PromptAction> {
         let mut action = None;
         if let Some(payload) = &self.payload {
             let (key_enter, key_esc) = ctx.input_mut(|inp| {
@@ -161,24 +166,65 @@ impl ModalDialog {
             let mut close = false;
             show_modal_ui(ctx, |ui| match payload {
                 ModalPayload::Err(s) => {
-                    let rect = ui.ctx().screen_rect();
-                    ui.set_width(rect.width() - 128.0);
-                    ui.vertical_centered(|ui| {
-                        ui.heading("Error");
-                        egui::ScrollArea::vertical()
-                            .max_height(rect.height() - 128.0)
-                            .auto_shrink(false)
-                            .show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::multiline(&mut s.as_str())
-                                        .code_editor()
-                                        .desired_width(ui.available_width()),
+                    Flex::vertical()
+                        .align_content(FlexAlignContent::Center)
+                        .align_items(FlexAlign::Center)
+                        .wrap(false)
+                        .gap(egui::vec2(ui.style().spacing.item_spacing.x, 16.0))
+                        .show(ui, |flex| {
+                            flex.add(
+                                item(),
+                                egui::Label::new(
+                                    egui::RichText::new([icons::WARN, " Error"].concat()).heading(),
+                                )
+                                .wrap_mode(TextWrapMode::Extend),
+                            );
+                            if s.lines().count() > 5 {
+                                flex.add_simple(item().basis(200.0).grow(1.0), |ui| {
+                                    ui.set_width(1000.0);
+                                    egui::ScrollArea::vertical().show(ui, |ui| {
+                                        ui.add_sized(
+                                            ui.available_size(),
+                                            egui::TextEdit::multiline(&mut s.as_str())
+                                                .code_editor(),
+                                        );
+                                    });
+                                });
+                            } else {
+                                flex.add(
+                                    item(),
+                                    egui::Label::new(s).wrap_mode(TextWrapMode::Extend),
                                 );
-                            });
-                        if ui.button("Ok").clicked() || key_enter || key_esc {
-                            close = true;
-                        }
-                    });
+                            }
+                            flex.add_flex(
+                                item().align_self(FlexAlign::End),
+                                Flex::horizontal(),
+                                |flex| {
+                                    let ok = flex
+                                        .add(
+                                            item(),
+                                            egui::Button::new([icons::CANCEL, " Close"].concat()),
+                                        )
+                                        .inner;
+                                    let ccopy = flex
+                                        .add(
+                                            item(),
+                                            egui::Button::new(
+                                                [icons::COPY, " Copy to clipboard"].concat(),
+                                            ),
+                                        )
+                                        .inner;
+                                    if ok.clicked() || key_enter || key_esc {
+                                        close = true;
+                                    }
+                                    if ccopy.clicked() {
+                                        if let Err(e) = clipboard.set_text(s) {
+                                            dlog!("Failed to set clipboard text: {e}");
+                                        }
+                                    }
+                                },
+                            );
+                        });
                 }
                 ModalPayload::Success(s) => {
                     ui.vertical_centered(|ui| {
@@ -210,9 +256,13 @@ impl ModalDialog {
                         .show(ui, |flex| {
                             flex.add(
                                 item(),
-                                egui::Label::new(egui::RichText::new(title).heading()),
+                                egui::Label::new(egui::RichText::new(title).heading())
+                                    .wrap_mode(TextWrapMode::Extend),
                             );
-                            flex.add(item(), egui::Label::new(message));
+                            flex.add(
+                                item(),
+                                egui::Label::new(message).wrap_mode(TextWrapMode::Extend),
+                            );
                             flex.add_flex(
                                 item().align_self(FlexAlign::End),
                                 Flex::horizontal(),
@@ -302,7 +352,10 @@ pub(super) fn do_ui(
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
     // Do the modal handling first, so it can steal Esc/Enter inputs
-    if let Some(action) = egui_state.modal.show_payload(egui_ctx) {
+    if let Some(action) = egui_state
+        .modal
+        .show_payload(egui_ctx, &mut state.clipboard_ctx)
+    {
         match action {
             PromptAction::QuitNoSave => {
                 egui_state.action = Some(Action::QuitNoSave);

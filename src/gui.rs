@@ -149,7 +149,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         egui_state.begin_frame();
         let mut result = Ok(());
         sf_egui.run(&mut window, |rw, ctx| {
-            result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, rw)
+            result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, rw);
         })?;
         if let Err(e) = result {
             // Note: These are not egui errors. Egui is doing fine when these errors
