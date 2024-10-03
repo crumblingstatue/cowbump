@@ -32,9 +32,10 @@ pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &Context) {
         .open(&mut win.open)
         .show(egui_ctx, |ui| {
             ui.heading("Debug log");
-            crate::gui::debug_log::LOG.with(|log| {
+            {
+                let log = &crate::gui::debug_log::LOG;
                 ui.group(|ui| {
-                    let log = log.borrow();
+                    let log = log.lock();
                     ScrollArea::vertical().max_height(500.).show(ui, |ui| {
                         if log.is_empty() {
                             ui.label("<empty>");
@@ -55,9 +56,9 @@ pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &Context) {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut win.auto_scroll, "Auto scroll");
                     if ui.button("Clear").clicked() {
-                        log.borrow_mut().clear();
+                        log.lock().clear();
                     }
                 });
-            });
+            };
         });
 }

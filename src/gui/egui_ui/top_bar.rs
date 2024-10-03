@@ -112,7 +112,7 @@ pub(super) fn do_frame(
             }
             ui.separator();
             ui.label("(F1 to toggle this panel)");
-            if !crate::gui::debug_log::LOG.with(|log| log.borrow().is_empty())
+            if !crate::gui::debug_log::LOG.lock().is_empty()
                 && ui
                     .button(RichText::new(icons::WARN).strong().color(Color32::YELLOW))
                     .on_hover_text("Debug output")

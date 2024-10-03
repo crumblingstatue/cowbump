@@ -1,7 +1,8 @@
 use {
     crate::{db::EntryMap, entry, gui::ThumbnailCache},
-    egui_sfml::{egui::mutex::Mutex, sfml::graphics::Texture},
+    egui_sfml::sfml::graphics::Texture,
     image::{imageops::FilterType, ImageBuffer, ImageResult, Rgba},
+    parking_lot::Mutex,
     std::{collections::hash_map, path::Path, sync::Arc},
 };
 

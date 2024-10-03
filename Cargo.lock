@@ -358,6 +358,7 @@ dependencies = [
  "fnv",
  "image",
  "open",
+ "parking_lot",
  "rand",
  "recently_used_list",
  "rmp-serde",
