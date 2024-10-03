@@ -282,6 +282,28 @@ impl Collection {
             .values()
             .any(|tag| tag.names.iter().any(|text| text == tag_text))
     }
+    /// Merge `merge` into `into`, replacing all references to it with `into`.
+    ///
+    /// 1. Replace all references of `merge` with `into`
+    /// 2. Merge all the names of `merge` into `into`
+    /// 3. Finally, remove `merge`
+    pub(crate) fn merge_tags(&mut self, merge: tag::Id, into: tag::Id) -> anyhow::Result<()> {
+        self.replace_tag_refs(merge, into);
+        // Merge names
+        {
+            let Some([merge, into]) = self.tags.get_many_mut([&merge, &into]) else {
+                bail!("Couldn't get tags for merge operation");
+            };
+            into.names.append(&mut merge.names);
+        }
+        self.tags.remove(&merge);
+        Ok(())
+    }
+    fn replace_tag_refs(&mut self, replace: tag::Id, with: tag::Id) {
+        for en in self.entries.values_mut() {
+            en.replace_tag(replace, with);
+        }
+    }
 }
 
 #[derive(Debug, Error)]

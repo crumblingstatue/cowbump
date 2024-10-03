@@ -55,6 +55,12 @@ impl Entry {
             .iter()
             .any(|tag_id| tag_satisfies_required_tag(*tag_id, required_tag_id, tags, &mut 0))
     }
+    /// If `replace` is found, remove it, and insert `with`
+    pub(crate) fn replace_tag(&mut self, replace: tag::Id, with: tag::Id) {
+        if self.tags.remove(&replace) {
+            self.tags.insert(with);
+        }
+    }
 }
 
 fn tag_satisfies_required_tag(

@@ -19,6 +19,7 @@ pub struct TagWindow {
     new_name: TextInputPrompt,
     new_imply: TextInputPrompt,
     new_tag: TextInputPrompt,
+    merge_this: Option<tag::Id>,
 }
 
 #[derive(Default)]
@@ -79,6 +80,7 @@ pub(super) fn do_frame(
     let new_imply = &mut egui_state.tag_window.new_imply;
     let new_tag = &mut egui_state.tag_window.new_tag;
     let modal = &mut egui_state.modal;
+    let merge_this = &mut egui_state.tag_window.merge_this;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     egui_sfml::egui::Window::new([icons::TAG, " Tag list"].concat())
@@ -154,7 +156,27 @@ pub(super) fn do_frame(
                                         button = button.fill(Color32::from_rgb(189, 145, 85));
                                     }
                                     if ui.add(button).clicked() {
-                                        *active = Some(*tag_uid);
+                                        match merge_this {
+                                            Some(id_to_merge) => {
+                                                let to_merge_name =
+                                                    coll.tags.first_name_of(id_to_merge);
+                                                let into_name = coll.tags.first_name_of(tag_uid);
+                                                modal.prompt(
+                                                    "Tag merge",
+                                                    format!(
+                                                        "Merge {to_merge_name} into {into_name}?"
+                                                    ),
+                                                    PromptAction::MergeTag {
+                                                        merge: *id_to_merge,
+                                                        into: *tag_uid,
+                                                    },
+                                                );
+                                                *merge_this = None;
+                                            }
+                                            None => {
+                                                *active = Some(*tag_uid);
+                                            }
+                                        }
                                     }
                                     let has_this_tag = reqs.have_tag(*tag_uid);
                                     let doesnt_have_this_tag = reqs.not_have_tag(*tag_uid);
@@ -384,6 +406,22 @@ pub(super) fn do_frame(
                                     return;
                                 };
                                 tag.implies.remove(&imply_id);
+                            }
+                            ui.separator();
+                            match merge_this {
+                                Some(_) => {
+                                    ui.label(
+                                        "Find and click the tag to merge with in the left list",
+                                    );
+                                    if ui.button(icons::CANCEL_TEXT).clicked() {
+                                        *merge_this = None;
+                                    }
+                                }
+                                None => {
+                                    if ui.button("Merge with other tag").clicked() {
+                                        *merge_this = Some(*id);
+                                    }
+                                }
                             }
                             if let Some(sel) = sel {
                                 *active = Some(sel);

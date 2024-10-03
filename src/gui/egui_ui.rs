@@ -31,7 +31,13 @@ use {
         tag_list::TagWindow,
     },
     super::{get_tex_for_entry, resources::Resources},
-    crate::{application::Application, collection::Collection, dlog, entry, gui::State, tag},
+    crate::{
+        application::Application,
+        collection::{Collection, TagsExt},
+        dlog, entry,
+        gui::State,
+        tag,
+    },
     anyhow::Context as _,
     arboard::Clipboard,
     egui_file_dialog::FileDialog,
@@ -110,6 +116,7 @@ impl EguiState {
 pub enum PromptAction {
     QuitNoSave,
     DeleteTags(Vec<tag::Id>),
+    MergeTag { merge: tag::Id, into: tag::Id },
 }
 
 #[derive(Default)]
@@ -365,6 +372,16 @@ pub(super) fn do_ui(
                     anyhow::bail!("No active collection");
                 };
                 coll.remove_tags(uids);
+            }
+            PromptAction::MergeTag { merge, into } => {
+                let Some((_, coll)) = &mut app.active_collection else {
+                    anyhow::bail!("No active collection");
+                };
+                coll.merge_tags(merge, into)?;
+                let into_name = coll.tags.first_name_of(&into);
+                egui_state
+                    .modal
+                    .success(format!("Successful merge into {into_name}"));
             }
         }
     }
