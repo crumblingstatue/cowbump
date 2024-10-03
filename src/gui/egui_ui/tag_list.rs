@@ -13,12 +13,42 @@ use {
 #[derive(Default)]
 pub struct TagWindow {
     pub on: bool,
-    pub filter_string: String,
-    pub selected_uids: TagSet,
     pub prop_active: Option<tag::Id>,
-    pub new_name: Option<String>,
-    pub new_imply: Option<String>,
-    pub new_tag: Option<String>,
+    filter_string: String,
+    selected_uids: TagSet,
+    new_name: TextInputPrompt,
+    new_imply: TextInputPrompt,
+    new_tag: TextInputPrompt,
+}
+
+#[derive(Default)]
+struct TextInputPrompt {
+    buf: Option<String>,
+    /// Try to request focus while non-zero
+    ///
+    /// For some reason requesting focus only once is
+    /// canceled by something else that I can't determine.
+    focus_ticks: u8,
+}
+
+impl TextInputPrompt {
+    fn init(&mut self) {
+        self.buf = Some(String::new());
+        self.focus_ticks = 2;
+    }
+    fn inactive(&self) -> bool {
+        self.buf.is_none()
+    }
+    fn clear(&mut self) {
+        self.buf = None;
+    }
+    fn take_if<P: FnOnce(&mut String, bool) -> bool>(&mut self, predicate: P) -> Option<String> {
+        self.buf.take_if(|s| {
+            let take = predicate(s, self.focus_ticks > 0);
+            self.focus_ticks = self.focus_ticks.saturating_sub(1);
+            take
+        })
+    }
 }
 
 impl TagWindow {
@@ -68,15 +98,18 @@ pub(super) fn do_frame(
                     reqs.clear();
                     entries_view.update_from_collection(coll, reqs);
                 }
-                if new_tag.is_none() {
+                if new_tag.inactive() {
                     if ui.button("Add new tag").clicked() {
-                        *new_tag = Some(String::new());
+                        new_tag.init();
                     }
                 } else {
                     let mut cancel = false;
                     let mut confirm = false;
-                    if let Some(tag) = new_tag.take_if(|tag| {
+                    if let Some(tag) = new_tag.take_if(|tag, focus| {
                         let re = ui.add(TextEdit::singleline(tag).hint_text("New tag"));
+                        if focus {
+                            re.request_focus();
+                        }
                         if ui.button(icons::CANCEL).clicked() {
                             cancel = true;
                         }
@@ -88,7 +121,7 @@ pub(super) fn do_frame(
                         coll.add_new_tag_from_text(tag, uid_counter);
                     }
                     if cancel {
-                        *new_tag = None;
+                        new_tag.clear();
                     }
                 }
             });
@@ -249,24 +282,25 @@ pub(super) fn do_frame(
                                 ui.label("Names");
                                 ui.rtl(|ui| {
                                     let mut confirm = false;
-                                    match new_name {
-                                        Some(_) => {
-                                            if ui.button(icons::CANCEL).clicked() {
-                                                *new_name = None;
-                                            }
-                                            if ui.button(icons::CHECK).clicked() {
-                                                confirm = true;
-                                            }
+                                    if new_name.inactive() {
+                                        if ui.button(icons::ADD).clicked() {
+                                            new_name.init();
                                         }
-                                        None => {
-                                            if ui.button(icons::ADD).clicked() {
-                                                *new_name = Some(String::new());
-                                            }
+                                    } else {
+                                        if ui.button(icons::CANCEL).clicked() {
+                                            new_name.clear();
+                                        }
+                                        if ui.button(icons::CHECK).clicked() {
+                                            confirm = true;
                                         }
                                     }
-                                    if let Some(new) = new_name.take_if(|name| {
+
+                                    if let Some(new) = new_name.take_if(|name, focus| {
                                         let re = ui
                                             .add(TextEdit::singleline(name).hint_text("New alias"));
+                                        if focus {
+                                            re.request_focus();
+                                        }
                                         (re.lost_focus()
                                             && ui.input(|inp| inp.key_pressed(Key::Enter)))
                                             | confirm
@@ -295,26 +329,26 @@ pub(super) fn do_frame(
                                 ui.label("Implies");
                                 ui.rtl(|ui| {
                                     let mut confirm = false;
-                                    match new_imply {
-                                        Some(_) => {
-                                            if ui.button(icons::CANCEL).clicked() {
-                                                *new_imply = None;
-                                            }
-                                            if ui.button(icons::CHECK).clicked() {
-                                                confirm = true;
-                                            }
+                                    if new_imply.inactive() {
+                                        if ui.button(icons::ADD).clicked() {
+                                            new_imply.init();
                                         }
-                                        None => {
-                                            if ui.button(icons::ADD).clicked() {
-                                                *new_imply = Some(String::new());
-                                            }
+                                    } else {
+                                        if ui.button(icons::CANCEL).clicked() {
+                                            new_imply.clear();
+                                        }
+                                        if ui.button(icons::CHECK).clicked() {
+                                            confirm = true;
                                         }
                                     }
-                                    if let Some(imply) = new_imply.take_if(|imply| {
+                                    if let Some(imply) = new_imply.take_if(|imply, focus| {
                                         let re = ui.add(
                                             TextEdit::singleline(imply)
                                                 .hint_text("New implication"),
                                         );
+                                        if focus {
+                                            re.request_focus();
+                                        }
                                         (re.lost_focus()
                                             && ui.input(|inp| inp.key_pressed(Key::Enter)))
                                             | confirm
