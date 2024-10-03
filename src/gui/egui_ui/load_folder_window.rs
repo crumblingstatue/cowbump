@@ -276,7 +276,7 @@ fn update(load_state: &mut LoadingState, result_vec: &mut Vec<Result<PathAdd, io
                 if let Some(jh) = load_state.join_handle.take() {
                     let result = jh.join().unwrap();
                     if let Err(e) = result {
-                        dlog!("Load folder update error: {e}");
+                        dlog!("Load folder update error: {}", e);
                     }
                 }
                 return true;

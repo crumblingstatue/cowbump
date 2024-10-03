@@ -6,9 +6,9 @@ thread_local! {
 
 #[macro_export]
 macro_rules! dlog {
-    ($($arg:tt) *) => {
+    ($fmt:literal $($arg:tt) *) => {
         $crate::gui::debug_log::LOG.with(|log| {
-            log.borrow_mut().push(format!($($arg)*))
+            log.borrow_mut().push(format!(concat!(file!(), ":", line!(), ": ", $fmt) $($arg)*))
         })
     }
 }
