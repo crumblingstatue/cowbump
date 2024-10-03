@@ -24,6 +24,12 @@ impl Tag {
             None => "<unnamed>",
         }
     }
+    /// If `replace` is an imply, replace it with `with`
+    pub(crate) fn replace_imply(&mut self, replace: Id, with: Id) {
+        if self.implies.remove(&replace) {
+            self.implies.insert(with);
+        }
+    }
 }
 
 #[derive(Hash, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]

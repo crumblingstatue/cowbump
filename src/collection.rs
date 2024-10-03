@@ -300,8 +300,13 @@ impl Collection {
         Ok(())
     }
     fn replace_tag_refs(&mut self, replace: tag::Id, with: tag::Id) {
+        // Entries
         for en in self.entries.values_mut() {
             en.replace_tag(replace, with);
+        }
+        // Tag-implies
+        for tag in self.tags.values_mut() {
+            tag.replace_imply(replace, with);
         }
     }
 }
