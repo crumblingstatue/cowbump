@@ -131,11 +131,15 @@ pub(super) fn do_frame(
                                         Color32::from_rgb(45, 45, 45)
                                     });
                                     let mut clicked_any = false;
-                                    if ui
-                                        .add(button)
-                                        .on_hover_text(format!("Filter for {name}"))
-                                        .clicked()
-                                    {
+                                    let re = ui.add(button);
+                                    re.context_menu(|ui| {
+                                        if ui.button("Exact").clicked() {
+                                            reqs.toggle_have_tag_exact(*tag_uid);
+                                            clicked_any = true;
+                                            ui.close_menu();
+                                        }
+                                    });
+                                    if re.on_hover_text(format!("Filter for {name}")).clicked() {
                                         reqs.toggle_have_tag(*tag_uid);
                                         reqs.set_not_have_tag(*tag_uid, false);
                                         clicked_any = true;

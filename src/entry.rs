@@ -43,6 +43,7 @@ impl Entry {
             Req::All(reqs) => reqs.all(|req| self.req_satisfied(id, req, tags, sequences)),
             Req::None(reqs) => reqs.none(|req| self.req_satisfied(id, req, tags, sequences)),
             Req::Tag(id) => self.satisfies_required_tag(*id, tags),
+            Req::TagExact(id) => self.tags.iter().any(|tagid| tagid == id),
             Req::Not(req) => !self.req_satisfied(id, req, tags, sequences),
             Req::FilenameSub(fsub) => self.path.to_string_lossy().to_lowercase().contains(fsub),
             Req::PartOfSeq => sequences.values().any(|seq| seq.contains_entry(id)),

@@ -40,6 +40,9 @@ impl Requirements {
     pub fn have_tag(&self, id: tag::Id) -> bool {
         self.any(|req| req == &Req::Tag(id))
     }
+    pub fn have_tag_exact(&self, id: tag::Id) -> bool {
+        self.any(|req| req == &Req::TagExact(id))
+    }
     /// It's required that the item doesn't have this tag
     pub fn not_have_tag(&self, id: tag::Id) -> bool {
         self.any(|req| req == &Req::Not(Box::new(Req::Tag(id))))
@@ -49,12 +52,24 @@ impl Requirements {
         self.set_have_tag(id, !self.have_tag(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
+    pub fn toggle_have_tag_exact(&mut self, id: tag::Id) {
+        self.set_have_tag_exact(id, !self.have_tag_exact(id));
+    }
+    /// Note that this is top-level only. It might result in conflicting requirements.
     fn add_tag(&mut self, id: tag::Id) {
         self.reqs.push(Req::Tag(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
+    fn add_tag_exact(&mut self, id: tag::Id) {
+        self.reqs.push(Req::TagExact(id));
+    }
+    /// Note that this is top-level only. It might result in conflicting requirements.
     fn remove_tag(&mut self, id: tag::Id) {
         self.reqs.retain(|req| req != &Req::Tag(id));
+    }
+    /// Note that this is top-level only. It might result in conflicting requirements.
+    fn remove_tag_exact(&mut self, id: tag::Id) {
+        self.reqs.retain(|req| req != &Req::TagExact(id));
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
     fn add_not_tag(&mut self, id: tag::Id) {
@@ -71,6 +86,14 @@ impl Requirements {
             self.add_tag(id);
         } else {
             self.remove_tag(id);
+        }
+    }
+    /// Note that this is top-level only. It might result in conflicting requirements.
+    pub fn set_have_tag_exact(&mut self, id: tag::Id, have: bool) {
+        if have {
+            self.add_tag_exact(id);
+        } else {
+            self.remove_tag_exact(id);
         }
     }
     /// Note that this is top-level only. It might result in conflicting requirements.
@@ -128,6 +151,8 @@ pub enum Req {
     All(Requirements),
     None(Requirements),
     Tag(tag::Id),
+    // TODO: Implement in tagfilter_lang
+    TagExact(tag::Id),
     Not(Box<Req>),
     FilenameSub(String),
     PartOfSeq,
@@ -201,6 +226,7 @@ impl Req {
             Req::All(reqs) => format!("@all[{}]", reqs.to_string(tags)),
             Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)),
             Req::Tag(id) => tags.first_name_of(id),
+            Req::TagExact(id) => format!("\"{}\"", tags.first_name_of(id)),
             Req::Not(req) => format!("!{}", req.to_string(tags)),
             Req::FilenameSub(substr) => format!("@f[{substr}]"),
             Req::PartOfSeq => "@seq".into(),
