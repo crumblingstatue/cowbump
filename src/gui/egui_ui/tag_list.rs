@@ -408,6 +408,7 @@ pub(super) fn do_frame(
                                 tag.implies.remove(&imply_id);
                             }
                             ui.separator();
+                            ui.heading("Actions");
                             match merge_this {
                                 Some(_) => {
                                     ui.label(
