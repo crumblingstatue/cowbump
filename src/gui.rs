@@ -147,16 +147,10 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             }
         }
         egui_state.begin_frame();
-        sf_egui.begin_pass();
-        let result = egui_ui::do_ui(
-            &mut state,
-            &mut egui_state,
-            sf_egui.context(),
-            app,
-            &res,
-            &window,
-        );
-        sf_egui.end_pass(&mut window)?;
+        let mut result = Ok(());
+        sf_egui.run(&mut window, |rw, ctx| {
+            result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, rw)
+        })?;
         if let Err(e) = result {
             // Note: These are not egui errors. Egui is doing fine when these errors
             // happen, so we can use the egui modal dialog to display them.
