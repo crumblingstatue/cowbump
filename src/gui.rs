@@ -20,7 +20,7 @@ use {
     },
     crate::{
         application::Application,
-        collection::{self, Collection},
+        collection::{self, Entries},
         db::EntryMap,
         entry,
         filter_reqs::Requirements,
@@ -222,7 +222,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         &mut state,
                         &res,
                         &mut window,
-                        coll,
+                        &coll.entries,
                         load_anim_rotation,
                         !sf_egui.context().wants_pointer_input(),
                     );
@@ -420,7 +420,7 @@ fn set_active_collection(
 fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
-    coll: &Collection,
+    entries: &Entries,
     thumbnail_loader: &ThumbnailLoader,
     thumb_size: u32,
     res: &'t Resources,
@@ -431,7 +431,7 @@ fn get_tex_for_entry<'t>(
             None => (false, &*res.error_texture),
         },
         None => {
-            let Some(entry) = &coll.entries.get(&id) else {
+            let Some(entry) = entries.get(&id) else {
                 return (false, &*res.error_texture);
             };
             thumbnail_loader.request(&entry.path, thumb_size, id);

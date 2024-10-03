@@ -240,7 +240,7 @@ pub(super) fn do_frame(
                             let tex_size = get_tex_for_entry(
                                 &state.thumbnail_cache,
                                 id,
-                                coll,
+                                &coll.entries,
                                 &state.thumbnail_loader,
                                 state.thumbs_view.thumb_size,
                                 res,

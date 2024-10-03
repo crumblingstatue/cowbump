@@ -8,7 +8,10 @@ use {
         State, ThumbnailCache,
     },
     crate::{
-        collection::Collection, dlog, entry, filter_reqs::Requirements, preferences::Preferences,
+        collection::{Collection, Entries},
+        dlog, entry,
+        filter_reqs::Requirements,
+        preferences::Preferences,
     },
     anyhow::Context as _,
     egui_sfml::{
@@ -182,7 +185,7 @@ pub(super) fn draw_thumbnails(
     state: &mut State,
     res: &Resources,
     window: &mut RenderWindow,
-    coll: &Collection,
+    entries: &Entries,
     load_anim_rotation: f32,
     pointer_active: bool,
 ) {
@@ -214,7 +217,7 @@ pub(super) fn draw_thumbnails(
         }
         draw_thumbnail(
             &state.thumbnail_cache,
-            coll,
+            entries,
             window,
             x,
             y,
@@ -245,7 +248,7 @@ pub(super) fn draw_thumbnails(
 #[expect(clippy::too_many_arguments)]
 fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_cache: &'a ThumbnailCache,
-    coll: &Collection,
+    entries: &Entries,
     window: &mut RenderWindow,
     x: f32,
     y: f32,
@@ -256,8 +259,14 @@ fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_loader: &ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
-    let (has_img, texture) =
-        get_tex_for_entry(thumbnail_cache, id, coll, thumbnail_loader, thumb_size, res);
+    let (has_img, texture) = get_tex_for_entry(
+        thumbnail_cache,
+        id,
+        entries,
+        thumbnail_loader,
+        thumb_size,
+        res,
+    );
     sprite.set_texture(texture, true);
     sprite.set_position((x, y));
     if thumbnail_loader.busy_with().contains(&id) {
@@ -280,7 +289,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw(&rect);
     }
     if show_filename {
-        if let Some(path_string) = coll.entries[&id].path.to_str() {
+        if let Some(path_string) = entries[&id].path.to_str() {
             let mut text = Text::new(path_string, &res.font, 12);
             text.set_position(fname_pos);
             window.draw_text(&text, &RenderStates::DEFAULT);

@@ -465,7 +465,7 @@ impl egui_sfml::UserTexSource for TexSrc<'_, '_, '_> {
                 get_tex_for_entry(
                     &self.state.thumbnail_cache,
                     entry::Id(id),
-                    coll,
+                    &coll.entries,
                     &self.state.thumbnail_loader,
                     self.state.thumbs_view.thumb_size,
                     self.res,
