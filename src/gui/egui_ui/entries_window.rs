@@ -11,7 +11,7 @@ use {
         dlog, entry,
         filter_reqs::Requirements,
         gui::{
-            get_tex_for_entry, native_dialog,
+            get_tex_for_entry,
             open::{
                 builtin,
                 external::{self, feed_args, OpenExternCandidate},
@@ -275,7 +275,9 @@ pub(super) fn do_frame(
                                     open_with: None,
                                 }];
                                 if let Err(e) = external::open(&paths, &mut db.preferences) {
-                                    native_dialog::error_blocking("Error opening with external", e);
+                                    egui_state
+                                        .modal
+                                        .err(format!("Error opening with external: {e}"));
                                 }
                             }
                         }
@@ -432,10 +434,11 @@ pub(super) fn do_frame(
                                             }
                                             retain = false;
                                         }
-                                        None => native_dialog::error_blocking(
-                                            "Error inserting tag",
-                                            anyhow::anyhow!("Already exists"),
-                                        ),
+                                        None => {
+                                            egui_state
+                                                .modal
+                                                .err("Failed to add tag: Already exists");
+                                        }
                                     }
                                 }
                                 if ui.button("Cancel").clicked() {
@@ -485,7 +488,9 @@ pub(super) fn do_frame(
                                 state.clipboard_ctx.set_text(out)?;
                             };
                             if let Err(e) = res {
-                                native_dialog::error_blocking("Filename clipboard copy error", e);
+                                egui_state
+                                    .modal
+                                    .err(format!("Filename clipboard copy error: {e}"));
                             }
                         }
                         if win.custom_command_prompt {
@@ -648,7 +653,9 @@ pub(super) fn do_frame(
                             ui.horizontal(|ui| {
                                 if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
                                     if let Err(e) = remove_entries(del_uids, coll, state) {
-                                        native_dialog::error_blocking("Error deleting entries", e);
+                                        egui_state
+                                            .modal
+                                            .err(format!("Error deleting entries: {e:?}"));
                                     }
                                     win.delete_confirm = false;
                                     close = true;

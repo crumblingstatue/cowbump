@@ -37,7 +37,17 @@ mod tag;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-use crate::application::Application;
+use {
+    crate::application::Application,
+    egui_sfml::{
+        egui,
+        sfml::{
+            graphics::RenderWindow,
+            window::{Event, Style},
+        },
+        SfEgui,
+    },
+};
 
 fn try_main() -> anyhow::Result<()> {
     let mut app = Application::new()?;
@@ -47,6 +57,32 @@ fn try_main() -> anyhow::Result<()> {
 fn main() {
     env_logger::init();
     if let Err(e) = try_main() {
-        gui::native_dialog::error_blocking("Fatal runtime error", e);
+        error_blocking("Fatal runtime error", e);
+    }
+}
+
+/// Show a blocking error window
+///
+/// # Panics
+///
+/// If the egui pass fails, and maybe some other catastrophic stuff
+fn error_blocking<E: std::fmt::Debug>(title: &str, err: E) {
+    let mut rw = RenderWindow::new((800, 600), title, Style::DEFAULT, &Default::default());
+    rw.set_framerate_limit(60);
+    let mut sf_egui = SfEgui::new(&rw);
+    while rw.is_open() {
+        while let Some(ev) = rw.poll_event() {
+            sf_egui.add_event(&ev);
+            sf_egui.begin_pass();
+            egui::CentralPanel::default().show(sf_egui.context(), |ui| {
+                ui.label(format!("{err:?}"));
+            });
+            sf_egui.end_pass(&mut rw).unwrap();
+            if let Event::Closed = ev {
+                rw.close();
+            }
+        }
+        sf_egui.draw(&mut rw, None);
+        rw.display();
     }
 }

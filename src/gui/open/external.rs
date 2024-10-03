@@ -2,7 +2,7 @@ use {
     crate::{
         collection::{Collection, Entries},
         entry,
-        gui::{native_dialog::error_blocking, State},
+        gui::State,
         preferences::{AppId, Preferences},
         sequence::Sequence,
     },
@@ -42,20 +42,19 @@ pub fn open_single_with_others(
 ) -> anyhow::Result<()> {
     if let Some(seq_id) = coll.find_related_sequences(&[uid]).pop() {
         let seq = &coll.sequences[&seq_id];
-        open_sequence(seq, uid, &coll.entries, preferences)?;
-    } else if let Err(e) = open(
-        {
-            let en = &coll.entries[&uid];
-            &[OpenExternCandidate {
-                path: &en.path,
-                open_with: find_open_with_for_entry(en, coll),
-            }]
-        },
-        preferences,
-    ) {
-        error_blocking("Failed to open file", e);
+        open_sequence(seq, uid, &coll.entries, preferences)
+    } else {
+        open(
+            {
+                let en = &coll.entries[&uid];
+                &[OpenExternCandidate {
+                    path: &en.path,
+                    open_with: find_open_with_for_entry(en, coll),
+                }]
+            },
+            preferences,
+        )
     }
-    Ok(())
 }
 
 /// Candidate for opening with extern app
@@ -82,9 +81,7 @@ pub fn open(
         bail!(msg);
     }
     for path in built_tasks.remainder {
-        if let Err(e) = open::that(path) {
-            error_blocking("Error opening", e);
-        }
+        open::that(path)?;
     }
     Ok(())
 }
@@ -171,10 +168,7 @@ pub(crate) fn open_sequence(
             open_with: None,
         });
     }
-    if let Err(e) = open(&candidates, prefs) {
-        error_blocking("Failed to open file", e);
-    }
-    Ok(())
+    open(&candidates, prefs)
 }
 
 pub fn feed_args(args_string: &str, paths: &[&Path], command: &mut Command) {

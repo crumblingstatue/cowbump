@@ -1,6 +1,5 @@
 pub mod debug_log;
 mod egui_ui;
-pub mod native_dialog;
 mod open;
 mod resources;
 mod thumbnail_loader;
@@ -265,9 +264,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         load_anim_rotation += 2.0;
     }
     if !app.no_save {
-        if let Err(e) = app.save_active_collection() {
-            native_dialog::error_blocking("Error saving collection", e);
-        }
+        app.save_active_collection()?;
         app.database.save()?;
     }
     Ok(())
