@@ -322,7 +322,7 @@ pub(super) fn do_frame(
                                     }) {
                                         if let Some(resolved_id) = coll.resolve_tag(&imply) {
                                             let Some(tag) = coll.tags.get_mut(id) else {
-                                                dlog!("Couldn't get tag with id {:?}", id);
+                                                dlog!("Couldn't get tag with id {id:?}");
                                                 return;
                                             };
                                             tag.implies.insert(resolved_id);
@@ -345,7 +345,7 @@ pub(super) fn do_frame(
                             }
                             if let Some(imply_id) = remove {
                                 let Some(tag) = coll.tags.get_mut(id) else {
-                                    dlog!("Failed to get tag with id {:?}", id);
+                                    dlog!("Failed to get tag with id {id:?}");
                                     return;
                                 };
                                 tag.implies.remove(&imply_id);

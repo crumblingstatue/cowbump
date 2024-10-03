@@ -45,7 +45,7 @@ pub(super) fn draw(
             let data = match std::fs::read(&entry.path) {
                 Ok(data) => data,
                 Err(e) => {
-                    dlog!("Error loading image: {}", e);
+                    dlog!("Error loading image: {e}");
                     return;
                 }
             };
