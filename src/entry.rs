@@ -82,7 +82,10 @@ fn tag_satisfies_required_tag(
         return true;
     }
     // Check if any implied tags satisfy required
-    let tag = &tags[&tag_id];
+    let Some(tag) = tags.get(&tag_id) else {
+        dlog!("Dangling tag id: {tag_id:?}");
+        return false;
+    };
     tag.implies.iter().any(|implied_tag_id| {
         tag_satisfies_required_tag(*implied_tag_id, required_tag_id, tags, depth)
     })
