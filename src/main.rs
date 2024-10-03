@@ -47,9 +47,37 @@ use {
         },
         SfEgui,
     },
+    std::io::IsTerminal,
 };
 
 fn try_main() -> anyhow::Result<()> {
+    std::panic::set_hook(Box::new(|panic_info| {
+        let payload = panic_info.payload();
+        let msg = if let Some(s) = payload.downcast_ref::<&str>() {
+            s
+        } else if let Some(s) = payload.downcast_ref::<String>() {
+            s
+        } else {
+            "Unknown panic payload"
+        };
+        let (file, line, column) = match panic_info.location() {
+            Some(loc) => (loc.file(), loc.line().to_string(), loc.column().to_string()),
+            None => ("unknown", "unknown".into(), "unknown".into()),
+        };
+        let btrace = std::backtrace::Backtrace::capture();
+        eprintln!("{btrace}");
+        fatal_error_report(
+            "Cowbump panic",
+            &format!(
+                "\
+            {msg}\n\n\
+            Location:\n\
+            {file}:{line}:{column}\n\n\
+            Backtrace:\n\
+            {btrace}"
+            ),
+        );
+    }));
     let mut app = Application::new()?;
     gui::run(&mut app)
 }
@@ -57,17 +85,22 @@ fn try_main() -> anyhow::Result<()> {
 fn main() {
     env_logger::init();
     if let Err(e) = try_main() {
-        error_blocking("Fatal runtime error", e);
+        fatal_error_report("Fatal runtime error", &format!("{e:?}"));
     }
 }
 
-/// Show a blocking error window
+/// Report fatal error or panic
 ///
 /// # Panics
 ///
 /// If the egui pass fails, and maybe some other catastrophic stuff
-fn error_blocking<E: std::fmt::Debug>(title: &str, err: E) {
-    let mut rw = RenderWindow::new((800, 600), title, Style::DEFAULT, &Default::default());
+fn fatal_error_report(title: &str, mut msg: &str) {
+    if std::io::stderr().is_terminal() {
+        eprintln!("== {title} ==\n");
+        eprintln!("{msg}");
+        return;
+    }
+    let mut rw = RenderWindow::new((800, 600), title, Style::CLOSE, &Default::default());
     rw.set_framerate_limit(60);
     let mut sf_egui = SfEgui::new(&rw);
     while rw.is_open() {
@@ -75,7 +108,16 @@ fn error_blocking<E: std::fmt::Debug>(title: &str, err: E) {
             sf_egui.add_event(&ev);
             sf_egui.begin_pass();
             egui::CentralPanel::default().show(sf_egui.context(), |ui| {
-                ui.label(format!("{err:?}"));
+                ui.heading("Cowbump panicked");
+                ui.separator();
+                egui::ScrollArea::vertical()
+                    .auto_shrink(false)
+                    .show(ui, |ui| {
+                        ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::multiline(&mut msg).code_editor(),
+                        );
+                    });
             });
             sf_egui.end_pass(&mut rw).unwrap();
             if let Event::Closed = ev {
