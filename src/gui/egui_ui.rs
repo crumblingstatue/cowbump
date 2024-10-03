@@ -261,6 +261,7 @@ fn show_modal_ui(ctx: &Context, ui_fn: impl FnOnce(&mut egui::Ui)) {
     ctx.move_to_top(re.response.layer_id);
     let re = Window::new("egui_modal_popup")
         .title_bar(false)
+        .resizable(false)
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .show(ctx, |ui| {
             ui_fn(ui);
