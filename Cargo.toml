@@ -24,6 +24,7 @@ rand = "0.8.5"
 env_logger = "0.11.3"
 egui-file-dialog = "0.7.0"
 parking_lot = "0.12"
+egui_flex = "0.1.1"
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"

@@ -34,6 +34,7 @@ use {
     crate::{application::Application, collection::Collection, entry, gui::State, tag},
     anyhow::Context as _,
     egui_file_dialog::FileDialog,
+    egui_flex::{item, Flex, FlexAlign, FlexAlignContent},
     egui_sfml::{
         egui::{self, Context, FontFamily, FontId, TextStyle, Window},
         sfml::{
@@ -202,20 +203,39 @@ impl ModalDialog {
                     message,
                     action: prompt_action,
                 } => {
-                    ui.with_layout(
-                        egui::Layout::top_down_justified(egui::Align::Center),
-                        |ui| {
-                            ui.heading(title);
-                            ui.label(message);
-                            if ui.button([icons::CHECK, " Ok"].concat()).clicked() || key_enter {
-                                action = Some(prompt_action.clone());
-                                close = true;
-                            }
-                            if ui.button(icons::CANCEL_TEXT).clicked() || key_esc {
-                                close = true;
-                            }
-                        },
-                    );
+                    Flex::vertical()
+                        .align_content(FlexAlignContent::Center)
+                        .align_items(FlexAlign::Center)
+                        .gap(egui::vec2(ui.style().spacing.item_spacing.x, 16.0))
+                        .show(ui, |flex| {
+                            flex.add(
+                                item(),
+                                egui::Label::new(egui::RichText::new(title).heading()),
+                            );
+                            flex.add(item(), egui::Label::new(message));
+                            flex.add_flex(
+                                item().align_self(FlexAlign::End),
+                                Flex::horizontal(),
+                                |flex| {
+                                    let ok = flex
+                                        .add(
+                                            item(),
+                                            egui::Button::new([icons::CHECK, " Ok"].concat()),
+                                        )
+                                        .inner;
+                                    let cancel = flex
+                                        .add(item(), egui::Button::new(icons::CANCEL_TEXT))
+                                        .inner;
+                                    if ok.clicked() || key_enter {
+                                        action = Some(prompt_action.clone());
+                                        close = true;
+                                    }
+                                    if cancel.clicked() || key_esc {
+                                        close = true;
+                                    }
+                                },
+                            );
+                        });
                 }
             });
             if close {
