@@ -746,10 +746,7 @@ fn remove_entries(
     for uid in entries.drain(..) {
         let path = &coll.entries[&uid].path;
         std::fs::remove_file(path)?;
-        match coll.entries.remove(&uid) {
-            Some(en) => dlog!("Removed `{uid:?}`: {:?}", en.path),
-            None => dlog!("Warning: Remove of entry `{uid:?}` failed"),
-        }
+        coll.entries.remove(&uid);
         // Also remove from selection buffers, if it's selected
         state.sel.for_each_mut(|sel| {
             if let Some(idx) = sel.as_vec().iter().position(|id| *id == uid) {
