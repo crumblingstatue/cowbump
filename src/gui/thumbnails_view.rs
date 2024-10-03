@@ -379,7 +379,9 @@ pub(in crate::gui) fn handle_event(
                 if preferences.use_built_in_viewer {
                     builtin::on_enter_open(state, window);
                 } else {
-                    external::on_enter_open(state, coll, preferences);
+                    if let Err(e) = external::on_enter_open(state, coll, preferences) {
+                        egui_state.modal.err(format!("Failed to open file(s): {e}"));
+                    }
                 }
             } else if code == Key::A && ctrl {
                 select_all(state, coll);

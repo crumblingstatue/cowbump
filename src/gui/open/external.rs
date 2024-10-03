@@ -15,7 +15,7 @@ pub(in crate::gui) fn on_enter_open(
     state: &State,
     coll: &Collection,
     preferences: &mut Preferences,
-) {
+) -> anyhow::Result<()> {
     let mut candidates: Vec<OpenExternCandidate> = Vec::new();
     for &uid in state.sel.selected_ids_iter() {
         candidates.push(OpenExternCandidate {
@@ -32,9 +32,7 @@ pub(in crate::gui) fn on_enter_open(
         }
     }
     candidates.sort_by_key(|c| c.path);
-    if let Err(e) = open(&candidates, preferences) {
-        error_blocking("Failed to open file", e);
-    }
+    open(&candidates, preferences)
 }
 
 pub fn open_single_with_others(coll: &Collection, uid: entry::Id, preferences: &mut Preferences) {
