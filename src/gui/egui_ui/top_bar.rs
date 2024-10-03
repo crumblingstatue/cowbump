@@ -159,12 +159,18 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
             egui_state.debug_window.toggle();
         }
         ui.separator();
-        if ui.button("Simulate error popup").clicked() {
-            egui_state
-                .modal
-                .err(format!("{:?}", anyhow!("Simulated error just happened!")));
-            ui.close_menu();
-        }
+        ui.menu_button("Simulate popup", |ui| {
+            if ui.button("Error popup").clicked() {
+                egui_state
+                    .modal
+                    .err(format!("{:?}", anyhow!("Simulated error just happened!")));
+                ui.close_menu();
+            }
+            if ui.button("Success popup").clicked() {
+                egui_state.modal.success("Something successfully happened.");
+                ui.close_menu();
+            }
+        });
     });
 }
 

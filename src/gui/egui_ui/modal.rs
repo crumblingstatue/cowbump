@@ -128,6 +128,7 @@ impl ModalDialog {
                 }
                 ModalPayload::Success(s) => {
                     ui.vertical_centered(|ui| {
+                        ui.heading([icons::CHECK, " Success"].concat());
                         ui.label(s);
                         ui.add_space(16.0);
                         if ui.button("Close").clicked() || key_enter || key_esc {
