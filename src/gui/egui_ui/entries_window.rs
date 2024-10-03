@@ -503,8 +503,14 @@ pub(super) fn do_frame(
                                 cmd.stdin(Stdio::piped());
                                 cmd.stdout(Stdio::piped());
                                 for uid in &win.ids {
-                                    let en = &coll.entries[uid];
-                                    feed_args(&win.args_buffer, &[&en.path], &mut cmd);
+                                    match coll.entries.get(uid) {
+                                        Some(en) => {
+                                            feed_args(&win.args_buffer, &[&en.path], &mut cmd);
+                                        }
+                                        None => {
+                                            dlog!("No entry with id {uid:?}");
+                                        }
+                                    }
                                 }
                                 match cmd.spawn() {
                                     Ok(child) => {
