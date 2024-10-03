@@ -50,7 +50,7 @@ impl ModalDialog {
             action,
         });
     }
-    pub fn show_payload(
+    pub(super) fn show_payload(
         &mut self,
         ctx: &egui::Context,
         clipboard: &mut arboard::Clipboard,
