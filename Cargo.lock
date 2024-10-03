@@ -1595,7 +1595,7 @@ dependencies = [
 [[package]]
 name = "tagfilter-lang"
 version = "0.1.0"
-source = "git+https://github.com/crumblingstatue/tagfilter-lang.git#c91f8bdbe39cacf07871ff86dff52d412adfe555"
+source = "git+https://github.com/crumblingstatue/tagfilter-lang.git#2e25361ed9993d14db558375d59d13166319940a"
 dependencies = [
  "thiserror",
 ]

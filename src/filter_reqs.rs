@@ -183,6 +183,12 @@ impl Req {
                     .ok_or(ReqTransformError::NoSuchTag(name))?;
                 Req::Tag(id)
             }
+            Requirement::TagExact(name) => {
+                let id = coll
+                    .resolve_tag(name)
+                    .ok_or(ReqTransformError::NoSuchTag(name))?;
+                Req::TagExact(id)
+            }
             Requirement::FnCall(call) => match call.name {
                 "any" => {
                     let mut reqs = Requirements::default();
@@ -202,7 +208,7 @@ impl Req {
                 "filename" | "file" | "fname" | "f" => {
                     let filename_sub = match call.params.first() {
                         Some(param) => match param {
-                            Requirement::Tag(tag) => tag,
+                            Requirement::Tag(tag) | Requirement::TagExact(tag) => tag,
                             Requirement::FnCall(_) | Requirement::Not(_) => {
                                 return Err(ReqTransformError::InvalidParameter)
                             }
@@ -226,7 +232,7 @@ impl Req {
             Req::All(reqs) => format!("@all[{}]", reqs.to_string(tags)),
             Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)),
             Req::Tag(id) => tags.first_name_of(id),
-            Req::TagExact(id) => format!("\"{}\"", tags.first_name_of(id)),
+            Req::TagExact(id) => ["$", &tags.first_name_of(id)].concat(),
             Req::Not(req) => format!("!{}", req.to_string(tags)),
             Req::FilenameSub(substr) => format!("@f[{substr}]"),
             Req::PartOfSeq => "@seq".into(),
