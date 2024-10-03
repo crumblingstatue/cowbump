@@ -39,7 +39,6 @@ use {
         },
         SfEgui,
     },
-    native_dialog::error_blocking,
     rand::seq::SliceRandom,
 };
 
@@ -273,7 +272,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     }
     if !app.no_save {
         if let Err(e) = app.save_active_collection() {
-            error_blocking("Error saving collection", e);
+            native_dialog::error_blocking("Error saving collection", e);
         }
         app.database.save()?;
     }

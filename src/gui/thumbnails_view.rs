@@ -1,7 +1,7 @@
 use {
     super::{
         egui_ui::EguiState,
-        get_tex_for_entry, native_dialog,
+        get_tex_for_entry,
         open::{builtin, external},
         resources::Resources,
         thumbnail_loader::ThumbnailLoader,
@@ -397,7 +397,7 @@ pub(in crate::gui) fn handle_event(
                     return;
                 };
                 if let Err(e) = copy_image_to_clipboard(state, coll, uid) {
-                    native_dialog::error_blocking("Clipboard copy failed", e);
+                    egui_state.modal.err(format!("Clipboard copy failed: {e}"));
                 }
             } else if code == Key::T {
                 egui_state.tag_window.toggle();

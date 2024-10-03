@@ -394,7 +394,9 @@ pub(super) fn do_ui(
             FileOp::RestoreBackup => {
                 app.active_collection = None;
                 if let Err(e) = app.database.restore_backups_from(&path) {
-                    crate::gui::native_dialog::error_blocking("Failed to restore backup", e);
+                    egui_state
+                        .modal
+                        .err(format!("Failed to restore backup: {e}"));
                 } else {
                     egui_state.modal.success("Backup restored");
                 }

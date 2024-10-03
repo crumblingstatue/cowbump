@@ -1,10 +1,7 @@
 use {
     super::EguiState,
     crate::{
-        application::Application,
-        db::FolderChanges,
-        entry,
-        gui::{native_dialog, thumbnails_view::ThumbnailsView},
+        application::Application, db::FolderChanges, entry, gui::thumbnails_view::ThumbnailsView,
     },
     egui_sfml::{
         egui::{
@@ -163,7 +160,7 @@ pub(super) fn do_frame(
                     return;
                 };
                 if let Err(e) = std::fs::remove_file(path) {
-                    native_dialog::error_blocking("Failed to remove file", e);
+                    egui_state.modal.err(format!("Failed to remove file: {e}"));
                 }
                 changes.add.remove(idx);
             }
