@@ -208,7 +208,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 Action::OpenEntriesWindow => {
                     let id_vec = state
                         .sel
-                        .current_as_id_vec()
+                        .current_as_nonempty_id_vec()
                         .context("Selection buffer inaccessible")?;
                     egui_state.add_entries_window(id_vec.clone());
                 }
@@ -365,8 +365,11 @@ impl SelectionBufs {
     fn none_selected(&self) -> bool {
         self.n_selected() == 0
     }
-    fn current_as_id_vec(&self) -> Option<&Vec<entry::Id>> {
-        self.current().map(SelectionBuf::as_vec)
+    /// Returns the currently active selected-ids vec, if any, if not empty
+    fn current_as_nonempty_id_vec(&self) -> Option<&Vec<entry::Id>> {
+        self.current()
+            .filter(|buf| !buf.buf.is_empty())
+            .map(SelectionBuf::as_vec)
     }
     fn selected_ids_iter(&self) -> impl Iterator<Item = &entry::Id> {
         match self.current() {

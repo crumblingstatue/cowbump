@@ -12,7 +12,7 @@ use {
 pub(in crate::gui) fn on_enter_open(state: &mut State, window: &RenderWindow) {
     if state.sel.none_selected() {
         open_list(state, state.thumbs_view.uids.clone(), 0, window);
-    } else if let Some(id_vec) = state.sel.current_as_id_vec() {
+    } else if let Some(id_vec) = state.sel.current_as_nonempty_id_vec() {
         open_list(state, id_vec.clone(), 0, window);
     }
 }

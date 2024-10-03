@@ -349,7 +349,7 @@ pub(in crate::gui) fn handle_event(
                 egui_state.add_entries_window(
                     state
                         .sel
-                        .current_as_id_vec()
+                        .current_as_nonempty_id_vec()
                         .map_or_else(|| vec![uid], Vec::to_owned),
                 );
             }
@@ -408,7 +408,7 @@ pub(in crate::gui) fn handle_event(
                 // height from it.
                 state.thumbs_view.go_to_bottom(window);
             } else if code == Key::F2
-                && let Some(id_vec) = state.sel.current_as_id_vec()
+                && let Some(id_vec) = state.sel.current_as_nonempty_id_vec()
             {
                 egui_state.add_entries_window(id_vec.clone());
             } else if code == Key::Escape
