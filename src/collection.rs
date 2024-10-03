@@ -12,6 +12,7 @@ use {
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
     std::{
+        borrow::Cow,
         ffi::OsStr,
         io,
         path::{Path, PathBuf},
@@ -25,14 +26,14 @@ pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
 pub type TagSpecificApps = FnvHashMap<tag::Id, preferences::AppId>;
 
 pub trait TagsExt {
-    fn first_name_of(&self, id: &tag::Id) -> String;
+    fn first_name_of(&self, id: &tag::Id) -> Cow<str>;
 }
 
 impl TagsExt for Tags {
-    fn first_name_of(&self, id: &tag::Id) -> String {
+    fn first_name_of(&self, id: &tag::Id) -> Cow<str> {
         match self.get(id) {
             Some(tag) => tag.first_name().into(),
-            None => format!("<dangling:{id:?}>"),
+            None => format!("<dangling:{id:?}>").into(),
         }
     }
 }

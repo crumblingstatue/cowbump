@@ -3,6 +3,7 @@ use {
         collection::{Collection, Tags, TagsExt},
         tag,
     },
+    std::borrow::Cow,
     tagfilter_lang::Requirement,
     thiserror::Error,
 };
@@ -226,15 +227,15 @@ impl Req {
         Ok(req)
     }
 
-    fn to_string(&self, tags: &Tags) -> String {
+    fn to_string<'a>(&self, tags: &'a Tags) -> Cow<'a, str> {
         match self {
-            Req::Any(reqs) => format!("@any[{}]", reqs.to_string(tags)),
-            Req::All(reqs) => format!("@all[{}]", reqs.to_string(tags)),
-            Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)),
+            Req::Any(reqs) => format!("@any[{}]", reqs.to_string(tags)).into(),
+            Req::All(reqs) => format!("@all[{}]", reqs.to_string(tags)).into(),
+            Req::None(reqs) => format!("@none[{}]", reqs.to_string(tags)).into(),
             Req::Tag(id) => tags.first_name_of(id),
-            Req::TagExact(id) => ["$", &tags.first_name_of(id)].concat(),
-            Req::Not(req) => format!("!{}", req.to_string(tags)),
-            Req::FilenameSub(substr) => format!("@f[{substr}]"),
+            Req::TagExact(id) => ["$", &tags.first_name_of(id)].concat().into(),
+            Req::Not(req) => format!("!{}", req.to_string(tags)).into(),
+            Req::FilenameSub(substr) => format!("@f[{substr}]").into(),
             Req::PartOfSeq => "@seq".into(),
             Req::Untagged => "@untagged".into(),
         }

@@ -113,7 +113,7 @@ pub(super) fn do_frame(
                                     if !name.contains(&tag_filter_string[..]) {
                                         continue;
                                     }
-                                    let mut button = Button::new(&name);
+                                    let mut button = Button::new(name.as_ref());
                                     let mut checked = selected_uids.contains(tag_uid);
                                     if active == &Some(*tag_uid) {
                                         button = button.fill(Color32::from_rgb(95, 69, 8));
