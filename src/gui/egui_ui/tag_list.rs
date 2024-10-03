@@ -412,14 +412,14 @@ pub(super) fn do_frame(
                             match merge_this {
                                 Some(_) => {
                                     ui.label(
-                                        "Find and click the tag to merge with in the left list",
+                                        "Find and click the tag to merge into in the left list",
                                     );
                                     if ui.button(icons::CANCEL_TEXT).clicked() {
                                         *merge_this = None;
                                     }
                                 }
                                 None => {
-                                    if ui.button("Merge with other tag").clicked() {
+                                    if ui.button("Merge into other tag").clicked() {
                                         *merge_this = Some(*id);
                                     }
                                 }
