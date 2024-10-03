@@ -606,7 +606,9 @@ pub(super) fn do_frame(
                         if win.renaming {
                             let re = ui.text_edit_singleline(&mut win.rename_buffer);
                             if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
-                                if let Err(e) = coll.rename(win.ids[0], &win.rename_buffer) {
+                                if let Some(id) = win.ids.first()
+                                    && let Err(e) = coll.rename(*id, &win.rename_buffer)
+                                {
                                     native_dialog::error_blocking("File rename error", e);
                                 }
                                 win.renaming = false;
