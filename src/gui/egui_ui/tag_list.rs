@@ -325,6 +325,8 @@ pub(super) fn do_frame(
                                                 return;
                                             };
                                             tag.implies.insert(resolved_id);
+                                        } else {
+                                            modal.err(format!("No such tag: {imply:?}"));
                                         }
                                     }
                                 })
