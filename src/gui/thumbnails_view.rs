@@ -364,12 +364,22 @@ pub(in crate::gui) fn handle_event(
                     }
                 }
             } else if button == mouse::Button::Right {
-                egui_state.add_entries_window(
-                    state
-                        .sel
-                        .current_as_nonempty_id_vec()
-                        .map_or_else(|| vec![uid], Vec::to_owned),
-                );
+                let entries = match state.sel.current_as_nonempty_id_vec() {
+                    Some(sel_uids) => {
+                        if sel_uids.contains(&uid) {
+                            // If the selection contains the right clicked item, open all selections
+                            sel_uids.clone()
+                        } else {
+                            // If the right clicked item isn't in the selection, just open it
+                            vec![uid]
+                        }
+                    }
+                    None => {
+                        // If we don't have any selections, just open the right clicked item
+                        vec![uid]
+                    }
+                };
+                egui_state.add_entries_window(entries);
             }
         }
         Event::KeyPressed { code, ctrl, .. } => {
