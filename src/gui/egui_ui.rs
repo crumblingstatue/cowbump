@@ -132,6 +132,11 @@ impl EguiState {
     }
 }
 
+/// Do the egui ui update thingy.
+///
+/// # Panics
+///
+/// During prompt action handling, there is a [`PromptAction::PanicTest`], which will cause a panic.
 pub(super) fn do_ui(
     state: &mut State,
     egui_state: &mut EguiState,
@@ -165,6 +170,7 @@ pub(super) fn do_ui(
                     .modal
                     .success(format!("Successful merge into {into_name}"));
             }
+            PromptAction::PanicTest => panic!("User inflicted panic"),
         }
     }
     top_bar::do_frame(state, egui_state, egui_ctx, app, win)?;

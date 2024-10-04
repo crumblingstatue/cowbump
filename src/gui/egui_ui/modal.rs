@@ -10,6 +10,7 @@ pub enum PromptAction {
     QuitNoSave,
     DeleteTags(Vec<tag::Id>),
     MergeTag { merge: tag::Id, into: tag::Id },
+    PanicTest,
 }
 
 #[derive(Default)]

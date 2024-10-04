@@ -207,6 +207,13 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
                 egui_state.modal.success("Something successfully happened.");
                 ui.close_menu();
             }
+            if ui.button("Panic (crash Cowbump)").clicked() {
+                egui_state.modal.prompt(
+                    "Panic?",
+                    "Are you sure you want to crash cowbump?\nUnsaved data will be lost!",
+                    PromptAction::PanicTest,
+                );
+            }
         });
     });
 }
