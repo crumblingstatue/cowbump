@@ -6,6 +6,7 @@ use {
             App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
         },
     },
+    egui_colors::{tokens::ColorPreset, Colorix},
     egui_file_dialog::FileDialog,
     egui_sfml::{
         egui::{
@@ -14,6 +15,7 @@ use {
         },
         sfml::graphics::RenderTarget,
     },
+    rand::Rng,
     std::path::PathBuf,
 };
 
@@ -50,6 +52,7 @@ enum Category {
     Ui,
     Startup,
     FileAssoc,
+    ColorTheme,
 }
 
 /// A slider for font sizes. Returns true if the value should be considered updated
@@ -75,6 +78,7 @@ pub(in crate::gui) fn do_frame(
                 ui.selectable_value(&mut win.category, Category::Ui, "User Interface");
                 ui.selectable_value(&mut win.category, Category::Startup, "Startup");
                 ui.selectable_value(&mut win.category, Category::FileAssoc, "File associations");
+                ui.selectable_value(&mut win.category, Category::ColorTheme, "Color theme");
             });
             match win.category {
                 Category::Ui => {
@@ -218,6 +222,32 @@ pub(in crate::gui) fn do_frame(
                             });
                         });
                     });
+                }
+                Category::ColorTheme => {
+                    ui.horizontal(|ui| {
+                        ui.label("Preset");
+                        egui_state
+                            .colorix
+                            .themes_dropdown(egui_ctx, ui, None, false);
+                    });
+                    ui.separator();
+                    egui_state.colorix.ui_combo_12(egui_ctx, ui);
+                    ui.horizontal(|ui| {
+                        ui.label("Color picker for custom color");
+                        egui_state.colorix.custom_picker(ui);
+                    });
+                    ui.separator();
+                    if ui.button("Random colors").clicked() {
+                        let mut rng = rand::thread_rng();
+                        let theme = std::array::from_fn(|_| {
+                            ColorPreset::Custom([rng.gen(), rng.gen(), rng.gen()])
+                        });
+                        egui_state.colorix = Colorix::init(egui_ctx, theme);
+                    }
+                    ui.separator();
+                    if ui.button([icons::SAVE, " Save"].concat()).clicked() {
+                        prefs.set_color_theme_from_colorix(&egui_state.colorix);
+                    }
                 }
             }
         });

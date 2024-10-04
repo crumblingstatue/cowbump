@@ -1,5 +1,6 @@
 use {
     crate::db::Uid,
+    egui_colors::{tokens::ColorPreset, Colorix},
     egui_sfml::egui::emath::Numeric,
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
@@ -38,7 +39,26 @@ pub struct Preferences {
     pub start_fullscreen: bool,
     #[serde(default = "thumbs_per_row_default")]
     pub thumbs_per_row: u8,
+    #[serde(default)]
+    pub color_theme: Option<ColorTheme>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct ColorTheme {
+    colors: [ThemeColor; 12],
+}
+impl ColorTheme {
+    fn from_colorix(theme: &[ColorPreset; 12]) -> Self {
+        Self {
+            colors: theme.map(|preset| preset.rgb()),
+        }
+    }
+    pub(crate) fn to_colorix(&self) -> [ColorPreset; 12] {
+        self.colors.map(|rgb| ColorPreset::Custom(rgb))
+    }
+}
+
+pub type ThemeColor = [u8; 3];
 
 const fn built_in_viewer_default() -> bool {
     true
@@ -54,6 +74,9 @@ impl Preferences {
             .iter()
             .find(|(_k, v)| v.name == name)
             .map(|(k, _v)| *k)
+    }
+    pub fn set_color_theme_from_colorix(&mut self, colorix: &Colorix) {
+        self.color_theme = Some(ColorTheme::from_colorix(colorix.theme()));
     }
 }
 
@@ -135,6 +158,7 @@ impl Default for Preferences {
             use_built_in_viewer: true,
             start_fullscreen: false,
             thumbs_per_row: thumbs_per_row_default(),
+            color_theme: None,
         }
     }
 }

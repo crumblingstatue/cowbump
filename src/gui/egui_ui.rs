@@ -37,8 +37,10 @@ use {
         collection::{Collection, TagsExt},
         entry,
         gui::State,
+        preferences::Preferences,
     },
     anyhow::Context as _,
+    egui_colors::Colorix,
     egui_file_dialog::FileDialog,
     egui_sfml::{
         egui::{self, Context, FontFamily, FontId, TextStyle},
@@ -75,6 +77,7 @@ pub(crate) struct EguiState {
     /// If `Some`, save this screenshot to the selected path of the file dialog
     pub(crate) file_op: Option<FileOp>,
     pub(crate) modal: ModalDialog,
+    colorix: Colorix,
 }
 
 pub(crate) enum FileOp {
@@ -85,7 +88,7 @@ pub(crate) enum FileOp {
 }
 
 impl EguiState {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(ctx: &Context, prefs: &Preferences) -> Self {
         Self {
             entries_windows: Default::default(),
             sequences_window: Default::default(),
@@ -108,6 +111,13 @@ impl EguiState {
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::default()),
             file_op: None,
             modal: ModalDialog::default(),
+            colorix: Colorix::init(
+                ctx,
+                prefs
+                    .color_theme
+                    .as_ref()
+                    .map_or(egui_colors::utils::SEVENTIES, |theme| theme.to_colorix()),
+            ),
         }
     }
 }
