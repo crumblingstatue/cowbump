@@ -568,15 +568,22 @@ pub(super) fn do_frame(
                                     c_wrap.exit_status = opt_status;
                                     if let Some(status) = opt_status {
                                         if !status.success() {
-                                            if let Some(stdout) = &mut c_wrap.child.stdout {
-                                                let mut buf = String::new();
-                                                let _ = stdout.read_to_string(&mut buf);
-                                                c_wrap.stdout = buf;
-                                            }
-                                            if let Some(stderr) = &mut c_wrap.child.stderr {
-                                                let mut buf = String::new();
-                                                let _ = stderr.read_to_string(&mut buf);
-                                                c_wrap.stderr = buf;
+                                            let result: anyhow::Result<()> = try {
+                                                if let Some(stdout) = &mut c_wrap.child.stdout {
+                                                    let mut buf = String::new();
+                                                    stdout.read_to_string(&mut buf)?;
+                                                    c_wrap.stdout = buf;
+                                                }
+                                                if let Some(stderr) = &mut c_wrap.child.stderr {
+                                                    let mut buf = String::new();
+                                                    stderr.read_to_string(&mut buf)?;
+                                                    c_wrap.stderr = buf;
+                                                }
+                                            };
+                                            if let Err(e) = result {
+                                                egui_state
+                                                    .modal
+                                                    .err(format!("Custom command read error: {e}"));
                                             }
                                         } else {
                                             retain = false;
