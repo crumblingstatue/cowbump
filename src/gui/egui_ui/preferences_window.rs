@@ -247,6 +247,11 @@ pub(in crate::gui) fn do_frame(
                     }
                     ui.separator();
                     ui.horizontal(|ui| {
+                        if let Some(theme) = &prefs.color_theme {
+                            if ui.button([icons::CANCEL, " Restore"].concat()).clicked() {
+                                *colorix = Colorix::init(egui_ctx, theme.to_colorix());
+                            }
+                        }
                         if ui.button([icons::SAVE, " Save custom"].concat()).clicked() {
                             prefs.set_color_theme_from_colorix(colorix);
                         }
