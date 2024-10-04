@@ -3,6 +3,7 @@ use {
     crate::{dlog, tag},
     egui_flex::{item, Flex, FlexAlign, FlexAlignContent},
     egui_sfml::egui::{self, TextWrapMode},
+    std::backtrace::Backtrace,
 };
 
 #[derive(Clone)]
@@ -18,8 +19,14 @@ pub struct ModalDialog {
     payload: Option<ModalPayload>,
 }
 
+struct ErrPayload {
+    message: String,
+    backtrace: Backtrace,
+    show_bt: bool,
+}
+
 enum ModalPayload {
-    Err(String),
+    Err(ErrPayload),
     Success(String),
     About,
     Prompt {
@@ -31,7 +38,11 @@ enum ModalPayload {
 
 impl ModalDialog {
     pub fn err(&mut self, body: impl std::fmt::Display) {
-        self.payload = Some(ModalPayload::Err(body.to_string()));
+        self.payload = Some(ModalPayload::Err(ErrPayload {
+            message: body.to_string(),
+            backtrace: Backtrace::force_capture(),
+            show_bt: false,
+        }));
     }
     pub fn about(&mut self) {
         self.payload = Some(ModalPayload::About);
@@ -57,7 +68,7 @@ impl ModalDialog {
         clipboard: &mut arboard::Clipboard,
     ) -> Option<PromptAction> {
         let mut action = None;
-        if let Some(payload) = &self.payload {
+        if let Some(payload) = &mut self.payload {
             let (key_enter, key_esc) = ctx.input_mut(|inp| {
                 (
                     inp.consume_key(egui::Modifiers::NONE, egui::Key::Enter),
@@ -66,7 +77,7 @@ impl ModalDialog {
             });
             let mut close = false;
             show_modal_ui(ctx, |ui| match payload {
-                ModalPayload::Err(s) => {
+                ModalPayload::Err(payload) => {
                     Flex::vertical()
                         .align_content(FlexAlignContent::Center)
                         .align_items(FlexAlign::Center)
@@ -80,27 +91,41 @@ impl ModalDialog {
                                 )
                                 .wrap_mode(TextWrapMode::Extend),
                             );
-                            if s.lines().count() > 5 {
+                            if payload.message.lines().count() > 5 || payload.show_bt {
                                 flex.add_simple(item().basis(200.0).grow(1.0), |ui| {
                                     ui.set_width(1000.0);
                                     egui::ScrollArea::vertical().show(ui, |ui| {
+                                        let bt_s;
+                                        let mut s;
                                         ui.add_sized(
                                             ui.available_size(),
-                                            egui::TextEdit::multiline(&mut s.as_str())
-                                                .code_editor(),
+                                            egui::TextEdit::multiline(if payload.show_bt {
+                                                bt_s = payload.backtrace.to_string();
+                                                s = bt_s.as_str();
+                                                &mut s
+                                            } else {
+                                                s = payload.message.as_str();
+                                                &mut s
+                                            })
+                                            .code_editor(),
                                         );
                                     });
                                 });
                             } else {
                                 flex.add(
                                     item(),
-                                    egui::Label::new(s).wrap_mode(TextWrapMode::Extend),
+                                    egui::Label::new(payload.message.as_str())
+                                        .wrap_mode(TextWrapMode::Extend),
                                 );
                             }
                             flex.add_flex(
                                 item().align_self(FlexAlign::End),
                                 Flex::horizontal(),
                                 |flex| {
+                                    flex.add(
+                                        item(),
+                                        egui::Checkbox::new(&mut payload.show_bt, "backtrace"),
+                                    );
                                     let ok = flex
                                         .add(
                                             item(),
@@ -119,7 +144,14 @@ impl ModalDialog {
                                         close = true;
                                     }
                                     if ccopy.clicked() {
-                                        if let Err(e) = clipboard.set_text(s) {
+                                        let bt_s;
+                                        let copy_payload = if payload.show_bt {
+                                            bt_s = payload.backtrace.to_string();
+                                            bt_s.as_str()
+                                        } else {
+                                            &payload.message
+                                        };
+                                        if let Err(e) = clipboard.set_text(copy_payload) {
                                             dlog!("Failed to set clipboard text: {e}");
                                         }
                                     }
@@ -130,7 +162,7 @@ impl ModalDialog {
                 ModalPayload::Success(s) => {
                     ui.vertical_centered(|ui| {
                         ui.heading([icons::CHECK, " Success"].concat());
-                        ui.label(s);
+                        ui.label(s.as_str());
                         ui.add_space(16.0);
                         if ui.button("Close").clicked() || key_enter || key_esc {
                             close = true;
@@ -158,12 +190,12 @@ impl ModalDialog {
                         .show(ui, |flex| {
                             flex.add(
                                 item(),
-                                egui::Label::new(egui::RichText::new(title).heading())
+                                egui::Label::new(egui::RichText::new(title.as_str()).heading())
                                     .wrap_mode(TextWrapMode::Extend),
                             );
                             flex.add(
                                 item(),
-                                egui::Label::new(message).wrap_mode(TextWrapMode::Extend),
+                                egui::Label::new(message.as_str()).wrap_mode(TextWrapMode::Extend),
                             );
                             flex.add_flex(
                                 item().align_self(FlexAlign::End),
