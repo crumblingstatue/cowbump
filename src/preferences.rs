@@ -54,7 +54,7 @@ impl ColorTheme {
         }
     }
     pub(crate) fn to_colorix(&self) -> [ColorPreset; 12] {
-        self.colors.map(|rgb| ColorPreset::Custom(rgb))
+        self.colors.map(ColorPreset::Custom)
     }
 }
 

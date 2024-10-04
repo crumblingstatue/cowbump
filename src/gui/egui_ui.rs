@@ -77,7 +77,7 @@ pub(crate) struct EguiState {
     /// If `Some`, save this screenshot to the selected path of the file dialog
     pub(crate) file_op: Option<FileOp>,
     pub(crate) modal: ModalDialog,
-    colorix: Colorix,
+    colorix: Option<Colorix>,
 }
 
 pub(crate) enum FileOp {
@@ -111,13 +111,10 @@ impl EguiState {
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::default()),
             file_op: None,
             modal: ModalDialog::default(),
-            colorix: Colorix::init(
-                ctx,
-                prefs
-                    .color_theme
-                    .as_ref()
-                    .map_or(egui_colors::utils::SEVENTIES, |theme| theme.to_colorix()),
-            ),
+            colorix: prefs
+                .color_theme
+                .as_ref()
+                .map(|theme| Colorix::init(ctx, theme.to_colorix())),
         }
     }
 }

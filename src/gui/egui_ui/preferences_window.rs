@@ -224,17 +224,18 @@ pub(in crate::gui) fn do_frame(
                     });
                 }
                 Category::ColorTheme => {
+                    let colorix = egui_state.colorix.get_or_insert_with(|| {
+                        Colorix::init(egui_ctx, egui_colors::utils::EGUI_THEME)
+                    });
                     ui.horizontal(|ui| {
                         ui.label("Preset");
-                        egui_state
-                            .colorix
-                            .themes_dropdown(egui_ctx, ui, None, false);
+                        colorix.themes_dropdown(egui_ctx, ui, None, false);
                     });
                     ui.separator();
-                    egui_state.colorix.ui_combo_12(egui_ctx, ui);
+                    colorix.ui_combo_12(egui_ctx, ui);
                     ui.horizontal(|ui| {
                         ui.label("Color picker for custom color");
-                        egui_state.colorix.custom_picker(ui);
+                        colorix.custom_picker(ui);
                     });
                     ui.separator();
                     if ui.button("Random colors").clicked() {
@@ -242,12 +243,21 @@ pub(in crate::gui) fn do_frame(
                         let theme = std::array::from_fn(|_| {
                             ColorPreset::Custom([rng.gen(), rng.gen(), rng.gen()])
                         });
-                        egui_state.colorix = Colorix::init(egui_ctx, theme);
+                        *colorix = Colorix::init(egui_ctx, theme);
                     }
                     ui.separator();
-                    if ui.button([icons::SAVE, " Save"].concat()).clicked() {
-                        prefs.set_color_theme_from_colorix(&egui_state.colorix);
-                    }
+                    ui.horizontal(|ui| {
+                        if ui.button([icons::SAVE, " Save custom"].concat()).clicked() {
+                            prefs.set_color_theme_from_colorix(colorix);
+                        }
+                        if ui
+                            .button([icons::SAVE, " Reset default egui theme and save"].concat())
+                            .clicked()
+                        {
+                            prefs.color_theme = None;
+                            egui_ctx.set_visuals(egui::Visuals::dark());
+                        }
+                    });
                 }
             }
         });
