@@ -213,6 +213,7 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
                     "Are you sure you want to crash cowbump?\nUnsaved data will be lost!",
                     PromptAction::PanicTest,
                 );
+                ui.close_menu();
             }
         });
     });
