@@ -48,16 +48,17 @@ use {
         },
     },
     modal::{ModalDialog, PromptAction},
+    top_bar::TopBar,
 };
 
 pub(crate) struct EguiState {
+    pub(super) top_bar: TopBar,
     entries_windows: Vec<EntriesWindow>,
     pub sequences_window: SequencesWindow,
     sequence_windows: Vec<SequenceWindow>,
     pub preferences_window: PreferencesWindow,
     pub tag_window: TagWindow,
     pub(crate) action: Option<Action>,
-    pub top_bar: bool,
     pub load_folder_window: LoadFolderWindow,
     pub(crate) changes_window: ChangesWindow,
     // We just closed window with esc, ignore the esc press outside of egui
@@ -92,7 +93,7 @@ impl EguiState {
             preferences_window: Default::default(),
             tag_window: Default::default(),
             action: Default::default(),
-            top_bar: true,
+            top_bar: Default::default(),
             load_folder_window: Default::default(),
             changes_window: Default::default(),
             just_closed_window_with_esc: Default::default(),

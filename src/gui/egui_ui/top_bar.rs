@@ -12,6 +12,28 @@ use {
     },
 };
 
+pub(in crate::gui) struct TopBar {
+    visible: bool,
+    // TODO: Ui state. maybe should be somewhere else? Dunno.
+    sel_rename: Option<usize>,
+    sel_focus: bool,
+}
+
+impl Default for TopBar {
+    fn default() -> Self {
+        Self {
+            visible: true,
+            sel_rename: Default::default(),
+            sel_focus: Default::default(),
+        }
+    }
+}
+impl TopBar {
+    pub(in crate::gui) fn toggle(&mut self) {
+        self.visible ^= true;
+    }
+}
+
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
@@ -19,7 +41,7 @@ pub(super) fn do_frame(
     app: &mut Application,
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
-    if !egui_state.top_bar {
+    if !egui_state.top_bar.visible {
         return Ok(());
     }
     let n_selected = state.sel.current_mut().map_or(0, |buf| buf.len());
@@ -59,11 +81,17 @@ pub(super) fn do_frame(
                     let mut i = 0;
                     state.sel.bufs.retain_mut(|sel| {
                         let mut retain = true;
-                        if i == state.sel.current && state.sel.rename {
-                            ui.text_edit_singleline(&mut sel.name);
-                            if ui.input(|inp| inp.key_pressed(egui::Key::Enter)) {
-                                state.sel.rename = false;
+                        if egui_state.top_bar.sel_rename == Some(i) {
+                            let re = ui.text_edit_singleline(&mut sel.name);
+                            if egui_state.top_bar.sel_focus {
+                                re.request_focus();
+                                egui_state.top_bar.sel_focus = false;
                             }
+                            if re.lost_focus() && ui.input(|inp| inp.key_pressed(egui::Key::Enter))
+                            {
+                                egui_state.top_bar.sel_rename = None;
+                            }
+                            i += 1;
                             return true;
                         }
                         let mut re = ui.selectable_label(i == state.sel.current, &sel.name);
@@ -74,12 +102,17 @@ pub(super) fn do_frame(
                                 ui.close_menu();
                             }
                             if ui.button("Rename").clicked() {
-                                state.sel.rename = true;
+                                egui_state.top_bar.sel_rename = Some(i);
+                                egui_state.top_bar.sel_focus = true;
                                 ui.close_menu();
                             }
                         });
                         if re.clicked() {
                             state.sel.current = i;
+                        }
+                        if re.double_clicked() {
+                            egui_state.top_bar.sel_rename = Some(i);
+                            egui_state.top_bar.sel_focus = true;
                         }
                         i += 1;
                         retain
