@@ -464,7 +464,7 @@ fn actions_menu(
         if ui
             .add_enabled(
                 active_coll,
-                Button::new("♻ Sort by filename").shortcut_text("S"),
+                Button::new(concat!(icons::SORT, " Sort by filename")).shortcut_text("S"),
             )
             .clicked()
         {
@@ -472,7 +472,10 @@ fn actions_menu(
             egui_state.action = Some(Action::SortByPath);
         }
         if ui
-            .add_enabled(active_coll, Button::new("♻ Sort by id"))
+            .add_enabled(
+                active_coll,
+                Button::new(concat!(icons::SORT, " Sort by id")),
+            )
             .clicked()
         {
             ui.close_menu();

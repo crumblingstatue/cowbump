@@ -459,7 +459,7 @@ dependencies = [
 [[package]]
 name = "egui_colors"
 version = "0.4.0"
-source = "git+https://github.com/crumblingstatue/egui_colors.git?branch=serialization#bcbea0ce8e2e6b3078ce43dbf24d9cd35204fe91"
+source = "git+https://github.com/crumblingstatue/egui_colors.git?branch=ui-improvements#0cad90173d040f44eb999efa514125f2088887e5"
 dependencies = [
  "egui",
  "palette",

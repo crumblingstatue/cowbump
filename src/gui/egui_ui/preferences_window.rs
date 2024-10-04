@@ -234,18 +234,20 @@ pub(in crate::gui) fn do_frame(
                     });
                     ui.separator();
                     colorix.ui_combo_12(egui_ctx, ui);
-                    ui.horizontal(|ui| {
-                        ui.label("Color picker for custom color");
-                        colorix.custom_picker(ui);
-                    });
                     ui.separator();
-                    if ui.button("Random colors").clicked() {
-                        let mut rng = rand::thread_rng();
-                        let theme = std::array::from_fn(|_| {
-                            ColorPreset::Custom([rng.gen(), rng.gen(), rng.gen()])
+                    ui.horizontal(|ui| {
+                        ui.group(|ui| {
+                            ui.label("Dark/light toggle");
+                            colorix.light_dark_toggle_button(egui_ctx, ui);
                         });
-                        *colorix = Colorix::init(egui_ctx, theme);
-                    }
+                        if ui.button(concat!(icons::SORT, " Randomize")).clicked() {
+                            let mut rng = rand::thread_rng();
+                            let theme = std::array::from_fn(|_| {
+                                ColorPreset::Custom([rng.gen(), rng.gen(), rng.gen()])
+                            });
+                            *colorix = Colorix::init(egui_ctx, theme);
+                        }
+                    });
                     ui.separator();
                     ui.horizontal(|ui| {
                         if let Some(theme) = &prefs.color_theme {

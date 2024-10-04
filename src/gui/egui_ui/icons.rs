@@ -17,3 +17,4 @@ pub const FOLDER: &str = "📂";
 pub const HAMBURGER: &str = "☰";
 pub const CABINET: &str = "🗄";
 pub const SAVE: &str = "💾";
+pub const SORT: &str = "♻";
