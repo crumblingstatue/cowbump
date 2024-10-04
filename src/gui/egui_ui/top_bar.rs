@@ -87,7 +87,11 @@ pub(super) fn do_frame(
                                 re.request_focus();
                                 egui_state.top_bar.sel_focus = false;
                             }
-                            if re.lost_focus() && ui.input(|inp| inp.key_pressed(egui::Key::Enter))
+                            if re.lost_focus()
+                                && ui.input(|inp| {
+                                    inp.key_pressed(egui::Key::Enter)
+                                        || inp.key_pressed(egui::Key::Escape)
+                                })
                             {
                                 egui_state.top_bar.sel_rename = None;
                             }
