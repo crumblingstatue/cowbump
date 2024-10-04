@@ -7,6 +7,7 @@ use {
         folder_scan::walkdir,
         gui::{resources::Resources, thumbnail_loader, State},
     },
+    constcat::concat,
     egui_sfml::{
         egui::{
             self, vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText,
@@ -184,7 +185,7 @@ pub(super) fn do_frame(
             ui.horizontal(|ui| {
                 ui.label("Ignored extensions (comma separated)");
                 ui.text_edit_singleline(&mut win.ign_ext_buf);
-                if ui.button([icons::CHECK, " Apply"].concat()).clicked() {
+                if ui.button(concat!(icons::CHECK, " Apply")).clicked() {
                     let ign_exts = win.ign_ext_buf.to_ignore_vec();
                     win.results.retain(|res| {
                         let mut retain = true;

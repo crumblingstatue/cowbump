@@ -14,6 +14,7 @@ use {
         preferences::Preferences,
         sequence::{self},
     },
+    constcat::concat,
     egui_sfml::{
         egui::{
             load::SizedTexture, Align, Button, Color32, Context, DragValue, ImageButton, Key,
@@ -247,7 +248,7 @@ pub(super) fn do_sequences_window(
                                     .sequence_windows
                                     .push(SequenceWindow::new(uid, None));
                             }
-                            let del_butt = Button::new([icons::REMOVE, " Delete"].concat())
+                            let del_butt = Button::new(concat!(icons::REMOVE, " Delete"))
                                 .fill(Color32::from_rgb(130, 14, 14));
                             if ui.add(del_butt).clicked() {
                                 retain = false;

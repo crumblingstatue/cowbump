@@ -26,6 +26,7 @@ egui-file-dialog = "0.7.0"
 parking_lot = "0.12"
 egui_flex = "0.1.1"
 egui_colors = { git = "https://github.com/crumblingstatue/egui_colors.git", branch = "serialization" }
+constcat = "0.5.0"
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"

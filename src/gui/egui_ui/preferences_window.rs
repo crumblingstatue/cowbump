@@ -6,6 +6,7 @@ use {
             App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
         },
     },
+    constcat::concat,
     egui_colors::{tokens::ColorPreset, Colorix},
     egui_file_dialog::FileDialog,
     egui_sfml::{
@@ -138,7 +139,7 @@ pub(in crate::gui) fn do_frame(
                                 ui,
                                 &mut egui_state.file_dialog,
                             );
-                            let butt = Button::new([icons::CHECK, " Add new application"].concat());
+                            let butt = Button::new(concat!(icons::CHECK, " Add new application"));
                             if ui
                                 .add_enabled(
                                     !win.new_app.name.is_empty()
@@ -248,15 +249,15 @@ pub(in crate::gui) fn do_frame(
                     ui.separator();
                     ui.horizontal(|ui| {
                         if let Some(theme) = &prefs.color_theme {
-                            if ui.button([icons::CANCEL, " Restore"].concat()).clicked() {
+                            if ui.button(concat!(icons::CANCEL, " Restore")).clicked() {
                                 *colorix = Colorix::init(egui_ctx, theme.to_colorix());
                             }
                         }
-                        if ui.button([icons::SAVE, " Save custom"].concat()).clicked() {
+                        if ui.button(concat!(icons::SAVE, " Save custom")).clicked() {
                             prefs.set_color_theme_from_colorix(colorix);
                         }
                         if ui
-                            .button([icons::SAVE, " Reset default egui theme and save"].concat())
+                            .button(concat!(icons::SAVE, " Reset default egui theme and save"))
                             .clicked()
                         {
                             prefs.color_theme = None;

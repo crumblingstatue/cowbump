@@ -23,6 +23,7 @@ use {
         tag,
     },
     anyhow::Context as _,
+    constcat::concat,
     egui_sfml::{
         egui::{
             self,
@@ -343,9 +344,9 @@ pub(super) fn do_frame(
                         // endregion
 
                         let txt = if win.editing_tags {
-                            &[icons::CHECK, " Stop editing"].concat()
+                            concat!(icons::CHECK, " Stop editing")
                         } else {
-                            &[icons::EDIT, " Edit tags"].concat()
+                            concat!(icons::EDIT, " Edit tags")
                         };
                         let plus_re = ui.button(txt);
                         if plus_re.clicked() {
@@ -447,10 +448,7 @@ pub(super) fn do_frame(
                             });
                             retain
                         });
-                        if ui
-                            .button([icons::ADD, " Add to sequence"].concat())
-                            .clicked()
-                        {
+                        if ui.button(concat!(icons::ADD, " Add to sequence")).clicked() {
                             egui_state.sequences_window.on = true;
                             egui_state.sequences_window.pick_mode = true;
                         }
@@ -461,7 +459,7 @@ pub(super) fn do_frame(
                         }
                         if ui
                             .add(
-                                Button::new([icons::TERM, " Run custom command"].concat())
+                                Button::new(concat!(icons::TERM, " Run custom command"))
                                     .wrap_mode(TextWrapMode::Extend),
                             )
                             .clicked()
@@ -469,7 +467,7 @@ pub(super) fn do_frame(
                             win.custom_command_prompt ^= true;
                         }
                         if ui
-                            .button([icons::COPY, " Copy filenames to clipboard"].concat())
+                            .button(concat!(icons::COPY, " Copy filenames to clipboard"))
                             .clicked()
                         {
                             let res: anyhow::Result<()> = try {
@@ -610,7 +608,7 @@ pub(super) fn do_frame(
                         if win.ids.len() == 1 {
                             if ui
                                 .add(
-                                    Button::new([icons::EDIT, " Rename file"].concat())
+                                    Button::new(concat!(icons::EDIT, " Rename file"))
                                         .wrap_mode(TextWrapMode::Extend),
                                 )
                                 .clicked()
@@ -618,7 +616,7 @@ pub(super) fn do_frame(
                                 win.renaming ^= true;
                             }
                         } else if ui
-                            .button([icons::EDIT, " Batch rename..."].concat())
+                            .button(concat!(icons::EDIT, " Batch rename..."))
                             .clicked()
                         {
                             egui_state.batch_rename_window.open = true;
@@ -645,7 +643,7 @@ pub(super) fn do_frame(
                         if !win.delete_confirm {
                             if ui
                                 .add(
-                                    Button::new([icons::REMOVE, " Delete from disk"].concat())
+                                    Button::new(concat!(icons::REMOVE, " Delete from disk"))
                                         .wrap_mode(TextWrapMode::Extend),
                                 )
                                 .clicked()

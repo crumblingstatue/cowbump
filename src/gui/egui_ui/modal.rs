@@ -1,6 +1,7 @@
 use {
     super::icons,
     crate::{dlog, tag},
+    constcat::concat,
     egui_flex::{item, Flex, FlexAlign, FlexAlignContent},
     egui_sfml::egui::{self, TextWrapMode},
     std::backtrace::Backtrace,
@@ -87,7 +88,7 @@ impl ModalDialog {
                             flex.add(
                                 item(),
                                 egui::Label::new(
-                                    egui::RichText::new([icons::WARN, " Error"].concat()).heading(),
+                                    egui::RichText::new(concat!(icons::WARN, " Error")).heading(),
                                 )
                                 .wrap_mode(TextWrapMode::Extend),
                             );
@@ -129,15 +130,16 @@ impl ModalDialog {
                                     let ok = flex
                                         .add(
                                             item(),
-                                            egui::Button::new([icons::CANCEL, " Close"].concat()),
+                                            egui::Button::new(concat!(icons::CANCEL, " Close")),
                                         )
                                         .inner;
                                     let ccopy = flex
                                         .add(
                                             item(),
-                                            egui::Button::new(
-                                                [icons::COPY, " Copy to clipboard"].concat(),
-                                            ),
+                                            egui::Button::new(concat!(
+                                                icons::COPY,
+                                                " Copy to clipboard"
+                                            )),
                                         )
                                         .inner;
                                     if ok.clicked() || key_enter || key_esc {
@@ -161,7 +163,7 @@ impl ModalDialog {
                 }
                 ModalPayload::Success(s) => {
                     ui.vertical_centered(|ui| {
-                        ui.heading([icons::CHECK, " Success"].concat());
+                        ui.heading(concat!(icons::CHECK, " Success"));
                         ui.label(s.as_str());
                         ui.add_space(16.0);
                         if ui.button("Close").clicked() || key_enter || key_esc {
@@ -171,7 +173,7 @@ impl ModalDialog {
                 }
                 ModalPayload::About => {
                     ui.vertical_centered(|ui| {
-                        ui.label(["Cowbump version ", crate::VERSION].concat());
+                        ui.label(concat!("Cowbump version ", crate::VERSION));
                         ui.add_space(16.0);
                         if ui.button("Close").clicked() || key_enter || key_esc {
                             close = true;
@@ -204,7 +206,7 @@ impl ModalDialog {
                                     let ok = flex
                                         .add(
                                             item(),
-                                            egui::Button::new([icons::CHECK, " Ok"].concat()),
+                                            egui::Button::new(concat!(icons::CHECK, " Ok")),
                                         )
                                         .inner;
                                     let cancel = flex

@@ -6,6 +6,7 @@ use {
         gui::{viewer, Activity, SelectionBuf, State},
     },
     anyhow::anyhow,
+    constcat::concat,
     egui_sfml::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
         sfml::graphics::{RenderTarget, RenderWindow},
@@ -165,7 +166,7 @@ pub(super) fn do_frame(
 
 fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_state: &mut EguiState) {
     ui.menu_button("Help", |ui| {
-        if ui.button([icons::QUESTION, "About"].concat()).clicked() {
+        if ui.button(concat!(icons::QUESTION, "About")).clicked() {
             ui.close_menu();
             egui_state.modal.about();
         }
@@ -174,14 +175,14 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
             ui.label("= Debug =");
         });
         if ui
-            .add(Button::new([icons::CAMERA, " Save screenshot"].concat()).shortcut_text("F11"))
+            .add(Button::new(concat!(icons::CAMERA, " Save screenshot")).shortcut_text("F11"))
             .clicked()
         {
             ui.close_menu();
             crate::gui::util::take_and_save_screenshot(win, egui_state);
         }
         if ui
-            .button([icons::FOLDER, " Open data dir"].concat())
+            .button(concat!(icons::FOLDER, " Open data dir"))
             .clicked()
         {
             ui.close_menu();
@@ -191,7 +192,7 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
                     .err(format!("Error opening database dir: {e:?}"));
             }
         }
-        if ui.button([icons::TERM, " Debug window"].concat()).clicked() {
+        if ui.button(concat!(icons::TERM, " Debug window")).clicked() {
             ui.close_menu();
             egui_state.debug_window.toggle();
         }
@@ -228,10 +229,7 @@ fn file_menu(
     window_width: u32,
 ) {
     ui.menu_button("File", |ui| {
-        if ui
-            .button([icons::FOLDER, " Load folder"].concat())
-            .clicked()
-        {
+        if ui.button(concat!(icons::FOLDER, " Load folder")).clicked() {
             ui.close_menu();
             egui_state.file_op = Some(FileOp::OpenDirectory);
             egui_state.file_dialog.select_directory();
@@ -313,7 +311,7 @@ fn file_menu(
             });
         });
         if ui
-            .button([icons::CABINET, " Collections database..."].concat())
+            .button(concat!(icons::CABINET, " Collections database..."))
             .clicked()
         {
             egui_state.collections_db_window.open = true;
@@ -332,7 +330,7 @@ fn file_menu(
         }
         ui.separator();
         if ui
-            .button([icons::HAMBURGER, " Preferences"].concat())
+            .button(concat!(icons::HAMBURGER, " Preferences"))
             .clicked()
         {
             ui.close_menu();
@@ -340,7 +338,7 @@ fn file_menu(
         }
         ui.separator();
         if ui
-            .button([icons::CANCEL, " Quit without saving"].concat())
+            .button(concat!(icons::CANCEL, " Quit without saving"))
             .clicked()
         {
             ui.close_menu();
@@ -363,7 +361,7 @@ fn file_menu(
 fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
     ui.menu_button("Collection", |ui| {
         if ui
-            .add(Button::new([icons::TAG, " Tag list"].concat()).shortcut_text("T"))
+            .add(Button::new(concat!(icons::TAG, " Tag list")).shortcut_text("T"))
             .clicked()
         {
             ui.close_menu();
@@ -376,12 +374,12 @@ fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
             ui.close_menu();
             egui_state.sequences_window.on ^= true;
         }
-        if ui.button([icons::QUESTION, " Changes"].concat()).clicked() {
+        if ui.button(concat!(icons::QUESTION, " Changes")).clicked() {
             ui.close_menu();
             egui_state.changes_window.open ^= true;
         }
         if ui
-            .button([icons::HAMBURGER, " Preferences"].concat())
+            .button(concat!(icons::HAMBURGER, " Preferences"))
             .clicked()
         {
             ui.close_menu();
@@ -483,7 +481,7 @@ fn actions_menu(
         if ui
             .add_enabled(
                 active_coll,
-                Button::new([icons::QUESTION, " Shuffle"].concat()),
+                Button::new(concat!(icons::QUESTION, " Shuffle")),
             )
             .clicked()
         {

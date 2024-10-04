@@ -7,6 +7,7 @@ use {
         gui::{egui_ui::PromptAction, State},
         tag,
     },
+    constcat::concat,
     egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit},
 };
 
@@ -83,7 +84,7 @@ pub(super) fn do_frame(
     let merge_this = &mut egui_state.tag_window.merge_this;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
-    egui_sfml::egui::Window::new([icons::TAG, " Tag list"].concat())
+    egui_sfml::egui::Window::new(concat!(icons::TAG, " Tag list"))
         .open(&mut egui_state.tag_window.on)
         .show(egui_ctx, move |ui| {
             ui.horizontal(|ui| {
@@ -233,7 +234,7 @@ pub(super) fn do_frame(
                     if !selected_uids.is_empty() {
                         ui.separator();
                         ui.horizontal(|ui| {
-                            if ui.button([icons::REMOVE, " Delete"].concat()).clicked() {
+                            if ui.button(concat!(icons::REMOVE, " Delete")).clicked() {
                                 let n = selected_uids.len();
                                 let fstring;
                                 let msg = format!(
@@ -255,7 +256,7 @@ pub(super) fn do_frame(
                                 );
                             }
                             if ui
-                                .button([icons::CLEAR, " Clear selection"].concat())
+                                .button(concat!(icons::CLEAR, " Clear selection"))
                                 .clicked()
                             {
                                 selected_uids.clear();
