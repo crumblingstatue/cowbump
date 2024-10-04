@@ -10,3 +10,18 @@ macro_rules! dlog {
             .push(format!("{}:{}: {}", file!(), line!(), format_args!($($arg)*)))
     }
 }
+
+#[macro_export]
+macro_rules! ddbg {
+    ($val:expr $(,)?) => {
+        match $val {
+            tmp => {
+                $crate::dlog!("{} = {:#?}", ::std::stringify!($val), &tmp);
+                tmp
+            }
+        }
+    };
+    ($($val:expr),+ $(,)?) => {
+        ($($crate::ddbg!($val)),+,)
+    };
+}
