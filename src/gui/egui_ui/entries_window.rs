@@ -537,7 +537,6 @@ pub(super) fn do_frame(
                         win.children.retain_mut(|c_wrap| {
                             ui.separator();
                             ui.heading(&c_wrap.name);
-                            let mut retain = true;
                             if let Some(status) = c_wrap.exit_status {
                                 ui.label("stdout:");
                                 ui.code(&c_wrap.stdout);
@@ -566,27 +565,24 @@ pub(super) fn do_frame(
                             match c_wrap.child.try_wait() {
                                 Ok(opt_status) => {
                                     c_wrap.exit_status = opt_status;
-                                    if let Some(status) = opt_status {
-                                        if !status.success() {
-                                            let result: anyhow::Result<()> = try {
-                                                if let Some(stdout) = &mut c_wrap.child.stdout {
-                                                    let mut buf = String::new();
-                                                    stdout.read_to_string(&mut buf)?;
-                                                    c_wrap.stdout = buf;
-                                                }
-                                                if let Some(stderr) = &mut c_wrap.child.stderr {
-                                                    let mut buf = String::new();
-                                                    stderr.read_to_string(&mut buf)?;
-                                                    c_wrap.stderr = buf;
-                                                }
-                                            };
-                                            if let Err(e) = result {
-                                                egui_state
-                                                    .modal
-                                                    .err(format!("Custom command read error: {e}"));
+                                    // The process has only exited if the status is some
+                                    if opt_status.is_some() {
+                                        let result: anyhow::Result<()> = try {
+                                            if let Some(stdout) = &mut c_wrap.child.stdout {
+                                                let mut buf = String::new();
+                                                stdout.read_to_string(&mut buf)?;
+                                                c_wrap.stdout = buf;
                                             }
-                                        } else {
-                                            retain = false;
+                                            if let Some(stderr) = &mut c_wrap.child.stderr {
+                                                let mut buf = String::new();
+                                                stderr.read_to_string(&mut buf)?;
+                                                c_wrap.stderr = buf;
+                                            }
+                                        };
+                                        if let Err(e) = result {
+                                            egui_state
+                                                .modal
+                                                .err(format!("Custom command read error: {e}"));
                                         }
                                     }
                                 }
@@ -594,7 +590,7 @@ pub(super) fn do_frame(
                                     win.err_str = e.to_string();
                                 }
                             }
-                            retain
+                            true
                         });
                         ui.separator();
                         // region: Rename button
