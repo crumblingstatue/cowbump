@@ -5,7 +5,6 @@ name = "cowbump"
 version = "0.3.0-dev"
 authors = ["Mika Attila <radiantstatue@gmail.com>"]
 edition = "2021"
-default-run = "cowbump"
 
 [dependencies]
 walkdir = "2.5.0"
