@@ -64,7 +64,7 @@ fn try_main() -> anyhow::Result<()> {
             Some(loc) => (loc.file(), loc.line().to_string(), loc.column().to_string()),
             None => ("unknown", "unknown".into(), "unknown".into()),
         };
-        let btrace = std::backtrace::Backtrace::capture();
+        let btrace = std::backtrace::Backtrace::force_capture();
         eprintln!("{btrace}");
         fatal_error_report(
             "Cowbump panic",
