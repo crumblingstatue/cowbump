@@ -1,11 +1,12 @@
 use {
     super::EguiState,
-    egui_sfml::egui::{Align, Color32, Context, Label, RichText, ScrollArea, Window},
+    egui_sfml::egui::{self, Align, Color32, Context, Label, RichText, ScrollArea, Window},
 };
 
 pub struct DebugWindow {
     open: bool,
     auto_scroll: bool,
+    max_entries: usize,
 }
 
 impl Default for DebugWindow {
@@ -13,6 +14,7 @@ impl Default for DebugWindow {
         Self {
             open: false,
             auto_scroll: true,
+            max_entries: 1000,
         }
     }
 }
@@ -32,11 +34,17 @@ pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &Context) {
         .open(&mut win.open)
         .show(egui_ctx, |ui| {
             ui.heading("Debug log");
-            {
-                let log = &crate::gui::debug_log::LOG;
-                ui.group(|ui| {
-                    let log = log.lock();
-                    ScrollArea::vertical().max_height(500.).show(ui, |ui| {
+            let log = &crate::gui::debug_log::LOG;
+            ui.group(|ui| {
+                let mut log = log.lock();
+                let overflow = log.len() as isize - win.max_entries as isize;
+                if overflow > 0 {
+                    log.drain(0..overflow as usize);
+                }
+                ScrollArea::vertical()
+                    .auto_shrink(false)
+                    .max_height(ui.available_height() - 32.0)
+                    .show(ui, |ui| {
                         if log.is_empty() {
                             ui.label("<empty>");
                         }
@@ -52,13 +60,14 @@ pub(super) fn do_frame(egui_state: &mut EguiState, egui_ctx: &Context) {
                             ui.scroll_to_cursor(Some(Align::BOTTOM));
                         }
                     });
-                });
-                ui.horizontal(|ui| {
-                    ui.checkbox(&mut win.auto_scroll, "Auto scroll");
-                    if ui.button("Clear").clicked() {
-                        log.lock().clear();
-                    }
-                });
-            };
+            });
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut win.auto_scroll, "Auto scroll");
+                ui.label("Max entries");
+                ui.add(egui::DragValue::new(&mut win.max_entries));
+                if ui.button("Clear").clicked() {
+                    log.lock().clear();
+                }
+            });
         });
 }
