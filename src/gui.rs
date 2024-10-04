@@ -39,6 +39,7 @@ use {
         SfEgui,
     },
     rand::seq::SliceRandom,
+    thumbnails_view::EventFlags,
 };
 
 pub fn run(app: &mut Application) -> anyhow::Result<()> {
@@ -99,7 +100,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 }
             }
         }
-
+        let mut ev_flags = EventFlags::default();
         while let Some(event) = window.poll_event() {
             sf_egui.add_event(&event);
             match event {
@@ -135,6 +136,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             &window,
                             sf_egui.context(),
                             &mut app.database.preferences,
+                            &mut ev_flags,
                         );
                     }
                 }
@@ -205,6 +207,17 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     egui_state.add_entries_window(id_vec.clone());
                 }
             }
+        }
+        // Do some post-egui event handling here.
+        //
+        // This needs to happen after the egui pass(es), because it needs to react to what
+        // happened in the egui ui, like if a window was just closed.
+        if ev_flags.esc_pressed
+            && !sf_egui.context().wants_keyboard_input()
+            && !sf_egui.context().wants_pointer_input()
+            && !egui_state.just_closed_window_with_esc
+        {
+            state.sel.clear_current();
         }
         window.clear(Color::BLACK);
         match &mut app.active_collection {

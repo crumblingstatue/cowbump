@@ -297,6 +297,11 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
 }
 
+#[derive(Default)]
+pub(in crate::gui) struct EventFlags {
+    pub(in crate::gui) esc_pressed: bool,
+}
+
 pub(in crate::gui) fn handle_event(
     event: Event,
     state: &mut State,
@@ -305,6 +310,7 @@ pub(in crate::gui) fn handle_event(
     window: &RenderWindow,
     egui_ctx: &Context,
     preferences: &mut Preferences,
+    flags: &mut EventFlags,
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
@@ -439,12 +445,8 @@ pub(in crate::gui) fn handle_event(
                 && let Some(id_vec) = state.sel.current_as_nonempty_id_vec()
             {
                 egui_state.add_entries_window(id_vec.clone());
-            } else if code == Key::Escape
-                && !egui_ctx.wants_keyboard_input()
-                && !egui_ctx.wants_pointer_input()
-                && !egui_state.just_closed_window_with_esc
-            {
-                state.sel.clear_current();
+            } else if code == Key::Escape {
+                flags.esc_pressed = true;
             }
         }
         Event::MouseWheelScrolled { delta, .. } => {
