@@ -9,10 +9,11 @@ use {
     constcat::concat,
     egui_colors::{tokens::ColorPreset, Colorix},
     egui_file_dialog::FileDialog,
+    egui_flex::{item, Flex},
     egui_sfml::{
         egui::{
             self, collapsing_header::CollapsingState, Button, ComboBox, Context, Grid, ScrollArea,
-            SidePanel, Slider, TextEdit, Ui, Window,
+            Slider, TextEdit, Ui, Window,
         },
         sfml::graphics::RenderTarget,
     },
@@ -73,43 +74,75 @@ pub(in crate::gui) fn do_frame(
     Window::new("Preferences")
         .open(&mut open)
         .collapsible(false)
+        .auto_sized()
         .show(egui_ctx, |ui| {
-            SidePanel::left("prefs_left_panel").show_inside(ui, |ui| {
-                ui.selectable_value(
-                    &mut egui_state.preferences_window.category,
-                    Category::Ui,
-                    "User Interface",
+            Flex::horizontal().show(ui, |flex| {
+                flex.add_flex_frame(
+                    item(),
+                    Flex::vertical(),
+                    egui::Frame::group(flex.ui().style()),
+                    |flex| {
+                        flex.add_simple(item(), |ui| {
+                            ui.selectable_value(
+                                &mut egui_state.preferences_window.category,
+                                Category::Ui,
+                                "User Interface",
+                            );
+                            ui.selectable_value(
+                                &mut egui_state.preferences_window.category,
+                                Category::Startup,
+                                "Startup",
+                            );
+                            ui.selectable_value(
+                                &mut egui_state.preferences_window.category,
+                                Category::FileAssoc,
+                                "File associations",
+                            );
+                            ui.selectable_value(
+                                &mut egui_state.preferences_window.category,
+                                Category::ColorTheme,
+                                "Color theme",
+                            );
+                        });
+                    },
                 );
-                ui.selectable_value(
-                    &mut egui_state.preferences_window.category,
-                    Category::Startup,
-                    "Startup",
-                );
-                ui.selectable_value(
-                    &mut egui_state.preferences_window.category,
-                    Category::FileAssoc,
-                    "File associations",
-                );
-                ui.selectable_value(
-                    &mut egui_state.preferences_window.category,
-                    Category::ColorTheme,
-                    "Color theme",
+                flex.add_flex_frame(
+                    item(),
+                    Flex::vertical(),
+                    egui::Frame::group(flex.ui().style()),
+                    |flex| {
+                        flex.add_simple(item(), |ui| {
+                            match egui_state.preferences_window.category {
+                                Category::Ui => ui_categ_ui(
+                                    ui,
+                                    &mut app.database.preferences,
+                                    state,
+                                    rw,
+                                    egui_ctx,
+                                ),
+                                Category::Startup => {
+                                    startup_categ_ui(ui, &mut app.database.preferences);
+                                }
+                                Category::FileAssoc => file_assoc_categ_ui(
+                                    ui,
+                                    egui_ctx,
+                                    &mut egui_state.preferences_window,
+                                    app,
+                                    &mut egui_state.file_dialog,
+                                ),
+                                Category::ColorTheme => {
+                                    color_theme_categ_ui(
+                                        egui_state,
+                                        egui_ctx,
+                                        ui,
+                                        &mut app.database.preferences,
+                                    );
+                                }
+                            };
+                        });
+                    },
                 );
             });
-            match egui_state.preferences_window.category {
-                Category::Ui => ui_categ_ui(ui, &mut app.database.preferences, state, rw, egui_ctx),
-                Category::Startup => startup_categ_ui(ui, &mut app.database.preferences),
-                Category::FileAssoc => file_assoc_categ_ui(
-                    ui,
-                    egui_ctx,
-                    &mut egui_state.preferences_window,
-                    app,
-                    &mut egui_state.file_dialog,
-                ),
-                Category::ColorTheme => {
-                    color_theme_categ_ui(egui_state, egui_ctx, ui, &mut app.database.preferences);
-                }
-            };
         });
     egui_state.preferences_window.on = open;
 }
@@ -169,6 +202,7 @@ fn file_assoc_categ_ui(
     app: &mut crate::application::Application,
     file_dialog: &mut FileDialog,
 ) {
+    ui.set_height(500.0);
     let prefs = &mut app.database.preferences;
     ui.heading("Applications");
     ui.group(|ui| {
