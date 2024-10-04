@@ -23,7 +23,6 @@ zstd = "0.13.1"
 zip = { version = "2.1.3", default-features = false }
 egui-sfml = { git = "https://github.com/crumblingstatue/egui-sfml.git" }
 rand = "0.8.5"
-env_logger = "0.11.3"
 egui-file-dialog = "0.7.0"
 parking_lot = "0.12"
 egui_flex = "0.1.1"

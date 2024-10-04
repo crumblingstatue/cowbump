@@ -83,7 +83,6 @@ fn try_main() -> anyhow::Result<()> {
 }
 
 fn main() {
-    env_logger::init();
     if let Err(e) = try_main() {
         fatal_error_report("Fatal runtime error", &format!("{e:?}"));
     }
