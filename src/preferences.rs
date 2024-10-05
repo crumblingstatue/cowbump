@@ -1,6 +1,6 @@
 use {
     crate::db::Uid,
-    egui_colors::{tokens::ColorPreset, Colorix},
+    egui_colors::{tokens::ThemeColor, Colorix},
     egui_sfml::egui::emath::Numeric,
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
@@ -45,20 +45,20 @@ pub struct Preferences {
 
 #[derive(Serialize, Deserialize)]
 pub struct ColorTheme {
-    colors: [ThemeColor; 12],
+    colors: [MyThemeColor; 12],
 }
 impl ColorTheme {
-    fn from_colorix(theme: &[ColorPreset; 12]) -> Self {
+    fn from_colorix(theme: &[ThemeColor; 12]) -> Self {
         Self {
             colors: theme.map(|preset| preset.rgb()),
         }
     }
-    pub(crate) fn to_colorix(&self) -> [ColorPreset; 12] {
-        self.colors.map(ColorPreset::Custom)
+    pub(crate) fn to_colorix(&self) -> [ThemeColor; 12] {
+        self.colors.map(ThemeColor::Custom)
     }
 }
 
-pub type ThemeColor = [u8; 3];
+pub type MyThemeColor = [u8; 3];
 
 const fn built_in_viewer_default() -> bool {
     true

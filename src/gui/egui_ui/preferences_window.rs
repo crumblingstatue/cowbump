@@ -7,7 +7,7 @@ use {
         },
     },
     constcat::concat,
-    egui_colors::{tokens::ColorPreset, Colorix},
+    egui_colors::{tokens::ThemeColor, Colorix},
     egui_file_dialog::FileDialog,
     egui_flex::{item, Flex},
     egui_sfml::{
@@ -113,19 +113,14 @@ pub(in crate::gui) fn do_frame(
                     |flex| {
                         flex.add_simple(item(), |ui| {
                             match egui_state.preferences_window.category {
-                                Category::Ui => ui_categ_ui(
-                                    ui,
-                                    &mut app.database.preferences,
-                                    state,
-                                    rw,
-                                    egui_ctx,
-                                ),
+                                Category::Ui => {
+                                    ui_categ_ui(ui, &mut app.database.preferences, state, rw);
+                                }
                                 Category::Startup => {
                                     startup_categ_ui(ui, &mut app.database.preferences);
                                 }
                                 Category::FileAssoc => file_assoc_categ_ui(
                                     ui,
-                                    egui_ctx,
                                     &mut egui_state.preferences_window,
                                     app,
                                     &mut egui_state.file_dialog,
@@ -133,7 +128,6 @@ pub(in crate::gui) fn do_frame(
                                 Category::ColorTheme => {
                                     color_theme_categ_ui(
                                         egui_state,
-                                        egui_ctx,
                                         ui,
                                         &mut app.database.preferences,
                                     );
@@ -149,37 +143,36 @@ pub(in crate::gui) fn do_frame(
 
 fn color_theme_categ_ui(
     egui_state: &mut EguiState,
-    egui_ctx: &Context,
     ui: &mut Ui,
     prefs: &mut crate::preferences::Preferences,
 ) {
     let colorix = egui_state
         .colorix
-        .get_or_insert_with(|| Colorix::init(egui_ctx, egui_colors::utils::EGUI_THEME));
+        .get_or_insert_with(|| Colorix::init(ui.ctx(), egui_colors::utils::EGUI_THEME));
     ui.horizontal(|ui| {
         ui.label("Preset");
-        colorix.themes_dropdown(egui_ctx, ui, None, false);
+        colorix.themes_dropdown(ui, None, false);
     });
     ui.separator();
-    colorix.ui_combo_12(egui_ctx, ui);
+    colorix.ui_combo_12(ui);
     ui.separator();
     ui.horizontal(|ui| {
         ui.group(|ui| {
             ui.label("Dark/light toggle");
-            colorix.light_dark_toggle_button(egui_ctx, ui);
+            colorix.light_dark_toggle_button(ui);
         });
         if ui.button(concat!(icons::SORT, " Randomize")).clicked() {
             let mut rng = rand::thread_rng();
             let theme =
-                std::array::from_fn(|_| ColorPreset::Custom([rng.gen(), rng.gen(), rng.gen()]));
-            *colorix = Colorix::init(egui_ctx, theme);
+                std::array::from_fn(|_| ThemeColor::Custom([rng.gen(), rng.gen(), rng.gen()]));
+            *colorix = Colorix::init(ui.ctx(), theme);
         }
     });
     ui.separator();
     ui.horizontal(|ui| {
         if let Some(theme) = &prefs.color_theme {
             if ui.button(concat!(icons::CANCEL, " Restore")).clicked() {
-                *colorix = Colorix::init(egui_ctx, theme.to_colorix());
+                *colorix = Colorix::init(ui.ctx(), theme.to_colorix());
             }
         }
         if ui.button(concat!(icons::SAVE, " Save custom")).clicked() {
@@ -190,14 +183,13 @@ fn color_theme_categ_ui(
             .clicked()
         {
             prefs.color_theme = None;
-            egui_ctx.set_visuals(egui::Visuals::dark());
+            ui.ctx().set_visuals(egui::Visuals::dark());
         }
     });
 }
 
 fn file_assoc_categ_ui(
     ui: &mut Ui,
-    egui_ctx: &Context,
     win: &mut PreferencesWindow,
     app: &mut crate::application::Application,
     file_dialog: &mut FileDialog,
@@ -207,7 +199,7 @@ fn file_assoc_categ_ui(
     ui.heading("Applications");
     ui.group(|ui| {
         let collap = CollapsingState::load_with_default_open(
-            egui_ctx,
+            ui.ctx(),
             egui::Id::new("add_new_collap"),
             false,
         );
@@ -240,7 +232,7 @@ fn file_assoc_categ_ui(
     prefs.applications.retain(|k, app| {
         let mut retain = true;
         let collap = CollapsingState::load_with_default_open(
-            egui_ctx,
+            ui.ctx(),
             egui::Id::new(&app.name).with(k.0),
             false,
         );
@@ -306,7 +298,6 @@ fn ui_categ_ui(
     prefs: &mut crate::preferences::Preferences,
     state: &mut State,
     rw: &egui_sfml::sfml::graphics::RenderWindow,
-    egui_ctx: &Context,
 ) {
     ui.heading("Thumbnails view");
     if slider_with_default::<ThumbnailsPerRow>(ui, &mut prefs.thumbs_per_row) {
@@ -327,7 +318,7 @@ fn ui_categ_ui(
         style_changed = true;
     }
     if style_changed {
-        crate::gui::egui_ui::set_up_style(egui_ctx, &prefs.style);
+        crate::gui::egui_ui::set_up_style(ui.ctx(), &prefs.style);
     }
     ui.separator();
     ui.heading("Opening");

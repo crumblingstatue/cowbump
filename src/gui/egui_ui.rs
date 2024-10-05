@@ -77,7 +77,7 @@ pub(crate) struct EguiState {
     /// If `Some`, save this screenshot to the selected path of the file dialog
     pub(crate) file_op: Option<FileOp>,
     pub(crate) modal: ModalDialog,
-    colorix: Option<Colorix>,
+    pub(crate) colorix: Option<Colorix>,
 }
 
 pub(crate) enum FileOp {
@@ -88,7 +88,7 @@ pub(crate) enum FileOp {
 }
 
 impl EguiState {
-    pub(crate) fn new(ctx: &Context, prefs: &Preferences) -> Self {
+    pub(crate) fn new(prefs: &Preferences, egui_ctx: &Context) -> Self {
         Self {
             entries_windows: Default::default(),
             sequences_window: Default::default(),
@@ -114,7 +114,7 @@ impl EguiState {
             colorix: prefs
                 .color_theme
                 .as_ref()
-                .map(|theme| Colorix::init(ctx, theme.to_colorix())),
+                .map(|theme| Colorix::init(egui_ctx, theme.to_colorix())),
         }
     }
 }

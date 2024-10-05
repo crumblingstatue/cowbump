@@ -56,7 +56,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
     egui_ui::set_up_style(sf_egui.context(), &app.database.preferences.style);
-    let mut egui_state = EguiState::new(sf_egui.context(), &app.database.preferences);
+    let mut egui_state = EguiState::new(&app.database.preferences, sf_egui.context());
 
     if app.database.preferences.open_last_coll_at_start && !app.database.recent.is_empty() {
         match app.load_last() {
