@@ -152,11 +152,6 @@ fn color_theme_categ_ui(
     ui.horizontal(|ui| {
         ui.label("Preset");
         colorix.themes_dropdown(ui, None, false);
-    });
-    ui.separator();
-    colorix.ui_combo_12(ui);
-    ui.separator();
-    ui.horizontal(|ui| {
         ui.group(|ui| {
             ui.label("Dark/light toggle");
             colorix.light_dark_toggle_button(ui);
@@ -168,6 +163,8 @@ fn color_theme_categ_ui(
             *colorix = Colorix::init(ui.ctx(), theme);
         }
     });
+    ui.separator();
+    colorix.ui_combo_12(ui);
     ui.separator();
     ui.horizontal(|ui| {
         if let Some(theme) = &prefs.color_theme {
