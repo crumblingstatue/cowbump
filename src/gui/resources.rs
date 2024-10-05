@@ -24,9 +24,8 @@ impl Resources {
         let mut loading_texture = Texture::new().context("texture create error")?;
         let mut error_texture = Texture::new().context("texture create error")?;
         let mut sel_begin_texture = Texture::new().context("texture create error")?;
-        let font = unsafe {
-            Font::from_memory(include_bytes!(res!("Vera.ttf"))).context("failed to load font")?
-        };
+        let font = Font::from_memory_static(include_bytes!(res!("Vera.ttf")))
+            .context("failed to load font")?;
         loading_texture
             .load_from_memory(include_bytes!(res!("loading.png")), IntRect::default())?;
         error_texture.load_from_memory(include_bytes!(res!("error.png")), IntRect::default())?;
