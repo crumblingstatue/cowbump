@@ -157,7 +157,6 @@ pub enum Req {
     Not(Box<Req>),
     FilenameSub(String),
     PartOfSeq,
-    Untagged,
     NTags(usize),
 }
 
@@ -220,7 +219,7 @@ impl Req {
                     Req::FilenameSub((*filename_sub).to_owned())
                 }
                 "seq" | "sequence" => Req::PartOfSeq,
-                "notag" | "no-tag" | "untagged" => Req::Untagged,
+                "notag" | "no-tag" | "untagged" => Req::NTags(0),
                 "ntags" => match call.params.first() {
                     Some(Requirement::Tag(tag) | Requirement::TagExact(tag)) => {
                         match tag.parse::<usize>() {
@@ -248,7 +247,7 @@ impl Req {
             Req::Not(req) => format!("!{}", req.to_string(tags)).into(),
             Req::FilenameSub(substr) => format!("@f[{substr}]").into(),
             Req::PartOfSeq => "@seq".into(),
-            Req::Untagged => "@untagged".into(),
+            Req::NTags(0) => "@untagged".into(),
             Req::NTags(n) => format!("@ntags[{n}]").into(),
         }
     }
