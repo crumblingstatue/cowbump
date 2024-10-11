@@ -45,8 +45,8 @@ use {
     egui_sfml::{
         egui::{self, Context, FontFamily, FontId, TextStyle},
         sfml::{
-            self,
-            graphics::{RenderTarget, RenderWindow, Texture},
+            graphics::{Image, RenderTarget, RenderWindow, Texture},
+            SfBox,
         },
     },
     modal::{ModalDialog, PromptAction},
@@ -82,7 +82,7 @@ pub(crate) struct EguiState {
 
 pub(crate) enum FileOp {
     OpenDirectory,
-    SaveScreenshot(sfml::graphics::Image),
+    SaveScreenshot(SfBox<Image>),
     CreateBackup,
     RestoreBackup,
 }

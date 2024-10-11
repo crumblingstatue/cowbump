@@ -48,7 +48,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     } else {
         (VideoMode::new(1280, 720, 32), Style::RESIZE)
     };
-    let mut window = RenderWindow::new(video, "Cowbump", style, &Default::default());
+    let mut window = RenderWindow::new(video, "Cowbump", style, &Default::default())?;
     window.set_vertical_sync_enabled(true);
     window.set_position((0, 0).into());
     let res = Resources::load()?;

@@ -4,10 +4,11 @@ use {
     egui_sfml::sfml::{
         graphics::{Image, RenderTarget, RenderWindow, Texture},
         system::Vector2u,
+        SfBox,
     },
 };
 
-pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<Image> {
+pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<SfBox<Image>> {
     let mut tex = Texture::new().context("Failed to create texture")?;
     let Vector2u { x: w, y: h } = win.size();
     tex.create(w, h).context("Failed to create texture")?;

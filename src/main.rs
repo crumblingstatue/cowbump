@@ -99,7 +99,7 @@ fn fatal_error_report(title: &str, mut msg: &str) {
         eprintln!("{msg}");
         return;
     }
-    let mut rw = RenderWindow::new((800, 600), title, Style::CLOSE, &Default::default());
+    let mut rw = RenderWindow::new((800, 600), title, Style::CLOSE, &Default::default()).unwrap();
     rw.set_framerate_limit(60);
     let mut sf_egui = SfEgui::new(&rw);
     while rw.is_open() {
