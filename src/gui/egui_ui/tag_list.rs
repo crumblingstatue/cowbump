@@ -1,5 +1,10 @@
 use {
-    super::{icons, ui_ext::UiExt, EguiState},
+    super::{
+        icons,
+        tag_autocomplete::{tag_autocomplete_popup, AcState},
+        ui_ext::UiExt,
+        EguiState,
+    },
     crate::{
         collection::{Collection, TagsExt},
         db::{TagSet, UidCounter},
@@ -21,6 +26,7 @@ pub struct TagWindow {
     new_imply: TextInputPrompt,
     new_tag: TextInputPrompt,
     merge_this: Option<tag::Id>,
+    ac_state: AcState,
 }
 
 #[derive(Default)]
@@ -82,6 +88,7 @@ pub(super) fn do_frame(
     let new_tag = &mut egui_state.tag_window.new_tag;
     let modal = &mut egui_state.modal;
     let merge_this = &mut egui_state.tag_window.merge_this;
+    let ac_state = &mut egui_state.tag_window.ac_state;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     egui_sfml::egui::Window::new(concat!(icons::TAG, " Tag list"))
@@ -368,6 +375,15 @@ pub(super) fn do_frame(
                                         let re = ui.add(
                                             TextEdit::singleline(imply)
                                                 .hint_text("New implication"),
+                                        );
+                                        let (up, down) = ui.input(|inp| {
+                                            (
+                                                inp.key_pressed(Key::ArrowUp),
+                                                inp.key_pressed(Key::ArrowDown),
+                                            )
+                                        });
+                                        tag_autocomplete_popup(
+                                            imply, ac_state, coll, ui, &re, up, down,
                                         );
                                         if focus {
                                             re.request_focus();
