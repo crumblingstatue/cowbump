@@ -48,6 +48,7 @@ impl Entry {
             Req::FilenameSub(fsub) => self.path.to_string_lossy().to_lowercase().contains(fsub),
             Req::PartOfSeq => sequences.values().any(|seq| seq.contains_entry(id)),
             Req::Untagged => self.tags.is_empty(),
+            Req::NTags(n) => self.tags.len() == *n,
         }
     }
     fn satisfies_required_tag(&self, required_tag_id: tag::Id, tags: &Tags) -> bool {

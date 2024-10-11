@@ -158,6 +158,7 @@ pub enum Req {
     FilenameSub(String),
     PartOfSeq,
     Untagged,
+    NTags(usize),
 }
 
 #[derive(Debug, Error)]
@@ -220,6 +221,16 @@ impl Req {
                 }
                 "seq" | "sequence" => Req::PartOfSeq,
                 "notag" | "no-tag" | "untagged" => Req::Untagged,
+                "ntags" => match call.params.first() {
+                    Some(Requirement::Tag(tag) | Requirement::TagExact(tag)) => {
+                        match tag.parse::<usize>() {
+                            Ok(n) => Req::NTags(n),
+                            Err(_) => return Err(ReqTransformError::InvalidParameter),
+                        }
+                    }
+                    Some(_) => return Err(ReqTransformError::InvalidParameter),
+                    None => return Err(ReqTransformError::MissingParameter),
+                },
                 _ => return Err(ReqTransformError::UnknownFn { name: call.name }),
             },
             Requirement::Not(req) => Req::Not(Box::new(Req::from_tagfilter_lang_req(*req, coll)?)),
@@ -238,6 +249,7 @@ impl Req {
             Req::FilenameSub(substr) => format!("@f[{substr}]").into(),
             Req::PartOfSeq => "@seq".into(),
             Req::Untagged => "@untagged".into(),
+            Req::NTags(n) => format!("@ntags[{n}]").into(),
         }
     }
 }

@@ -108,6 +108,11 @@ pub(super) fn tag_autocomplete_popup(
             ),
             ("@seq", "Part of a sequence", "@seq"),
             ("@untagged", "Entries that don't have any tags", "@untagged"),
+            (
+                "@ntags[n]",
+                "The entry must have this many tags",
+                "@ntags[]",
+            ),
         ];
         let last_is_special = last.bytes().next() == Some(b'@');
         if last_is_special {
