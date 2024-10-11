@@ -39,6 +39,7 @@ pub struct ThumbnailsView {
 pub enum SortBy {
     Path,
     Id,
+    NTags,
 }
 
 fn thumbs_per_row_and_size(window_width: u32, preferences: &Preferences) -> (u8, u32) {
@@ -80,6 +81,7 @@ impl ThumbnailsView {
         match self.sort_by {
             SortBy::Id => self.uids.sort_by_key(|uid| uid.0),
             SortBy::Path => self.uids.sort_by_key(|uid| &coll.entries[uid].path),
+            SortBy::NTags => self.uids.sort_by_key(|uid| coll.entries[uid].tags.len()),
         }
     }
     pub fn iter(&self) -> impl Iterator<Item = entry::Id> + '_ {

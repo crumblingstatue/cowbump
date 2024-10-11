@@ -461,26 +461,23 @@ fn actions_menu(
             egui_state.action = Some(Action::OpenEntriesWindow);
         }
         ui.separator();
-        if ui
-            .add_enabled(
-                active_coll,
-                Button::new(concat!(icons::SORT, " Sort by filename")).shortcut_text("S"),
-            )
-            .clicked()
-        {
-            ui.close_menu();
-            egui_state.action = Some(Action::SortByPath);
-        }
-        if ui
-            .add_enabled(
-                active_coll,
-                Button::new(concat!(icons::SORT, " Sort by id")),
-            )
-            .clicked()
-        {
-            ui.close_menu();
-            egui_state.action = Some(Action::SortById);
-        }
+        ui.menu_button(concat!(icons::SORT, " Sort by"), |ui| {
+            if !active_coll {
+                ui.disable();
+            }
+            if ui.add(Button::new("Filename").shortcut_text("S")).clicked() {
+                ui.close_menu();
+                egui_state.action = Some(Action::SortByPath);
+            }
+            if ui.add(Button::new("Id")).clicked() {
+                ui.close_menu();
+                egui_state.action = Some(Action::SortById);
+            }
+            if ui.add(Button::new("Number of tags")).clicked() {
+                ui.close_menu();
+                egui_state.action = Some(Action::SortByNTags);
+            }
+        });
         if ui
             .add_enabled(
                 active_coll,

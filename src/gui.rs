@@ -196,6 +196,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             .update_from_collection(coll, &state.filter);
                     }
                 }
+                Action::SortByNTags => {
+                    state.thumbs_view.sort_by = SortBy::NTags;
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        state
+                            .thumbs_view
+                            .update_from_collection(coll, &state.filter);
+                    }
+                }
                 Action::Shuffle => {
                     state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
                 }

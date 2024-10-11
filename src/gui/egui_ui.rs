@@ -130,6 +130,7 @@ pub(crate) enum Action {
     SortById,
     OpenEntriesWindow,
     Shuffle,
+    SortByNTags,
 }
 
 impl EguiState {
