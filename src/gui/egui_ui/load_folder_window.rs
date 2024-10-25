@@ -13,7 +13,7 @@ use {
             self, vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText,
             ScrollArea, Sense, Window,
         },
-        sfml::{graphics::Texture, SfBox},
+        sfml::{cpp::FBox, graphics::Texture},
     },
     std::{
         ffi::OsStr,
@@ -36,7 +36,7 @@ pub struct LoadFolderWindow {
     /// Selection marker for items in result window
     res_select: Option<usize>,
     res_hover: Option<usize>,
-    pub texture: Option<SfBox<Texture>>,
+    pub texture: Option<FBox<Texture>>,
     ign_ext_buf: String,
 }
 

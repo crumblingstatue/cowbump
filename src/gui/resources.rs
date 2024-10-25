@@ -1,8 +1,8 @@
 use {
     anyhow::Context,
     egui_sfml::sfml::{
+        cpp::FBox,
         graphics::{Font, IntRect, Texture},
-        SfBox,
     },
 };
 
@@ -13,10 +13,10 @@ macro_rules! res {
 }
 
 pub struct Resources {
-    pub loading_texture: SfBox<Texture>,
-    pub error_texture: SfBox<Texture>,
-    pub sel_begin_texture: SfBox<Texture>,
-    pub font: SfBox<Font>,
+    pub loading_texture: FBox<Texture>,
+    pub error_texture: FBox<Texture>,
+    pub sel_begin_texture: FBox<Texture>,
+    pub font: FBox<Font>,
 }
 
 impl Resources {

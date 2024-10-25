@@ -2,13 +2,13 @@ use {
     super::egui_ui::{EguiState, FileOp},
     anyhow::Context,
     egui_sfml::sfml::{
+        cpp::FBox,
         graphics::{Image, RenderTarget, RenderWindow, Texture},
         system::Vector2u,
-        SfBox,
     },
 };
 
-pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<SfBox<Image>> {
+pub fn take_screenshot(win: &RenderWindow) -> anyhow::Result<FBox<Image>> {
     let mut tex = Texture::new().context("Failed to create texture")?;
     let Vector2u { x: w, y: h } = win.size();
     tex.create(w, h).context("Failed to create texture")?;

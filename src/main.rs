@@ -105,25 +105,25 @@ fn fatal_error_report(title: &str, mut msg: &str) {
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             sf_egui.add_event(&ev);
-            sf_egui.begin_pass();
-            egui::CentralPanel::default().show(sf_egui.context(), |ui| {
-                ui.heading("Cowbump panicked");
-                ui.separator();
-                egui::ScrollArea::vertical()
-                    .auto_shrink(false)
-                    .show(ui, |ui| {
-                        ui.add_sized(
-                            ui.available_size(),
-                            egui::TextEdit::multiline(&mut msg).code_editor(),
-                        );
-                    });
-            });
-            sf_egui.end_pass(&mut rw).unwrap();
             if let Event::Closed = ev {
                 rw.close();
             }
         }
-        sf_egui.draw(&mut rw, None);
+        sf_egui.begin_pass();
+        egui::CentralPanel::default().show(sf_egui.context(), |ui| {
+            ui.heading("Cowbump panicked");
+            ui.separator();
+            egui::ScrollArea::vertical()
+                .auto_shrink(false)
+                .show(ui, |ui| {
+                    ui.add_sized(
+                        ui.available_size(),
+                        egui::TextEdit::multiline(&mut msg).code_editor(),
+                    );
+                });
+        });
+        let di = sf_egui.end_pass(&mut rw).unwrap();
+        sf_egui.draw(di, &mut rw, None);
         rw.display();
     }
 }

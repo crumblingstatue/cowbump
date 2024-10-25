@@ -29,12 +29,12 @@ use {
     arboard::Clipboard,
     egui_sfml::{
         sfml::{
+            cpp::FBox,
             graphics::{
                 Color, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
                 Transformable, View,
             },
             window::{Event, Key, Style, VideoMode},
-            SfBox,
         },
         SfEgui,
     },
@@ -115,12 +115,12 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     _ => {}
                 },
                 Event::Resized { width, height } => {
-                    window.set_view(&View::from_rect(Rect::new(
+                    window.set_view(&*View::from_rect(Rect::new(
                         0.,
                         0.,
                         width as f32,
                         height as f32,
-                    )));
+                    ))?);
                     state.thumbs_view.resize(width, &app.database.preferences);
                 }
                 _ => {}
@@ -149,7 +149,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
         egui_state.begin_frame();
         let mut result = Ok(());
-        sf_egui.run(&mut window, |rw, ctx| {
+        let di = sf_egui.run(&mut window, |rw, ctx| {
             result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, rw);
         })?;
         if let Err(e) = result {
@@ -280,7 +280,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             window.draw(&rs);
         }
         let mut tex_src = egui_ui::TexSrc::new(&mut state, &res, app);
-        sf_egui.draw(&mut window, Some(&mut tex_src));
+        sf_egui.draw(di, &mut window, Some(&mut tex_src));
         window.display();
         load_anim_rotation += 2.0;
     }
@@ -291,7 +291,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     Ok(())
 }
 
-type ThumbnailCache = EntryMap<Option<SfBox<Texture>>>;
+type ThumbnailCache = EntryMap<Option<FBox<Texture>>>;
 
 struct State {
     filter: Requirements,

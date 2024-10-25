@@ -1,6 +1,6 @@
 use {
     crate::{db::EntryMap, entry, gui::ThumbnailCache},
-    egui_sfml::sfml::graphics::Texture,
+    egui_sfml::sfml::{cpp::FBox, graphics::Texture},
     image::{imageops::FilterType, ImageBuffer, ImageResult, Rgba},
     parking_lot::Mutex,
     std::{collections::hash_map, path::Path, sync::Arc},
@@ -68,14 +68,12 @@ impl ThumbnailLoader {
 /// # Panics
 ///
 /// If the texture can't be created, it will panic. Shouldn't happen normally.
-pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> egui_sfml::sfml::SfBox<Texture> {
+pub fn imagebuf_to_sf_tex(buf: ImageBuffer<Rgba<u8>, Vec<u8>>) -> FBox<Texture> {
     let (w, h) = buf.dimensions();
     let mut tex = Texture::new().unwrap();
     if tex.create(w, h).is_err() {
         panic!("Failed to create texture");
     }
-    unsafe {
-        tex.update_from_pixels(&buf.into_raw(), w, h, 0, 0);
-    }
+    tex.update_from_pixels(&buf.into_raw(), w, h, 0, 0);
     tex
 }

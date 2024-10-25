@@ -4,9 +4,9 @@ use {
     egui_sfml::{
         egui,
         sfml::{
+            cpp::FBox,
             graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
             window::{mouse, Event, Key},
-            SfBox,
         },
     },
     std::{collections::VecDeque, time::Instant},
@@ -103,7 +103,7 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &RenderWind
     }
 }
 
-type ImageResult = Result<SfBox<Texture>, anyhow::Error>;
+type ImageResult = Result<FBox<Texture>, anyhow::Error>;
 type CacheKvPair = (entry::Id, ImageResult);
 
 struct ImageCache {
