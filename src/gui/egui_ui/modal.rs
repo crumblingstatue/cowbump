@@ -48,6 +48,10 @@ impl ModalDialog {
     pub fn about(&mut self) {
         self.payload = Some(ModalPayload::About);
     }
+    pub fn keybinds(&mut self){
+        let keybinds_text = include_str!("../../../KEYBINDS.md");
+        self.payload = Some(ModalPayload::Success(keybinds_text.to_string()));
+    }
     pub fn success(&mut self, msg: impl std::fmt::Display) {
         self.payload = Some(ModalPayload::Success(msg.to_string()));
     }
