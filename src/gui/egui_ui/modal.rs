@@ -30,6 +30,7 @@ enum ModalPayload {
     Err(ErrPayload),
     Success(String),
     About,
+    Keybinds,
     Prompt {
         title: String,
         message: String,
@@ -49,8 +50,7 @@ impl ModalDialog {
         self.payload = Some(ModalPayload::About);
     }
     pub fn keybinds(&mut self){
-        let keybinds_text = include_str!("../../../KEYBINDS.md");
-        self.payload = Some(ModalPayload::Success(keybinds_text.to_string()));
+        self.payload = Some(ModalPayload::Keybinds);
     }
     pub fn success(&mut self, msg: impl std::fmt::Display) {
         self.payload = Some(ModalPayload::Success(msg.to_string()));
@@ -178,6 +178,17 @@ impl ModalDialog {
                 ModalPayload::About => {
                     ui.vertical_centered(|ui| {
                         ui.label(concat!("Cowbump version ", crate::VERSION));
+                        ui.add_space(16.0);
+                        if ui.button("Close").clicked() || key_enter || key_esc {
+                            close = true;
+                        }
+                    });
+                }
+                ModalPayload::Keybinds => {
+                    ui.vertical(|ui| {
+                        ui.set_width(1000.0);
+                        let keybinds_text = include_str!("../../../KEYBINDS.md");
+                        ui.label(keybinds_text);
                         ui.add_space(16.0);
                         if ui.button("Close").clicked() || key_enter || key_esc {
                             close = true;
