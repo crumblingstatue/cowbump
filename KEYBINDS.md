@@ -7,7 +7,7 @@ F11: Opens the Save Screenshot menu.
 F12: Opens the Debug menu. 
 Q: Opens Sequences menu.
 T: Opens Tags menu.
-P,N: Previous and Next, scrolls the red highlight (used for) forwards and backwards through the menu. 
+P,N: Previous and Next, scrolls the red highlight forwards and backwards through the list of images. 
 F: Opens Filter menu.
 ?: Opens Search menu. 
 C: Copies whatever image you're highlighting over into the clipboard. Prioritizes the highlight caused by the mouse, but if no image is being moused over, will copy the image highlighted using P and N. 

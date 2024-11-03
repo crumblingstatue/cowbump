@@ -170,6 +170,10 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
             ui.close_menu();
             egui_state.modal.about();
         }
+        if ui.button(concat!(icons::QUESTION, "Keybinds")).clicked() {
+            ui.close_menu();
+            egui_state.modal.keybinds();
+        }
         ui.separator();
         ui.vertical_centered(|ui| {
             ui.label("= Debug =");
