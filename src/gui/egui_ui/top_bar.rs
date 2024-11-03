@@ -172,7 +172,6 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
         }
         if ui.button(concat!(icons::QUESTION, "Keybinds")).clicked() {
             ui.close_menu();
-            //dbg!(keybinds_text);
             egui_state.modal.keybinds();
         }
         ui.separator();

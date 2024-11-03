@@ -49,7 +49,7 @@ impl ModalDialog {
     pub fn about(&mut self) {
         self.payload = Some(ModalPayload::About);
     }
-    pub fn keybinds(&mut self){
+    pub fn keybinds(&mut self) {
         self.payload = Some(ModalPayload::Keybinds);
     }
     pub fn success(&mut self, msg: impl std::fmt::Display) {
