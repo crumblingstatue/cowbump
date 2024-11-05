@@ -97,6 +97,9 @@ pub(crate) fn do_frame(
                                 img = img.tint(egui::Color32::BROWN);
                             }
                         }
+                        if state.viewer_state.shown_entry().is_some_and(|en| en == *id) {
+                            img = img.tint(egui::Color32::GREEN);
+                        }
                         let re = ui.add(img);
                         let alt = ui.input(|inp| inp.modifiers.alt);
                         if re.clicked() && alt {

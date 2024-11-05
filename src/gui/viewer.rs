@@ -147,6 +147,9 @@ pub struct ViewerState {
 }
 
 impl ViewerState {
+    pub(in crate::gui) fn shown_entry(&self) -> Option<entry::Id> {
+        self.image_list.get(self.index).copied()
+    }
     pub(in crate::gui) fn zoom_to_fit(&mut self, window: &RenderWindow) {
         self.scale = 1.0;
         self.image_offset = (0, 0);
