@@ -61,7 +61,7 @@ pub(super) fn draw(
                         .insert((id, Err(anyhow::anyhow!(e))));
                 }
             }
-            state.viewer_state.reset_view(window);
+            state.viewer_state.zoom_to_fit(window);
         }
     }
 }
@@ -76,7 +76,7 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &RenderWind
             Key::Equal => state.viewer_state.original_scale(),
             Key::Hyphen => state.viewer_state.zoom_out(),
             Key::Delete => state.viewer_state.remove_from_view_list(),
-            Key::R => state.viewer_state.reset_view(window),
+            Key::R => state.viewer_state.zoom_to_fit(window),
             _ => {}
         },
         Event::MouseButtonPressed {
@@ -147,15 +147,18 @@ pub struct ViewerState {
 }
 
 impl ViewerState {
-    pub(in crate::gui) fn reset_view(&mut self, window: &RenderWindow) {
+    pub(in crate::gui) fn zoom_to_fit(&mut self, window: &RenderWindow) {
         self.scale = 1.0;
         self.image_offset = (0, 0);
         let id = self.image_list[self.index];
         if let Some(Ok(img)) = self.image_cache.get(id) {
             let img_size = img.size();
             let win_size = window.size();
-            if img_size.y > win_size.y {
-                self.scale = win_size.y as f32 / img_size.y as f32;
+            let x_ratio = win_size.x as f32 / img_size.x as f32;
+            let y_ratio = win_size.y as f32 / img_size.y as f32;
+            let min_ratio = f32::min(x_ratio, y_ratio);
+            if min_ratio < 1.0 {
+                self.scale = min_ratio;
             }
         }
     }
@@ -182,7 +185,7 @@ impl ViewerState {
         } else {
             self.index += 1;
         }
-        self.reset_view(window);
+        self.zoom_to_fit(window);
     }
 
     pub(in crate::gui) fn prev(&mut self, window: &RenderWindow) {
@@ -191,7 +194,7 @@ impl ViewerState {
         } else {
             self.index -= 1;
         }
-        self.reset_view(window);
+        self.zoom_to_fit(window);
     }
 }
 
@@ -215,8 +218,8 @@ pub fn menu_ui(ui: &mut egui::Ui, state: &mut State, win: &RenderWindow) {
         if ui.button("Zoom in (+)").clicked() {
             state.viewer_state.zoom_in();
         }
-        if ui.button("Reset View (R)").clicked() {
-            state.viewer_state.reset_view(win);
+        if ui.button("Zoom to fit (R)").clicked() {
+            state.viewer_state.zoom_to_fit(win);
         }
         ui.separator();
         if ui.button("Remove from view list (Del)").clicked() {
