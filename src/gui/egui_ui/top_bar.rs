@@ -236,7 +236,7 @@ fn file_menu(
         if ui.button(concat!(icons::FOLDER, " Load folder")).clicked() {
             ui.close_menu();
             egui_state.file_op = Some(FileOp::OpenDirectory);
-            egui_state.file_dialog.select_directory();
+            egui_state.file_dialog.pick_directory();
         }
         if ui.button("↺ Reload folder").clicked() {
             ui.close_menu();
@@ -329,7 +329,7 @@ fn file_menu(
         }
         if ui.button("⛃⬊ Restore backup").clicked() {
             ui.close_menu();
-            egui_state.file_dialog.select_file();
+            egui_state.file_dialog.pick_file();
             egui_state.file_op = Some(FileOp::RestoreBackup);
         }
         ui.separator();

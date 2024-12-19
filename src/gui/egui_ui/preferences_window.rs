@@ -75,14 +75,14 @@ pub(in crate::gui) fn do_frame(
         .open(&mut open)
         .collapsible(false)
         .auto_sized()
+        .max_width(300.0)
         .show(egui_ctx, |ui| {
             Flex::horizontal().show(ui, |flex| {
-                flex.add_flex_frame(
-                    item(),
+                flex.add_flex(
+                    item().frame(egui::Frame::group(flex.ui().style())),
                     Flex::vertical(),
-                    egui::Frame::group(flex.ui().style()),
                     |flex| {
-                        flex.add_simple(item(), |ui| {
+                        flex.add_ui(item(), |ui| {
                             ui.selectable_value(
                                 &mut egui_state.preferences_window.category,
                                 Category::Ui,
@@ -106,12 +106,11 @@ pub(in crate::gui) fn do_frame(
                         });
                     },
                 );
-                flex.add_flex_frame(
-                    item(),
+                flex.add_flex(
+                    item().frame(egui::Frame::group(flex.ui().style())),
                     Flex::vertical(),
-                    egui::Frame::group(flex.ui().style()),
                     |flex| {
-                        flex.add_simple(item(), |ui| {
+                        flex.add_ui(item(), |ui| {
                             match egui_state.preferences_window.category {
                                 Category::Ui => {
                                     ui_categ_ui(ui, &mut app.database.preferences, state, rw);
@@ -164,7 +163,7 @@ fn color_theme_categ_ui(
         }
     });
     ui.separator();
-    colorix.ui_combo_12(ui);
+    colorix.ui_combo_12(ui, true);
     ui.separator();
     ui.horizontal(|ui| {
         if let Some(theme) = &prefs.color_theme {
@@ -351,7 +350,7 @@ fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui, file_dialog
             app.path = PathBuf::from(path_buffer.clone());
         }
         if ui.button("...").clicked() {
-            file_dialog.select_file();
+            file_dialog.pick_file();
         }
         ui.end_row();
         ui.label("Arg list");
@@ -362,7 +361,7 @@ fn app_edit_ui(app: &mut App, path_buffer: &mut String, ui: &mut Ui, file_dialog
                                                         append entries as arguments",
         );
     });
-    if let Some(path) = file_dialog.take_selected() {
+    if let Some(path) = file_dialog.take_picked() {
         *path_buffer = path.to_string_lossy().into_owned();
         app.path = path;
     }

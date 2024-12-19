@@ -97,7 +97,7 @@ impl ModalDialog {
                                 .wrap_mode(TextWrapMode::Extend),
                             );
                             if payload.message.lines().count() > 5 || payload.show_bt {
-                                flex.add_simple(item().basis(200.0).grow(1.0), |ui| {
+                                flex.add_ui(item().basis(200.0).grow(1.0), |ui| {
                                     ui.set_width(1000.0);
                                     egui::ScrollArea::vertical().show(ui, |ui| {
                                         let bt_s;
@@ -131,21 +131,17 @@ impl ModalDialog {
                                         item(),
                                         egui::Checkbox::new(&mut payload.show_bt, "backtrace"),
                                     );
-                                    let ok = flex
-                                        .add(
-                                            item(),
-                                            egui::Button::new(concat!(icons::CANCEL, " Close")),
-                                        )
-                                        .inner;
-                                    let ccopy = flex
-                                        .add(
-                                            item(),
-                                            egui::Button::new(concat!(
-                                                icons::COPY,
-                                                " Copy to clipboard"
-                                            )),
-                                        )
-                                        .inner;
+                                    let ok = flex.add(
+                                        item(),
+                                        egui::Button::new(concat!(icons::CANCEL, " Close")),
+                                    );
+                                    let ccopy = flex.add(
+                                        item(),
+                                        egui::Button::new(concat!(
+                                            icons::COPY,
+                                            " Copy to clipboard"
+                                        )),
+                                    );
                                     if ok.clicked() || key_enter || key_esc {
                                         close = true;
                                     }
@@ -218,15 +214,12 @@ impl ModalDialog {
                                 item().align_self(FlexAlign::End),
                                 Flex::horizontal(),
                                 |flex| {
-                                    let ok = flex
-                                        .add(
-                                            item(),
-                                            egui::Button::new(concat!(icons::CHECK, " Ok")),
-                                        )
-                                        .inner;
-                                    let cancel = flex
-                                        .add(item(), egui::Button::new(icons::CANCEL_TEXT))
-                                        .inner;
+                                    let ok = flex.add(
+                                        item(),
+                                        egui::Button::new(concat!(icons::CHECK, " Ok")),
+                                    );
+                                    let cancel =
+                                        flex.add(item(), egui::Button::new(icons::CANCEL_TEXT));
                                     if ok.clicked() || key_enter {
                                         action = Some(prompt_action.clone());
                                         close = true;

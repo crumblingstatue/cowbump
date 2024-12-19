@@ -232,7 +232,7 @@ pub(super) fn do_ui(
         batch_rename_window::do_frame(state, egui_state, coll, egui_ctx, win);
     }
     if let Some(op) = &egui_state.file_op
-        && let Some(path) = egui_state.file_dialog.take_selected()
+        && let Some(path) = egui_state.file_dialog.take_picked()
     {
         match op {
             FileOp::OpenDirectory => {

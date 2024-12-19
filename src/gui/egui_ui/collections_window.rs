@@ -20,7 +20,7 @@ pub(crate) fn do_frame(
                     ui.label(id.0.to_string());
                     if ui.button(path.display().to_string()).clicked() {
                         egui_state.collections_db_window.path_assign_id = Some(*id);
-                        egui_state.file_dialog.select_directory();
+                        egui_state.file_dialog.pick_directory();
                     }
                     if ui.button("Remove").clicked() {
                         retain = false;
@@ -30,7 +30,7 @@ pub(crate) fn do_frame(
             });
         });
     if let Some(assign_id) = &egui_state.collections_db_window.path_assign_id
-        && let Some(path) = egui_state.file_dialog.take_selected()
+        && let Some(path) = egui_state.file_dialog.take_picked()
     {
         if let Some(coll_path) = app.database.collections.get_mut(assign_id) {
             *coll_path = path;
