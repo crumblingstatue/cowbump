@@ -6,7 +6,7 @@ use {
         preferences::{AppId, Preferences},
         sequence::Sequence,
     },
-    anyhow::{bail, Context},
+    anyhow::{Context, bail},
     std::{path::Path, process::Command},
 };
 
@@ -44,14 +44,12 @@ pub fn open_single_with_others(
         let seq = &coll.sequences[&seq_id];
         open_sequence(seq, uid, &coll.entries, preferences)
     } else {
+        let en = &coll.entries[&uid];
         open(
-            {
-                let en = &coll.entries[&uid];
-                &[OpenExternCandidate {
-                    path: &en.path,
-                    open_with: find_open_with_for_entry(en, coll),
-                }]
-            },
+            &[OpenExternCandidate {
+                path: &en.path,
+                open_with: find_open_with_for_entry(en, coll),
+            }],
             preferences,
         )
     }

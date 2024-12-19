@@ -3,7 +3,7 @@ use {
         collection::{Collection, TagsExt},
         tag,
     },
-    egui_sfml::egui::{self, popup_below_widget, Key, PopupCloseBehavior, Ui},
+    egui_sfml::egui::{self, Key, PopupCloseBehavior, Ui, popup_below_widget},
     std::ops::Range,
 };
 

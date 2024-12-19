@@ -5,8 +5,8 @@ use {
     },
     egui_sfml::{
         egui::{
-            self, load::SizedTexture, Color32, Context, ImageButton, Label, RichText, ScrollArea,
-            TextureId, Window,
+            self, Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window,
+            load::SizedTexture,
         },
         sfml::graphics::{RenderTarget, RenderWindow},
     },

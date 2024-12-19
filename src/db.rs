@@ -10,7 +10,7 @@ use {
         fs::File,
         path::{Path, PathBuf},
     },
-    zip::{write::SimpleFileOptions, ZipArchive, ZipWriter},
+    zip::{ZipArchive, ZipWriter, write::SimpleFileOptions},
 };
 
 /// Unique identifier for entries/tags.

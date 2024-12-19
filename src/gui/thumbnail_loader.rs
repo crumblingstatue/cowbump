@@ -1,7 +1,7 @@
 use {
     crate::{db::EntryMap, entry, gui::ThumbnailCache},
     egui_sfml::sfml::{cpp::FBox, graphics::Texture},
-    image::{imageops::FilterType, ImageBuffer, ImageResult, Rgba},
+    image::{ImageBuffer, ImageResult, Rgba, imageops::FilterType},
     parking_lot::Mutex,
     std::{collections::hash_map, path::Path, sync::Arc},
 };

@@ -4,7 +4,7 @@ use {
         db::{Db, FolderChanges},
         entry, serialization,
     },
-    anyhow::{bail, Context},
+    anyhow::{Context, bail},
     std::path::{Path, PathBuf},
 };
 

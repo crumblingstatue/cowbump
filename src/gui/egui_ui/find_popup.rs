@@ -1,11 +1,11 @@
 use {
     super::{
-        entries_window::text_edit_cursor_set_to_end, tag_autocomplete::tag_autocomplete_popup,
-        EguiState,
+        EguiState, entries_window::text_edit_cursor_set_to_end,
+        tag_autocomplete::tag_autocomplete_popup,
     },
     crate::{
         collection::Collection,
-        gui::{thumbnails_view::search_goto_cursor, State},
+        gui::{State, thumbnails_view::search_goto_cursor},
     },
     egui_sfml::{
         egui::{Context, Key, Modifiers, TextEdit},

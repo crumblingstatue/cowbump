@@ -2,7 +2,7 @@ use {
     super::icons,
     crate::{dlog, tag},
     constcat::concat,
-    egui_flex::{item, Flex, FlexAlign, FlexAlignContent},
+    egui_flex::{Flex, FlexAlign, FlexAlignContent, item},
     egui_sfml::egui::{self, TextWrapMode},
     std::backtrace::Backtrace,
 };

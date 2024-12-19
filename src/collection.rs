@@ -8,7 +8,7 @@ use {
         sequence::{self, Sequence},
         tag::{self, Tag},
     },
-    anyhow::{bail, Context},
+    anyhow::{Context, bail},
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},
     std::{

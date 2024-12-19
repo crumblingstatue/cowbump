@@ -40,12 +40,11 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 use {
     crate::application::Application,
     egui_sfml::{
-        egui,
+        SfEgui, egui,
         sfml::{
             graphics::RenderWindow,
             window::{Event, Style},
         },
-        SfEgui,
     },
     std::io::IsTerminal,
 };

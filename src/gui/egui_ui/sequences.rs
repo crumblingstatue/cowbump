@@ -1,15 +1,15 @@
 use {
-    super::{icons, EguiState},
+    super::{EguiState, icons},
     crate::{
         collection::Collection,
         db::UidCounter,
         dlog, entry,
         gui::{
+            State,
             open::{
                 builtin,
                 external::{self},
             },
-            State,
         },
         preferences::Preferences,
         sequence::{self},
@@ -17,8 +17,8 @@ use {
     constcat::concat,
     egui_sfml::{
         egui::{
-            load::SizedTexture, Align, Button, Color32, Context, DragValue, ImageButton, Key,
-            ScrollArea, TextEdit, TextureId, Window,
+            Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit,
+            TextureId, Window, load::SizedTexture,
         },
         sfml::graphics::RenderWindow,
     },

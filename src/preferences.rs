@@ -1,6 +1,6 @@
 use {
     crate::db::Uid,
-    egui_colors::{tokens::ThemeColor, Colorix},
+    egui_colors::{Colorix, tokens::ThemeColor},
     egui_sfml::egui::emath::Numeric,
     fnv::FnvHashMap,
     serde_derive::{Deserialize, Serialize},

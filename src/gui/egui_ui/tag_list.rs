@@ -1,15 +1,14 @@
 use {
     super::{
-        icons,
-        tag_autocomplete::{tag_autocomplete_popup, AcState},
+        EguiState, icons,
+        tag_autocomplete::{AcState, tag_autocomplete_popup},
         ui_ext::UiExt,
-        EguiState,
     },
     crate::{
         collection::{Collection, TagsExt},
         db::{TagSet, UidCounter},
         dlog,
-        gui::{egui_ui::PromptAction, State},
+        gui::{State, egui_ui::PromptAction},
         tag,
     },
     constcat::concat,

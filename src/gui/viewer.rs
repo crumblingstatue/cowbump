@@ -1,12 +1,12 @@
 use {
-    super::{resources::Resources, thumbnail_loader::imagebuf_to_sf_tex, Activity, State},
+    super::{Activity, State, resources::Resources, thumbnail_loader::imagebuf_to_sf_tex},
     crate::{collection::Collection, dlog, entry},
     egui_sfml::{
         egui,
         sfml::{
             cpp::FBox,
             graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
-            window::{mouse, Event, Key},
+            window::{Event, Key, mouse},
         },
     },
     std::{collections::VecDeque, time::Instant},

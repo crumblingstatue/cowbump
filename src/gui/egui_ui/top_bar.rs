@@ -1,9 +1,9 @@
 use {
-    super::{icons, Action, EguiState, FileOp, PromptAction},
+    super::{Action, EguiState, FileOp, PromptAction, icons},
     crate::{
         application::Application,
         collection,
-        gui::{viewer, Activity, SelectionBuf, State},
+        gui::{Activity, SelectionBuf, State, viewer},
     },
     anyhow::anyhow,
     constcat::concat,

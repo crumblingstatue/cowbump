@@ -13,7 +13,7 @@ use {
         resources::Resources,
         thumbnail_loader::ThumbnailLoader,
         thumbnails_view::{
-            handle_event, search_next, search_prev, select_all, SortBy, ThumbnailsView,
+            SortBy, ThumbnailsView, handle_event, search_next, search_prev, select_all,
         },
         viewer::ViewerState,
     },
@@ -28,6 +28,7 @@ use {
     anyhow::Context as _,
     arboard::Clipboard,
     egui_sfml::{
+        SfEgui,
         sfml::{
             cpp::FBox,
             graphics::{
@@ -36,7 +37,6 @@ use {
             },
             window::{Event, Key, Style, VideoMode},
         },
-        SfEgui,
     },
     rand::seq::SliceRandom,
     thumbnails_view::EventFlags,

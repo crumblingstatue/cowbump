@@ -3,11 +3,11 @@ use {
     crate::{
         collection::Collection,
         gui::{
+            State,
             egui_ui::{
                 entries_window::text_edit_cursor_set_to_end,
                 tag_autocomplete::tag_autocomplete_popup,
             },
-            State,
         },
     },
     egui_sfml::egui::{Color32, Context, Key, Modifiers, TextEdit},

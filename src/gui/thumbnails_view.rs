@@ -1,11 +1,11 @@
 use {
     super::{
+        State, ThumbnailCache,
         egui_ui::EguiState,
         get_tex_for_entry,
         open::{builtin, external},
         resources::Resources,
         thumbnail_loader::ThumbnailLoader,
-        State, ThumbnailCache,
     },
     crate::{
         collection::{Collection, Entries},
@@ -22,7 +22,7 @@ use {
                 Sprite, Text, Transformable,
             },
             system::Vector2f,
-            window::{mouse, Event, Key},
+            window::{Event, Key, mouse},
         },
     },
 };

@@ -1,5 +1,5 @@
 use {
-    super::{icons, EguiState},
+    super::{EguiState, icons},
     crate::{
         gui::State,
         preferences::{
@@ -7,13 +7,13 @@ use {
         },
     },
     constcat::concat,
-    egui_colors::{tokens::ThemeColor, Colorix},
+    egui_colors::{Colorix, tokens::ThemeColor},
     egui_file_dialog::FileDialog,
-    egui_flex::{item, Flex},
+    egui_flex::{Flex, item},
     egui_sfml::{
         egui::{
-            self, collapsing_header::CollapsingState, Button, ComboBox, Context, Grid, ScrollArea,
-            Slider, TextEdit, Ui, Window,
+            self, Button, ComboBox, Context, Grid, ScrollArea, Slider, TextEdit, Ui, Window,
+            collapsing_header::CollapsingState,
         },
         sfml::graphics::RenderTarget,
     },
@@ -157,8 +157,9 @@ fn color_theme_categ_ui(
         });
         if ui.button(concat!(icons::SORT, " Randomize")).clicked() {
             let mut rng = rand::thread_rng();
-            let theme =
-                std::array::from_fn(|_| ThemeColor::Custom([rng.gen(), rng.gen(), rng.gen()]));
+            let theme = std::array::from_fn(|_| {
+                ThemeColor::Custom([rng.r#gen(), rng.r#gen(), rng.r#gen()])
+            });
             *colorix = Colorix::init(ui.ctx(), theme);
         }
     });

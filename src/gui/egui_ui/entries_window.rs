@@ -1,9 +1,8 @@
 use {
     super::{
-        icons,
+        EguiState, icons,
         sequences::SequenceWindow,
-        tag_autocomplete::{tag_autocomplete_popup, AcState},
-        EguiState,
+        tag_autocomplete::{AcState, tag_autocomplete_popup},
     },
     crate::{
         collection::{AddTagError, Collection, TagsExt},
@@ -11,14 +10,13 @@ use {
         dlog, entry,
         filter_reqs::Requirements,
         gui::{
-            get_tex_for_entry,
+            State, get_tex_for_entry,
             open::{
                 builtin,
-                external::{self, feed_args, OpenExternCandidate},
+                external::{self, OpenExternCandidate, feed_args},
             },
             resources::Resources,
             thumbnails_view::ThumbnailsView,
-            State,
         },
         tag,
     },
@@ -26,12 +24,12 @@ use {
     constcat::concat,
     egui_sfml::{
         egui::{
-            self,
+            self, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
+            Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui, Widget,
             epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
             load::SizedTexture,
             text_selection::CursorRange,
-            vec2, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
-            Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui, Widget,
+            vec2,
         },
         sfml::graphics::{RenderTarget, RenderWindow},
     },

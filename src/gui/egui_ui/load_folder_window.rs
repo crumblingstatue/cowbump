@@ -1,17 +1,17 @@
 use {
-    super::{icons, EguiState},
+    super::{EguiState, icons},
     crate::{
         application::Application,
         collection::Collection,
         dlog,
         folder_scan::walkdir,
-        gui::{resources::Resources, thumbnail_loader, State},
+        gui::{State, resources::Resources, thumbnail_loader},
     },
     constcat::concat,
     egui_sfml::{
         egui::{
-            self, vec2, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText,
-            ScrollArea, Sense, Window,
+            self, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea,
+            Sense, Window, vec2,
         },
         sfml::{cpp::FBox, graphics::Texture},
     },
@@ -20,8 +20,8 @@ use {
         io, mem,
         path::{Path, PathBuf},
         sync::{
-            mpsc::{self, channel, Receiver, Sender},
             Arc,
+            mpsc::{self, Receiver, Sender, channel},
         },
         thread::JoinHandle,
     },

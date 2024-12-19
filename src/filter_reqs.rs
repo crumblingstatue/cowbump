@@ -211,7 +211,7 @@ impl Req {
                         Some(param) => match param {
                             Requirement::Tag(tag) | Requirement::TagExact(tag) => tag,
                             Requirement::FnCall(_) | Requirement::Not(_) => {
-                                return Err(ReqTransformError::InvalidParameter)
+                                return Err(ReqTransformError::InvalidParameter);
                             }
                         },
                         None => return Err(ReqTransformError::MissingParameter),
