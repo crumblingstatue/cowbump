@@ -386,7 +386,7 @@ impl SelectionBufs {
         }
     }
     fn current_contains(&self, id: &entry::Id) -> bool {
-        self.current().map_or(false, |buf| buf.contains(id))
+        self.current().is_some_and(|buf| buf.contains(id))
     }
 
     fn clear_current(&mut self) {
