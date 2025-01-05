@@ -280,7 +280,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         sprite.set_origin((0.0, 0.0));
     }
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
-    if props.ffmpeg {
+    if props.has_img && props.ffmpeg {
         sprite.set_texture(&res.movie_texture, true);
         window.draw_sprite(sprite, &RenderStates::DEFAULT);
     }
