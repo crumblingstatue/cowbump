@@ -261,7 +261,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     thumbnail_loader: &ThumbnailLoader,
     load_anim_rotation: f32,
 ) {
-    let (has_img, texture) = get_tex_for_entry(
+    let (props, texture) = get_tex_for_entry(
         thumbnail_cache,
         id,
         entries,
@@ -280,7 +280,11 @@ fn draw_thumbnail<'a: 'b, 'b>(
         sprite.set_origin((0.0, 0.0));
     }
     window.draw_sprite(sprite, &RenderStates::DEFAULT);
-    let mut show_filename = !has_img;
+    if props.ffmpeg {
+        sprite.set_texture(&res.movie_texture, true);
+        window.draw_sprite(sprite, &RenderStates::DEFAULT);
+    }
+    let mut show_filename = !props.has_img;
     let fname_pos = (x, y + 64.0);
     if Key::LAlt.is_pressed() {
         show_filename = true;

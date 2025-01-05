@@ -1,4 +1,5 @@
 use {
+    super::Thumbnail,
     crate::{db::EntryMap, dlog, entry, gui::ThumbnailCache},
     egui_sfml::sfml::{cpp::FBox, graphics::Texture},
     image::{ImageBuffer, ImageResult, Rgba, imageops::FilterType},
@@ -15,7 +16,12 @@ use {
 };
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
-type ImageSlot = Option<ImageResult<RgbaBuf>>;
+
+#[derive(Default)]
+struct ImageSlot {
+    result: Option<ImageResult<RgbaBuf>>,
+    ffmpeg: bool,
+}
 
 /// Loads images on a separate thread, one at a time.
 #[derive(Default)]
@@ -28,7 +34,7 @@ impl ThumbnailLoader {
     pub fn request(&self, name: &Path, size: u32, uid: entry::Id) {
         let mut slots = self.image_slots.lock();
         if let hash_map::Entry::Vacant(e) = slots.entry(uid) {
-            e.insert(None);
+            e.insert(ImageSlot::default());
             let slots_clone = Arc::clone(&self.image_slots);
             let name = name.to_owned();
             let no_ffmpeg = self.no_ffmpeg.clone();
@@ -36,19 +42,22 @@ impl ThumbnailLoader {
                 let data = match std::fs::read(&name) {
                     Ok(data) => data,
                     Err(e) => {
-                        slots_clone
-                            .lock()
-                            .insert(uid, Some(Err(image::ImageError::IoError(e))));
+                        slots_clone.lock().insert(uid, ImageSlot {
+                            result: Some(Err(image::ImageError::IoError(e))),
+                            ffmpeg: false,
+                        });
                         return;
                     }
                 };
                 let mut image_result = image::load_from_memory(&data);
+                let mut ffmpeg_was_used = false;
                 if image_result.is_err() && !no_ffmpeg.load(atomic::Ordering::Relaxed) {
                     let result = Command::new("ffmpeg")
                         .args(["-y", "-i"])
                         .arg(&name)
                         .args(["-frames:v", "1", "-f", "image2pipe", "/dev/stdout"])
                         .output();
+                    ffmpeg_was_used = true;
                     match result {
                         Ok(out) => {
                             image_result = image::load_from_memory(&out.stdout);
@@ -61,22 +70,31 @@ impl ThumbnailLoader {
                 }
                 let result =
                     image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba8());
-                slots_clone.lock().insert(uid, Some(result));
+                slots_clone.lock().insert(uid, ImageSlot {
+                    result: Some(result),
+                    ffmpeg: ffmpeg_was_used,
+                });
             });
         }
     }
     pub fn write_to_cache(&self, cache: &mut ThumbnailCache) {
         let mut slots = self.image_slots.lock();
         slots.retain(|&uid, slot| {
-            if let Some(result) = slot.take() {
+            if let Some(result) = slot.result.take() {
                 match result {
                     Ok(buf) => {
                         let tex = imagebuf_to_sf_tex(buf);
-                        cache.insert(uid, Some(tex));
+                        cache.insert(uid, Thumbnail {
+                            texture: Some(tex),
+                            ffmpeg_loaded: slot.ffmpeg,
+                        });
                     }
                     Err(e) => {
                         dlog!("Error loading thumbnail: {e}");
-                        cache.insert(uid, None);
+                        cache.insert(uid, Thumbnail {
+                            texture: None,
+                            ffmpeg_loaded: slot.ffmpeg,
+                        });
                     }
                 }
                 false
