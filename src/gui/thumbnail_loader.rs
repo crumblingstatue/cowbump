@@ -1,9 +1,9 @@
 use {
-    crate::{db::EntryMap, entry, gui::ThumbnailCache},
+    crate::{db::EntryMap, dlog, entry, gui::ThumbnailCache},
     egui_sfml::sfml::{cpp::FBox, graphics::Texture},
     image::{ImageBuffer, ImageResult, Rgba, imageops::FilterType},
     parking_lot::Mutex,
-    std::{collections::hash_map, path::Path, sync::Arc},
+    std::{collections::hash_map, path::Path, process::Command, sync::Arc},
 };
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
@@ -23,7 +23,7 @@ impl ThumbnailLoader {
             let slots_clone = Arc::clone(&self.image_slots);
             let name = name.to_owned();
             ::std::thread::spawn(move || {
-                let data = match std::fs::read(name) {
+                let data = match std::fs::read(&name) {
                     Ok(data) => data,
                     Err(e) => {
                         slots_clone
@@ -32,7 +32,22 @@ impl ThumbnailLoader {
                         return;
                     }
                 };
-                let image_result = image::load_from_memory(&data);
+                let mut image_result = image::load_from_memory(&data);
+                if image_result.is_err() {
+                    let result = Command::new("ffmpeg")
+                        .args(["-y", "-i"])
+                        .arg(&name)
+                        .args(["-frames:v", "1", "-f", "image2pipe", "/dev/stdout"])
+                        .output();
+                    match result {
+                        Ok(out) => {
+                            image_result = image::load_from_memory(&out.stdout);
+                        }
+                        Err(e) => {
+                            dlog!("Failed to generate thumbnail with ffmpeg: {e}");
+                        }
+                    }
+                }
                 let result =
                     image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba8());
                 slots_clone.lock().insert(uid, Some(result));
@@ -48,7 +63,8 @@ impl ThumbnailLoader {
                         let tex = imagebuf_to_sf_tex(buf);
                         cache.insert(uid, Some(tex));
                     }
-                    Err(_) => {
+                    Err(e) => {
+                        dlog!("Error loading thumbnail: {e}");
                         cache.insert(uid, None);
                     }
                 }
