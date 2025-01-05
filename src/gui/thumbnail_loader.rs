@@ -57,10 +57,10 @@ impl ThumbnailLoader {
                         .arg(&name)
                         .args(["-frames:v", "1", "-f", "image2pipe", "/dev/stdout"])
                         .output();
-                    ffmpeg_was_used = true;
                     match result {
                         Ok(out) => {
                             image_result = image::load_from_memory(&out.stdout);
+                            ffmpeg_was_used = true;
                         }
                         Err(e) => {
                             dlog!("Failed to generate thumbnail with ffmpeg: {e}");
