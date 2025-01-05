@@ -3,7 +3,15 @@ use {
     egui_sfml::sfml::{cpp::FBox, graphics::Texture},
     image::{ImageBuffer, ImageResult, Rgba, imageops::FilterType},
     parking_lot::Mutex,
-    std::{collections::hash_map, path::Path, process::Command, sync::Arc},
+    std::{
+        collections::hash_map,
+        path::Path,
+        process::Command,
+        sync::{
+            Arc,
+            atomic::{self, AtomicBool},
+        },
+    },
 };
 
 type RgbaBuf = ImageBuffer<Rgba<u8>, Vec<u8>>;
@@ -13,6 +21,7 @@ type ImageSlot = Option<ImageResult<RgbaBuf>>;
 #[derive(Default)]
 pub struct ThumbnailLoader {
     image_slots: Arc<Mutex<EntryMap<ImageSlot>>>,
+    no_ffmpeg: Arc<AtomicBool>,
 }
 
 impl ThumbnailLoader {
@@ -22,6 +31,7 @@ impl ThumbnailLoader {
             e.insert(None);
             let slots_clone = Arc::clone(&self.image_slots);
             let name = name.to_owned();
+            let no_ffmpeg = self.no_ffmpeg.clone();
             ::std::thread::spawn(move || {
                 let data = match std::fs::read(&name) {
                     Ok(data) => data,
@@ -33,7 +43,7 @@ impl ThumbnailLoader {
                     }
                 };
                 let mut image_result = image::load_from_memory(&data);
-                if image_result.is_err() {
+                if image_result.is_err() && !no_ffmpeg.load(atomic::Ordering::Relaxed) {
                     let result = Command::new("ffmpeg")
                         .args(["-y", "-i"])
                         .arg(&name)
@@ -45,6 +55,7 @@ impl ThumbnailLoader {
                         }
                         Err(e) => {
                             dlog!("Failed to generate thumbnail with ffmpeg: {e}");
+                            no_ffmpeg.store(true, atomic::Ordering::Relaxed);
                         }
                     }
                 }
