@@ -291,7 +291,12 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     Ok(())
 }
 
-type ThumbnailCache = EntryMap<Option<FBox<Texture>>>;
+struct Thumbnail {
+    texture: Option<FBox<Texture>>,
+    ffmpeg_loaded: bool,
+}
+
+type ThumbnailCache = EntryMap<Thumbnail>;
 
 struct State {
     filter: Requirements,
@@ -425,6 +430,11 @@ fn set_active_collection(
     std::env::set_current_dir(root).context("failed to set directory")
 }
 
+struct TexProperties {
+    has_img: bool,
+    ffmpeg: bool,
+}
+
 fn get_tex_for_entry<'t>(
     thumbnail_cache: &'t ThumbnailCache,
     id: entry::Id,
@@ -432,21 +442,45 @@ fn get_tex_for_entry<'t>(
     thumbnail_loader: &ThumbnailLoader,
     thumb_size: u32,
     res: &'t Resources,
-) -> (bool, &'t Texture) {
-    let (has_img, texture) = match thumbnail_cache.get(&id) {
-        Some(opt_texture) => match *opt_texture {
-            Some(ref tex) => (true, &**tex),
-            None => (false, &*res.error_texture),
+) -> (TexProperties, &'t Texture) {
+    let (props, texture) = match thumbnail_cache.get(&id) {
+        Some(thumb) => match thumb.texture {
+            Some(ref tex) => (
+                TexProperties {
+                    has_img: true,
+                    ffmpeg: thumb.ffmpeg_loaded,
+                },
+                &**tex,
+            ),
+            None => (
+                TexProperties {
+                    has_img: false,
+                    ffmpeg: thumb.ffmpeg_loaded,
+                },
+                &*res.error_texture,
+            ),
         },
         None => {
             let Some(entry) = entries.get(&id) else {
-                return (false, &*res.error_texture);
+                return (
+                    TexProperties {
+                        has_img: false,
+                        ffmpeg: false,
+                    },
+                    &*res.error_texture,
+                );
             };
             thumbnail_loader.request(&entry.path, thumb_size, id);
-            (false, &*res.loading_texture)
+            (
+                TexProperties {
+                    has_img: false,
+                    ffmpeg: false,
+                },
+                &*res.loading_texture,
+            )
         }
     };
-    (has_img, texture)
+    (props, texture)
 }
 
 impl State {
