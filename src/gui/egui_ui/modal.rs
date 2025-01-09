@@ -163,6 +163,7 @@ impl ModalDialog {
                 }
                 ModalPayload::Success(s) => {
                     ui.vertical_centered(|ui| {
+                        ui.set_max_width(1000.0);
                         ui.heading(concat!(icons::CHECK, " Success"));
                         ui.label(s.as_str());
                         ui.add_space(16.0);
