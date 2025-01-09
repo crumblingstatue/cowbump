@@ -55,7 +55,7 @@ impl ThumbnailLoader {
                     let result = Command::new("ffmpeg")
                         .args(["-y", "-i"])
                         .arg(&name)
-                        .args(["-frames:v", "1", "-f", "image2pipe", "/dev/stdout"])
+                        .args(["-frames:v", "1", "-f", "image2pipe", "pipe:1"])
                         .output();
                     match result {
                         Ok(out) => {
