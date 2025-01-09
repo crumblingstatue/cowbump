@@ -5,7 +5,10 @@ use {
         entry, serialization,
     },
     anyhow::{Context, bail},
-    std::path::{Path, PathBuf},
+    std::{
+        path::{Path, PathBuf},
+        sync::mpsc::Receiver,
+    },
 };
 
 type ActiveCollection = Option<(collection::Id, Collection)>;
@@ -14,6 +17,7 @@ pub struct Application {
     pub database: Db,
     pub active_collection: ActiveCollection,
     pub no_save: bool,
+    pub folder_changes_recv: Option<Receiver<anyhow::Result<FolderChanges>>>,
 }
 
 impl Application {
@@ -23,6 +27,7 @@ impl Application {
             database: global_db,
             active_collection: None,
             no_save: false,
+            folder_changes_recv: None,
         })
     }
     pub fn add_collection(&mut self, collection: Collection, root: PathBuf) -> collection::Id {
@@ -31,24 +36,24 @@ impl Application {
         self.database.recent.use_(id);
         id
     }
-    pub(crate) fn load_last(&mut self) -> anyhow::Result<FolderChanges> {
+    pub(crate) fn load_last(&mut self) -> anyhow::Result<()> {
         if let Some(&id) = self.database.recent.most_recent() {
             self.load_collection(id)
                 .with_context(|| format!("Error loading collection {id:?}"))
         } else {
-            Ok(FolderChanges::default())
+            Ok(())
         }
     }
-    pub(crate) fn reload_active_collection(&mut self) -> anyhow::Result<FolderChanges> {
+    pub(crate) fn reload_active_collection(&mut self) -> anyhow::Result<()> {
         if let Some((id, _)) = self.active_collection {
             self.load_collection(id)
         } else {
             bail!("No active collection")
         }
     }
-    pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<FolderChanges> {
+    pub(crate) fn load_collection(&mut self, id: collection::Id) -> anyhow::Result<()> {
         self.save_active_collection()?;
-        let path = &self
+        let path = self
             .database
             .collections
             .get(&id)
@@ -57,10 +62,10 @@ impl Application {
         let filename = collection_filename(&coll_dir, id);
         let coll: Collection = serialization::read_from_file(&filename)
             .with_context(move || format!("Deserialization error for: {}", filename.display()))?;
-        let changes = coll.scan_changes(path)?;
+        self.folder_changes_recv = Some(coll.scan_changes(path.to_owned()));
         self.active_collection = Some((id, coll));
         self.database.recent.use_(id);
-        Ok(changes)
+        Ok(())
     }
     pub(crate) fn apply_changes_to_active_collection(
         &mut self,

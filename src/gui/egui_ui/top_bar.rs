@@ -160,6 +160,12 @@ pub(super) fn do_frame(
                 egui_state.debug_window.toggle();
             }
         });
+        if egui_state.loading_changes_notify {
+            ui.horizontal(|ui| {
+                ui.label("Loading folder changes...");
+                ui.spinner();
+            });
+        }
     });
     result
 }
@@ -240,16 +246,13 @@ fn file_menu(
         }
         if ui.button("↺ Reload folder").clicked() {
             ui.close_menu();
-            let changes = match app.reload_active_collection() {
+            match app.reload_active_collection() {
                 Ok(changes) => changes,
                 Err(e) => {
                     *result = Err(e);
                     return;
                 }
             };
-            if !changes.empty() {
-                egui_state.changes_window.open(changes);
-            }
         }
         if ui
             .add_enabled(
@@ -291,10 +294,7 @@ fn file_menu(
                 }
                 match action {
                     Action::Open(id) => match app.load_collection(id) {
-                        Ok(changes) => {
-                            if !changes.empty() {
-                                egui_state.changes_window.open(changes);
-                            }
+                        Ok(()) => {
                             *result = crate::gui::set_active_collection(
                                 &mut state.thumbs_view,
                                 app,

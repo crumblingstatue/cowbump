@@ -39,6 +39,7 @@ use {
         },
     },
     rand::seq::SliceRandom,
+    std::sync::mpsc::TryRecvError,
     thumbnails_view::EventFlags,
 };
 
@@ -60,10 +61,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
 
     if app.database.preferences.open_last_coll_at_start && !app.database.recent.is_empty() {
         match app.load_last() {
-            Ok(changes) => {
-                if !changes.empty() {
-                    egui_state.changes_window.open(changes);
-                }
+            Ok(()) => {
                 let coll = app
                     .active_collection
                     .as_ref()
@@ -229,22 +227,45 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
         window.clear(Color::BLACK);
         match &mut app.active_collection {
-            Some((_, coll)) => match state.activity {
-                Activity::Thumbnails => {
-                    thumbnails_view::draw_thumbnails(
-                        &mut state,
-                        &res,
-                        &mut window,
-                        &coll.entries,
-                        load_anim_rotation,
-                        !sf_egui.context().wants_pointer_input(),
-                    );
+            Some((_, coll)) => {
+                match state.activity {
+                    Activity::Thumbnails => {
+                        thumbnails_view::draw_thumbnails(
+                            &mut state,
+                            &res,
+                            &mut window,
+                            &coll.entries,
+                            load_anim_rotation,
+                            !sf_egui.context().wants_pointer_input(),
+                        );
+                    }
+                    Activity::Viewer => {
+                        viewer::update(&mut state, &window);
+                        viewer::draw(&mut state, &mut window, coll, &res);
+                    }
                 }
-                Activity::Viewer => {
-                    viewer::update(&mut state, &window);
-                    viewer::draw(&mut state, &mut window, coll, &res);
+                egui_state.loading_changes_notify = false;
+                if let Some(recv) = &app.folder_changes_recv {
+                    match recv.try_recv() {
+                        Ok(changes) => match changes {
+                            Ok(changes) => {
+                                if !changes.empty() {
+                                    egui_state.changes_window.open(changes);
+                                }
+                            }
+                            Err(e) => {
+                                egui_state.modal.err(e);
+                            }
+                        },
+                        Err(TryRecvError::Empty) => {
+                            egui_state.loading_changes_notify = true;
+                        }
+                        Err(TryRecvError::Disconnected) => {
+                            app.folder_changes_recv = None;
+                        }
+                    }
                 }
-            },
+            }
             None => {
                 let msg = "Welcome to cowbump!\n\
                 \n\

@@ -1,6 +1,7 @@
 use {
     crate::{
         db::{EntryMap, EntrySet, FolderChanges, Uid, UidCounter},
+        dlog,
         entry::{self, Entry},
         filter_reqs::Requirements,
         folder_scan::walkdir,
@@ -15,6 +16,7 @@ use {
         borrow::Cow,
         ffi::OsStr,
         path::{Path, PathBuf},
+        sync::mpsc::Receiver,
     },
     thiserror::Error,
 };
@@ -217,44 +219,21 @@ impl Collection {
             .and_then(|id| self.sequences.get(&id))
     }
 
-    pub(crate) fn scan_changes(&self, root: &Path) -> anyhow::Result<FolderChanges> {
-        let wd = walkdir(root);
-        let self_paths: Vec<_> = self.entries.values().map(|en| &en.path).collect();
-        let mut add = Vec::new();
-        let mut remove = Vec::new();
-        // Scan for additions (paths we don't have)
-        for dir_entry in wd {
-            let dir_entry = dir_entry?;
-            if dir_entry.file_type().is_dir() {
-                continue;
+    pub(crate) fn scan_changes(&self, root: PathBuf) -> Receiver<anyhow::Result<FolderChanges>> {
+        let paths = self
+            .entries
+            .values()
+            .map(|en| en.path.to_path_buf())
+            .collect::<Vec<_>>();
+        let ign_ext = self.ignored_extensions.clone();
+        let (send, recv) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let changes = scan_changes(&root, paths, &ign_ext);
+            if let Err(e) = send.send(changes) {
+                dlog!("Failed to send folder changes: {e}");
             }
-            let ignored_ext = dir_entry.path().extension().is_some_and(|ext| {
-                self.ignored_extensions
-                    .iter()
-                    .any(|ign_ext| ext == AsRef::<OsStr>::as_ref(ign_ext))
-            });
-            if ignored_ext {
-                continue;
-            }
-            let dir_entry_path = dir_entry.into_path();
-            let dir_entry_path = match dir_entry_path.strip_prefix(root) {
-                Ok(stripped) => stripped,
-                Err(e) => {
-                    eprintln!("Failed to add entry {dir_entry_path:?}: {e}");
-                    continue;
-                }
-            };
-            if !self_paths.iter().any(|&p| p == dir_entry_path) {
-                add.push(dir_entry_path.to_owned());
-            }
-        }
-        // Scan for removes (paths we have but fs doesn't have)
-        for path in self_paths {
-            if !root.join(path).exists() {
-                remove.push(path.to_owned());
-            }
-        }
-        Ok(FolderChanges { add, remove })
+        });
+        recv
     }
 
     pub(crate) fn apply_changes(
@@ -309,6 +288,49 @@ impl Collection {
             tag.replace_imply(replace, with);
         }
     }
+}
+
+pub fn scan_changes(
+    root: &Path,
+    coll_paths: Vec<PathBuf>,
+    ignored_extensions: &[String],
+) -> anyhow::Result<FolderChanges> {
+    let wd = walkdir(root);
+    let mut add = Vec::new();
+    let mut remove = Vec::new();
+    // Scan for additions (paths we don't have)
+    for dir_entry in wd {
+        let dir_entry = dir_entry?;
+        if dir_entry.file_type().is_dir() {
+            continue;
+        }
+        let ignored_ext = dir_entry.path().extension().is_some_and(|ext| {
+            ignored_extensions
+                .iter()
+                .any(|ign_ext| ext == AsRef::<OsStr>::as_ref(ign_ext))
+        });
+        if ignored_ext {
+            continue;
+        }
+        let dir_entry_path = dir_entry.into_path();
+        let dir_entry_path = match dir_entry_path.strip_prefix(root) {
+            Ok(stripped) => stripped,
+            Err(e) => {
+                eprintln!("Failed to add entry {dir_entry_path:?}: {e}");
+                continue;
+            }
+        };
+        if !coll_paths.iter().any(|p| p == dir_entry_path) {
+            add.push(dir_entry_path.to_owned());
+        }
+    }
+    // Scan for removes (paths we have but fs doesn't have)
+    for path in coll_paths {
+        if !root.join(&path).exists() {
+            remove.push(path);
+        }
+    }
+    Ok(FolderChanges { add, remove })
 }
 
 #[derive(Debug, Error)]

@@ -78,6 +78,8 @@ pub(crate) struct EguiState {
     pub(crate) file_op: Option<FileOp>,
     pub(crate) modal: ModalDialog,
     pub(crate) colorix: Option<Colorix>,
+    /// Whether to tell the user we're loading folder changes
+    pub loading_changes_notify: bool,
 }
 
 pub(crate) enum FileOp {
@@ -115,6 +117,7 @@ impl EguiState {
                 .color_theme
                 .as_ref()
                 .map(|theme| Colorix::init(egui_ctx, theme.to_colorix())),
+            loading_changes_notify: false,
         }
     }
 }
@@ -237,10 +240,7 @@ pub(super) fn do_ui(
         match op {
             FileOp::OpenDirectory => {
                 if let Some(id) = app.database.find_collection_by_path(&path) {
-                    let changes = app.load_collection(id)?;
-                    if !changes.empty() {
-                        egui_state.changes_window.open(changes);
-                    }
+                    app.load_collection(id)?;
                     let result = crate::gui::set_active_collection(
                         &mut state.thumbs_view,
                         app,
