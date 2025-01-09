@@ -162,7 +162,7 @@ pub(super) fn do_frame(
         });
         if egui_state.loading_changes_notify {
             ui.horizontal(|ui| {
-                ui.label("Loading folder changes...");
+                ui.label("Scanning folder changes...");
                 ui.spinner();
             });
         }
