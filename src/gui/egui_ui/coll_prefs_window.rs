@@ -129,10 +129,15 @@ fn tag_specific_apps_ui(
     });
 
     ui.separator();
-    for (tag_id, app_id) in &coll.tag_specific_apps {
+    coll.tag_specific_apps.retain(|tag_id, app_id| {
+        let mut retain = true;
         ui.horizontal(|ui| {
             ui.label(coll.tags.first_name_of(tag_id));
             ui.label(prefs.applications.name_of(app_id));
+            if ui.button("🗑").clicked() {
+                retain = false;
+            }
         });
-    }
+        retain
+    });
 }
