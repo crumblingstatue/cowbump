@@ -39,8 +39,9 @@ pub(super) fn do_frame(
     prefs: &Preferences,
 ) {
     let win = &mut egui_state.coll_prefs_window;
+    let mut open = win.open;
     egui::Window::new("Collection preferences")
-        .open(&mut win.open)
+        .open(&mut open)
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui
@@ -59,57 +60,10 @@ pub(super) fn do_frame(
             ui.separator();
             match win.tab {
                 Tab::IgnoredExts => ignored_exts_ui(ui, coll),
-                Tab::TagSpecificApps => {
-                    ui.heading("Tag specific applications");
-                    ui.label("new");
-                    ui.horizontal(|ui| {
-                        ui.label("tag");
-                        let re = ui.text_edit_singleline(&mut win.add_buf.tag);
-                        if re.changed() {
-                            win.ac_closed = false;
-                        }
-                        let (up_pressed, down_pressed) = ui.input(|inp| {
-                            (
-                                inp.key_pressed(egui::Key::ArrowUp),
-                                inp.key_pressed(egui::Key::ArrowDown),
-                            )
-                        });
-                        if !win.ac_closed
-                            && tag_autocomplete_popup(
-                                &mut win.add_buf.tag,
-                                &mut win.ac_state,
-                                coll,
-                                ui,
-                                &re,
-                                up_pressed,
-                                down_pressed,
-                            )
-                        {
-                            win.ac_closed = true;
-                        }
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("app");
-                        ui.text_edit_singleline(&mut win.add_buf.app);
-                        if ui.button("Add new").clicked() {
-                            if let Some(tag) = coll.resolve_tag(&win.add_buf.tag) {
-                                if let Some(app) = prefs.resolve_app(&win.add_buf.app) {
-                                    coll.tag_specific_apps.insert(tag, app);
-                                }
-                            }
-                        }
-                    });
-
-                    ui.separator();
-                    for (tag_id, app_id) in &coll.tag_specific_apps {
-                        ui.horizontal(|ui| {
-                            ui.label(coll.tags.first_name_of(tag_id));
-                            ui.label(prefs.applications.name_of(app_id));
-                        });
-                    }
-                }
+                Tab::TagSpecificApps => tag_specific_apps_ui(ui, coll, win, prefs),
             }
         });
+    win.open = open;
 }
 
 fn ignored_exts_ui(ui: &mut egui::Ui, coll: &mut Collection) {
@@ -125,5 +79,60 @@ fn ignored_exts_ui(ui: &mut egui::Ui, coll: &mut Collection) {
     });
     if ui.button("Add new").clicked() {
         coll.ignored_extensions.push(String::new());
+    }
+}
+
+fn tag_specific_apps_ui(
+    ui: &mut egui::Ui,
+    coll: &mut Collection,
+    win: &mut CollPrefsWindow,
+    prefs: &Preferences,
+) {
+    ui.heading("Tag specific applications");
+    ui.label("new");
+    ui.horizontal(|ui| {
+        ui.label("tag");
+        let re = ui.text_edit_singleline(&mut win.add_buf.tag);
+        if re.changed() {
+            win.ac_closed = false;
+        }
+        let (up_pressed, down_pressed) = ui.input(|inp| {
+            (
+                inp.key_pressed(egui::Key::ArrowUp),
+                inp.key_pressed(egui::Key::ArrowDown),
+            )
+        });
+        if !win.ac_closed
+            && tag_autocomplete_popup(
+                &mut win.add_buf.tag,
+                &mut win.ac_state,
+                coll,
+                ui,
+                &re,
+                up_pressed,
+                down_pressed,
+            )
+        {
+            win.ac_closed = true;
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label("app");
+        ui.text_edit_singleline(&mut win.add_buf.app);
+        if ui.button("Add new").clicked() {
+            if let Some(tag) = coll.resolve_tag(&win.add_buf.tag) {
+                if let Some(app) = prefs.resolve_app(&win.add_buf.app) {
+                    coll.tag_specific_apps.insert(tag, app);
+                }
+            }
+        }
+    });
+
+    ui.separator();
+    for (tag_id, app_id) in &coll.tag_specific_apps {
+        ui.horizontal(|ui| {
+            ui.label(coll.tags.first_name_of(tag_id));
+            ui.label(prefs.applications.name_of(app_id));
+        });
     }
 }
