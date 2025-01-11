@@ -53,19 +53,7 @@ pub(super) fn do_frame(
             });
             ui.separator();
             match win.tab {
-                Tab::IgnoredExts => {
-                    coll.ignored_extensions.retain_mut(|ext| {
-                        let mut retain = true;
-                        ui.text_edit_singleline(ext);
-                        if ui.button("-").clicked() {
-                            retain = false;
-                        }
-                        retain
-                    });
-                    if ui.button("Add new").clicked() {
-                        coll.ignored_extensions.push(String::new());
-                    }
-                }
+                Tab::IgnoredExts => ignored_exts_ui(ui, coll),
                 Tab::TagSpecificApps => {
                     ui.heading("Tag specific applications");
                     ui.label("new");
@@ -90,4 +78,20 @@ pub(super) fn do_frame(
                 }
             }
         });
+}
+
+fn ignored_exts_ui(ui: &mut egui::Ui, coll: &mut Collection) {
+    coll.ignored_extensions.retain_mut(|ext| {
+        let mut retain = true;
+        ui.horizontal(|ui| {
+            ui.text_edit_singleline(ext);
+            if ui.button("🗑").clicked() {
+                retain = false;
+            }
+        });
+        retain
+    });
+    if ui.button("Add new").clicked() {
+        coll.ignored_extensions.push(String::new());
+    }
 }
