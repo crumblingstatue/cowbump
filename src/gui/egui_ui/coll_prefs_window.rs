@@ -1,5 +1,8 @@
 use {
-    super::EguiState,
+    super::{
+        EguiState,
+        tag_autocomplete::{AcState, tag_autocomplete_popup},
+    },
     crate::{
         collection::{Collection, TagsExt},
         preferences::{AppMapExt, Preferences},
@@ -12,6 +15,8 @@ pub struct CollPrefsWindow {
     pub open: bool,
     add_buf: AddBuf,
     tab: Tab,
+    ac_state: AcState,
+    ac_closed: bool,
 }
 
 #[derive(Default)]
@@ -57,17 +62,44 @@ pub(super) fn do_frame(
                 Tab::TagSpecificApps => {
                     ui.heading("Tag specific applications");
                     ui.label("new");
-                    ui.label("tag");
-                    ui.text_edit_singleline(&mut win.add_buf.tag);
-                    ui.label("app");
-                    ui.text_edit_singleline(&mut win.add_buf.app);
-                    if ui.button("Add new").clicked() {
-                        if let Some(tag) = coll.resolve_tag(&win.add_buf.tag) {
-                            if let Some(app) = prefs.resolve_app(&win.add_buf.app) {
-                                coll.tag_specific_apps.insert(tag, app);
+                    ui.horizontal(|ui| {
+                        ui.label("tag");
+                        let re = ui.text_edit_singleline(&mut win.add_buf.tag);
+                        if re.changed() {
+                            win.ac_closed = false;
+                        }
+                        let (up_pressed, down_pressed) = ui.input(|inp| {
+                            (
+                                inp.key_pressed(egui::Key::ArrowUp),
+                                inp.key_pressed(egui::Key::ArrowDown),
+                            )
+                        });
+                        if !win.ac_closed
+                            && tag_autocomplete_popup(
+                                &mut win.add_buf.tag,
+                                &mut win.ac_state,
+                                coll,
+                                ui,
+                                &re,
+                                up_pressed,
+                                down_pressed,
+                            )
+                        {
+                            win.ac_closed = true;
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("app");
+                        ui.text_edit_singleline(&mut win.add_buf.app);
+                        if ui.button("Add new").clicked() {
+                            if let Some(tag) = coll.resolve_tag(&win.add_buf.tag) {
+                                if let Some(app) = prefs.resolve_app(&win.add_buf.app) {
+                                    coll.tag_specific_apps.insert(tag, app);
+                                }
                             }
                         }
-                    }
+                    });
+
                     ui.separator();
                     for (tag_id, app_id) in &coll.tag_specific_apps {
                         ui.horizontal(|ui| {
