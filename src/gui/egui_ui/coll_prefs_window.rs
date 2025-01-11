@@ -17,6 +17,7 @@ pub struct CollPrefsWindow {
     tab: Tab,
     ac_state: AcState,
     ac_closed: bool,
+    err_msg: String,
 }
 
 #[derive(Default)]
@@ -120,13 +121,21 @@ fn tag_specific_apps_ui(
         ui.label("app");
         ui.text_edit_singleline(&mut win.add_buf.app);
         if ui.button("Add new").clicked() {
+            win.err_msg.clear();
             if let Some(tag) = coll.resolve_tag(&win.add_buf.tag) {
                 if let Some(app) = prefs.resolve_app(&win.add_buf.app) {
                     coll.tag_specific_apps.insert(tag, app);
+                } else {
+                    win.err_msg = format!("Unresolved app: '{}'", win.add_buf.app);
                 }
+            } else {
+                win.err_msg = format!("Unresolved tag: '{}'", win.add_buf.tag);
             }
         }
     });
+    if !win.err_msg.is_empty() {
+        ui.label(egui::RichText::new(&win.err_msg).color(egui::Color32::DARK_RED));
+    }
 
     ui.separator();
     coll.tag_specific_apps.retain(|tag_id, app_id| {
