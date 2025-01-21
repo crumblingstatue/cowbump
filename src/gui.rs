@@ -250,7 +250,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         Ok(changes) => match changes {
                             Ok(changes) => {
                                 if !changes.empty() {
-                                    egui_state.changes_window.open(changes);
+                                    egui_state.changes_window.open_fresh(changes);
                                 }
                             }
                             Err(e) => {

@@ -171,7 +171,9 @@ pub(super) fn do_frame(
     }
 }
 impl ChangesWindow {
-    pub(crate) fn open(&mut self, changes: FolderChanges) {
+    /// Opens a freshly initialized changes window containing the provided changes
+    pub(crate) fn open_fresh(&mut self, changes: FolderChanges) {
+        *self = Default::default();
         self.open = true;
         self.changes = changes;
     }
