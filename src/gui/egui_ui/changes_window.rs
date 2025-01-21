@@ -16,7 +16,6 @@ use {
 
 struct AddedInfo {
     id: entry::Id,
-    checked: bool,
 }
 
 #[derive(Default)]
@@ -64,23 +63,12 @@ pub(super) fn do_frame(
                                                 (128.0, 128.0),
                                             ));
                                             let re = ui.add(img_button);
-                                            if info.checked {
-                                                ui.painter().rect_stroke(
-                                                    re.rect,
-                                                    1.0,
-                                                    (2.0, Color32::GREEN),
-                                                );
-                                            }
                                             if re.clicked() {
                                                 state.thumbs_view.highlight_and_seek_to_entry(
                                                     info.id,
                                                     rw.size().y,
                                                 );
                                             }
-                                            ui.checkbox(
-                                                &mut info.checked,
-                                                add.to_string_lossy().as_ref(),
-                                            );
                                         });
                                     }
                                     None => {
@@ -127,8 +115,7 @@ pub(super) fn do_frame(
                 if !win.applied {
                     if ui.button("Apply").clicked() {
                         app.apply_changes_to_active_collection(changes, |path, id| {
-                            win.added
-                                .insert(path.to_owned(), AddedInfo { id, checked: false });
+                            win.added.insert(path.to_owned(), AddedInfo { id });
                         });
                         if let Some((_, active_coll)) = &mut app.active_collection {
                             state.thumbs_view = ThumbnailsView::from_collection(
