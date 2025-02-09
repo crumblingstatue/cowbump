@@ -46,11 +46,21 @@ pub struct Preferences {
 #[derive(Serialize, Deserialize)]
 pub struct ColorTheme {
     colors: [MyThemeColor; 12],
+    #[serde(default)]
+    pub light_dark_preference: Option<LightDarkPref>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub enum LightDarkPref {
+    Light,
+    Dark,
+}
+
 impl ColorTheme {
-    fn from_colorix(theme: &[ThemeColor; 12]) -> Self {
+    fn from_colorix(theme: &[ThemeColor; 12], light_dark: Option<LightDarkPref>) -> Self {
         Self {
             colors: theme.map(|preset| preset.rgb()),
+            light_dark_preference: light_dark,
         }
     }
     pub(crate) fn to_colorix(&self) -> [ThemeColor; 12] {
@@ -75,8 +85,12 @@ impl Preferences {
             .find(|(_k, v)| v.name == name)
             .map(|(k, _v)| *k)
     }
-    pub fn set_color_theme_from_colorix(&mut self, colorix: &Colorix) {
-        self.color_theme = Some(ColorTheme::from_colorix(colorix.theme()));
+    pub fn set_color_theme_from_colorix(
+        &mut self,
+        colorix: &Colorix,
+        light_dark: Option<LightDarkPref>,
+    ) {
+        self.color_theme = Some(ColorTheme::from_colorix(colorix.theme(), light_dark));
     }
 }
 

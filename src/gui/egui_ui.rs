@@ -37,7 +37,7 @@ use {
         collection::{Collection, TagsExt},
         entry,
         gui::State,
-        preferences::Preferences,
+        preferences::{LightDarkPref, Preferences},
     },
     anyhow::Context as _,
     egui_colors::Colorix,
@@ -113,10 +113,19 @@ impl EguiState {
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::default()),
             file_op: None,
             modal: ModalDialog::default(),
-            colorix: prefs
-                .color_theme
-                .as_ref()
-                .map(|theme| Colorix::global(egui_ctx, theme.to_colorix())),
+            colorix: prefs.color_theme.as_ref().map(|theme| {
+                let mut colorix = Colorix::global(egui_ctx, theme.to_colorix());
+                if let Some(pref) = &theme.light_dark_preference {
+                    // TODO: This is really stupid. Create a mock ui to set light/dark
+                    let mut ui =
+                        egui::Ui::new(egui_ctx.clone(), "mock".into(), egui::UiBuilder::new());
+                    match pref {
+                        LightDarkPref::Light => colorix.set_light(&mut ui),
+                        LightDarkPref::Dark => colorix.set_dark(&mut ui),
+                    }
+                }
+                colorix
+            }),
             loading_changes_notify: false,
         }
     }

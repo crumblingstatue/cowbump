@@ -3,7 +3,8 @@ use {
     crate::{
         gui::State,
         preferences::{
-            App, AppId, ScrollWheelMultiplier, ThumbnailsPerRow, UpDownArrowScrollSpeed, ValuePref,
+            App, AppId, LightDarkPref, ScrollWheelMultiplier, ThumbnailsPerRow,
+            UpDownArrowScrollSpeed, ValuePref,
         },
     },
     constcat::concat,
@@ -151,10 +152,14 @@ fn color_theme_categ_ui(
     ui.horizontal(|ui| {
         ui.label("Preset");
         colorix.themes_dropdown(ui, None, false);
-        ui.group(|ui| {
-            ui.label("Dark/light toggle");
-            colorix.light_dark_toggle_button(ui, 30.0);
-        });
+        let was_dark = colorix.dark_mode();
+        if ui.button("Toggle dark/light").clicked() {
+            if was_dark {
+                colorix.set_light(ui);
+            } else {
+                colorix.set_dark(ui);
+            }
+        }
         if ui.button(concat!(icons::SORT, " Randomize")).clicked() {
             let mut rng = rand::thread_rng();
             let theme = std::array::from_fn(|_| {
@@ -173,7 +178,12 @@ fn color_theme_categ_ui(
             }
         }
         if ui.button(concat!(icons::SAVE, " Save custom")).clicked() {
-            prefs.set_color_theme_from_colorix(colorix);
+            let light_dark = if colorix.dark_mode() {
+                LightDarkPref::Dark
+            } else {
+                LightDarkPref::Light
+            };
+            prefs.set_color_theme_from_colorix(colorix, Some(light_dark));
         }
         if ui
             .button(concat!(icons::SAVE, " Reset default egui theme and save"))
