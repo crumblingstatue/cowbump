@@ -42,10 +42,13 @@ impl ThumbnailLoader {
                 let data = match std::fs::read(&name) {
                     Ok(data) => data,
                     Err(e) => {
-                        slots_clone.lock().insert(uid, ImageSlot {
-                            result: Some(Err(image::ImageError::IoError(e))),
-                            ffmpeg: false,
-                        });
+                        slots_clone.lock().insert(
+                            uid,
+                            ImageSlot {
+                                result: Some(Err(image::ImageError::IoError(e))),
+                                ffmpeg: false,
+                            },
+                        );
                         return;
                     }
                 };
@@ -70,10 +73,13 @@ impl ThumbnailLoader {
                 }
                 let result =
                     image_result.map(|i| i.resize(size, size, FilterType::Triangle).to_rgba8());
-                slots_clone.lock().insert(uid, ImageSlot {
-                    result: Some(result),
-                    ffmpeg: ffmpeg_was_used,
-                });
+                slots_clone.lock().insert(
+                    uid,
+                    ImageSlot {
+                        result: Some(result),
+                        ffmpeg: ffmpeg_was_used,
+                    },
+                );
             });
         }
     }
@@ -84,17 +90,23 @@ impl ThumbnailLoader {
                 match result {
                     Ok(buf) => {
                         let tex = imagebuf_to_sf_tex(buf);
-                        cache.insert(uid, Thumbnail {
-                            texture: Some(tex),
-                            ffmpeg_loaded: slot.ffmpeg,
-                        });
+                        cache.insert(
+                            uid,
+                            Thumbnail {
+                                texture: Some(tex),
+                                ffmpeg_loaded: slot.ffmpeg,
+                            },
+                        );
                     }
                     Err(e) => {
                         dlog!("Error loading thumbnail: {e}");
-                        cache.insert(uid, Thumbnail {
-                            texture: None,
-                            ffmpeg_loaded: slot.ffmpeg,
-                        });
+                        cache.insert(
+                            uid,
+                            Thumbnail {
+                                texture: None,
+                                ffmpeg_loaded: slot.ffmpeg,
+                            },
+                        );
                     }
                 }
                 false

@@ -116,7 +116,7 @@ impl EguiState {
             colorix: prefs
                 .color_theme
                 .as_ref()
-                .map(|theme| Colorix::init(egui_ctx, theme.to_colorix())),
+                .map(|theme| Colorix::global(egui_ctx, theme.to_colorix())),
             loading_changes_notify: false,
         }
     }

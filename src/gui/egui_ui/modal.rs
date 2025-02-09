@@ -249,7 +249,7 @@ fn show_modal_ui(ctx: &egui::Context, ui_fn: impl FnOnce(&mut egui::Ui)) {
             ui.allocate_response(screen_rect.size(), egui::Sense::click());
             ui.painter().rect_filled(
                 screen_rect,
-                egui::Rounding::ZERO,
+                egui::CornerRadius::ZERO,
                 egui::Color32::from_rgba_premultiplied(0, 0, 0, 200),
             );
         });

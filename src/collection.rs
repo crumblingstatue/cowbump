@@ -270,7 +270,7 @@ impl Collection {
         self.replace_tag_refs(merge, into);
         // Merge names
         {
-            let [Some(merge), Some(into)] = self.tags.get_many_mut([&merge, &into]) else {
+            let [Some(merge), Some(into)] = self.tags.get_disjoint_mut([&merge, &into]) else {
                 bail!("Couldn't get tags for merge operation");
             };
             into.names.append(&mut merge.names);

@@ -1,4 +1,4 @@
-#![feature(try_blocks, let_chains, map_many_mut)]
+#![feature(try_blocks, let_chains)]
 #![windows_subsystem = "windows"]
 #![warn(
     unused_qualifications,

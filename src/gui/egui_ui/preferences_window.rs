@@ -147,20 +147,20 @@ fn color_theme_categ_ui(
 ) {
     let colorix = egui_state
         .colorix
-        .get_or_insert_with(|| Colorix::init(ui.ctx(), egui_colors::utils::EGUI_THEME));
+        .get_or_insert_with(|| Colorix::global(ui.ctx(), egui_colors::utils::EGUI_THEME));
     ui.horizontal(|ui| {
         ui.label("Preset");
         colorix.themes_dropdown(ui, None, false);
         ui.group(|ui| {
             ui.label("Dark/light toggle");
-            colorix.light_dark_toggle_button(ui);
+            colorix.light_dark_toggle_button(ui, 30.0);
         });
         if ui.button(concat!(icons::SORT, " Randomize")).clicked() {
             let mut rng = rand::thread_rng();
             let theme = std::array::from_fn(|_| {
                 ThemeColor::Custom([rng.r#gen(), rng.r#gen(), rng.r#gen()])
             });
-            *colorix = Colorix::init(ui.ctx(), theme);
+            *colorix = Colorix::global(ui.ctx(), theme);
         }
     });
     ui.separator();
@@ -169,7 +169,7 @@ fn color_theme_categ_ui(
     ui.horizontal(|ui| {
         if let Some(theme) = &prefs.color_theme {
             if ui.button(concat!(icons::CANCEL, " Restore")).clicked() {
-                *colorix = Colorix::init(ui.ctx(), theme.to_colorix());
+                *colorix = Colorix::global(ui.ctx(), theme.to_colorix());
             }
         }
         if ui.button(concat!(icons::SAVE, " Save custom")).clicked() {
