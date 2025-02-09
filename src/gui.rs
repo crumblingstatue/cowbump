@@ -23,12 +23,13 @@ use {
         db::EntryMap,
         entry,
         filter_reqs::Requirements,
-        preferences::Preferences,
+        preferences::{LightDarkPref, Preferences},
     },
     anyhow::Context as _,
     arboard::Clipboard,
     egui_sfml::{
         SfEgui,
+        egui::ThemePreference,
         sfml::{
             cpp::FBox,
             graphics::{
@@ -56,6 +57,15 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut state = State::new(window.size().x, &app.database.preferences)?;
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
+    if let Some(theme) = &app.database.preferences.color_theme
+        && let Some(pref) = &theme.light_dark_preference
+    {
+        let pref = match pref {
+            LightDarkPref::Light => ThemePreference::Light,
+            LightDarkPref::Dark => ThemePreference::Dark,
+        };
+        sf_egui.context().set_theme(pref);
+    }
     egui_ui::set_up_style(sf_egui.context(), &app.database.preferences.style);
     let mut egui_state = EguiState::new(&app.database.preferences, sf_egui.context());
 

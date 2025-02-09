@@ -37,13 +37,13 @@ use {
         collection::{Collection, TagsExt},
         entry,
         gui::State,
-        preferences::{LightDarkPref, Preferences},
+        preferences::Preferences,
     },
     anyhow::Context as _,
     egui_colors::Colorix,
     egui_file_dialog::FileDialog,
     egui_sfml::{
-        egui::{self, Context, FontFamily, FontId, TextStyle, ThemePreference},
+        egui::{self, Context, FontFamily, FontId, TextStyle},
         sfml::{
             cpp::FBox,
             graphics::{Image, RenderTarget, RenderWindow, Texture},
@@ -113,15 +113,10 @@ impl EguiState {
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::default()),
             file_op: None,
             modal: ModalDialog::default(),
-            colorix: prefs.color_theme.as_ref().map(|theme| {
-                if let Some(pref) = &theme.light_dark_preference {
-                    match pref {
-                        LightDarkPref::Light => egui_ctx.set_theme(ThemePreference::Light),
-                        LightDarkPref::Dark => egui_ctx.set_theme(ThemePreference::Dark),
-                    }
-                }
-                Colorix::global(egui_ctx, theme.to_colorix())
-            }),
+            colorix: prefs
+                .color_theme
+                .as_ref()
+                .map(|theme| Colorix::global(egui_ctx, theme.to_colorix())),
             loading_changes_notify: false,
         }
     }
