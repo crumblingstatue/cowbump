@@ -211,7 +211,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     }
                 }
                 Action::Shuffle => {
-                    state.thumbs_view.uids.shuffle(&mut rand::thread_rng());
+                    state.thumbs_view.uids.shuffle(&mut rand::rng());
                 }
                 Action::OpenEntriesWindow => {
                     let id_vec = state

@@ -161,9 +161,9 @@ fn color_theme_categ_ui(
             }
         }
         if ui.button(concat!(icons::SORT, " Randomize")).clicked() {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             let theme = std::array::from_fn(|_| {
-                ThemeColor::Custom([rng.r#gen(), rng.r#gen(), rng.r#gen()])
+                ThemeColor::Custom([rng.random(), rng.random(), rng.random()])
             });
             *colorix = Colorix::global(ui.ctx(), theme);
         }
