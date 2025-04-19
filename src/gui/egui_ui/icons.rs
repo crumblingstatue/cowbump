@@ -11,7 +11,6 @@ pub const EDIT: &str = "🖊";
 pub const TERM: &str = "🖳";
 pub const COPY: &str = "🖹";
 pub const WARN: &str = "⚠";
-pub const CAMERA: &str = "📷";
 pub const QUESTION: &str = "？";
 pub const FOLDER: &str = "📂";
 pub const HAMBURGER: &str = "☰";

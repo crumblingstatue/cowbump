@@ -1,11 +1,13 @@
 use {
     super::{Activity, State, resources::Resources, thumbnail_loader::imagebuf_to_sf_tex},
     crate::{collection::Collection, dlog, entry},
-    egui_sfml::{
+    egui_sf2g::{
         egui,
-        sfml::{
+        sf2g::{
             cpp::FBox,
-            graphics::{RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable},
+            graphics::{
+                RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable,
+            },
             window::{Event, Key, mouse},
         },
     },
@@ -33,12 +35,12 @@ pub(super) fn draw(
                     state.viewer_state.image_offset.1 as f32,
                 ));
                 spr.set_scale((state.viewer_state.scale, state.viewer_state.scale));
-                window.draw(&spr);
+                window.draw_sprite(&spr, &RenderStates::DEFAULT);
             }
             Err(e) => {
                 let mut text = Text::new(&e.to_string(), &res.font, 20);
                 text.set_position((200., 200.));
-                window.draw(&text);
+                window.draw_text(&text, &RenderStates::DEFAULT);
             }
         },
         None => {

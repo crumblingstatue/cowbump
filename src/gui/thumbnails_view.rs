@@ -14,9 +14,9 @@ use {
         preferences::Preferences,
     },
     anyhow::Context as _,
-    egui_sfml::{
+    egui_sf2g::{
         egui::Context,
-        sfml::{
+        sf2g::{
             graphics::{
                 Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
                 Sprite, Text, Transformable,
@@ -235,14 +235,14 @@ pub(super) fn draw_thumbnails(
             rs.set_fill_color(Color::rgba(225, 225, 200, 48));
             rs.set_outline_color(Color::rgb(200, 200, 0));
             rs.set_outline_thickness(-2.0);
-            window.draw(&rs);
+            window.draw_rectangle_shape(&rs, &RenderStates::DEFAULT);
         }
         if let Some(idx) = state.select_a
             && idx == abs_idx
         {
             let mut s = Sprite::with_texture(&res.sel_begin_texture);
             s.set_position((x, y));
-            window.draw(&s);
+            window.draw_sprite(&s, &RenderStates::DEFAULT);
         }
     }
 }
@@ -292,7 +292,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         rect.set_fill_color(Color::rgba(0, 0, 0, 128));
         rect.set_size((380., 24.));
         rect.set_position(fname_pos);
-        window.draw(&rect);
+        window.draw_rectangle_shape(&rect, &RenderStates::DEFAULT);
     }
     if show_filename {
         if let Some(path_string) = entries[&id].path.to_str() {

@@ -39,15 +39,11 @@ use {
         gui::State,
         preferences::Preferences,
     },
-    anyhow::Context as _,
     egui_colors::Colorix,
     egui_file_dialog::FileDialog,
-    egui_sfml::{
+    egui_sf2g::{
         egui::{self, Context, FontFamily, FontId, TextStyle},
-        sfml::{
-            cpp::FBox,
-            graphics::{Image, RenderTarget, RenderWindow, Texture},
-        },
+        sf2g::graphics::{RenderTarget, RenderWindow, Texture},
     },
     modal::{ModalDialog, PromptAction},
     top_bar::TopBar,
@@ -84,7 +80,6 @@ pub(crate) struct EguiState {
 
 pub(crate) enum FileOp {
     OpenDirectory,
-    SaveScreenshot(FBox<Image>),
     CreateBackup,
     RestoreBackup,
 }
@@ -257,13 +252,6 @@ pub(super) fn do_ui(
                     load_folder_window::open(&mut egui_state.load_folder_window, path);
                 }
             }
-            FileOp::SaveScreenshot(ss) => {
-                let path_str = path.to_str().context("Failed to convert path to str")?;
-                ss.save_to_file(path_str).context("Failed to save image")?;
-                egui_state
-                    .modal
-                    .success(format!("Saved screenshot to {path_str}"));
-            }
             FileOp::CreateBackup => {
                 let result: anyhow::Result<()> = try {
                     app.save_active_collection()?;
@@ -347,7 +335,7 @@ impl<'state, 'res, 'db> TexSrc<'state, 'res, 'db> {
     }
 }
 
-impl egui_sfml::UserTexSource for TexSrc<'_, '_, '_> {
+impl egui_sf2g::UserTexSource for TexSrc<'_, '_, '_> {
     fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
         let tex = match self.coll {
             Some(coll) => {

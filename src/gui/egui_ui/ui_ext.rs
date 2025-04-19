@@ -1,4 +1,4 @@
-use egui_sfml::egui;
+use egui_sf2g::egui;
 
 pub trait UiExt {
     fn rtl(&mut self, add_contents: impl FnOnce(&mut egui::Ui)) -> egui::InnerResponse<()>;

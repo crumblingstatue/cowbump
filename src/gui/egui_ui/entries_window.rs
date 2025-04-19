@@ -22,7 +22,7 @@ use {
     },
     anyhow::Context as _,
     constcat::concat,
-    egui_sfml::{
+    egui_sf2g::{
         egui::{
             self, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
             Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui, Widget,
@@ -31,7 +31,7 @@ use {
             text_selection::CursorRange,
             vec2,
         },
-        sfml::graphics::{RenderTarget, RenderWindow},
+        sf2g::graphics::{RenderTarget, RenderWindow},
     },
     std::{
         fmt::Write,

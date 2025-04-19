@@ -1,6 +1,6 @@
 use {
     super::EguiState,
-    egui_sfml::egui::{self, Align, Color32, Context, Label, RichText, ScrollArea, Window},
+    egui_sf2g::egui::{self, Align, Color32, Context, Label, RichText, ScrollArea, Window},
 };
 
 pub struct DebugWindow {

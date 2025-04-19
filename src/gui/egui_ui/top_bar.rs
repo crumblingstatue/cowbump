@@ -7,9 +7,9 @@ use {
     },
     anyhow::anyhow,
     constcat::concat,
-    egui_sfml::{
+    egui_sf2g::{
         egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
-        sfml::graphics::{RenderTarget, RenderWindow},
+        sf2g::graphics::{RenderTarget, RenderWindow},
     },
 };
 
@@ -57,7 +57,7 @@ pub(super) fn do_frame(
                 }
                 Activity::Viewer => viewer::menu_ui(ui, state, win),
             }
-            help_menu(ui, win, app, egui_state);
+            help_menu(ui, app, egui_state);
             ui.separator();
             match state.activity {
                 Activity::Thumbnails => {
@@ -170,7 +170,7 @@ pub(super) fn do_frame(
     result
 }
 
-fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_state: &mut EguiState) {
+fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
     ui.menu_button("Help", |ui| {
         if ui.button(concat!(icons::QUESTION, "About")).clicked() {
             ui.close_menu();
@@ -184,13 +184,6 @@ fn help_menu(ui: &mut egui::Ui, win: &RenderWindow, app: &Application, egui_stat
         ui.vertical_centered(|ui| {
             ui.label("= Debug =");
         });
-        if ui
-            .add(Button::new(concat!(icons::CAMERA, " Save screenshot")).shortcut_text("F11"))
-            .clicked()
-        {
-            ui.close_menu();
-            crate::gui::util::take_and_save_screenshot(win, egui_state);
-        }
         if ui
             .button(concat!(icons::FOLDER, " Open data dir"))
             .clicked()

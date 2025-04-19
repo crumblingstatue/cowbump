@@ -1,4 +1,4 @@
-use {crate::application::Application, egui_sfml::egui};
+use {crate::application::Application, egui_sf2g::egui};
 
 #[derive(Default)]
 pub struct CollectionsDbWindow {

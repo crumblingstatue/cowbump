@@ -7,9 +7,9 @@ use {
         collection::Collection,
         gui::{State, thumbnails_view::search_goto_cursor},
     },
-    egui_sfml::{
+    egui_sf2g::{
         egui::{Context, Key, Modifiers, TextEdit},
-        sfml::graphics::{RenderTarget, RenderWindow},
+        sf2g::graphics::{RenderTarget, RenderWindow},
     },
 };
 

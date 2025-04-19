@@ -15,12 +15,12 @@ use {
         sequence::{self},
     },
     constcat::concat,
-    egui_sfml::{
+    egui_sf2g::{
         egui::{
             Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit,
             TextureId, Window, load::SizedTexture,
         },
-        sfml::graphics::RenderWindow,
+        sf2g::graphics::RenderWindow,
     },
 };
 

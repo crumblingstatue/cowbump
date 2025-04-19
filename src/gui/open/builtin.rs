@@ -5,7 +5,7 @@ use {
         gui::{Activity, State},
         sequence::Sequence,
     },
-    egui_sfml::sfml::graphics::RenderWindow,
+    egui_sf2g::sf2g::graphics::RenderWindow,
 };
 
 /// Open functionality when enter is pressed in thumbnails view

@@ -1,6 +1,6 @@
 use {
     super::tag_autocomplete::AcState,
-    egui_sfml::egui::{Align2, Context, Ui, Window},
+    egui_sf2g::egui::{Align2, Context, Ui, Window},
 };
 
 #[derive(Default)]

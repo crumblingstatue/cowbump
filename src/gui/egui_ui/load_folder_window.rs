@@ -8,12 +8,12 @@ use {
         gui::{State, resources::Resources, thumbnail_loader},
     },
     constcat::concat,
-    egui_sfml::{
+    egui_sf2g::{
         egui::{
             self, Align, Button, Color32, Context, Key, Label, ProgressBar, RichText, ScrollArea,
             Sense, Window, vec2,
         },
-        sfml::{cpp::FBox, graphics::Texture},
+        sf2g::{cpp::FBox, graphics::Texture},
     },
     std::{
         ffi::OsStr,

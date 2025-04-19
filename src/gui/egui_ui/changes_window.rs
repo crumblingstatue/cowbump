@@ -3,12 +3,12 @@ use {
     crate::{
         application::Application, db::FolderChanges, entry, gui::thumbnails_view::ThumbnailsView,
     },
-    egui_sfml::{
+    egui_sf2g::{
         egui::{
             self, Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window,
             load::SizedTexture,
         },
-        sfml::graphics::{RenderTarget, RenderWindow},
+        sf2g::graphics::{RenderTarget, RenderWindow},
     },
     fnv::FnvHashMap,
     std::path::PathBuf,

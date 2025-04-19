@@ -4,7 +4,6 @@ mod open;
 mod resources;
 mod thumbnail_loader;
 mod thumbnails_view;
-mod util;
 mod viewer;
 
 use {
@@ -27,14 +26,14 @@ use {
     },
     anyhow::Context as _,
     arboard::Clipboard,
-    egui_sfml::{
+    egui_sf2g::{
         SfEgui,
         egui::ThemePreference,
-        sfml::{
+        sf2g::{
             cpp::FBox,
             graphics::{
-                Color, Rect, RectangleShape, RenderTarget, RenderWindow, Shape, Text, Texture,
-                Transformable, View,
+                Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Text,
+                Texture, Transformable, View,
             },
             window::{Event, Key, Style, VideoMode},
         },
@@ -117,7 +116,6 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     code, ctrl, shift, ..
                 } => match code {
                     Key::F1 => egui_state.top_bar.toggle(),
-                    Key::F11 => util::take_and_save_screenshot(&window, &mut egui_state),
                     Key::F12 if !ctrl && !shift => egui_state.debug_window.toggle(),
                     Key::Q if ctrl => window.close(),
                     _ => {}
@@ -285,7 +283,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 If you don't see the top menu, you can toggle it with F1";
                 let mut text = Text::new(msg, &res.font, 24);
                 text.set_position((16., 64.));
-                window.draw(&text);
+                window.draw_text(&text, &RenderStates::DEFAULT);
             }
         }
         if let Some(index) = state.thumbs_view.highlight {
@@ -301,14 +299,14 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             search_highlight.set_outline_thickness(-4.0);
             let (x, y) = state.thumbs_view.item_position(index);
             search_highlight.set_position((x as f32, y as f32 - state.thumbs_view.y_offset));
-            window.draw(&search_highlight);
+            window.draw_rectangle_shape(&search_highlight, &RenderStates::DEFAULT);
         }
         if let Some(tex) = egui_state.load_folder_window.texture.as_ref() {
             let mut rs = RectangleShape::from_rect(Rect::new(800., 64., 512., 512.));
             rs.set_texture(tex, true);
             rs.set_outline_color(Color::YELLOW);
             rs.set_outline_thickness(4.0);
-            window.draw(&rs);
+            window.draw_rectangle_shape(&rs, &RenderStates::DEFAULT);
         }
         let mut tex_src = egui_ui::TexSrc::new(&mut state, &res, app);
         sf_egui.draw(di, &mut window, Some(&mut tex_src));

@@ -3,7 +3,7 @@ use {
     crate::{dlog, tag},
     constcat::concat,
     egui_flex::{Flex, FlexAlign, FlexAlignContent, item},
-    egui_sfml::egui::{self, TextWrapMode},
+    egui_sf2g::egui::{self, TextWrapMode},
     std::backtrace::Backtrace,
 };
 

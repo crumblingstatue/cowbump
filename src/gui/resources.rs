@@ -1,8 +1,8 @@
 use {
     anyhow::Context,
-    egui_sfml::sfml::{
+    egui_sf2g::sf2g::{
         cpp::FBox,
-        graphics::{Font, IntRect, Texture},
+        graphics::{Font, Texture},
     },
 };
 
@@ -28,12 +28,10 @@ impl Resources {
         let mut movie_texture = Texture::new().context("texture create error")?;
         let font = Font::from_memory_static(include_bytes!(res!("Vera.ttf")))
             .context("failed to load font")?;
-        loading_texture
-            .load_from_memory(include_bytes!(res!("loading.png")), IntRect::default())?;
-        error_texture.load_from_memory(include_bytes!(res!("error.png")), IntRect::default())?;
-        sel_begin_texture
-            .load_from_memory(include_bytes!(res!("select_begin.png")), IntRect::default())?;
-        movie_texture.load_from_memory(include_bytes!(res!("movie.png")), IntRect::default())?;
+        loading_texture.load_from_memory(include_bytes!(res!("loading.png")))?;
+        error_texture.load_from_memory(include_bytes!(res!("error.png")))?;
+        sel_begin_texture.load_from_memory(include_bytes!(res!("select_begin.png")))?;
+        movie_texture.load_from_memory(include_bytes!(res!("movie.png")))?;
         Ok(Self {
             loading_texture,
             error_texture,

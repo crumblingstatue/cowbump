@@ -12,7 +12,7 @@ use {
         tag,
     },
     constcat::concat,
-    egui_sfml::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit},
+    egui_sf2g::egui::{Button, Color32, Context, Grid, Key, RichText, ScrollArea, TextEdit},
 };
 
 #[derive(Default)]
@@ -90,7 +90,7 @@ pub(super) fn do_frame(
     let ac_state = &mut egui_state.tag_window.ac_state;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
-    egui_sfml::egui::Window::new(concat!(icons::TAG, " Tag list"))
+    egui_sf2g::egui::Window::new(concat!(icons::TAG, " Tag list"))
         .open(&mut egui_state.tag_window.on)
         .show(egui_ctx, move |ui| {
             ui.horizontal(|ui| {

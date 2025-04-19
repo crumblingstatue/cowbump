@@ -7,7 +7,7 @@ use {
         collection::{Collection, TagsExt},
         preferences::{AppMapExt, Preferences},
     },
-    egui_sfml::egui,
+    egui_sf2g::egui,
 };
 
 #[derive(Default)]

@@ -1,7 +1,7 @@
 use {
     super::Thumbnail,
     crate::{db::EntryMap, dlog, entry, gui::ThumbnailCache},
-    egui_sfml::sfml::{cpp::FBox, graphics::Texture},
+    egui_sf2g::sf2g::{cpp::FBox, graphics::Texture},
     image::{ImageBuffer, ImageResult, Rgba, imageops::FilterType},
     parking_lot::Mutex,
     std::{

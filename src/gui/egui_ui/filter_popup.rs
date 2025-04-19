@@ -10,7 +10,7 @@ use {
             },
         },
     },
-    egui_sfml::egui::{Color32, Context, Key, Modifiers, TextEdit},
+    egui_sf2g::egui::{Color32, Context, Key, Modifiers, TextEdit},
 };
 
 /// Returns whether filter state changed

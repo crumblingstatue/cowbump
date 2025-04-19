@@ -1,9 +1,9 @@
 use {
     crate::{entry, gui::State},
     anyhow::Context,
-    egui_sfml::{
+    egui_sf2g::{
         egui::{self, PointerButton, TextureId},
-        sfml::graphics::RenderWindow,
+        sf2g::graphics::RenderWindow,
     },
 };
 
