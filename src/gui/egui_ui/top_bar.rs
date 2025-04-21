@@ -2,12 +2,8 @@ use {
     super::{Action, EguiState, FileOp, PromptAction, icons},
     crate::{
         application::Application,
-        collection,
-        gui::{
-            Activity, SelectionBuf, State,
-            thumbnails_view::{SortBy, SortOrder},
-            viewer,
-        },
+        collection::{self, SortBy, SortOrder},
+        gui::{Activity, SelectionBuf, State, viewer},
     },
     anyhow::anyhow,
     constcat::concat,

@@ -359,3 +359,16 @@ fn pathbuf_rename_filename(buf: &mut PathBuf, new_name: &str) -> anyhow::Result<
     *buf = new_buf;
     Ok(())
 }
+
+#[derive(PartialEq, Serialize, Deserialize, Clone, Copy)]
+pub enum SortBy {
+    Path,
+    Id,
+    NTags,
+}
+
+#[derive(PartialEq, Serialize, Deserialize, Clone, Copy)]
+pub enum SortOrder {
+    Asc,
+    Desc,
+}

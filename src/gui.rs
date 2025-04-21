@@ -20,7 +20,7 @@ use {
         db::EntryMap,
         entry,
         filter_reqs::Requirements,
-        preferences::{LightDarkPref, Preferences},
+        preferences::{LightDarkPref, Preferences, SortPreference},
     },
     anyhow::Context as _,
     arboard::Clipboard,
@@ -296,9 +296,18 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     }
     if !app.no_save {
         app.save_active_collection()?;
+        pre_db_save_update(app, &state);
         app.database.save()?;
     }
     Ok(())
+}
+
+/// Update things like preferences from application state, before saving the db.
+fn pre_db_save_update(app: &mut Application, state: &State) {
+    app.database.preferences.sort_pref = SortPreference {
+        by: state.thumbs_view.sort_by,
+        order: state.thumbs_view.sort_order,
+    };
 }
 
 struct Thumbnail {

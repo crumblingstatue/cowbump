@@ -8,7 +8,7 @@ use {
         thumbnail_loader::ThumbnailLoader,
     },
     crate::{
-        collection::{Collection, Entries},
+        collection::{Collection, Entries, SortBy, SortOrder},
         dlog, entry,
         filter_reqs::Requirements,
         preferences::Preferences,
@@ -38,19 +38,6 @@ pub struct ThumbnailsView {
     pub highlight: Option<u32>,
 }
 
-#[derive(PartialEq)]
-pub enum SortBy {
-    Path,
-    Id,
-    NTags,
-}
-
-#[derive(PartialEq)]
-pub enum SortOrder {
-    Asc,
-    Desc,
-}
-
 fn thumbs_per_row_and_size(window_width: u32, preferences: &Preferences) -> (u8, u32) {
     let thumbnails_per_row = preferences.thumbs_per_row;
     let thumbnail_size = window_width / u32::from(thumbnails_per_row);
@@ -62,8 +49,8 @@ impl ThumbnailsView {
         let (thumbs_per_row, thumb_size) = thumbs_per_row_and_size(window_width, preferences);
         Self {
             y_offset: Default::default(),
-            sort_by: SortBy::Path,
-            sort_order: SortOrder::Asc,
+            sort_by: preferences.sort_pref.by,
+            sort_order: preferences.sort_pref.order,
             uids: Default::default(),
             thumb_size,
             thumbs_per_row,

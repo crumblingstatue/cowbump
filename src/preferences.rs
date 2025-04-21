@@ -1,5 +1,8 @@
 use {
-    crate::db::Uid,
+    crate::{
+        collection::{SortBy, SortOrder},
+        db::Uid,
+    },
     egui_colors::{Colorix, tokens::ThemeColor},
     egui_sf2g::egui::emath::Numeric,
     fnv::FnvHashMap,
@@ -41,6 +44,21 @@ pub struct Preferences {
     pub thumbs_per_row: u8,
     #[serde(default)]
     pub color_theme: Option<ColorTheme>,
+    #[serde(default = "default_sort_pref")]
+    pub sort_pref: SortPreference,
+}
+
+fn default_sort_pref() -> SortPreference {
+    SortPreference {
+        by: SortBy::Path,
+        order: SortOrder::Asc,
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy)]
+pub struct SortPreference {
+    pub by: SortBy,
+    pub order: SortOrder,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -173,6 +191,7 @@ impl Default for Preferences {
             start_fullscreen: false,
             thumbs_per_row: thumbs_per_row_default(),
             color_theme: None,
+            sort_pref: default_sort_pref(),
         }
     }
 }
