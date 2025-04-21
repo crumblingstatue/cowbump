@@ -3,7 +3,7 @@ use {
     crate::{
         application::Application,
         collection,
-        gui::{Activity, SelectionBuf, State, viewer},
+        gui::{Activity, SelectionBuf, State, thumbnails_view::SortBy, viewer},
     },
     anyhow::anyhow,
     constcat::concat,
@@ -52,7 +52,7 @@ pub(super) fn do_frame(
             match state.activity {
                 Activity::Thumbnails => {
                     file_menu(ui, app, state, egui_state, &mut result, win.size().x);
-                    actions_menu(ui, app, egui_state, n_selected);
+                    actions_menu(ui, app, state, egui_state, n_selected);
                     collection_menu(ui, egui_state);
                 }
                 Activity::Viewer => viewer::menu_ui(ui, state, win),
@@ -388,6 +388,7 @@ fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
 fn actions_menu(
     ui: &mut egui::Ui,
     app: &Application,
+    state: &mut State,
     egui_state: &mut EguiState,
     n_selected: usize,
 ) {
@@ -458,32 +459,32 @@ fn actions_menu(
             egui_state.action = Some(Action::OpenEntriesWindow);
         }
         ui.separator();
-        ui.menu_button(concat!(icons::SORT, " Sort by"), |ui| {
+        ui.menu_button(concat!(icons::SORT, " Sort"), |ui| {
             if !active_coll {
                 ui.disable();
             }
-            if ui.add(Button::new("Filename").shortcut_text("S")).clicked() {
+            if ui
+                .add(Button::new(concat!(icons::SORT, " Sort")).shortcut_text("S"))
+                .clicked()
+            {
                 ui.close_menu();
-                egui_state.action = Some(Action::SortByPath);
+                egui_state.action = Some(Action::Sort);
             }
-            if ui.add(Button::new("Id")).clicked() {
+            if ui
+                .add(Button::new(concat!(icons::QUESTION, " Shuffle")).shortcut_text("R"))
+                .clicked()
+            {
                 ui.close_menu();
-                egui_state.action = Some(Action::SortById);
+                egui_state.action = Some(Action::Shuffle);
             }
-            if ui.add(Button::new("Number of tags")).clicked() {
-                ui.close_menu();
-                egui_state.action = Some(Action::SortByNTags);
-            }
+            ui.separator();
+            ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Path, "By filename");
+            ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Id, "By id");
+            ui.selectable_value(
+                &mut state.thumbs_view.sort_by,
+                SortBy::NTags,
+                "By number of tags",
+            );
         });
-        if ui
-            .add_enabled(
-                active_coll,
-                Button::new(concat!(icons::QUESTION, " Shuffle")),
-            )
-            .clicked()
-        {
-            ui.close_menu();
-            egui_state.action = Some(Action::Shuffle);
-        }
     });
 }

@@ -124,11 +124,9 @@ pub(crate) enum Action {
     FindPrev,
     SelectAll,
     SelectNone,
-    SortByPath,
-    SortById,
     OpenEntriesWindow,
     Shuffle,
-    SortByNTags,
+    Sort,
 }
 
 impl EguiState {

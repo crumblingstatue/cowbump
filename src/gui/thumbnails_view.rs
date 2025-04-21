@@ -25,6 +25,7 @@ use {
             window::{Event, Key, mouse},
         },
     },
+    rand::seq::SliceRandom,
 };
 
 pub struct ThumbnailsView {
@@ -36,6 +37,7 @@ pub struct ThumbnailsView {
     pub highlight: Option<u32>,
 }
 
+#[derive(PartialEq)]
 pub enum SortBy {
     Path,
     Id,
@@ -438,6 +440,8 @@ pub(in crate::gui) fn handle_event(
                 state
                     .thumbs_view
                     .update_from_collection(coll, &state.filter);
+            } else if code == Key::R {
+                state.thumbs_view.uids.shuffle(&mut rand::rng());
             } else if code == Key::Home {
                 if !egui_ctx.wants_keyboard_input() {
                     state.thumbs_view.y_offset = 0.0;

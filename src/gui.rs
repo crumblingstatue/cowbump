@@ -11,9 +11,7 @@ use {
         egui_ui::{Action, EguiState},
         resources::Resources,
         thumbnail_loader::ThumbnailLoader,
-        thumbnails_view::{
-            SortBy, ThumbnailsView, handle_event, search_next, search_prev, select_all,
-        },
+        thumbnails_view::{ThumbnailsView, handle_event, search_next, search_prev, select_all},
         viewer::ViewerState,
     },
     crate::{
@@ -186,24 +184,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                         select_all(&mut state, coll);
                     }
                 }
-                Action::SortByPath => {
-                    state.thumbs_view.sort_by = SortBy::Path;
-                    if let Some((_, coll)) = &mut app.active_collection {
-                        state
-                            .thumbs_view
-                            .update_from_collection(coll, &state.filter);
-                    }
-                }
-                Action::SortById => {
-                    state.thumbs_view.sort_by = SortBy::Id;
-                    if let Some((_, coll)) = &mut app.active_collection {
-                        state
-                            .thumbs_view
-                            .update_from_collection(coll, &state.filter);
-                    }
-                }
-                Action::SortByNTags => {
-                    state.thumbs_view.sort_by = SortBy::NTags;
+                Action::Sort => {
                     if let Some((_, coll)) = &mut app.active_collection {
                         state
                             .thumbs_view
