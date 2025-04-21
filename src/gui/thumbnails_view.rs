@@ -33,6 +33,7 @@ pub struct ThumbnailsView {
     pub thumb_size: u32,
     pub y_offset: f32,
     pub sort_by: SortBy,
+    pub sort_order: SortOrder,
     pub uids: Vec<entry::Id>,
     pub highlight: Option<u32>,
 }
@@ -42,6 +43,12 @@ pub enum SortBy {
     Path,
     Id,
     NTags,
+}
+
+#[derive(PartialEq)]
+pub enum SortOrder {
+    Asc,
+    Desc,
 }
 
 fn thumbs_per_row_and_size(window_width: u32, preferences: &Preferences) -> (u8, u32) {
@@ -56,6 +63,7 @@ impl ThumbnailsView {
         Self {
             y_offset: Default::default(),
             sort_by: SortBy::Path,
+            sort_order: SortOrder::Asc,
             uids: Default::default(),
             thumb_size,
             thumbs_per_row,
@@ -80,10 +88,20 @@ impl ThumbnailsView {
         self.sort(coll);
     }
     fn sort(&mut self, coll: &Collection) {
+        let rev = self.sort_order == SortOrder::Desc;
         match self.sort_by {
-            SortBy::Id => self.uids.sort_by_key(|uid| uid.0),
-            SortBy::Path => self.uids.sort_by_key(|uid| &coll.entries[uid].path),
-            SortBy::NTags => self.uids.sort_by_key(|uid| coll.entries[uid].tags.len()),
+            SortBy::Id => self.uids.sort_by(|a, b| {
+                let ord = a.0.cmp(&b.0);
+                if rev { ord.reverse() } else { ord }
+            }),
+            SortBy::Path => self.uids.sort_by(|a, b| {
+                let ord = coll.entries[a].path.cmp(&coll.entries[b].path);
+                if rev { ord.reverse() } else { ord }
+            }),
+            SortBy::NTags => self.uids.sort_by(|a, b| {
+                let ord = coll.entries[a].tags.len().cmp(&coll.entries[b].tags.len());
+                if rev { ord.reverse() } else { ord }
+            }),
         }
     }
     pub fn iter(&self) -> impl Iterator<Item = entry::Id> + '_ {

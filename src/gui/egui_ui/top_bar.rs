@@ -3,7 +3,11 @@ use {
     crate::{
         application::Application,
         collection,
-        gui::{Activity, SelectionBuf, State, thumbnails_view::SortBy, viewer},
+        gui::{
+            Activity, SelectionBuf, State,
+            thumbnails_view::{SortBy, SortOrder},
+            viewer,
+        },
     },
     anyhow::anyhow,
     constcat::concat,
@@ -484,6 +488,17 @@ fn actions_menu(
                 &mut state.thumbs_view.sort_by,
                 SortBy::NTags,
                 "By number of tags",
+            );
+            ui.separator();
+            ui.selectable_value(
+                &mut state.thumbs_view.sort_order,
+                SortOrder::Asc,
+                "Ascending",
+            );
+            ui.selectable_value(
+                &mut state.thumbs_view.sort_order,
+                SortOrder::Desc,
+                "Descending",
             );
         });
     });
