@@ -1,4 +1,4 @@
-#![feature(try_blocks, let_chains)]
+#![feature(try_blocks)]
 #![windows_subsystem = "windows"]
 #![warn(
     unused_qualifications,
