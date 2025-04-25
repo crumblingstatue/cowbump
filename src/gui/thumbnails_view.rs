@@ -303,9 +303,9 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
     if show_filename {
         if let Some(path_string) = entries[&id].path.to_str() {
-            let mut text = Text::new(path_string, &res.font, 12);
+            let mut text = Text::new(path_string.to_owned(), &res.font, 12);
             text.set_position(fname_pos);
-            window.draw_text(&text, &RenderStates::DEFAULT);
+            window.draw_text(&mut text, &RenderStates::DEFAULT);
         }
     }
 }

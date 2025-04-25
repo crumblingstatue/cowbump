@@ -38,9 +38,9 @@ pub(super) fn draw(
                 window.draw_sprite(&spr, &RenderStates::DEFAULT);
             }
             Err(e) => {
-                let mut text = Text::new(&e.to_string(), &res.font, 20);
+                let mut text = Text::new(e.to_string(), &res.font, 20);
                 text.set_position((200., 200.));
-                window.draw_text(&text, &RenderStates::DEFAULT);
+                window.draw_text(&mut text, &RenderStates::DEFAULT);
             }
         },
         None => {
