@@ -16,7 +16,7 @@ use {
             self, Button, ComboBox, Context, Grid, ScrollArea, Slider, TextEdit, Ui, Window,
             collapsing_header::CollapsingState,
         },
-        sf2g::graphics::RenderTarget,
+        sf2g::graphics::{RenderTarget, RenderWindow},
     },
     rand::Rng,
     std::path::PathBuf,
@@ -69,7 +69,7 @@ pub(in crate::gui) fn do_frame(
     egui_state: &mut EguiState,
     app: &mut crate::application::Application,
     egui_ctx: &Context,
-    rw: &egui_sf2g::sf2g::graphics::RenderWindow,
+    rw: &RenderWindow,
 ) {
     let mut open = egui_state.preferences_window.on;
     Window::new("Preferences")
@@ -304,7 +304,7 @@ fn ui_categ_ui(
     ui: &mut Ui,
     prefs: &mut crate::preferences::Preferences,
     state: &mut State,
-    rw: &egui_sf2g::sf2g::graphics::RenderWindow,
+    rw: &RenderWindow,
 ) {
     ui.heading("Thumbnails view");
     if slider_with_default::<ThumbnailsPerRow>(ui, &mut prefs.thumbs_per_row) {

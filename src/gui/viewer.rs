@@ -40,7 +40,7 @@ pub(super) fn draw(
             Err(e) => {
                 let mut text = Text::new(e.to_string(), &res.font, 20);
                 text.set_position((200., 200.));
-                window.draw_text(&mut text, &RenderStates::DEFAULT);
+                text.draw(window, &RenderStates::DEFAULT);
             }
         },
         None => {

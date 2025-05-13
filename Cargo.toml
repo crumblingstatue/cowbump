@@ -18,9 +18,11 @@ directories = "6.0"
 open = "5.1.2"
 zstd = "0.13.1"
 zip = { version = "2.1.3", default-features = false }
-egui-sf2g = "0.2"
+egui-sf2g = "0.3.1"
+sf2g.version = "0.3.0"
+sf2g.features = ["text"]
 rand = "0.9"
-egui-file-dialog = "0.9.0"
+egui-file-dialog = "0.10.0"
 parking_lot = "0.12"
 egui_flex = "0.3.0"
 egui_colors = "0.8"

@@ -264,7 +264,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 If you don't see the top menu, you can toggle it with F1";
                 let mut text = Text::new(msg.to_owned(), &res.font, 24);
                 text.set_position((16., 64.));
-                window.draw_text(&mut text, &RenderStates::DEFAULT);
+                text.draw(&mut *window, &RenderStates::DEFAULT);
             }
         }
         if let Some(index) = state.thumbs_view.highlight {
