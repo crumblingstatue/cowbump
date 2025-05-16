@@ -258,7 +258,15 @@ pub(super) fn do_frame(
                     });
                     ui.vertical(|ui| {
                         // region: Tags
-                        ui.horizontal_wrapped(|ui| {
+                        let layout = egui::Layout {
+                            main_dir: egui::Direction::LeftToRight,
+                            main_wrap: true,
+                            main_align: egui::Align::Min,
+                            main_justify: false,
+                            cross_align: egui::Align::Min,
+                            cross_justify: false,
+                        };
+                        ui.with_layout(layout, |ui| {
                             for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
                                 let tag_name = coll.tags.first_name_of(&tagid);
                                 let mut changed_filter = false;
