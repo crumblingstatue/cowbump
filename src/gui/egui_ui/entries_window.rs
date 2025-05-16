@@ -209,7 +209,7 @@ pub(super) fn do_frame(
         egui::Window::new(title)
             .id(egui::Id::new("en_window").with(win.window_id))
             .open(&mut open)
-            .min_width(960.)
+            .min_width(880.)
             .show(egui_ctx, |ui| {
                 if invalid {
                     ui.label("Invalid entry. This is a bug.");
