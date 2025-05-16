@@ -140,16 +140,16 @@ fn tag_ui(
     .response
 }
 
-fn tag<'a>(
-    name: &'a str,
+fn tag(
+    name: &str,
     id: tag::Id,
-    del: Option<&'a mut bool>,
-    filter: &'a mut Requirements,
-    coll: &'a Collection,
-    egui_state: &'a mut EguiState,
-    changed_filter: &'a mut bool,
-    entries_view: &'a mut ThumbnailsView,
-) -> impl Widget + 'a {
+    del: Option<&mut bool>,
+    filter: &mut Requirements,
+    coll: &Collection,
+    egui_state: &mut EguiState,
+    changed_filter: &mut bool,
+    entries_view: &mut ThumbnailsView,
+) -> impl Widget {
     move |ui: &mut Ui| {
         tag_ui(
             ui,
