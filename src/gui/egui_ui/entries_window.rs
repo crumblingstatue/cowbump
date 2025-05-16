@@ -100,6 +100,7 @@ fn tag(
     entries_view: &mut ThumbnailsView,
 ) -> Response {
     ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
+        ui.visuals_mut().widgets.noninteractive.corner_radius = egui::CornerRadius::same(6);
         ui.group(|ui| {
             let mut text = RichText::new(name);
             if reqs.have_tag_by_name(name, coll) {
