@@ -80,7 +80,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &app.database.preferences,
                 );
                 let root_path = &app.database.collections[&coll.0];
-                std::env::set_current_dir(root_path)?;
+                if let Err(e) = std::env::set_current_dir(root_path) {
+                    egui_state
+                        .modal
+                        .err(format!("Error changing to collection directory: {e:?}"));
+                }
             }
             Err(e) => {
                 egui_state
