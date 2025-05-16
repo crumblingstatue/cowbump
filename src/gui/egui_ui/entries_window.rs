@@ -99,7 +99,19 @@ fn tag(
     changed_filter: &mut bool,
     entries_view: &mut ThumbnailsView,
 ) -> Response {
-    ui.allocate_ui(vec2(200., ui.spacing().interact_size.y + 10.), |ui| {
+    // FIXME: Magic number to add to text size to stop text from wrapping
+    let magic = if del.is_some() { 44.0 } else { 14.0 };
+    let w =
+        ui.fonts(|f| {
+            f.layout_no_wrap(
+                name.into(),
+                egui::TextStyle::Button.resolve(ui.style()),
+                Color32::WHITE,
+            )
+        })
+        .size()
+        .x + magic;
+    ui.allocate_ui(vec2(w, ui.spacing().interact_size.y + 10.), |ui| {
         ui.visuals_mut().widgets.noninteractive.corner_radius = egui::CornerRadius::same(6);
         ui.group(|ui| {
             let mut text = RichText::new(name);
