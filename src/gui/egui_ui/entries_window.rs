@@ -25,7 +25,7 @@ use {
     egui_sf2g::{
         egui::{
             self, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
-            Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui, Widget,
+            Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
             epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
             load::SizedTexture,
             text_selection::CursorRange,
@@ -88,7 +88,7 @@ impl EntriesWindow {
     }
 }
 
-fn tag_ui(
+fn tag(
     ui: &mut Ui,
     name: &str,
     id: tag::Id,
@@ -138,31 +138,6 @@ fn tag_ui(
         });
     })
     .response
-}
-
-fn tag(
-    name: &str,
-    id: tag::Id,
-    del: Option<&mut bool>,
-    filter: &mut Requirements,
-    coll: &Collection,
-    egui_state: &mut EguiState,
-    changed_filter: &mut bool,
-    entries_view: &mut ThumbnailsView,
-) -> impl Widget {
-    move |ui: &mut Ui| {
-        tag_ui(
-            ui,
-            name,
-            id,
-            del,
-            filter,
-            coll,
-            egui_state,
-            changed_filter,
-            entries_view,
-        )
-    }
 }
 
 pub fn text_edit_cursor_set_to_end(ui: &Ui, te_id: egui::Id) {
@@ -290,7 +265,8 @@ pub(super) fn do_frame(
 
                                 if win.editing_tags {
                                     let mut del = false;
-                                    ui.add(tag(
+                                    tag(
+                                        ui,
                                         &tag_name,
                                         tagid,
                                         Some(&mut del),
@@ -299,7 +275,7 @@ pub(super) fn do_frame(
                                         egui_state,
                                         &mut changed_filter,
                                         &mut state.thumbs_view,
-                                    ));
+                                    );
                                     if del {
                                         let result: anyhow::Result<()> = try {
                                             for en_id in &win.ids {
@@ -320,7 +296,8 @@ pub(super) fn do_frame(
                                         }
                                     }
                                 } else {
-                                    ui.add(tag(
+                                    tag(
+                                        ui,
                                         &tag_name,
                                         tagid,
                                         None,
@@ -329,7 +306,7 @@ pub(super) fn do_frame(
                                         egui_state,
                                         &mut changed_filter,
                                         &mut state.thumbs_view,
-                                    ));
+                                    );
                                 }
                                 if changed_filter {
                                     state
