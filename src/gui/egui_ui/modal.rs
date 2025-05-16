@@ -4,7 +4,7 @@ use {
     constcat::concat,
     egui_flex::{Flex, FlexAlign, FlexAlignContent, item},
     egui_sf2g::egui::{self, TextWrapMode},
-    std::backtrace::Backtrace,
+    std::{backtrace::Backtrace, collections::VecDeque},
 };
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub enum PromptAction {
 
 #[derive(Default)]
 pub struct ModalDialog {
-    payload: Option<ModalPayload>,
+    payloads: VecDeque<ModalPayload>,
 }
 
 struct ErrPayload {
@@ -40,20 +40,21 @@ enum ModalPayload {
 
 impl ModalDialog {
     pub fn err(&mut self, body: impl std::fmt::Display) {
-        self.payload = Some(ModalPayload::Err(ErrPayload {
+        self.payloads.push_back(ModalPayload::Err(ErrPayload {
             message: body.to_string(),
             backtrace: Backtrace::force_capture(),
             show_bt: false,
         }));
     }
     pub fn about(&mut self) {
-        self.payload = Some(ModalPayload::About);
+        self.payloads.push_front(ModalPayload::About);
     }
     pub fn keybinds(&mut self) {
-        self.payload = Some(ModalPayload::Keybinds);
+        self.payloads.push_front(ModalPayload::Keybinds);
     }
     pub fn success(&mut self, msg: impl std::fmt::Display) {
-        self.payload = Some(ModalPayload::Success(msg.to_string()));
+        self.payloads
+            .push_back(ModalPayload::Success(msg.to_string()));
     }
     pub fn prompt(
         &mut self,
@@ -61,7 +62,7 @@ impl ModalDialog {
         message: impl Into<String>,
         action: PromptAction,
     ) {
-        self.payload = Some(ModalPayload::Prompt {
+        self.payloads.push_back(ModalPayload::Prompt {
             title: title.into(),
             message: message.into(),
             action,
@@ -73,7 +74,8 @@ impl ModalDialog {
         clipboard: &mut arboard::Clipboard,
     ) -> Option<PromptAction> {
         let mut action = None;
-        if let Some(payload) = &mut self.payload {
+        let n_more = self.payloads.len().saturating_sub(1);
+        if let Some(payload) = self.payloads.front_mut() {
             let (key_enter, key_esc) = ctx.input_mut(|inp| {
                 (
                     inp.consume_key(egui::Modifiers::NONE, egui::Key::Enter),
@@ -127,6 +129,12 @@ impl ModalDialog {
                                 item().align_self(FlexAlign::End),
                                 Flex::horizontal(),
                                 |flex| {
+                                    if n_more > 0 {
+                                        flex.add(
+                                            item(),
+                                            egui::Label::new(format!("{n_more} more")),
+                                        );
+                                    }
                                     flex.add(
                                         item(),
                                         egui::Checkbox::new(&mut payload.show_bt, "backtrace"),
@@ -234,7 +242,7 @@ impl ModalDialog {
                 }
             });
             if close {
-                self.payload = None;
+                self.payloads.pop_front();
             }
         }
         action
