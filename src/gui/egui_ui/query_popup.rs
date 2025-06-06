@@ -12,7 +12,7 @@ pub struct QueryPopup {
 }
 
 /// Create an egui window in the corner for queries (filter/search)
-fn query_window(title: &str) -> Window {
+fn query_window(title: &str) -> Window<'static> {
     Window::new(title)
         .anchor(Align2::LEFT_TOP, [32.0, 32.0])
         .title_bar(false)

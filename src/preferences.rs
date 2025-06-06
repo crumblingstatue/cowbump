@@ -17,7 +17,7 @@ pub trait AppMapExt {
 }
 
 impl AppMapExt for AppMap {
-    fn name_of(&self, id: &AppId) -> Cow<str> {
+    fn name_of(&'_ self, id: &AppId) -> Cow<'_, str> {
         self.get(id)
             .map_or(format!("<dangling appid: {id:?}>").into(), |app| {
                 Cow::Borrowed(&app.name)

@@ -31,7 +31,7 @@ pub trait TagsExt {
 }
 
 impl TagsExt for Tags {
-    fn first_name_of(&self, id: &tag::Id) -> Cow<str> {
+    fn first_name_of(&'_ self, id: &tag::Id) -> Cow<'_, str> {
         match self.get(id) {
             Some(tag) => tag.first_name().into(),
             None => format!("<dangling:{id:?}>").into(),
