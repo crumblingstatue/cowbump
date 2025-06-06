@@ -81,19 +81,18 @@ pub(super) fn do_frame(
 ) {
     let win = &mut egui_state.load_folder_window;
     let mut new_sel = None;
-    if egui_ctx.input(|inp| inp.key_pressed(Key::ArrowUp)) {
-        if let Some(sel) = win.res_select.as_mut() {
-            if *sel > 0 {
-                *sel -= 1;
-                new_sel = Some(*sel);
-            }
-        }
+    if egui_ctx.input(|inp| inp.key_pressed(Key::ArrowUp))
+        && let Some(sel) = win.res_select.as_mut()
+        && *sel > 0
+    {
+        *sel -= 1;
+        new_sel = Some(*sel);
     }
-    if egui_ctx.input(|inp| inp.key_pressed(Key::ArrowDown)) {
-        if let Some(sel) = win.res_select.as_mut() {
-            *sel += 1;
-            new_sel = Some(*sel);
-        }
+    if egui_ctx.input(|inp| inp.key_pressed(Key::ArrowDown))
+        && let Some(sel) = win.res_select.as_mut()
+    {
+        *sel += 1;
+        new_sel = Some(*sel);
     }
     if !win.open {
         return;

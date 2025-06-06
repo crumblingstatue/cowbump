@@ -92,10 +92,10 @@ pub(crate) fn do_frame(
                             TextureId::User(id.0),
                             egui::vec2(256., 256.),
                         ));
-                        if let Some(sel_idx) = egui_state.batch_rename_window.sel_idx {
-                            if sel_idx == i {
-                                img = img.tint(egui::Color32::BROWN);
-                            }
+                        if let Some(sel_idx) = egui_state.batch_rename_window.sel_idx
+                            && sel_idx == i
+                        {
+                            img = img.tint(egui::Color32::BROWN);
                         }
                         if state.viewer_state.shown_entry().is_some_and(|en| en == *id) {
                             img = img.tint(egui::Color32::GREEN);
@@ -118,13 +118,13 @@ pub(crate) fn do_frame(
                                 }
                                 None => egui_state.batch_rename_window.sel_idx = Some(i),
                             }
-                        } else if re.clicked_by(PointerButton::Secondary) {
-                            if let Some(idx) = egui_state.batch_rename_window.sel_idx {
-                                let id = egui_state.batch_rename_window.ids.remove(idx);
-                                egui_state.batch_rename_window.ids.insert(i, id);
-                                egui_state.batch_rename_window.sel_idx = None;
-                                break;
-                            }
+                        } else if re.clicked_by(PointerButton::Secondary)
+                            && let Some(idx) = egui_state.batch_rename_window.sel_idx
+                        {
+                            let id = egui_state.batch_rename_window.ids.remove(idx);
+                            egui_state.batch_rename_window.ids.insert(i, id);
+                            egui_state.batch_rename_window.sel_idx = None;
+                            break;
                         }
                     }
                 });

@@ -73,10 +73,9 @@ pub(super) fn do_frame(
                                     .color(Color32::YELLOW),
                             ))
                             .clicked()
+                            && let Some(buf) = state.sel.current_mut()
                         {
-                            if let Some(buf) = state.sel.current_mut() {
-                                buf.clear();
-                            }
+                            buf.clear();
                         }
                     }
                     let mut i = 0;

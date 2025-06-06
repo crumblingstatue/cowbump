@@ -122,10 +122,10 @@ pub(super) fn tag_autocomplete_popup(
                 Nothing,
             }
 
-            if let Some(selection) = &mut state.select {
-                if *selection >= len {
-                    *selection = len - 1;
-                }
+            if let Some(selection) = &mut state.select
+                && *selection >= len
+            {
+                *selection = len - 1;
             }
             let mut complete = C::Nothing;
             popup_below_widget(

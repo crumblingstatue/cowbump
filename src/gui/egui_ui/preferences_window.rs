@@ -172,10 +172,10 @@ fn color_theme_categ_ui(
     colorix.ui_combo_12(ui, true);
     ui.separator();
     ui.horizontal(|ui| {
-        if let Some(theme) = &prefs.color_theme {
-            if ui.button(concat!(icons::CANCEL, " Restore")).clicked() {
-                *colorix = Colorix::global(ui.ctx(), theme.to_colorix());
-            }
+        if let Some(theme) = &prefs.color_theme
+            && ui.button(concat!(icons::CANCEL, " Restore")).clicked()
+        {
+            *colorix = Colorix::global(ui.ctx(), theme.to_colorix());
         }
         if ui.button(concat!(icons::SAVE, " Save custom")).clicked() {
             let light_dark = if colorix.dark_mode() {

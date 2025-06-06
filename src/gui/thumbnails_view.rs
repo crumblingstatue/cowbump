@@ -301,12 +301,10 @@ fn draw_thumbnail<'a: 'b, 'b>(
         rect.set_position(fname_pos);
         window.draw_rectangle_shape(&rect, &RenderStates::DEFAULT);
     }
-    if show_filename {
-        if let Some(path_string) = entries[&id].path.to_str() {
-            let mut text = Text::new(path_string.to_owned(), &res.font, 12);
-            text.set_position(fname_pos);
-            text.draw(window, &RenderStates::DEFAULT);
-        }
+    if show_filename && let Some(path_string) = entries[&id].path.to_str() {
+        let mut text = Text::new(path_string.to_owned(), &res.font, 12);
+        text.set_position(fname_pos);
+        text.draw(window, &RenderStates::DEFAULT);
     }
 }
 

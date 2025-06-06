@@ -143,10 +143,10 @@ fn tag(
                 *changed_filter = true;
                 entries_view.update_from_collection(coll, reqs);
             }
-            if let Some(del) = del {
-                if ui.button(icons::REMOVE).clicked() {
-                    *del = true;
-                }
+            if let Some(del) = del
+                && ui.button(icons::REMOVE).clicked()
+            {
+                *del = true;
             }
         });
     })
