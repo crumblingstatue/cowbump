@@ -267,7 +267,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 \n\
                 If you don't see the top menu, you can toggle it with F1";
                 let mut text = Text::new(msg.to_owned(), &res.font, 24);
-                text.set_position((16., 64.));
+                text.tf.position = [16., 64.];
                 text.draw(&mut *window, &RenderStates::DEFAULT);
             }
         }

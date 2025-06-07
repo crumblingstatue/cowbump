@@ -39,7 +39,7 @@ pub(super) fn draw(
             }
             Err(e) => {
                 let mut text = Text::new(e.to_string(), &res.font, 20);
-                text.set_position((200., 200.));
+                text.tf.position = [200., 200.];
                 text.draw(window, &RenderStates::DEFAULT);
             }
         },

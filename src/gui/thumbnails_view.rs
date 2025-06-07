@@ -292,7 +292,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw_sprite(sprite, &RenderStates::DEFAULT);
     }
     let mut show_filename = !props.has_img;
-    let fname_pos = (x, y + 64.0);
+    let fname_pos = [x, y + 64.0];
     if Key::LAlt.is_pressed() {
         show_filename = true;
         let mut rect = RectangleShape::new();
@@ -303,7 +303,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     }
     if show_filename && let Some(path_string) = entries[&id].path.to_str() {
         let mut text = Text::new(path_string.to_owned(), &res.font, 12);
-        text.set_position(fname_pos);
+        text.tf.position = fname_pos;
         text.draw(window, &RenderStates::DEFAULT);
     }
 }
