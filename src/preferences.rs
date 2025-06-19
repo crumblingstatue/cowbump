@@ -13,7 +13,7 @@ use {
 type AppMap = FnvHashMap<AppId, App>;
 
 pub trait AppMapExt {
-    fn name_of(&self, id: &AppId) -> Cow<str>;
+    fn name_of(&'_ self, id: &AppId) -> Cow<'_, str>;
 }
 
 impl AppMapExt for AppMap {

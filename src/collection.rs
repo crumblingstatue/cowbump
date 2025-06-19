@@ -27,7 +27,7 @@ pub type Sequences = FnvHashMap<sequence::Id, Sequence>;
 pub type TagSpecificApps = FnvHashMap<tag::Id, preferences::AppId>;
 
 pub trait TagsExt {
-    fn first_name_of(&self, id: &tag::Id) -> Cow<str>;
+    fn first_name_of(&'_ self, id: &tag::Id) -> Cow<'_, str>;
 }
 
 impl TagsExt for Tags {
