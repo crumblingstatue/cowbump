@@ -150,9 +150,14 @@ pub(super) fn do_frame(
             }
             ui.separator();
             ui.label("(F1 to toggle this panel)");
-            if !crate::gui::debug_log::LOG.lock().is_empty()
+            let log = crate::gui::debug_log::LOG.lock();
+            if !log.is_empty()
                 && ui
-                    .button(RichText::new(icons::WARN).strong().color(Color32::YELLOW))
+                    .button(
+                        RichText::new(format!("{} {}", icons::WARN, log.len()))
+                            .strong()
+                            .color(Color32::YELLOW),
+                    )
                     .on_hover_text("Debug output")
                     .clicked()
             {
