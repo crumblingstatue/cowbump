@@ -54,7 +54,9 @@ impl ThumbnailLoader {
                 };
                 let mut image_result = image::load_from_memory(&data);
                 let mut ffmpeg_was_used = false;
-                if image_result.is_err() && !no_ffmpeg.load(atomic::Ordering::Relaxed) {
+                if let Err(err) = &image_result
+                    && !no_ffmpeg.load(atomic::Ordering::Relaxed)
+                {
                     let result = Command::new("ffmpeg")
                         .args(["-y", "-i"])
                         .arg(&name)
@@ -62,7 +64,7 @@ impl ThumbnailLoader {
                         .output();
                     match result {
                         Ok(out) => {
-                            dlog!("Error loading {name:?}: {image_result:?}. Loading with ffmpeg");
+                            dlog!("Error loading {name:?}: {err}. Loading with ffmpeg");
                             image_result = image::load_from_memory(&out.stdout);
                             ffmpeg_was_used = true;
                         }
