@@ -62,6 +62,7 @@ impl ThumbnailLoader {
                         .output();
                     match result {
                         Ok(out) => {
+                            dlog!("Error loading {name:?}: {image_result:?}. Loading with ffmpeg");
                             image_result = image::load_from_memory(&out.stdout);
                             ffmpeg_was_used = true;
                         }
