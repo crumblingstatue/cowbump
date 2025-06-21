@@ -53,44 +53,49 @@ pub(super) fn do_frame(
                         ui.set_width(800.);
                         ui.set_height(720.);
                         ui.heading("Added");
-                        ScrollArea::vertical().id_salt("scroll_add").show(ui, |ui| {
-                            for (idx, add) in changes.add.iter().enumerate() {
-                                match win.added.get_mut(add) {
-                                    Some(info) => {
-                                        ui.horizontal(|ui| {
-                                            let img_button = ImageButton::new(SizedTexture::new(
-                                                TextureId::User(info.id.0),
-                                                (128.0, 128.0),
-                                            ));
-                                            let re = ui.add(img_button);
-                                            if re.clicked() {
-                                                state.thumbs_view.highlight_and_seek_to_entry(
-                                                    info.id,
-                                                    rw.size().y,
-                                                );
-                                            }
-                                        });
-                                    }
-                                    None => {
-                                        ui.scope(|ui| {
-                                            let vis = &mut ui.style_mut().visuals.widgets;
-                                            vis.inactive.fg_stroke.color =
-                                                Color32::from_rgb(26, 138, 11);
-                                            vis.hovered.fg_stroke.color =
-                                                Color32::from_rgb(167, 255, 155);
-                                            let label = Label::new(add.to_string_lossy().as_ref())
-                                                .sense(egui::Sense::click());
-                                            ui.add(label).context_menu(|ui| {
-                                                if ui.button("Delete file").clicked() {
-                                                    action = Some(Action::RemFile { idx });
-                                                    ui.close_menu();
+                        ScrollArea::vertical()
+                            .id_salt("scroll_add")
+                            .auto_shrink(false)
+                            .show(ui, |ui| {
+                                for (idx, add) in changes.add.iter().enumerate() {
+                                    match win.added.get_mut(add) {
+                                        Some(info) => {
+                                            ui.horizontal(|ui| {
+                                                let img_button =
+                                                    ImageButton::new(SizedTexture::new(
+                                                        TextureId::User(info.id.0),
+                                                        (128.0, 128.0),
+                                                    ));
+                                                let re = ui.add(img_button);
+                                                if re.clicked() {
+                                                    state.thumbs_view.highlight_and_seek_to_entry(
+                                                        info.id,
+                                                        rw.size().y,
+                                                    );
                                                 }
-                                            })
-                                        });
+                                            });
+                                        }
+                                        None => {
+                                            ui.scope(|ui| {
+                                                let vis = &mut ui.style_mut().visuals.widgets;
+                                                vis.inactive.fg_stroke.color =
+                                                    Color32::from_rgb(26, 138, 11);
+                                                vis.hovered.fg_stroke.color =
+                                                    Color32::from_rgb(167, 255, 155);
+                                                let label =
+                                                    Label::new(add.to_string_lossy().as_ref())
+                                                        .sense(egui::Sense::click());
+                                                ui.add(label).context_menu(|ui| {
+                                                    if ui.button("Delete file").clicked() {
+                                                        action = Some(Action::RemFile { idx });
+                                                        ui.close_menu();
+                                                    }
+                                                })
+                                            });
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
                     });
                 }
                 if !changes.remove.is_empty() {
@@ -98,15 +103,18 @@ pub(super) fn do_frame(
                         ui.set_height(600.);
                         ui.set_width(300.);
                         ui.heading("Removed");
-                        ScrollArea::vertical().id_salt("scroll_rm").show(ui, |ui| {
-                            for rem in &changes.remove {
-                                let label = Label::new(
-                                    RichText::new(rem.to_string_lossy().as_ref())
-                                        .color(Color32::RED),
-                                );
-                                ui.add(label);
-                            }
-                        });
+                        ScrollArea::vertical()
+                            .id_salt("scroll_rm")
+                            .auto_shrink(false)
+                            .show(ui, |ui| {
+                                for rem in &changes.remove {
+                                    let label = Label::new(
+                                        RichText::new(rem.to_string_lossy().as_ref())
+                                            .color(Color32::RED),
+                                    );
+                                    ui.add(label);
+                                }
+                            });
                     });
                 }
             });
