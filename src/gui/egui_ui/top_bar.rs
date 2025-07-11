@@ -48,7 +48,7 @@ pub(super) fn do_frame(
     let n_selected = state.sel.current_mut().map_or(0, |buf| buf.len());
     let mut result = Ok(());
     TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
-        egui::menu::bar(ui, |ui| {
+        egui::MenuBar::new().ui(ui, |ui| {
             match state.activity {
                 Activity::Thumbnails => {
                     file_menu(ui, app, state, egui_state, &mut result, win.size().x);
@@ -103,12 +103,10 @@ pub(super) fn do_frame(
                         re.context_menu(|ui| {
                             if ui.button("Remove").clicked() {
                                 retain = false;
-                                ui.close_menu();
                             }
                             if ui.button("Rename").clicked() {
                                 egui_state.top_bar.sel_rename = Some(i);
                                 egui_state.top_bar.sel_focus = true;
-                                ui.close_menu();
                             }
                         });
                         if re.clicked() {
@@ -177,11 +175,9 @@ pub(super) fn do_frame(
 fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
     ui.menu_button("Help", |ui| {
         if ui.button(concat!(icons::QUESTION, "About")).clicked() {
-            ui.close_menu();
             egui_state.modal.about();
         }
         if ui.button(concat!(icons::QUESTION, "Keybinds")).clicked() {
-            ui.close_menu();
             egui_state.modal.keybinds();
         }
         ui.separator();
@@ -192,7 +188,6 @@ fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
             .button(concat!(icons::FOLDER, " Open data dir"))
             .clicked()
         {
-            ui.close_menu();
             if let Err(e) = open::that(&app.database.data_dir) {
                 egui_state
                     .modal
@@ -200,7 +195,6 @@ fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
             }
         }
         if ui.button(concat!(icons::TERM, " Debug window")).clicked() {
-            ui.close_menu();
             egui_state.debug_window.toggle();
         }
         ui.separator();
@@ -209,11 +203,9 @@ fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
                 egui_state
                     .modal
                     .err(format!("{:?}", anyhow!("Simulated error just happened!")));
-                ui.close_menu();
             }
             if ui.button("Success popup").clicked() {
                 egui_state.modal.success("Something successfully happened.");
-                ui.close_menu();
             }
             if ui.button("Panic (crash Cowbump)").clicked() {
                 egui_state.modal.prompt(
@@ -221,7 +213,6 @@ fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
                     "Are you sure you want to crash cowbump?\nUnsaved data will be lost!",
                     PromptAction::PanicTest,
                 );
-                ui.close_menu();
             }
         });
     });
@@ -237,12 +228,10 @@ fn file_menu(
 ) {
     ui.menu_button("File", |ui| {
         if ui.button(concat!(icons::FOLDER, " Load folder")).clicked() {
-            ui.close_menu();
             egui_state.file_op = Some(FileOp::OpenDirectory);
             egui_state.file_dialog.pick_directory();
         }
         if ui.button("↺ Reload folder").clicked() {
-            ui.close_menu();
             match app.reload_active_collection() {
                 Ok(changes) => changes,
                 Err(e) => {
@@ -261,7 +250,6 @@ fn file_menu(
             if let Err(e) = app.switch_collection(None) {
                 *result = Err(e);
             }
-            ui.close_menu();
         }
         ui.add_enabled_ui(!app.database.recent.is_empty(), |ui| {
             ui.menu_button("🕓 Recent", |ui| {
@@ -277,7 +265,6 @@ fn file_menu(
                             Some(coll) => {
                                 if ui.button(format!("🗁 {}", &coll.display())).clicked() {
                                     action = Action::Open(id);
-                                    ui.close_menu();
                                 }
                             }
                             None => {
@@ -316,16 +303,13 @@ fn file_menu(
             .clicked()
         {
             egui_state.collections_db_window.open = true;
-            ui.close_menu();
         }
         ui.separator();
         if ui.button("⛃⬉ Create backup").clicked() {
-            ui.close_menu();
             egui_state.file_dialog.save_file();
             egui_state.file_op = Some(FileOp::CreateBackup);
         }
         if ui.button("⛃⬊ Restore backup").clicked() {
-            ui.close_menu();
             egui_state.file_dialog.pick_file();
             egui_state.file_op = Some(FileOp::RestoreBackup);
         }
@@ -334,7 +318,6 @@ fn file_menu(
             .button(concat!(icons::HAMBURGER, " Preferences"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.preferences_window.toggle();
         }
         ui.separator();
@@ -342,7 +325,6 @@ fn file_menu(
             .button(concat!(icons::CANCEL, " Quit without saving"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.modal.prompt(
                 "Quit without saving",
                 "Warning: All changes made this session will be lost.",
@@ -365,25 +347,21 @@ fn collection_menu(ui: &mut egui::Ui, egui_state: &mut EguiState) {
             .add(Button::new(concat!(icons::TAG, " Tag list")).shortcut_text("T"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.tag_window.toggle();
         }
         if ui
             .add(Button::new("⬌ Sequences").shortcut_text("Q"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.sequences_window.on ^= true;
         }
         if ui.button(concat!(icons::QUESTION, " Changes")).clicked() {
-            ui.close_menu();
             egui_state.changes_window.open ^= true;
         }
         if ui
             .button(concat!(icons::HAMBURGER, " Preferences"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.coll_prefs_window.open ^= true;
         }
     });
@@ -402,7 +380,6 @@ fn actions_menu(
             .add_enabled(active_coll, Button::new("🔍 Filter").shortcut_text("F"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.filter_popup.on ^= true;
         }
         ui.separator();
@@ -410,14 +387,12 @@ fn actions_menu(
             .add_enabled(active_coll, Button::new("🔍 Find").shortcut_text("/"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.find_popup.on ^= true;
         }
         if ui
             .add_enabled(active_coll, Button::new("⮫ Next result").shortcut_text("N"))
             .clicked()
         {
-            ui.close_menu();
             egui_state.action = Some(Action::FindNext);
         }
         if ui
@@ -427,7 +402,6 @@ fn actions_menu(
             )
             .clicked()
         {
-            ui.close_menu();
             egui_state.action = Some(Action::FindPrev);
         }
         ui.separator();
@@ -438,7 +412,6 @@ fn actions_menu(
             )
             .clicked()
         {
-            ui.close_menu();
             egui_state.action = Some(Action::SelectAll);
         }
         if ui
@@ -448,7 +421,6 @@ fn actions_menu(
             )
             .clicked()
         {
-            ui.close_menu();
             egui_state.action = Some(Action::SelectNone);
         }
         ui.separator();
@@ -459,7 +431,6 @@ fn actions_menu(
             )
             .clicked()
         {
-            ui.close_menu();
             egui_state.action = Some(Action::OpenEntriesWindow);
         }
         ui.separator();
@@ -471,14 +442,12 @@ fn actions_menu(
                 .add(Button::new(concat!(icons::SORT, " Sort")).shortcut_text("S"))
                 .clicked()
             {
-                ui.close_menu();
                 egui_state.action = Some(Action::Sort);
             }
             if ui
                 .add(Button::new(concat!(icons::QUESTION, " Shuffle")).shortcut_text("R"))
                 .clicked()
             {
-                ui.close_menu();
                 egui_state.action = Some(Action::Shuffle);
             }
             ui.separator();

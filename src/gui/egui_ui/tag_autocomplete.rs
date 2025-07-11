@@ -3,7 +3,7 @@ use {
         collection::{Collection, TagsExt},
         tag,
     },
-    egui_sf2g::egui::{self, Key, PopupCloseBehavior, Ui, popup_below_widget},
+    egui_sf2g::egui::{self, Key, Ui},
     std::ops::Range,
 };
 
@@ -128,12 +128,15 @@ pub(super) fn tag_autocomplete_popup(
                 *selection = len - 1;
             }
             let mut complete = C::Nothing;
-            popup_below_widget(
-                ui,
-                popup_id,
-                response,
-                PopupCloseBehavior::CloseOnClickOutside,
-                |ui| {
+            egui::Popup::from_response(response)
+                .layout(egui::Layout::top_down_justified(egui::Align::LEFT))
+                .open_memory(None)
+                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+                .id(popup_id)
+                .align(egui::RectAlign::BOTTOM_START)
+                .width(response.rect.width())
+                .show(|ui| {
+                    ui.set_min_width(ui.available_width());
                     if last_is_special {
                         let enter =
                             ui.input_mut(|inp| inp.consume_key(egui::Modifiers::NONE, Key::Enter));
@@ -193,8 +196,7 @@ pub(super) fn tag_autocomplete_popup(
                             }
                         }
                     }
-                },
-            );
+                });
             match complete {
                 C::Id(id) => {
                     let range = str_range(string, last);
@@ -211,9 +213,9 @@ pub(super) fn tag_autocomplete_popup(
                 C::Nothing => {}
             }
             if !string.is_empty() {
-                ui.memory_mut(|mem| mem.open_popup(popup_id));
+                egui::Popup::open_id(ui.ctx(), popup_id);
             } else {
-                ui.memory_mut(egui::Memory::close_popup);
+                egui::Popup::close_id(ui.ctx(), popup_id);
             }
         }
     }

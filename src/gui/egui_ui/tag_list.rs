@@ -198,7 +198,6 @@ pub(super) fn do_frame(
                                         if ui.button("Exact").clicked() {
                                             reqs.toggle_have_tag_exact(*tag_uid);
                                             clicked_any = true;
-                                            ui.close_menu();
                                         }
                                     });
                                     if re.on_hover_text(format!("Filter for {name}")).clicked() {

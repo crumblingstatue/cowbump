@@ -88,7 +88,6 @@ pub(super) fn do_frame(
                                                 ui.add(label).context_menu(|ui| {
                                                     if ui.button("Delete file").clicked() {
                                                         action = Some(Action::RemFile { idx });
-                                                        ui.close_menu();
                                                     }
                                                 })
                                             });

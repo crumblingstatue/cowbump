@@ -26,10 +26,7 @@ use {
         egui::{
             self, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
             Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
-            epaint::text::cursor::{CCursor, Cursor, PCursor, RCursor},
-            load::SizedTexture,
-            text_selection::CursorRange,
-            vec2,
+            epaint::text::cursor::CCursor, load::SizedTexture, text::CCursorRange, vec2,
         },
         sf2g::graphics::{RenderTarget, RenderWindow},
     },
@@ -128,12 +125,10 @@ fn tag(
                     egui_state.filter_popup.string = reqs.to_string(&coll.tags);
                     *changed_filter = true;
                     entries_view.update_from_collection(coll, reqs);
-                    ui.close_menu();
                 }
                 if ui.button("Open in tags window").clicked() {
                     egui_state.tag_window.toggle();
                     egui_state.tag_window.prop_active = Some(id);
-                    ui.close_menu();
                 }
             });
             if re.clicked_by(PointerButton::Primary) {
@@ -158,17 +153,9 @@ pub fn text_edit_cursor_set_to_end(ui: &Ui, te_id: egui::Id) {
         dlog!("Failed to set text edit cursor to end");
         return;
     };
-    state.cursor.set_range(Some(CursorRange::one(Cursor {
-        ccursor: CCursor {
-            index: 0,
-            prefer_next_row: false,
-        },
-        rcursor: RCursor { row: 0, column: 0 },
-        pcursor: PCursor {
-            paragraph: 0,
-            offset: 10000,
-            prefer_next_row: false,
-        },
+    state.cursor.set_char_range(Some(CCursorRange::one(CCursor {
+        index: 100_000,
+        prefer_next_row: false,
     })));
     TextEdit::store_state(ui.ctx(), te_id, state);
 }
