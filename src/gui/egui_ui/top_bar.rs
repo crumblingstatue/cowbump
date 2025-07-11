@@ -187,12 +187,11 @@ fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
         if ui
             .button(concat!(icons::FOLDER, " Open data dir"))
             .clicked()
+            && let Err(e) = open::that(&app.database.data_dir)
         {
-            if let Err(e) = open::that(&app.database.data_dir) {
-                egui_state
-                    .modal
-                    .err(format!("Error opening database dir: {e:?}"));
-            }
+            egui_state
+                .modal
+                .err(format!("Error opening database dir: {e:?}"));
         }
         if ui.button(concat!(icons::TERM, " Debug window")).clicked() {
             egui_state.debug_window.toggle();
@@ -246,10 +245,9 @@ fn file_menu(
                 Button::new("🗀 Close folder"),
             )
             .clicked()
+            && let Err(e) = app.switch_collection(None)
         {
-            if let Err(e) = app.switch_collection(None) {
-                *result = Err(e);
-            }
+            *result = Err(e);
         }
         ui.add_enabled_ui(!app.database.recent.is_empty(), |ui| {
             ui.menu_button("🕓 Recent", |ui| {

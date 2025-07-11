@@ -104,7 +104,7 @@ impl ThumbnailsView {
         let thumb_size = self.thumb_size;
         let mut thumbnails_per_column = (window_height / thumb_size) as u8;
         // Compensate for truncating division
-        if window_height % thumb_size != 0 {
+        if !window_height.is_multiple_of(thumb_size) {
             thumbnails_per_column += 1;
         }
         // Since we can scroll, we can have another partially drawn frame per screen
@@ -118,7 +118,7 @@ impl ThumbnailsView {
     fn find_bottom(&self, window: &RenderWindow) -> f32 {
         let n_pics = self.iter().count();
         let mut rows = n_pics as u32 / u32::from(self.thumbs_per_row);
-        if n_pics as u32 % u32::from(self.thumbs_per_row) != 0 {
+        if !(n_pics as u32).is_multiple_of(u32::from(self.thumbs_per_row)) {
             rows += 1;
         }
         let bottom = rows * self.thumb_size;
