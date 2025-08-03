@@ -8,7 +8,10 @@ use {
     anyhow::anyhow,
     constcat::concat,
     egui_sf2g::{
-        egui::{self, Button, Color32, Context, Label, RichText, TopBottomPanel},
+        egui::{
+            self, Button, Color32, Context, Label, RichText, TopBottomPanel,
+            containers::menu::{MenuConfig, SubMenuButton},
+        },
         sf2g::graphics::{RenderTarget, RenderWindow},
     },
 };
@@ -432,41 +435,50 @@ fn actions_menu(
             egui_state.action = Some(Action::OpenEntriesWindow);
         }
         ui.separator();
-        ui.menu_button(concat!(icons::SORT, " Sort"), |ui| {
-            if !active_coll {
-                ui.disable();
-            }
-            if ui
-                .add(Button::new(concat!(icons::SORT, " Sort")).shortcut_text("S"))
-                .clicked()
-            {
-                egui_state.action = Some(Action::Sort);
-            }
-            if ui
-                .add(Button::new(concat!(icons::QUESTION, " Shuffle")).shortcut_text("R"))
-                .clicked()
-            {
-                egui_state.action = Some(Action::Shuffle);
-            }
-            ui.separator();
-            ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Path, "By filename");
-            ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Id, "By id");
-            ui.selectable_value(
-                &mut state.thumbs_view.sort_by,
-                SortBy::NTags,
-                "By number of tags",
-            );
-            ui.separator();
-            ui.selectable_value(
-                &mut state.thumbs_view.sort_order,
-                SortOrder::Asc,
-                "Ascending",
-            );
-            ui.selectable_value(
-                &mut state.thumbs_view.sort_order,
-                SortOrder::Desc,
-                "Descending",
-            );
-        });
+        SubMenuButton::new(concat!(icons::SORT, " Sort"))
+            .config(MenuConfig::new().close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside))
+            .ui(ui, |ui| sort_menu_ui(active_coll, ui, egui_state, state));
     });
+}
+
+fn sort_menu_ui(
+    active_coll: bool,
+    ui: &mut egui::Ui,
+    egui_state: &mut EguiState,
+    state: &mut State,
+) {
+    if !active_coll {
+        ui.disable();
+    }
+    if ui
+        .add(Button::new(concat!(icons::SORT, " Sort")).shortcut_text("S"))
+        .clicked()
+    {
+        egui_state.action = Some(Action::Sort);
+    }
+    if ui
+        .add(Button::new(concat!(icons::QUESTION, " Shuffle")).shortcut_text("R"))
+        .clicked()
+    {
+        egui_state.action = Some(Action::Shuffle);
+    }
+    ui.separator();
+    ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Path, "By filename");
+    ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Id, "By id");
+    ui.selectable_value(
+        &mut state.thumbs_view.sort_by,
+        SortBy::NTags,
+        "By number of tags",
+    );
+    ui.separator();
+    ui.selectable_value(
+        &mut state.thumbs_view.sort_order,
+        SortOrder::Asc,
+        "Ascending",
+    );
+    ui.selectable_value(
+        &mut state.thumbs_view.sort_order,
+        SortOrder::Desc,
+        "Descending",
+    );
 }
