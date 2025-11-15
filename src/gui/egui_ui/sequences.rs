@@ -152,7 +152,7 @@ pub(super) fn do_sequence_windows(
                     seq.remove_entry(uid);
                 }
                 Action::Open => {
-                    let result: anyhow::Result<()> = try {
+                    let result = try {
                         if prefs.use_built_in_viewer {
                             builtin::open_sequence(state, seq, uid, window)?;
                         } else {
@@ -262,7 +262,7 @@ pub(super) fn do_sequences_window(
                                     (128., 128.),
                                 ));
                                 if ui.add(but).clicked() {
-                                    let result: anyhow::Result<()> = try {
+                                    let result = try {
                                         if preferences.use_built_in_viewer {
                                             builtin::open_sequence(state, seq, *en, window)?;
                                         } else {

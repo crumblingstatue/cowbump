@@ -160,6 +160,22 @@ pub fn text_edit_cursor_set_to_end(ui: &Ui, te_id: egui::Id) {
     TextEdit::store_state(ui.ctx(), te_id, state);
 }
 
+trait AnyhowConv<T, E>
+where
+    anyhow::Error: From<E>,
+{
+    fn how(self) -> anyhow::Result<T>;
+}
+
+impl<T, E> AnyhowConv<T, E> for Result<T, E>
+where
+    anyhow::Error: From<E>,
+{
+    fn how(self) -> anyhow::Result<T> {
+        self.map_err(anyhow::Error::from)
+    }
+}
+
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
@@ -285,7 +301,7 @@ pub(super) fn do_frame(
                                         &mut state.thumbs_view,
                                     );
                                     if del {
-                                        let result: anyhow::Result<()> = try {
+                                        let result = try {
                                             for en_id in &win.ids {
                                                 coll.entries
                                                     .get_mut(en_id)
@@ -453,20 +469,21 @@ pub(super) fn do_frame(
                             .button(concat!(icons::COPY, " Copy filenames to clipboard"))
                             .clicked()
                         {
-                            let res: anyhow::Result<()> = try {
+                            let res = try {
                                 let mut out = String::new();
                                 for uid in &win.ids {
                                     match coll.entries.get(uid) {
                                         Some(en) => {
-                                            let canonical = std::fs::canonicalize(&en.path)?;
-                                            writeln!(&mut out, "{}", canonical.display())?;
+                                            let canonical =
+                                                std::fs::canonicalize(&en.path).how()?;
+                                            writeln!(&mut out, "{}", canonical.display()).how()?;
                                         }
                                         None => {
-                                            writeln!(&mut out, "<Dangling id {uid:?}>")?;
+                                            writeln!(&mut out, "<Dangling id {uid:?}>").how()?;
                                         }
                                     }
                                 }
-                                state.clipboard_ctx.set_text(out)?;
+                                state.clipboard_ctx.set_text(out).how()?;
                             };
                             if let Err(e) = res {
                                 egui_state
@@ -559,15 +576,15 @@ pub(super) fn do_frame(
                                             c_wrap.exit_status = opt_status;
                                             // The process has only exited if the status is some
                                             if opt_status.is_some() {
-                                                let result: anyhow::Result<()> = try {
+                                                let result = try {
                                                     if let Some(stdout) = &mut c_wrap.child.stdout {
                                                         let mut buf = String::new();
-                                                        stdout.read_to_string(&mut buf)?;
+                                                        stdout.read_to_string(&mut buf).how()?;
                                                         c_wrap.stdout = buf;
                                                     }
                                                     if let Some(stderr) = &mut c_wrap.child.stderr {
                                                         let mut buf = String::new();
-                                                        stderr.read_to_string(&mut buf)?;
+                                                        stderr.read_to_string(&mut buf).how()?;
                                                         c_wrap.stderr = buf;
                                                     }
                                                 };
@@ -700,7 +717,7 @@ pub(super) fn do_frame(
                                         (128., 128.),
                                     ));
                                     if ui.add(img_but).clicked() {
-                                        let result: anyhow::Result<()> = try {
+                                        let result = try {
                                             if db.preferences.use_built_in_viewer {
                                                 builtin::open_sequence(
                                                     state, seq, img_id, rend_win,

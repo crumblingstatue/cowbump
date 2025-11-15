@@ -251,7 +251,7 @@ pub(super) fn do_ui(
                 }
             }
             FileOp::CreateBackup => {
-                let result: anyhow::Result<()> = try {
+                let result = try {
                     app.save_active_collection()?;
                     app.database.save_backups(&path)?;
                 };

@@ -359,7 +359,7 @@ pub(in crate::gui) fn handle_event(
                         None => state.select_a = Some(curr_thumb_idx),
                     }
                 } else {
-                    let result: anyhow::Result<()> = try {
+                    let result = try {
                         if preferences.use_built_in_viewer {
                             if let Some(id) = state.thumbs_view.entry_at_xy(x, y) {
                                 builtin::open_single_with_others(
