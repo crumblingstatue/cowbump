@@ -399,7 +399,9 @@ pub(in crate::gui) fn handle_event(
                 egui_state.add_entries_window(entries);
             }
         }
-        Event::KeyPressed { code, ctrl, .. } => {
+        Event::KeyPressed {
+            code, ctrl, shift, ..
+        } => {
             if egui_ctx.wants_keyboard_input()
                 || *egui_state.file_dialog.state() == egui_file_dialog::DialogState::Open
             {
@@ -418,7 +420,11 @@ pub(in crate::gui) fn handle_event(
                     egui_state.modal.err(format!("Failed to open file(s): {e}"));
                 }
             } else if code == Key::A && ctrl {
-                select_all(state, coll);
+                if shift {
+                    add_all_to_selection(state, coll);
+                } else {
+                    select_all(state, coll);
+                }
             } else if code == Key::Slash {
                 egui_state.find_popup.on = true;
             } else if code == Key::N {
@@ -503,6 +509,18 @@ pub(in crate::gui) fn select_all(state: &mut State, coll: &Collection) {
     buf.clear();
     for uid in coll.filter(&state.filter) {
         buf.buf.push(uid);
+    }
+}
+
+pub(in crate::gui) fn add_all_to_selection(state: &mut State, coll: &Collection) {
+    let Some(buf) = state.sel.current_mut() else {
+        dlog!("Current selection buffer inacessible");
+        return;
+    };
+    for uid in coll.filter(&state.filter) {
+        if !buf.contains(&uid) {
+            buf.buf.push(uid);
+        }
     }
 }
 

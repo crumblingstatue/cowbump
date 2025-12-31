@@ -20,6 +20,7 @@ use {
         db::EntryMap,
         entry,
         filter_reqs::Requirements,
+        gui::thumbnails_view::add_all_to_selection,
         preferences::{LightDarkPref, Preferences, SortPreference},
     },
     anyhow::Context as _,
@@ -186,6 +187,11 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                 Action::SelectAll => {
                     if let Some((_, coll)) = &mut app.active_collection {
                         select_all(&mut state, coll);
+                    }
+                }
+                Action::AddAllToSelection => {
+                    if let Some((_, coll)) = &mut app.active_collection {
+                        add_all_to_selection(&mut state, coll);
                     }
                 }
                 Action::Sort => {

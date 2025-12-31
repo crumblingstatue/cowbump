@@ -123,6 +123,7 @@ pub(crate) enum Action {
     FindNext,
     FindPrev,
     SelectAll,
+    AddAllToSelection,
     SelectNone,
     OpenEntriesWindow,
     Shuffle,

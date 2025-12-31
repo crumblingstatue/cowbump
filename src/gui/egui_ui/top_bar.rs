@@ -428,6 +428,16 @@ fn actions_menu(
         if ui
             .add_enabled(
                 active_coll,
+                Button::new(concat!(icons::ADD, " Add All to selection"))
+                    .shortcut_text("ctrl+shift+A"),
+            )
+            .clicked()
+        {
+            egui_state.action = Some(Action::AddAllToSelection);
+        }
+        if ui
+            .add_enabled(
+                active_coll,
                 Button::new("☐ Select None").shortcut_text("Esc"),
             )
             .clicked()
