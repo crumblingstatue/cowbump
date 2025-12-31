@@ -99,7 +99,7 @@ fn tag(
     // FIXME: Magic number to add to text size to stop text from wrapping
     let magic = if del.is_some() { 44.0 } else { 14.0 };
     let w =
-        ui.fonts(|f| {
+        ui.fonts_mut(|f| {
             f.layout_no_wrap(
                 name.into(),
                 egui::TextStyle::Button.resolve(ui.style()),

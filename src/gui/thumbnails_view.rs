@@ -401,7 +401,7 @@ pub(in crate::gui) fn handle_event(
         }
         Event::KeyPressed { code, ctrl, .. } => {
             if egui_ctx.wants_keyboard_input()
-                || egui_state.file_dialog.state() == egui_file_dialog::DialogState::Open
+                || *egui_state.file_dialog.state() == egui_file_dialog::DialogState::Open
             {
                 return;
             }

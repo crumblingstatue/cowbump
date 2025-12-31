@@ -253,7 +253,7 @@ fn show_modal_ui(ctx: &egui::Context, ui_fn: impl FnOnce(&mut egui::Ui)) {
     let re = egui::Area::new(egui::Id::new("modal_area"))
         .fixed_pos(egui::Pos2::ZERO)
         .show(ctx, |ui| {
-            let screen_rect = ui.ctx().input(|inp| inp.screen_rect);
+            let screen_rect = ui.ctx().input(|inp| inp.screen_rect());
             ui.allocate_response(screen_rect.size(), egui::Sense::click());
             ui.painter().rect_filled(
                 screen_rect,
