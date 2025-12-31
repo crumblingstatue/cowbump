@@ -139,6 +139,13 @@ pub(super) fn do_frame(
                             .sel
                             .add_buf(format!("Sel {}", state.sel.bufs.len() + 1));
                     }
+                    if state.select_a.is_some()
+                        && ui
+                            .button(concat!(icons::REMOVE, "Remove a-select"))
+                            .clicked()
+                    {
+                        state.select_a = None;
+                    }
                 }
                 Activity::Viewer => {
                     ui.separator();
