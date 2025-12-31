@@ -141,7 +141,10 @@ pub(super) fn do_frame(
                     }
                     if state.select_a.is_some()
                         && ui
-                            .button(concat!(icons::REMOVE, "Remove a-select"))
+                            .button(
+                                RichText::new(concat!(icons::REMOVE, "Remove a-select"))
+                                    .color(Color32::YELLOW),
+                            )
                             .clicked()
                     {
                         state.select_a = None;
