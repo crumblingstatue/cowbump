@@ -17,8 +17,8 @@ use {
     constcat::concat,
     egui_sf2g::{
         egui::{
-            Align, Button, Color32, Context, DragValue, ImageButton, Key, ScrollArea, TextEdit,
-            TextureId, Window, load::SizedTexture,
+            self, Align, Button, Color32, Context, DragValue, Key, ScrollArea, TextEdit, TextureId,
+            Window, load::SizedTexture,
         },
         sf2g::graphics::RenderWindow,
     },
@@ -64,14 +64,14 @@ pub(super) fn do_sequence_windows(
                     let seq_entries_len = seq.entries.len();
                     for (i, &img_uid) in seq.entries.iter().enumerate() {
                         ui.vertical(|ui| {
-                            let mut img_butt = ImageButton::new(SizedTexture::new(
+                            let mut img = egui::Image::new(SizedTexture::new(
                                 TextureId::User(img_uid.0),
                                 (256., 256.),
                             ));
                             if win.focus_req == Some(img_uid) {
-                                img_butt = img_butt.tint(Color32::YELLOW);
+                                img = img.tint(Color32::YELLOW);
                             }
-                            let re = ui.add(img_butt);
+                            let re = ui.add(Button::image(img));
                             if win.focus_req == Some(img_uid) {
                                 re.scroll_to_me(Some(Align::Center));
                                 win.focus_req = None;
@@ -257,7 +257,7 @@ pub(super) fn do_sequences_window(
                         // Display the first 7 images of the sequence
                         ui.horizontal(|ui| {
                             for en in seq.entries.iter().take(7) {
-                                let but = ImageButton::new(SizedTexture::new(
+                                let but = Button::image(SizedTexture::new(
                                     TextureId::User(en.0),
                                     (128., 128.),
                                 ));

@@ -5,7 +5,7 @@ use {
     },
     egui_sf2g::{
         egui::{
-            self, Color32, Context, ImageButton, Label, RichText, ScrollArea, TextureId, Window,
+            self, Color32, Context, Label, RichText, ScrollArea, TextureId, Window,
             load::SizedTexture,
         },
         sf2g::graphics::{RenderTarget, RenderWindow},
@@ -62,7 +62,7 @@ pub(super) fn do_frame(
                                         Some(info) => {
                                             ui.horizontal(|ui| {
                                                 let img_button =
-                                                    ImageButton::new(SizedTexture::new(
+                                                    egui::Button::image(SizedTexture::new(
                                                         TextureId::User(info.id.0),
                                                         (128.0, 128.0),
                                                     ));

@@ -88,7 +88,7 @@ pub(crate) fn do_frame(
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (i, id) in egui_state.batch_rename_window.ids.iter().enumerate() {
-                        let mut img = egui::ImageButton::new(egui::load::SizedTexture::new(
+                        let mut img = egui::Image::new(egui::load::SizedTexture::new(
                             TextureId::User(id.0),
                             egui::vec2(256., 256.),
                         ));
@@ -100,7 +100,7 @@ pub(crate) fn do_frame(
                         if state.viewer_state.shown_entry().is_some_and(|en| en == *id) {
                             img = img.tint(egui::Color32::GREEN);
                         }
-                        let re = ui.add(img);
+                        let re = ui.add(egui::Button::image(img));
                         let alt = ui.input(|inp| inp.modifiers.alt);
                         if re.clicked() && alt {
                             crate::gui::open::builtin::open_list(

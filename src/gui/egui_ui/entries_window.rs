@@ -24,8 +24,8 @@ use {
     constcat::concat,
     egui_sf2g::{
         egui::{
-            self, Button, Color32, ImageButton, Key, Label, Modifiers, PointerButton, Response,
-            Rgba, RichText, ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
+            self, Button, Color32, Key, Label, Modifiers, PointerButton, Response, Rgba, RichText,
+            ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
             epaint::text::cursor::CCursor, load::SizedTexture, text::CCursorRange, vec2,
         },
         sf2g::graphics::{RenderTarget, RenderWindow},
@@ -250,7 +250,7 @@ pub(super) fn do_frame(
                             };
                             let w = h * ratio;
                             if ui
-                                .add(ImageButton::new(SizedTexture::new(
+                                .add(Button::image(SizedTexture::new(
                                     TextureId::User(id.0),
                                     (w, h),
                                 )))
@@ -712,7 +712,7 @@ pub(super) fn do_frame(
                         ui.horizontal(|ui| {
                             ScrollArea::horizontal().show(ui, |ui| {
                                 for &img_id in &seq.entries {
-                                    let img_but = ImageButton::new(SizedTexture::new(
+                                    let img_but = Button::image(SizedTexture::new(
                                         TextureId::User(img_id.0),
                                         (128., 128.),
                                     ));
