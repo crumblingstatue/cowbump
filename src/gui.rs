@@ -79,6 +79,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     &coll.1,
                     &state.filter,
                     &app.database.preferences,
+                    &state.sel,
                 );
                 let root_path = &app.database.collections[&coll.0];
                 if let Err(e) = std::env::set_current_dir(root_path) {
@@ -198,7 +199,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     if let Some((_, coll)) = &mut app.active_collection {
                         state
                             .thumbs_view
-                            .update_from_collection(coll, &state.filter);
+                            .update_from_collection(coll, &state.filter, &state.sel);
                     }
                 }
                 Action::Shuffle => {
@@ -384,7 +385,7 @@ impl SelectionBufs {
     pub fn new() -> Self {
         Self {
             current: 0,
-            bufs: vec![SelectionBuf::new("Sel 1")],
+            bufs: vec![SelectionBuf::new("sel-1")],
         }
     }
     pub fn current(&self) -> Option<&SelectionBuf> {
@@ -397,6 +398,9 @@ impl SelectionBufs {
         for buf in &mut self.bufs {
             f(buf);
         }
+    }
+    pub fn any(&self, f: impl FnMut(&SelectionBuf) -> bool) -> bool {
+        self.bufs.iter().any(f)
     }
     pub fn add_buf(&mut self, name: impl Into<String>) {
         self.bufs.push(SelectionBuf::new(name));
@@ -442,6 +446,7 @@ fn set_active_collection(
     id: collection::Id,
     reqs: &Requirements,
     window_width: u32,
+    sel_bufs: &SelectionBufs,
 ) -> anyhow::Result<()> {
     app.save_active_collection()?;
     let active_coll = &app
@@ -449,8 +454,13 @@ fn set_active_collection(
         .as_ref()
         .context("No active collection")?
         .1;
-    *entries_view =
-        ThumbnailsView::from_collection(window_width, active_coll, reqs, &app.database.preferences);
+    *entries_view = ThumbnailsView::from_collection(
+        window_width,
+        active_coll,
+        reqs,
+        &app.database.preferences,
+        sel_bufs,
+    );
     let root = app
         .database
         .collections

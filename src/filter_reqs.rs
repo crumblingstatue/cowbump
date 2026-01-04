@@ -157,6 +157,7 @@ pub enum Req {
     Not(Box<Req>),
     FilenameSub(String),
     PartOfSeq,
+    PartOfSelectionGroup(String),
     NTags(usize),
 }
 
@@ -219,6 +220,18 @@ impl Req {
                     Req::FilenameSub((*filename_sub).to_owned())
                 }
                 "seq" | "sequence" => Req::PartOfSeq,
+                "sel" => {
+                    let group_name = match call.params.first() {
+                        Some(req) => match req {
+                            Requirement::Tag(tag) | Requirement::TagExact(tag) => tag,
+                            Requirement::FnCall(_) | Requirement::Not(_) => {
+                                return Err(ReqTransformError::InvalidParameter);
+                            }
+                        },
+                        None => return Err(ReqTransformError::MissingParameter),
+                    };
+                    Req::PartOfSelectionGroup((*group_name).to_owned())
+                }
                 "notag" | "no-tag" | "untagged" => Req::NTags(0),
                 "ntags" => match call.params.first() {
                     Some(Requirement::Tag(tag) | Requirement::TagExact(tag)) => {
@@ -247,6 +260,7 @@ impl Req {
             Req::Not(req) => format!("!{}", req.to_string(tags)).into(),
             Req::FilenameSub(substr) => format!("@f[{substr}]").into(),
             Req::PartOfSeq => "@seq".into(),
+            Req::PartOfSelectionGroup(name) => format!("@sel[{name}]").into(),
             Req::NTags(0) => "@untagged".into(),
             Req::NTags(n) => format!("@ntags[{n}]").into(),
         }

@@ -189,7 +189,7 @@ pub(super) fn do_ui(
         if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
             state
                 .thumbs_view
-                .update_from_collection(coll, &state.filter);
+                .update_from_collection(coll, &state.filter, &state.sel);
             state.thumbs_view.clamp_bottom(win);
         }
         tag_list::do_frame(
@@ -241,6 +241,7 @@ pub(super) fn do_ui(
                         id,
                         &state.filter,
                         win.size().x,
+                        &state.sel,
                     );
                     if let Err(e) = result {
                         egui_state

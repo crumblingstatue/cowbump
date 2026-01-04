@@ -128,7 +128,7 @@ pub(super) fn do_frame(
                     }
                     if state.sel.bufs.is_empty() {
                         state.sel.current = 0;
-                        state.sel.bufs.push(SelectionBuf::new("Sel 1"));
+                        state.sel.bufs.push(SelectionBuf::new("sel-1"));
                     }
                     if ui
                         .button(icons::ADD)
@@ -137,7 +137,7 @@ pub(super) fn do_frame(
                     {
                         state
                             .sel
-                            .add_buf(format!("Sel {}", state.sel.bufs.len() + 1));
+                            .add_buf(format!("sel-{}", state.sel.bufs.len() + 1));
                     }
                     if state.select_a.is_some()
                         && ui
@@ -296,6 +296,7 @@ fn file_menu(
                                 id,
                                 &state.filter,
                                 window_width,
+                                &state.sel,
                             );
                         }
                         Err(e) => {

@@ -11,6 +11,7 @@ use {
         collection::{Collection, Entries, SortBy, SortOrder},
         dlog, entry,
         filter_reqs::Requirements,
+        gui::SelectionBufs,
         preferences::Preferences,
     },
     anyhow::Context as _,
@@ -65,13 +66,19 @@ impl ThumbnailsView {
         coll: &Collection,
         reqs: &Requirements,
         preferences: &Preferences,
+        sel_bufs: &SelectionBufs,
     ) -> Self {
         let mut this = Self::new(window_width, preferences);
-        this.update_from_collection(coll, reqs);
+        this.update_from_collection(coll, reqs, sel_bufs);
         this
     }
-    pub fn update_from_collection(&mut self, coll: &Collection, reqs: &Requirements) {
-        self.uids = coll.filter(reqs).collect();
+    pub fn update_from_collection(
+        &mut self,
+        coll: &Collection,
+        reqs: &Requirements,
+        sel_bufs: &SelectionBufs,
+    ) {
+        self.uids = coll.filter(reqs, sel_bufs).collect();
         self.sort(coll);
     }
     fn sort(&mut self, coll: &Collection) {
@@ -448,7 +455,7 @@ pub(in crate::gui) fn handle_event(
             } else if code == Key::S {
                 state
                     .thumbs_view
-                    .update_from_collection(coll, &state.filter);
+                    .update_from_collection(coll, &state.filter, &state.sel);
             } else if code == Key::R {
                 state.thumbs_view.uids.shuffle(&mut rand::rng());
             } else if code == Key::Home {
@@ -502,26 +509,30 @@ fn copy_image_to_clipboard(
 }
 
 pub(in crate::gui) fn select_all(state: &mut State, coll: &Collection) {
+    let ids: Vec<entry::Id> = coll.filter(&state.filter, &state.sel).collect();
     let Some(buf) = state.sel.current_mut() else {
         dlog!("Current selection buffer inacessible");
         return;
     };
-    buf.clear();
-    for uid in coll.filter(&state.filter) {
-        buf.buf.push(uid);
-    }
+    buf.buf = ids;
 }
 
 pub(in crate::gui) fn add_all_to_selection(state: &mut State, coll: &Collection) {
-    let Some(buf) = state.sel.current_mut() else {
+    let Some(current_buf) = state.sel.current() else {
         dlog!("Current selection buffer inacessible");
         return;
     };
-    for uid in coll.filter(&state.filter) {
-        if !buf.contains(&uid) {
-            buf.buf.push(uid);
+    let mut new_buf = Vec::new();
+    for uid in coll.filter(&state.filter, &state.sel) {
+        if !current_buf.contains(&uid) {
+            new_buf.push(uid);
         }
     }
+    let Some(current_buf_mut) = state.sel.current_mut() else {
+        dlog!("Current selection buffer inacessible");
+        return;
+    };
+    current_buf_mut.buf = new_buf;
 }
 
 pub(in crate::gui) fn search_prev(state: &mut State, coll: &Collection, view_height: u32) {
@@ -546,7 +557,13 @@ fn find_nth(state: &State, coll: &Collection, nth: usize) -> Option<usize> {
         .enumerate()
         .filter(|(_, uid)| {
             let en = &coll.entries[uid];
-            en.all_reqs_satisfied(*uid, &state.find_reqs, &coll.tags, &coll.sequences)
+            en.all_reqs_satisfied(
+                *uid,
+                &state.find_reqs,
+                &coll.tags,
+                &coll.sequences,
+                &state.sel,
+            )
         })
         .map(|(i, _)| i)
         .nth(nth)

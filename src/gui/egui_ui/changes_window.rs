@@ -130,6 +130,7 @@ pub(super) fn do_frame(
                                 active_coll,
                                 &state.filter,
                                 &app.database.preferences,
+                                &state.sel,
                             );
                             win.applied = true;
                         } else {

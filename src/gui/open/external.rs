@@ -24,7 +24,7 @@ pub(in crate::gui) fn on_enter_open(
         });
     }
     if candidates.is_empty() && !state.filter.is_empty() {
-        for uid in coll.filter(&state.filter) {
+        for uid in coll.filter(&state.filter, &state.sel) {
             candidates.push(OpenExternCandidate {
                 path: &coll.entries[&uid].path,
                 open_with: None,

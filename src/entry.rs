@@ -4,6 +4,7 @@ use {
         db::{TagSet, Uid},
         dlog,
         filter_reqs::{Req, Requirements},
+        gui::SelectionBufs,
         tag,
     },
     serde_derive::{Deserialize, Serialize},
@@ -34,19 +35,36 @@ impl Entry {
         reqs: &Requirements,
         tags: &Tags,
         sequences: &Sequences,
+        sel_bufs: &SelectionBufs,
     ) -> bool {
-        reqs.all(|req| self.req_satisfied(id, req, tags, sequences))
+        reqs.all(|req| self.req_satisfied(id, req, tags, sequences, sel_bufs))
     }
-    pub fn req_satisfied(&self, id: Id, req: &Req, tags: &Tags, sequences: &Sequences) -> bool {
+    pub fn req_satisfied(
+        &self,
+        id: Id,
+        req: &Req,
+        tags: &Tags,
+        sequences: &Sequences,
+        sel_bufs: &SelectionBufs,
+    ) -> bool {
         match req {
-            Req::Any(reqs) => reqs.any(|req| self.req_satisfied(id, req, tags, sequences)),
-            Req::All(reqs) => reqs.all(|req| self.req_satisfied(id, req, tags, sequences)),
-            Req::None(reqs) => reqs.none(|req| self.req_satisfied(id, req, tags, sequences)),
+            Req::Any(reqs) => {
+                reqs.any(|req| self.req_satisfied(id, req, tags, sequences, sel_bufs))
+            }
+            Req::All(reqs) => {
+                reqs.all(|req| self.req_satisfied(id, req, tags, sequences, sel_bufs))
+            }
+            Req::None(reqs) => {
+                reqs.none(|req| self.req_satisfied(id, req, tags, sequences, sel_bufs))
+            }
             Req::Tag(id) => self.satisfies_required_tag(*id, tags),
             Req::TagExact(id) => self.tags.iter().any(|tagid| tagid == id),
-            Req::Not(req) => !self.req_satisfied(id, req, tags, sequences),
+            Req::Not(req) => !self.req_satisfied(id, req, tags, sequences, sel_bufs),
             Req::FilenameSub(fsub) => self.path.to_string_lossy().to_lowercase().contains(fsub),
             Req::PartOfSeq => sequences.values().any(|seq| seq.contains_entry(id)),
+            Req::PartOfSelectionGroup(name) => {
+                sel_bufs.any(|buf| buf.name.eq_ignore_ascii_case(name) && buf.buf.contains(&id))
+            }
             Req::NTags(n) => self.tags.len() == *n,
         }
     }
@@ -97,8 +115,9 @@ pub fn filter_map(
     reqs: &Requirements,
     tags: &Tags,
     sequences: &Sequences,
+    sel_bufs: &SelectionBufs,
 ) -> Option<Id> {
-    if entry.all_reqs_satisfied(uid, reqs, tags, sequences) {
+    if entry.all_reqs_satisfied(uid, reqs, tags, sequences, sel_bufs) {
         Some(uid)
     } else {
         None

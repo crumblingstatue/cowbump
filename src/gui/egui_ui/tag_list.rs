@@ -88,6 +88,7 @@ pub(super) fn do_frame(
     let modal = &mut egui_state.modal;
     let merge_this = &mut egui_state.tag_window.merge_this;
     let ac_state = &mut egui_state.tag_window.ac_state;
+    let sel = &mut state.sel;
     // Clear selected uids that have already been deleted
     selected_uids.retain(|uid| coll.tags.contains_key(uid));
     egui_sf2g::egui::Window::new(concat!(icons::TAG, " Tag list"))
@@ -105,7 +106,7 @@ pub(super) fn do_frame(
                 }
                 if ui.button("Clear all filters").clicked() {
                     reqs.clear();
-                    entries_view.update_from_collection(coll, reqs);
+                    entries_view.update_from_collection(coll, reqs, sel);
                 }
                 if new_tag.inactive() {
                     if ui.button("Add new tag").clicked() {
@@ -231,7 +232,7 @@ pub(super) fn do_frame(
                                     ui.end_row();
                                     if clicked_any {
                                         *filter_string = reqs.to_string(&coll.tags);
-                                        entries_view.update_from_collection(coll, reqs);
+                                        entries_view.update_from_collection(coll, reqs, sel);
                                     }
                                 }
                             });

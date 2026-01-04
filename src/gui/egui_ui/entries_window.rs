@@ -10,7 +10,7 @@ use {
         dlog, entry,
         filter_reqs::Requirements,
         gui::{
-            State, get_tex_for_entry,
+            SelectionBufs, State, get_tex_for_entry,
             open::{
                 builtin,
                 external::{self, OpenExternCandidate, feed_args},
@@ -95,6 +95,7 @@ fn tag(
     egui_state: &mut EguiState,
     changed_filter: &mut bool,
     entries_view: &mut ThumbnailsView,
+    sel_bufs: &SelectionBufs,
 ) -> Response {
     // FIXME: Magic number to add to text size to stop text from wrapping
     let magic = if del.is_some() { 44.0 } else { 14.0 };
@@ -124,7 +125,7 @@ fn tag(
                     reqs.set_have_tag(id, false);
                     egui_state.filter_popup.string = reqs.to_string(&coll.tags);
                     *changed_filter = true;
-                    entries_view.update_from_collection(coll, reqs);
+                    entries_view.update_from_collection(coll, reqs, sel_bufs);
                 }
                 if ui.button("Open in tags window").clicked() {
                     egui_state.tag_window.toggle();
@@ -136,7 +137,7 @@ fn tag(
                 reqs.set_not_have_tag(id, false);
                 egui_state.filter_popup.string = reqs.to_string(&coll.tags);
                 *changed_filter = true;
-                entries_view.update_from_collection(coll, reqs);
+                entries_view.update_from_collection(coll, reqs, sel_bufs);
             }
             if let Some(del) = del
                 && ui.button(icons::REMOVE).clicked()
@@ -299,6 +300,7 @@ pub(super) fn do_frame(
                                         egui_state,
                                         &mut changed_filter,
                                         &mut state.thumbs_view,
+                                        &state.sel,
                                     );
                                     if del {
                                         let result = try {
@@ -309,9 +311,11 @@ pub(super) fn do_frame(
                                                     .tags
                                                     .retain(|&t| t != tagid);
                                             }
-                                            state
-                                                .thumbs_view
-                                                .update_from_collection(coll, &state.filter);
+                                            state.thumbs_view.update_from_collection(
+                                                coll,
+                                                &state.filter,
+                                                &state.sel,
+                                            );
                                         };
                                         if let Err(e) = result {
                                             egui_state
@@ -330,12 +334,15 @@ pub(super) fn do_frame(
                                         egui_state,
                                         &mut changed_filter,
                                         &mut state.thumbs_view,
+                                        &state.sel,
                                     );
                                 }
                                 if changed_filter {
-                                    state
-                                        .thumbs_view
-                                        .update_from_collection(coll, &state.filter);
+                                    state.thumbs_view.update_from_collection(
+                                        coll,
+                                        &state.filter,
+                                        &state.sel,
+                                    );
                                     state.thumbs_view.clamp_bottom(rend_win);
                                 }
                             }
@@ -406,9 +413,11 @@ pub(super) fn do_frame(
                                 }
                                 win.add_tag_buffer.clear();
                                 win.editing_tags = false;
-                                state
-                                    .thumbs_view
-                                    .update_from_collection(coll, &state.filter);
+                                state.thumbs_view.update_from_collection(
+                                    coll,
+                                    &state.filter,
+                                    &state.sel,
+                                );
                             }
                         }
 
@@ -771,6 +780,6 @@ fn remove_entries(
     // Make sure to only update the view after the collection entry removes finished
     state
         .thumbs_view
-        .update_from_collection(coll, &state.filter);
+        .update_from_collection(coll, &state.filter, &state.sel);
     Ok(())
 }

@@ -239,6 +239,7 @@ pub(super) fn do_frame(
                             id,
                             &state.filter,
                             window_width,
+                            &state.sel,
                         ) {
                             egui_state
                                 .modal

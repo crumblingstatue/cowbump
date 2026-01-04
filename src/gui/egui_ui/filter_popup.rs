@@ -25,7 +25,7 @@ pub(super) fn do_frame(
     egui_state
         .filter_popup
         .do_frame("filter", egui_ctx, |popup, ui| {
-            let count = coll.filter(&state.filter).count();
+            let count = coll.filter(&state.filter, &state.sel).count();
             let up_pressed =
                 ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowUp));
             let down_pressed =

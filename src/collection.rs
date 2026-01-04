@@ -5,6 +5,7 @@ use {
         entry::{self, Entry},
         filter_reqs::Requirements,
         folder_scan::walkdir,
+        gui::SelectionBufs,
         preferences,
         sequence::{self, Sequence},
         tag::{self, Tag},
@@ -144,9 +145,13 @@ impl Collection {
             uid_counter,
         ))
     }
-    pub fn filter<'a>(&'a self, reqs: &'a Requirements) -> impl Iterator<Item = entry::Id> + 'a {
+    pub fn filter<'a>(
+        &'a self,
+        reqs: &'a Requirements,
+        sel_bufs: &'a SelectionBufs,
+    ) -> impl Iterator<Item = entry::Id> + 'a {
         self.entries.iter().filter_map(move |(&uid, en)| {
-            entry::filter_map(uid, en, reqs, &self.tags, &self.sequences)
+            entry::filter_map(uid, en, reqs, &self.tags, &self.sequences, sel_bufs)
         })
     }
     pub fn rename(&mut self, uid: entry::Id, new: &str) -> anyhow::Result<()> {

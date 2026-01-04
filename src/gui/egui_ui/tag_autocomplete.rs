@@ -104,6 +104,7 @@ pub(super) fn tag_autocomplete_popup(
                 "@f[]",
             ),
             ("@seq", "Part of a sequence", "@seq"),
+            ("@sel[name]", "Part of a selection buffer", "@sel"),
             ("@untagged", "Entries that don't have any tags", "@untagged"),
             (
                 "@ntags[n]",
