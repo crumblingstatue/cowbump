@@ -9,7 +9,7 @@ use {
     constcat::concat,
     egui_sf2g::{
         egui::{
-            self, Button, Color32, Context, Label, RichText, TopBottomPanel,
+            self, Button, Color32, Label, RichText,
             containers::menu::{MenuConfig, SubMenuButton},
         },
         sf2g::graphics::{RenderTarget, RenderWindow},
@@ -41,7 +41,7 @@ impl TopBar {
 pub(super) fn do_frame(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &Context,
+    ui: &mut egui::Ui,
     app: &mut Application,
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
@@ -50,7 +50,7 @@ pub(super) fn do_frame(
     }
     let n_selected = state.sel.current_mut().map_or(0, |buf| buf.len());
     let mut result = Ok(());
-    TopBottomPanel::top("top_panel").show(egui_ctx, |ui| {
+    egui::Panel::top("top_panel").show_inside(ui, |ui| {
         egui::MenuBar::new().ui(ui, |ui| {
             match state.activity {
                 Activity::Thumbnails => {

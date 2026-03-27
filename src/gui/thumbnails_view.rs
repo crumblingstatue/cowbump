@@ -332,7 +332,7 @@ pub(in crate::gui) fn handle_event(
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
-            if egui_ctx.wants_pointer_input() {
+            if egui_ctx.egui_wants_pointer_input() {
                 return;
             }
             let Some(uid) = state.thumbs_view.entry_at_xy(x, y) else {
@@ -409,7 +409,7 @@ pub(in crate::gui) fn handle_event(
         Event::KeyPressed {
             code, ctrl, shift, ..
         } => {
-            if egui_ctx.wants_keyboard_input()
+            if egui_ctx.egui_wants_keyboard_input()
                 || *egui_state.file_dialog.state() == egui_file_dialog::DialogState::Open
             {
                 return;
@@ -459,10 +459,10 @@ pub(in crate::gui) fn handle_event(
             } else if code == Key::R {
                 state.thumbs_view.uids.shuffle(&mut rand::rng());
             } else if code == Key::Home {
-                if !egui_ctx.wants_keyboard_input() {
+                if !egui_ctx.egui_wants_keyboard_input() {
                     state.thumbs_view.y_offset = 0.0;
                 }
-            } else if code == Key::End && !egui_ctx.wants_keyboard_input() {
+            } else if code == Key::End && !egui_ctx.egui_wants_keyboard_input() {
                 // Align the bottom edge of the view with the bottom edge of the last row.
                 // To do align the camera with a bottom edge, we need to subtract the screen
                 // height from it.

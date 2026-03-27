@@ -97,7 +97,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     }
 
     while window.is_open() {
-        if !sf_egui.context().wants_keyboard_input() {
+        if !sf_egui.context().egui_wants_keyboard_input() {
             let scroll_speed = app.database.preferences.arrow_key_scroll_speed;
             if Key::Down.is_pressed() {
                 state.thumbs_view.y_offset += scroll_speed;
@@ -151,7 +151,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     }
                 }
                 Activity::Viewer => {
-                    if !sf_egui.context().wants_pointer_input() {
+                    if !sf_egui.context().egui_wants_pointer_input() {
                         viewer::handle_event(&mut state, &event, &window);
                     }
                 }
@@ -159,8 +159,8 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         }
         egui_state.begin_frame();
         let mut result = Ok(());
-        let di = sf_egui.run(&mut window, |rw, ctx| {
-            result = egui_ui::do_ui(&mut state, &mut egui_state, ctx, app, &res, rw);
+        let di = sf_egui.run(&mut window, |rw, ui| {
+            result = egui_ui::do_ui(&mut state, &mut egui_state, ui, app, &res, rw);
         })?;
         if let Err(e) = result {
             // Note: These are not egui errors. Egui is doing fine when these errors
@@ -219,8 +219,8 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         // This needs to happen after the egui pass(es), because it needs to react to what
         // happened in the egui ui, like if a window was just closed.
         if ev_flags.esc_pressed
-            && !sf_egui.context().wants_keyboard_input()
-            && !sf_egui.context().wants_pointer_input()
+            && !sf_egui.context().egui_wants_keyboard_input()
+            && !sf_egui.context().egui_wants_pointer_input()
             && !egui_state.just_closed_window_with_esc
         {
             state.sel.clear_current();
@@ -236,7 +236,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             &mut window,
                             &coll.entries,
                             load_anim_rotation,
-                            !sf_egui.context().wants_pointer_input(),
+                            !sf_egui.context().egui_wants_pointer_input(),
                         );
                     }
                     Activity::Viewer => {

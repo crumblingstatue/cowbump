@@ -145,16 +145,13 @@ impl EguiState {
 pub(super) fn do_ui(
     state: &mut State,
     egui_state: &mut EguiState,
-    egui_ctx: &Context,
+    ui: &mut egui::Ui,
     app: &mut Application,
     res: &Resources,
     win: &RenderWindow,
 ) -> anyhow::Result<()> {
     // Do the modal handling first, so it can steal Esc/Enter inputs
-    if let Some(action) = egui_state
-        .modal
-        .show_payload(egui_ctx, &mut state.clipboard_ctx)
-    {
+    if let Some(action) = egui_state.modal.show_payload(ui, &mut state.clipboard_ctx) {
         match action {
             PromptAction::QuitNoSave => {
                 egui_state.action = Some(Action::QuitNoSave);
@@ -178,33 +175,27 @@ pub(super) fn do_ui(
             PromptAction::PanicTest => panic!("User inflicted panic"),
         }
     }
-    top_bar::do_frame(state, egui_state, egui_ctx, app, win)?;
-    preferences_window::do_frame(state, egui_state, app, egui_ctx, win);
-    load_folder_window::do_frame(state, egui_state, egui_ctx, res, app, win.size().x);
-    changes_window::do_frame(state, egui_state, egui_ctx, app, win);
-    debug_window::do_frame(egui_state, egui_ctx);
-    collections_window::do_frame(app, egui_state, egui_ctx);
+    top_bar::do_frame(state, egui_state, ui, app, win)?;
+    preferences_window::do_frame(state, egui_state, app, ui, win);
+    load_folder_window::do_frame(state, egui_state, ui, res, app, win.size().x);
+    changes_window::do_frame(state, egui_state, ui, app, win);
+    debug_window::do_frame(egui_state, ui);
+    collections_window::do_frame(app, egui_state, ui);
     if let Some((_id, coll)) = app.active_collection.as_mut() {
-        find_popup::do_frame(state, egui_state, egui_ctx, coll, win);
-        if filter_popup::do_frame(state, egui_state, egui_ctx, coll) {
+        find_popup::do_frame(state, egui_state, ui, coll, win);
+        if filter_popup::do_frame(state, egui_state, ui, coll) {
             state
                 .thumbs_view
                 .update_from_collection(coll, &state.filter, &state.sel);
             state.thumbs_view.clamp_bottom(win);
         }
-        tag_list::do_frame(
-            state,
-            egui_state,
-            coll,
-            egui_ctx,
-            &mut app.database.uid_counter,
-        );
+        tag_list::do_frame(state, egui_state, coll, ui, &mut app.database.uid_counter);
         sequences::do_sequences_window(
             state,
             egui_state,
             coll,
             &mut app.database.uid_counter,
-            egui_ctx,
+            ui,
             &mut app.database.preferences,
             win,
         );
@@ -212,21 +203,13 @@ pub(super) fn do_ui(
             state,
             egui_state,
             coll,
-            egui_ctx,
+            ui,
             &mut app.database.preferences,
             win,
         );
-        coll_prefs_window::do_frame(egui_state, coll, egui_ctx, &app.database.preferences);
-        entries_window::do_frame(
-            state,
-            egui_state,
-            coll,
-            egui_ctx,
-            win,
-            &mut app.database,
-            res,
-        );
-        batch_rename_window::do_frame(state, egui_state, coll, egui_ctx, win);
+        coll_prefs_window::do_frame(egui_state, coll, ui, &app.database.preferences);
+        entries_window::do_frame(state, egui_state, coll, ui, win, &mut app.database, res);
+        batch_rename_window::do_frame(state, egui_state, coll, ui, win);
     }
     if let Some(op) = &egui_state.file_op
         && let Some(path) = egui_state.file_dialog.take_picked()
@@ -279,7 +262,7 @@ pub(super) fn do_ui(
         }
         egui_state.file_op = None;
     }
-    egui_state.file_dialog.update(egui_ctx);
+    egui_state.file_dialog.update(ui);
     Ok(())
 }
 
@@ -292,7 +275,7 @@ impl EguiState {
 }
 
 pub fn set_up_style(ctx: &Context, pref_style: &crate::preferences::Style) {
-    let mut style = (*ctx.style()).clone();
+    let mut style = (*ctx.global_style()).clone();
     style.text_styles = [
         (
             TextStyle::Heading,
@@ -312,7 +295,7 @@ pub fn set_up_style(ctx: &Context, pref_style: &crate::preferences::Style) {
         ),
     ]
     .into();
-    ctx.set_style(style);
+    ctx.set_global_style(style);
 }
 
 pub(super) struct TexSrc<'state, 'res, 'db> {

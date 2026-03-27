@@ -108,20 +108,22 @@ fn fatal_error_report(title: &str, mut msg: &str) {
                 rw.close();
             }
         }
-        sf_egui.begin_pass();
-        egui::CentralPanel::default().show(sf_egui.context(), |ui| {
-            ui.heading("Cowbump panicked");
-            ui.separator();
-            egui::ScrollArea::vertical()
-                .auto_shrink(false)
-                .show(ui, |ui| {
-                    ui.add_sized(
-                        ui.available_size(),
-                        egui::TextEdit::multiline(&mut msg).code_editor(),
-                    );
+        let di = sf_egui
+            .run(&mut rw, |_, ui| {
+                egui::CentralPanel::default().show_inside(ui, |ui| {
+                    ui.heading("Cowbump panicked");
+                    ui.separator();
+                    egui::ScrollArea::vertical()
+                        .auto_shrink(false)
+                        .show(ui, |ui| {
+                            ui.add_sized(
+                                ui.available_size(),
+                                egui::TextEdit::multiline(&mut msg).code_editor(),
+                            );
+                        });
                 });
-        });
-        let di = sf_egui.end_pass(&mut rw).unwrap();
+            })
+            .unwrap();
         sf_egui.draw(di, &mut rw, None);
         rw.display();
     }
