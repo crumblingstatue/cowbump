@@ -332,7 +332,7 @@ pub(in crate::gui) fn handle_event(
 ) {
     match event {
         Event::MouseButtonPressed { button, x, y } => {
-            if egui_ctx.egui_wants_pointer_input() {
+            if !egui_state.ptr_over_content_area {
                 return;
             }
             let Some(uid) = state.thumbs_view.entry_at_xy(x, y) else {

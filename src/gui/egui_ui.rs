@@ -76,6 +76,8 @@ pub(crate) struct EguiState {
     pub(crate) colorix: Option<Colorix>,
     /// Whether to tell the user we're loading folder changes
     pub loading_changes_notify: bool,
+    /// Whether the mouse pointer is over the main content area (not covered by egui)
+    pub ptr_over_content_area: bool,
 }
 
 pub(crate) enum FileOp {
@@ -113,6 +115,7 @@ impl EguiState {
                 .as_ref()
                 .map(|theme| Colorix::global(egui_ctx, theme.to_colorix())),
             loading_changes_notify: false,
+            ptr_over_content_area: false,
         }
     }
 }
@@ -176,6 +179,9 @@ pub(super) fn do_ui(
         }
     }
     top_bar::do_frame(state, egui_state, ui, app, win)?;
+    egui::CentralPanel::no_frame().show_inside(ui, |ui| {
+        egui_state.ptr_over_content_area = ui.ui_contains_pointer();
+    });
     preferences_window::do_frame(state, egui_state, app, ui, win);
     load_folder_window::do_frame(state, egui_state, ui, res, app, win.size().x);
     changes_window::do_frame(state, egui_state, ui, app, win);

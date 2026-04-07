@@ -151,7 +151,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                     }
                 }
                 Activity::Viewer => {
-                    if !sf_egui.context().egui_wants_pointer_input() {
+                    if egui_state.ptr_over_content_area {
                         viewer::handle_event(&mut state, &event, &window);
                     }
                 }
@@ -220,7 +220,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
         // happened in the egui ui, like if a window was just closed.
         if ev_flags.esc_pressed
             && !sf_egui.context().egui_wants_keyboard_input()
-            && !sf_egui.context().egui_wants_pointer_input()
+            && egui_state.ptr_over_content_area
             && !egui_state.just_closed_window_with_esc
         {
             state.sel.clear_current();
@@ -236,7 +236,7 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
                             &mut window,
                             &coll.entries,
                             load_anim_rotation,
-                            !sf_egui.context().egui_wants_pointer_input(),
+                            egui_state.ptr_over_content_area,
                         );
                     }
                     Activity::Viewer => {
