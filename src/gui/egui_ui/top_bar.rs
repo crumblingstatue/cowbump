@@ -305,7 +305,7 @@ fn file_menu(
                                 .err(format!("Error loading recent collection: {e:?}"));
                         }
                     },
-                    Action::Remove(id) => app.database.recent.remove(id),
+                    Action::Remove(id) => app.database.recent.find_remove(id),
                     Action::None => {}
                 }
             });

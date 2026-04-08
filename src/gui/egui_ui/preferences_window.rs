@@ -18,7 +18,7 @@ use {
         },
         sf2g::graphics::{RenderTarget, RenderWindow},
     },
-    rand::Rng,
+    rand::RngExt,
     std::path::PathBuf,
 };
 

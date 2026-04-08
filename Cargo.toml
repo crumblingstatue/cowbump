@@ -17,10 +17,10 @@ fnv = "1.0.7"
 directories = "6.0"
 open = "5.1.2"
 zstd = "0.13.1"
-zip = { version = "7", default-features = false }
+zip = { version = "8", default-features = false }
 egui-sf2g = "0.7.0"
 sf2g.version = "0.4.0"
-rand = "0.9"
+rand = "0.10"
 egui-file-dialog.git = "https://github.com/jannistpl/egui-file-dialog.git"
 parking_lot = "0.12"
 egui_flex = "0.6.0"
