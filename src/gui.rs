@@ -27,11 +27,11 @@ use {
     arboard::Clipboard,
     egui_sf2g::{
         SfEgui,
-        egui::ThemePreference,
+        egui::{self, ThemePreference},
         sf2g::{
             cpp::FBox,
             graphics::{
-                Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape, Text,
+                Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
                 Texture, Transformable, View,
             },
             window::{Event, Key, Style, VideoMode},
@@ -226,56 +226,50 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
             state.sel.clear_current();
         }
         window.clear(Color::BLACK);
-        match &mut app.active_collection {
-            Some((_, coll)) => {
-                match state.activity {
-                    Activity::Thumbnails => {
-                        thumbnails_view::draw_thumbnails(
-                            &mut state,
-                            &res,
-                            &mut window,
-                            &coll.entries,
-                            load_anim_rotation,
-                            egui_state.ptr_over_content_area,
-                        );
-                    }
-                    Activity::Viewer => {
-                        viewer::update(&mut state, &window);
-                        viewer::draw(&mut state, &mut window, coll, &res);
-                    }
+        let painter = egui::Painter::new(
+            sf_egui.context().clone(),
+            egui::LayerId::background(),
+            // TODO: clip rect size is hardcoded value
+            egui::Rect::from_min_max(egui::pos2(0., 0.0), egui::pos2(10000.0, 10000.0)),
+        );
+        if let Some((_, coll)) = &mut app.active_collection {
+            match state.activity {
+                Activity::Thumbnails => {
+                    thumbnails_view::draw_thumbnails(
+                        &mut state,
+                        &res,
+                        &mut window,
+                        &coll.entries,
+                        load_anim_rotation,
+                        egui_state.ptr_over_content_area,
+                        &painter,
+                    );
                 }
-                egui_state.loading_changes_notify = false;
-                if let Some(recv) = &app.folder_changes_recv {
-                    match recv.try_recv() {
-                        Ok(changes) => match changes {
-                            Ok(changes) => {
-                                if !changes.empty() {
-                                    egui_state.changes_window.open_fresh(changes);
-                                }
-                            }
-                            Err(e) => {
-                                egui_state.modal.err(e);
-                            }
-                        },
-                        Err(TryRecvError::Empty) => {
-                            egui_state.loading_changes_notify = true;
-                        }
-                        Err(TryRecvError::Disconnected) => {
-                            app.folder_changes_recv = None;
-                        }
-                    }
+                Activity::Viewer => {
+                    viewer::update(&mut state, &window);
+                    viewer::draw(&mut state, &mut window, coll, &painter);
                 }
             }
-            None => {
-                let msg = "Welcome to cowbump!\n\
-                \n\
-                To start, load a folder with File->Load folder\n\
-                You can also pick from the recently used list, if you had opened something before\n\
-                \n\
-                If you don't see the top menu, you can toggle it with F1";
-                let mut text = Text::new(msg.to_owned(), &res.font, 24);
-                text.tf.position = [16., 64.];
-                text.draw(&mut *window, &RenderStates::DEFAULT);
+            egui_state.loading_changes_notify = false;
+            if let Some(recv) = &app.folder_changes_recv {
+                match recv.try_recv() {
+                    Ok(changes) => match changes {
+                        Ok(changes) => {
+                            if !changes.empty() {
+                                egui_state.changes_window.open_fresh(changes);
+                            }
+                        }
+                        Err(e) => {
+                            egui_state.modal.err(e);
+                        }
+                    },
+                    Err(TryRecvError::Empty) => {
+                        egui_state.loading_changes_notify = true;
+                    }
+                    Err(TryRecvError::Disconnected) => {
+                        app.folder_changes_recv = None;
+                    }
+                }
             }
         }
         if let Some(index) = state.thumbs_view.highlight {

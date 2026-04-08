@@ -649,16 +649,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "freetype-sys-nopng"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f62dff207fc71a4bf56014d992fb7ea8b1d6f1ff8d81129faaf3e82715bca130"
-dependencies = [
- "cc",
- "pkg-config",
-]
-
-[[package]]
 name = "gethostname"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1532,7 +1522,6 @@ dependencies = [
  "bitflags",
  "cc",
  "cmake",
- "freetype-sys-nopng",
  "image",
  "link-cplusplus",
  "num-traits",

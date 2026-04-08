@@ -1,13 +1,11 @@
 use {
-    super::{Activity, State, resources::Resources, thumbnail_loader::imagebuf_to_sf_tex},
+    super::{Activity, State, thumbnail_loader::imagebuf_to_sf_tex},
     crate::{collection::Collection, dlog, entry},
     egui_sf2g::{
         egui,
         sf2g::{
             cpp::FBox,
-            graphics::{
-                RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture, Transformable,
-            },
+            graphics::{RenderStates, RenderTarget, RenderWindow, Sprite, Texture, Transformable},
             window::{Event, Key, mouse},
         },
     },
@@ -18,7 +16,7 @@ pub(super) fn draw(
     state: &mut State,
     window: &mut RenderWindow,
     coll: &Collection,
-    res: &Resources,
+    painter: &egui::Painter,
 ) {
     if state.viewer_state.image_list.is_empty() {
         state.activity = Activity::Thumbnails;
@@ -38,9 +36,13 @@ pub(super) fn draw(
                 window.draw_sprite(&spr, &RenderStates::DEFAULT);
             }
             Err(e) => {
-                let mut text = Text::new(e.to_string(), &res.font, 20);
-                text.tf.position = [200., 200.];
-                text.draw(window, &RenderStates::DEFAULT);
+                painter.text(
+                    egui::pos2(200.0, 200.0),
+                    egui::Align2::LEFT_TOP,
+                    e.to_string(),
+                    egui::FontId::proportional(14.0),
+                    egui::Color32::RED,
+                );
             }
         },
         None => {

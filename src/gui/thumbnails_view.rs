@@ -16,11 +16,11 @@ use {
     },
     anyhow::Context as _,
     egui_sf2g::{
-        egui::Context,
+        egui::{self, Context},
         sf2g::{
             graphics::{
                 Color, Rect, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
-                Sprite, Text, Transformable,
+                Sprite, Transformable,
             },
             system::Vector2f,
             window::{Event, Key, mouse},
@@ -204,6 +204,7 @@ pub(super) fn draw_thumbnails(
     entries: &Entries,
     load_anim_rotation: f32,
     pointer_active: bool,
+    painter: &egui::Painter,
 ) {
     let mouse_pos = window.mouse_position();
     let thumb_size = state.thumbs_view.thumb_size;
@@ -243,6 +244,7 @@ pub(super) fn draw_thumbnails(
             res,
             &state.thumbnail_loader,
             load_anim_rotation,
+            painter,
         );
         if mouse_over && pointer_active {
             let mut rs = RectangleShape::from_rect(image_rect);
@@ -274,6 +276,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
     res: &'a Resources,
     thumbnail_loader: &ThumbnailLoader,
     load_anim_rotation: f32,
+    painter: &egui::Painter,
 ) {
     let (props, texture) = get_tex_for_entry(
         thumbnail_cache,
@@ -309,9 +312,13 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw_rectangle_shape(&rect, &RenderStates::DEFAULT);
     }
     if show_filename && let Some(path_string) = entries[&id].path.to_str() {
-        let mut text = Text::new(path_string.to_owned(), &res.font, 12);
-        text.tf.position = fname_pos;
-        text.draw(window, &RenderStates::DEFAULT);
+        painter.text(
+            fname_pos.into(),
+            egui::Align2::LEFT_TOP,
+            path_string,
+            egui::FontId::proportional(11.0),
+            egui::Color32::WHITE,
+        );
     }
 }
 

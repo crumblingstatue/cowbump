@@ -1,9 +1,6 @@
 use {
     anyhow::Context,
-    egui_sf2g::sf2g::{
-        cpp::FBox,
-        graphics::{Font, Texture},
-    },
+    egui_sf2g::sf2g::{cpp::FBox, graphics::Texture},
 };
 
 macro_rules! res {
@@ -17,7 +14,6 @@ pub struct Resources {
     pub error_texture: FBox<Texture>,
     pub sel_begin_texture: FBox<Texture>,
     pub movie_texture: FBox<Texture>,
-    pub font: FBox<Font>,
 }
 
 impl Resources {
@@ -26,8 +22,6 @@ impl Resources {
         let mut error_texture = Texture::new().context("texture create error")?;
         let mut sel_begin_texture = Texture::new().context("texture create error")?;
         let mut movie_texture = Texture::new().context("texture create error")?;
-        let font = Font::from_memory_static(include_bytes!(res!("Vera.ttf")))
-            .context("failed to load font")?;
         loading_texture.load_from_memory(include_bytes!(res!("loading.png")))?;
         error_texture.load_from_memory(include_bytes!(res!("error.png")))?;
         sel_begin_texture.load_from_memory(include_bytes!(res!("select_begin.png")))?;
@@ -37,7 +31,6 @@ impl Resources {
             error_texture,
             sel_begin_texture,
             movie_texture,
-            font,
         })
     }
 }

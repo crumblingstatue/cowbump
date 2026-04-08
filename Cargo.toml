@@ -20,7 +20,6 @@ zstd = "0.13.1"
 zip = { version = "7", default-features = false }
 egui-sf2g = "0.7.0"
 sf2g.version = "0.4.0"
-sf2g.features = ["text"]
 rand = "0.9"
 egui-file-dialog.git = "https://github.com/jannistpl/egui-file-dialog.git"
 parking_lot = "0.12"

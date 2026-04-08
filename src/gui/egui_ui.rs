@@ -181,6 +181,15 @@ pub(super) fn do_ui(
     top_bar::do_frame(state, egui_state, ui, app, win)?;
     egui::CentralPanel::no_frame().show_inside(ui, |ui| {
         egui_state.ptr_over_content_area = ui.ui_contains_pointer();
+        if app.active_collection.is_none() {
+            let msg = "Welcome to cowbump!\n\
+                \n\
+                To start, load a folder with File->Load folder\n\
+                You can also pick from the recently used list, if you had opened something before\n\
+                \n\
+                If you don't see the top menu, you can toggle it with F1";
+            ui.strong(msg);
+        }
     });
     preferences_window::do_frame(state, egui_state, app, ui, win);
     load_folder_window::do_frame(state, egui_state, ui, res, app, win.size().x);
