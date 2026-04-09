@@ -302,23 +302,25 @@ fn draw_thumbnail<'a: 'b, 'b>(
         window.draw_sprite(sprite, &RenderStates::DEFAULT);
     }
     let mut show_filename = !props.has_img;
-    let fname_pos = [x, y + 64.0];
+    let fname_pos = [x + 2.0, y + 64.0];
     if Key::LAlt.is_pressed() {
         show_filename = true;
-        let mut rect = RectangleShape::new();
-        rect.set_fill_color(Color::rgba(0, 0, 0, 128));
-        rect.set_size((380., 24.));
-        rect.set_position(fname_pos);
-        window.draw_rectangle_shape(&rect, &RenderStates::DEFAULT);
     }
     if show_filename && let Some(path_string) = entries[&id].path.to_str() {
-        painter.text(
-            fname_pos.into(),
-            egui::Align2::LEFT_TOP,
-            path_string,
-            egui::FontId::proportional(11.0),
-            egui::Color32::WHITE,
+        let galley = painter.ctx().fonts_mut(|fonts| {
+            fonts.layout(
+                path_string.into(),
+                egui::FontId::proportional(14.0),
+                egui::Color32::WHITE,
+                380.0,
+            )
+        });
+        painter.rect_filled(
+            egui::Rect::from_min_size(fname_pos.into(), galley.size()),
+            1.0,
+            egui::Color32::from_rgba_premultiplied(0, 0, 0, 128),
         );
+        painter.galley(fname_pos.into(), galley, egui::Color32::WHITE);
     }
 }
 
