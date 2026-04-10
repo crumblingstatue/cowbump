@@ -765,50 +765,63 @@ fn right_side_ui(
             }
             ui.memory_mut(|mem| mem.request_focus(re.id));
         }
-        // endregion
-        // region: Delete button
-        if !win.delete_confirm {
-            if ui
-                .add(
-                    Button::new(concat!(icons::REMOVE, " Delete from disk"))
-                        .wrap_mode(TextWrapMode::Extend),
-                )
-                .clicked()
-            {
-                win.delete_confirm ^= true;
-            }
-        } else {
-            let del_uids = &mut win.ids;
-            let del_len = del_uids.len();
-            // We already know the length is 1 so it's fine
-            #[expect(clippy::indexing_slicing)]
-            let label_string = if del_len == 1 {
-                format!(
-                    "About to delete {}",
-                    coll.entries[&del_uids[0]].path.display()
-                )
-            } else {
-                format!("About to delete {del_len} entries")
-            };
-            ui.label(&label_string);
-            ui.horizontal(|ui| {
-                if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                    if let Err(e) = remove_entries(del_uids, coll, state) {
-                        egui_state
-                            .modal
-                            .err(format!("Error deleting entries: {e:?}"));
-                    }
-                    win.delete_confirm = false;
-                    *close = true;
-                }
-                if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
-                    win.delete_confirm = false;
-                    *close = false;
-                }
-            });
-        }
-        // endregion
+        delete_ui(ui, win, coll, state, egui_state, esc_pressed, close);
     });
+}
+
+fn delete_ui(
+    ui: &mut Ui,
+    win: &mut EntriesWindow,
+    coll: &mut Collection,
+    state: &mut State,
+    egui_state: &mut EguiState,
+    esc_pressed: bool,
+    close: &mut bool,
+) {
+    if !win.delete_confirm {
+        if ui
+            .add(
+                Button::new(
+                    RichText::new(concat!(icons::REMOVE, " Delete from disk"))
+                        .background_color(Color32::DARK_RED)
+                        .color(Color32::WHITE),
+                )
+                .wrap_mode(TextWrapMode::Extend),
+            )
+            .clicked()
+        {
+            win.delete_confirm ^= true;
+        }
+    } else {
+        let del_uids = &mut win.ids;
+        let del_len = del_uids.len();
+        // We already know the length is 1 so it's fine
+        #[expect(clippy::indexing_slicing)]
+        let label_string = if del_len == 1 {
+            format!(
+                "About to delete {}",
+                coll.entries[&del_uids[0]].path.display()
+            )
+        } else {
+            format!("About to delete {del_len} entries")
+        };
+        ui.label(&label_string);
+        ui.horizontal(|ui| {
+            if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
+                if let Err(e) = remove_entries(del_uids, coll, state) {
+                    egui_state
+                        .modal
+                        .err(format!("Error deleting entries: {e:?}"));
+                }
+                win.delete_confirm = false;
+                *close = true;
+            }
+            if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
+                win.delete_confirm = false;
+                *close = false;
+            }
+        });
+    }
 }
 
 fn remove_entries(
