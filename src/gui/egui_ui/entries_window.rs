@@ -256,463 +256,20 @@ fn window_ui(
     close: &mut bool,
 ) {
     ui.horizontal(|ui| {
-        ui.horizontal_wrapped(|ui| {
-            ui.set_max_width(512.0);
-            let n_visible_entries = n_entries.min(64);
-            for &id in win.ids.iter().take(n_visible_entries) {
-                let Some(entry) = coll.entries.get(&id) else {
-                    ui.label(format!("No entry for id {id:?}"));
-                    continue;
-                };
-                let tex_size = get_tex_for_entry(
-                    &state.thumbnail_cache,
-                    id,
-                    &coll.entries,
-                    &state.thumbnail_loader,
-                    state.thumbs_view.thumb_size,
-                    res,
-                )
-                .1
-                .size();
-                let ratio = tex_size.x as f32 / tex_size.y as f32;
-                let ts = state.thumbs_view.thumb_size as f32;
-                let h = match n_entries as u32 {
-                    0..=2 => ts,
-                    3..=6 => ts / 2.0,
-                    7..=15 => ts / 3.0,
-                    16..=26 => ts / 4.0,
-                    27..=36 => ts / 5.0,
-                    37..=56 => ts / 6.0,
-                    57.. => ts / 7.0,
-                };
-                let w = h * ratio;
-                if ui
-                    .add(Button::image(SizedTexture::new(
-                        TextureId::User(id.0),
-                        (w, h),
-                    )))
-                    .clicked()
-                    && !state
-                        .thumbs_view
-                        .highlight_and_seek_to_entry(id, rend_win.size().y)
-                {
-                    // Can't find in view, open it in external instead
-                    let paths = [OpenExternCandidate {
-                        path: &entry.path,
-                        open_with: None,
-                    }];
-                    if let Err(e) = external::open(&paths, &mut db.preferences) {
-                        egui_state
-                            .modal
-                            .err(format!("Error opening with external: {e}"));
-                    }
-                }
-            }
-        });
-        ui.vertical(|ui| {
-            // region: Tags
-            let layout = egui::Layout {
-                main_dir: egui::Direction::LeftToRight,
-                main_wrap: true,
-                main_align: egui::Align::Min,
-                main_justify: false,
-                cross_align: egui::Align::Min,
-                cross_justify: false,
-            };
-            ui.with_layout(layout, |ui| {
-                for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
-                    let tag_name = coll.tags.first_name_of(&tagid);
-                    let mut changed_filter = false;
-
-                    if win.editing_tags {
-                        let mut del = false;
-                        tag(
-                            ui,
-                            &tag_name,
-                            tagid,
-                            Some(&mut del),
-                            &mut state.filter,
-                            coll,
-                            egui_state,
-                            &mut changed_filter,
-                            &mut state.thumbs_view,
-                            &state.sel,
-                        );
-                        if del {
-                            let result = try {
-                                for en_id in &win.ids {
-                                    coll.entries
-                                        .get_mut(en_id)
-                                        .context("Failed to get entry")?
-                                        .tags
-                                        .retain(|&t| t != tagid);
-                                }
-                                state.thumbs_view.update_from_collection(
-                                    coll,
-                                    &state.filter,
-                                    &state.sel,
-                                );
-                            };
-                            if let Err(e) = result {
-                                egui_state
-                                    .modal
-                                    .err(format!("Failed to delete tag(s): {e:?}"));
-                            }
-                        }
-                    } else {
-                        tag(
-                            ui,
-                            &tag_name,
-                            tagid,
-                            None,
-                            &mut state.filter,
-                            coll,
-                            egui_state,
-                            &mut changed_filter,
-                            &mut state.thumbs_view,
-                            &state.sel,
-                        );
-                    }
-                    if changed_filter {
-                        state
-                            .thumbs_view
-                            .update_from_collection(coll, &state.filter, &state.sel);
-                        state.thumbs_view.clamp_bottom(rend_win);
-                    }
-                }
-            });
-            // endregion
-
-            let txt = if win.editing_tags {
-                concat!(icons::CHECK, " Stop editing")
-            } else {
-                concat!(icons::EDIT, " Edit tags")
-            };
-            let plus_re = ui.button(txt);
-            if plus_re.clicked() {
-                win.editing_tags ^= true;
-            }
-            if win.editing_tags {
-                let te_id = ui.make_persistent_id("text_edit_add_tag");
-                let up_pressed =
-                    ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowUp));
-
-                let down_pressed =
-                    ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowDown));
-                let te = TextEdit::singleline(&mut win.add_tag_buffer)
-                    .hint_text("New tags (tag1 tag2 tag3 ...)")
-                    .id(te_id);
-                if win.ac_state.applied {
-                    text_edit_cursor_set_to_end(ui, te_id);
-                }
-                let re = ui.add(te);
-                if re.changed() {
-                    win.ac_state.input_changed = true;
-                }
-                tag_autocomplete_popup(
-                    &mut win.add_tag_buffer,
-                    &mut win.ac_state,
-                    coll,
-                    ui,
-                    &re,
-                    up_pressed,
-                    down_pressed,
-                );
-                win.add_tag_buffer.make_ascii_lowercase();
-                re.request_focus();
-                if esc_pressed {
-                    win.editing_tags = false;
-                    win.add_tag_buffer.clear();
-                    *close = false;
-                }
-                if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
-                    let add_tag_buffer: &str = &win.add_tag_buffer;
-                    let entry_uids: &[entry::Id] = &win.ids;
-                    let tags = add_tag_buffer.split_whitespace();
-                    for tag in tags {
-                        match coll.resolve_tag(tag) {
-                            Some(tag_uid) => {
-                                if let Err(AddTagError) =
-                                    coll.add_tag_for_multi(entry_uids, tag_uid)
-                                {
-                                    egui_state.modal.err("Failed to add tags");
-                                }
-                            }
-                            None => {
-                                win.new_tags.push(tag.to_owned());
-                            }
-                        }
-                    }
-                    win.add_tag_buffer.clear();
-                    win.editing_tags = false;
-                    state
-                        .thumbs_view
-                        .update_from_collection(coll, &state.filter, &state.sel);
-                }
-            }
-
-            if !win.new_tags.is_empty() {
-                ui.label(
-                    "You added the following tags to the entry,\
-                                 but they aren't present in the database: ",
-                );
-            }
-            win.new_tags.retain_mut(|tag| {
-                let mut retain = true;
-                ui.horizontal(|ui| {
-                    ui.label(&tag[..]);
-                    if ui.button("Add").clicked() {
-                        match coll.add_new_tag_from_text(tag.to_owned(), &mut db.uid_counter) {
-                            Some(id) => {
-                                if let Err(AddTagError) = coll.add_tag_for_multi(&win.ids, id) {
-                                    egui_state.modal.err("Failed to add tags");
-                                }
-                                retain = false;
-                            }
-                            None => {
-                                egui_state.modal.err("Failed to add tag: Already exists");
-                            }
-                        }
-                    }
-                    if ui.button("Cancel").clicked() {
-                        retain = false;
-                    }
-                });
-                retain
-            });
-            if ui.button(concat!(icons::ADD, " Add to sequence")).clicked() {
-                egui_state.sequences_window.on = true;
-                egui_state.sequences_window.pick_mode = true;
-            }
-            if let Some(uid) = egui_state.sequences_window.pick_result {
-                coll.add_entries_to_sequence(uid, &win.ids);
-                egui_state.sequences_window.pick_mode = false;
-                egui_state.sequences_window.pick_result = None;
-            }
-            if ui
-                .add(
-                    Button::new(concat!(icons::TERM, " Run custom command"))
-                        .wrap_mode(TextWrapMode::Extend),
-                )
-                .clicked()
-            {
-                win.custom_command_prompt ^= true;
-            }
-            if ui
-                .button(concat!(icons::COPY, " Copy filenames to clipboard"))
-                .clicked()
-            {
-                let res = try {
-                    let mut out = String::new();
-                    for uid in &win.ids {
-                        match coll.entries.get(uid) {
-                            Some(en) => {
-                                let canonical = std::fs::canonicalize(&en.path).how()?;
-                                writeln!(&mut out, "{}", canonical.display()).how()?;
-                            }
-                            None => {
-                                writeln!(&mut out, "<Dangling id {uid:?}>").how()?;
-                            }
-                        }
-                    }
-                    state.clipboard_ctx.set_text(out).how()?;
-                };
-                if let Err(e) = res {
-                    egui_state
-                        .modal
-                        .err(format!("Filename clipboard copy error: {e}"));
-                }
-            }
-            if win.custom_command_prompt {
-                if esc_pressed {
-                    win.custom_command_prompt = false;
-                    *close = false;
-                }
-                ui.label("Command");
-                let re = ui.text_edit_singleline(&mut win.cmd_buffer);
-                ui.label("Args (use {} for entry path, or leave empty)");
-                ui.text_edit_singleline(&mut win.args_buffer);
-                if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
-                    let mut cmd = Command::new(&win.cmd_buffer);
-                    cmd.stderr(Stdio::piped());
-                    cmd.stdin(Stdio::piped());
-                    cmd.stdout(Stdio::piped());
-                    for uid in &win.ids {
-                        match coll.entries.get(uid) {
-                            Some(en) => {
-                                feed_args(&win.args_buffer, &[&en.path], &mut cmd);
-                            }
-                            None => {
-                                dlog!("No entry with id {uid:?}");
-                            }
-                        }
-                    }
-                    match cmd.spawn() {
-                        Ok(child) => {
-                            win.err_str.clear();
-                            win.custom_command_prompt = false;
-                            win.children
-                                .push(ChildWrapper::new(child, win.cmd_buffer.clone()));
-                        }
-                        Err(e) => win.err_str = e.to_string(),
-                    }
-                }
-                if !win.err_str.is_empty() {
-                    ui.add(Label::new(
-                        RichText::new(format!("Error: {}", win.err_str)).color(Rgba::RED),
-                    ));
-                }
-            }
-            win.children.retain_mut(|c_wrap| {
-                let mut retain = true;
-                ui.separator();
-                ui.heading(&c_wrap.name);
-                match c_wrap.exit_status {
-                    Some(status) => {
-                        if !c_wrap.stdout.is_empty() {
-                            ui.label("stdout:");
-                            ui.code(&c_wrap.stdout);
-                        }
-                        if !c_wrap.stderr.is_empty() {
-                            ui.label("stderr:");
-                            ui.code(&c_wrap.stderr);
-                        }
-                        let exit_code_msg = match status.code() {
-                            Some(code) => code.to_string(),
-                            None => "<terminated>".to_string(),
-                        };
-                        ui.horizontal(|ui| {
-                            ui.label(format!(
-                                "Exit code: {} ({})",
-                                exit_code_msg,
-                                status.success()
-                            ));
-                            if ui.button(icons::CANCEL).clicked() {
-                                retain = false;
-                            }
-                        });
-                    }
-                    None => {
-                        let mut clicked = false;
-                        ui.horizontal(|ui| {
-                            clicked = ui.button(icons::CANCEL).clicked();
-                            ui.label(format!("[running] ({})", c_wrap.child.id()));
-                        });
-                        if clicked {
-                            let _ = c_wrap.child.kill();
-                            return false;
-                        }
-                        match c_wrap.child.try_wait() {
-                            Ok(opt_status) => {
-                                c_wrap.exit_status = opt_status;
-                                // The process has only exited if the status is some
-                                if opt_status.is_some() {
-                                    let result = try {
-                                        if let Some(stdout) = &mut c_wrap.child.stdout {
-                                            let mut buf = String::new();
-                                            stdout.read_to_string(&mut buf).how()?;
-                                            c_wrap.stdout = buf;
-                                        }
-                                        if let Some(stderr) = &mut c_wrap.child.stderr {
-                                            let mut buf = String::new();
-                                            stderr.read_to_string(&mut buf).how()?;
-                                            c_wrap.stderr = buf;
-                                        }
-                                    };
-                                    if let Err(e) = result {
-                                        egui_state
-                                            .modal
-                                            .err(format!("Custom command read error: {e}"));
-                                    }
-                                }
-                            }
-                            Err(e) => {
-                                win.err_str = e.to_string();
-                            }
-                        }
-                    }
-                }
-                retain
-            });
-            ui.separator();
-            // region: Rename button
-            if win.ids.len() == 1 {
-                if ui
-                    .add(
-                        Button::new(concat!(icons::EDIT, " Rename file"))
-                            .wrap_mode(TextWrapMode::Extend),
-                    )
-                    .clicked()
-                {
-                    win.renaming ^= true;
-                }
-            } else if ui
-                .button(concat!(icons::EDIT, " Batch rename..."))
-                .clicked()
-            {
-                egui_state.batch_rename_window.open = true;
-                egui_state.batch_rename_window.ids.clone_from(&win.ids);
-            }
-            if win.renaming {
-                let re = ui.text_edit_singleline(&mut win.rename_buffer);
-                if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
-                    if let Some(id) = win.ids.first()
-                        && let Err(e) = coll.rename(*id, &win.rename_buffer)
-                    {
-                        egui_state.modal.err(format!("Rename error: {e:?}"));
-                    }
-                    win.renaming = false;
-                }
-                if re.lost_focus() {
-                    win.renaming = false;
-                    *close = false;
-                }
-                ui.memory_mut(|mem| mem.request_focus(re.id));
-            }
-            // endregion
-            // region: Delete button
-            if !win.delete_confirm {
-                if ui
-                    .add(
-                        Button::new(concat!(icons::REMOVE, " Delete from disk"))
-                            .wrap_mode(TextWrapMode::Extend),
-                    )
-                    .clicked()
-                {
-                    win.delete_confirm ^= true;
-                }
-            } else {
-                let del_uids = &mut win.ids;
-                let del_len = del_uids.len();
-                // We already know the length is 1 so it's fine
-                #[expect(clippy::indexing_slicing)]
-                let label_string = if del_len == 1 {
-                    format!(
-                        "About to delete {}",
-                        coll.entries[&del_uids[0]].path.display()
-                    )
-                } else {
-                    format!("About to delete {del_len} entries")
-                };
-                ui.label(&label_string);
-                ui.horizontal(|ui| {
-                    if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
-                        if let Err(e) = remove_entries(del_uids, coll, state) {
-                            egui_state
-                                .modal
-                                .err(format!("Error deleting entries: {e:?}"));
-                        }
-                        win.delete_confirm = false;
-                        *close = true;
-                    }
-                    if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
-                        win.delete_confirm = false;
-                        *close = false;
-                    }
-                });
-            }
-            // endregion
-        });
+        left_side_ui(
+            ui, n_entries, win, coll, db, state, egui_state, res, rend_win,
+        );
+        right_side_ui(
+            ui,
+            win,
+            coll,
+            db,
+            state,
+            egui_state,
+            rend_win,
+            esc_pressed,
+            close,
+        );
     });
     let seqs = coll.find_related_sequences(&win.ids);
     if !seqs.is_empty() {
@@ -771,6 +328,487 @@ fn window_ui(
             });
         }
     }
+}
+
+fn left_side_ui(
+    ui: &mut Ui,
+    n_entries: usize,
+    win: &EntriesWindow,
+    coll: &Collection,
+    db: &mut Db,
+    state: &mut State,
+    egui_state: &mut EguiState,
+    res: &Resources,
+    rend_win: &RenderWindow,
+) {
+    ui.horizontal_wrapped(|ui| {
+        ui.set_max_width(512.0);
+        let n_visible_entries = n_entries.min(64);
+        for &id in win.ids.iter().take(n_visible_entries) {
+            let Some(entry) = coll.entries.get(&id) else {
+                ui.label(format!("No entry for id {id:?}"));
+                continue;
+            };
+            let tex_size = get_tex_for_entry(
+                &state.thumbnail_cache,
+                id,
+                &coll.entries,
+                &state.thumbnail_loader,
+                state.thumbs_view.thumb_size,
+                res,
+            )
+            .1
+            .size();
+            let ratio = tex_size.x as f32 / tex_size.y as f32;
+            let ts = state.thumbs_view.thumb_size as f32;
+            let h = match n_entries as u32 {
+                0..=2 => ts,
+                3..=6 => ts / 2.0,
+                7..=15 => ts / 3.0,
+                16..=26 => ts / 4.0,
+                27..=36 => ts / 5.0,
+                37..=56 => ts / 6.0,
+                57.. => ts / 7.0,
+            };
+            let w = h * ratio;
+            if ui
+                .add(Button::image(SizedTexture::new(
+                    TextureId::User(id.0),
+                    (w, h),
+                )))
+                .clicked()
+                && !state
+                    .thumbs_view
+                    .highlight_and_seek_to_entry(id, rend_win.size().y)
+            {
+                // Can't find in view, open it in external instead
+                let paths = [OpenExternCandidate {
+                    path: &entry.path,
+                    open_with: None,
+                }];
+                if let Err(e) = external::open(&paths, &mut db.preferences) {
+                    egui_state
+                        .modal
+                        .err(format!("Error opening with external: {e}"));
+                }
+            }
+        }
+    });
+}
+
+fn right_side_ui(
+    ui: &mut Ui,
+    win: &mut EntriesWindow,
+    coll: &mut Collection,
+    db: &mut Db,
+    state: &mut State,
+    egui_state: &mut EguiState,
+    rend_win: &RenderWindow,
+    esc_pressed: bool,
+    close: &mut bool,
+) {
+    ui.vertical(|ui| {
+        // region: Tags
+        let layout = egui::Layout {
+            main_dir: egui::Direction::LeftToRight,
+            main_wrap: true,
+            main_align: egui::Align::Min,
+            main_justify: false,
+            cross_align: egui::Align::Min,
+            cross_justify: false,
+        };
+        ui.with_layout(layout, |ui| {
+            for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
+                let tag_name = coll.tags.first_name_of(&tagid);
+                let mut changed_filter = false;
+
+                if win.editing_tags {
+                    let mut del = false;
+                    tag(
+                        ui,
+                        &tag_name,
+                        tagid,
+                        Some(&mut del),
+                        &mut state.filter,
+                        coll,
+                        egui_state,
+                        &mut changed_filter,
+                        &mut state.thumbs_view,
+                        &state.sel,
+                    );
+                    if del {
+                        let result = try {
+                            for en_id in &win.ids {
+                                coll.entries
+                                    .get_mut(en_id)
+                                    .context("Failed to get entry")?
+                                    .tags
+                                    .retain(|&t| t != tagid);
+                            }
+                            state.thumbs_view.update_from_collection(
+                                coll,
+                                &state.filter,
+                                &state.sel,
+                            );
+                        };
+                        if let Err(e) = result {
+                            egui_state
+                                .modal
+                                .err(format!("Failed to delete tag(s): {e:?}"));
+                        }
+                    }
+                } else {
+                    tag(
+                        ui,
+                        &tag_name,
+                        tagid,
+                        None,
+                        &mut state.filter,
+                        coll,
+                        egui_state,
+                        &mut changed_filter,
+                        &mut state.thumbs_view,
+                        &state.sel,
+                    );
+                }
+                if changed_filter {
+                    state
+                        .thumbs_view
+                        .update_from_collection(coll, &state.filter, &state.sel);
+                    state.thumbs_view.clamp_bottom(rend_win);
+                }
+            }
+        });
+        // endregion
+
+        let txt = if win.editing_tags {
+            concat!(icons::CHECK, " Stop editing")
+        } else {
+            concat!(icons::EDIT, " Edit tags")
+        };
+        let plus_re = ui.button(txt);
+        if plus_re.clicked() {
+            win.editing_tags ^= true;
+        }
+        if win.editing_tags {
+            let te_id = ui.make_persistent_id("text_edit_add_tag");
+            let up_pressed =
+                ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowUp));
+
+            let down_pressed =
+                ui.input_mut(|inp| inp.consume_key(Modifiers::default(), Key::ArrowDown));
+            let te = TextEdit::singleline(&mut win.add_tag_buffer)
+                .hint_text("New tags (tag1 tag2 tag3 ...)")
+                .id(te_id);
+            if win.ac_state.applied {
+                text_edit_cursor_set_to_end(ui, te_id);
+            }
+            let re = ui.add(te);
+            if re.changed() {
+                win.ac_state.input_changed = true;
+            }
+            tag_autocomplete_popup(
+                &mut win.add_tag_buffer,
+                &mut win.ac_state,
+                coll,
+                ui,
+                &re,
+                up_pressed,
+                down_pressed,
+            );
+            win.add_tag_buffer.make_ascii_lowercase();
+            re.request_focus();
+            if esc_pressed {
+                win.editing_tags = false;
+                win.add_tag_buffer.clear();
+                *close = false;
+            }
+            if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
+                let add_tag_buffer: &str = &win.add_tag_buffer;
+                let entry_uids: &[entry::Id] = &win.ids;
+                let tags = add_tag_buffer.split_whitespace();
+                for tag in tags {
+                    match coll.resolve_tag(tag) {
+                        Some(tag_uid) => {
+                            if let Err(AddTagError) = coll.add_tag_for_multi(entry_uids, tag_uid) {
+                                egui_state.modal.err("Failed to add tags");
+                            }
+                        }
+                        None => {
+                            win.new_tags.push(tag.to_owned());
+                        }
+                    }
+                }
+                win.add_tag_buffer.clear();
+                win.editing_tags = false;
+                state
+                    .thumbs_view
+                    .update_from_collection(coll, &state.filter, &state.sel);
+            }
+        }
+
+        if !win.new_tags.is_empty() {
+            ui.label(
+                "You added the following tags to the entry,\
+                                 but they aren't present in the database: ",
+            );
+        }
+        win.new_tags.retain_mut(|tag| {
+            let mut retain = true;
+            ui.horizontal(|ui| {
+                ui.label(&tag[..]);
+                if ui.button("Add").clicked() {
+                    match coll.add_new_tag_from_text(tag.to_owned(), &mut db.uid_counter) {
+                        Some(id) => {
+                            if let Err(AddTagError) = coll.add_tag_for_multi(&win.ids, id) {
+                                egui_state.modal.err("Failed to add tags");
+                            }
+                            retain = false;
+                        }
+                        None => {
+                            egui_state.modal.err("Failed to add tag: Already exists");
+                        }
+                    }
+                }
+                if ui.button("Cancel").clicked() {
+                    retain = false;
+                }
+            });
+            retain
+        });
+        if ui.button(concat!(icons::ADD, " Add to sequence")).clicked() {
+            egui_state.sequences_window.on = true;
+            egui_state.sequences_window.pick_mode = true;
+        }
+        if let Some(uid) = egui_state.sequences_window.pick_result {
+            coll.add_entries_to_sequence(uid, &win.ids);
+            egui_state.sequences_window.pick_mode = false;
+            egui_state.sequences_window.pick_result = None;
+        }
+        if ui
+            .add(
+                Button::new(concat!(icons::TERM, " Run custom command"))
+                    .wrap_mode(TextWrapMode::Extend),
+            )
+            .clicked()
+        {
+            win.custom_command_prompt ^= true;
+        }
+        if ui
+            .button(concat!(icons::COPY, " Copy filenames to clipboard"))
+            .clicked()
+        {
+            let res = try {
+                let mut out = String::new();
+                for uid in &win.ids {
+                    match coll.entries.get(uid) {
+                        Some(en) => {
+                            let canonical = std::fs::canonicalize(&en.path).how()?;
+                            writeln!(&mut out, "{}", canonical.display()).how()?;
+                        }
+                        None => {
+                            writeln!(&mut out, "<Dangling id {uid:?}>").how()?;
+                        }
+                    }
+                }
+                state.clipboard_ctx.set_text(out).how()?;
+            };
+            if let Err(e) = res {
+                egui_state
+                    .modal
+                    .err(format!("Filename clipboard copy error: {e}"));
+            }
+        }
+        if win.custom_command_prompt {
+            if esc_pressed {
+                win.custom_command_prompt = false;
+                *close = false;
+            }
+            ui.label("Command");
+            let re = ui.text_edit_singleline(&mut win.cmd_buffer);
+            ui.label("Args (use {} for entry path, or leave empty)");
+            ui.text_edit_singleline(&mut win.args_buffer);
+            if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
+                let mut cmd = Command::new(&win.cmd_buffer);
+                cmd.stderr(Stdio::piped());
+                cmd.stdin(Stdio::piped());
+                cmd.stdout(Stdio::piped());
+                for uid in &win.ids {
+                    match coll.entries.get(uid) {
+                        Some(en) => {
+                            feed_args(&win.args_buffer, &[&en.path], &mut cmd);
+                        }
+                        None => {
+                            dlog!("No entry with id {uid:?}");
+                        }
+                    }
+                }
+                match cmd.spawn() {
+                    Ok(child) => {
+                        win.err_str.clear();
+                        win.custom_command_prompt = false;
+                        win.children
+                            .push(ChildWrapper::new(child, win.cmd_buffer.clone()));
+                    }
+                    Err(e) => win.err_str = e.to_string(),
+                }
+            }
+            if !win.err_str.is_empty() {
+                ui.add(Label::new(
+                    RichText::new(format!("Error: {}", win.err_str)).color(Rgba::RED),
+                ));
+            }
+        }
+        win.children.retain_mut(|c_wrap| {
+            let mut retain = true;
+            ui.separator();
+            ui.heading(&c_wrap.name);
+            match c_wrap.exit_status {
+                Some(status) => {
+                    if !c_wrap.stdout.is_empty() {
+                        ui.label("stdout:");
+                        ui.code(&c_wrap.stdout);
+                    }
+                    if !c_wrap.stderr.is_empty() {
+                        ui.label("stderr:");
+                        ui.code(&c_wrap.stderr);
+                    }
+                    let exit_code_msg = match status.code() {
+                        Some(code) => code.to_string(),
+                        None => "<terminated>".to_string(),
+                    };
+                    ui.horizontal(|ui| {
+                        ui.label(format!(
+                            "Exit code: {} ({})",
+                            exit_code_msg,
+                            status.success()
+                        ));
+                        if ui.button(icons::CANCEL).clicked() {
+                            retain = false;
+                        }
+                    });
+                }
+                None => {
+                    let mut clicked = false;
+                    ui.horizontal(|ui| {
+                        clicked = ui.button(icons::CANCEL).clicked();
+                        ui.label(format!("[running] ({})", c_wrap.child.id()));
+                    });
+                    if clicked {
+                        let _ = c_wrap.child.kill();
+                        return false;
+                    }
+                    match c_wrap.child.try_wait() {
+                        Ok(opt_status) => {
+                            c_wrap.exit_status = opt_status;
+                            // The process has only exited if the status is some
+                            if opt_status.is_some() {
+                                let result = try {
+                                    if let Some(stdout) = &mut c_wrap.child.stdout {
+                                        let mut buf = String::new();
+                                        stdout.read_to_string(&mut buf).how()?;
+                                        c_wrap.stdout = buf;
+                                    }
+                                    if let Some(stderr) = &mut c_wrap.child.stderr {
+                                        let mut buf = String::new();
+                                        stderr.read_to_string(&mut buf).how()?;
+                                        c_wrap.stderr = buf;
+                                    }
+                                };
+                                if let Err(e) = result {
+                                    egui_state
+                                        .modal
+                                        .err(format!("Custom command read error: {e}"));
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            win.err_str = e.to_string();
+                        }
+                    }
+                }
+            }
+            retain
+        });
+        ui.separator();
+        // region: Rename button
+        if win.ids.len() == 1 {
+            if ui
+                .add(
+                    Button::new(concat!(icons::EDIT, " Rename file"))
+                        .wrap_mode(TextWrapMode::Extend),
+                )
+                .clicked()
+            {
+                win.renaming ^= true;
+            }
+        } else if ui
+            .button(concat!(icons::EDIT, " Batch rename..."))
+            .clicked()
+        {
+            egui_state.batch_rename_window.open = true;
+            egui_state.batch_rename_window.ids.clone_from(&win.ids);
+        }
+        if win.renaming {
+            let re = ui.text_edit_singleline(&mut win.rename_buffer);
+            if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
+                if let Some(id) = win.ids.first()
+                    && let Err(e) = coll.rename(*id, &win.rename_buffer)
+                {
+                    egui_state.modal.err(format!("Rename error: {e:?}"));
+                }
+                win.renaming = false;
+            }
+            if re.lost_focus() {
+                win.renaming = false;
+                *close = false;
+            }
+            ui.memory_mut(|mem| mem.request_focus(re.id));
+        }
+        // endregion
+        // region: Delete button
+        if !win.delete_confirm {
+            if ui
+                .add(
+                    Button::new(concat!(icons::REMOVE, " Delete from disk"))
+                        .wrap_mode(TextWrapMode::Extend),
+                )
+                .clicked()
+            {
+                win.delete_confirm ^= true;
+            }
+        } else {
+            let del_uids = &mut win.ids;
+            let del_len = del_uids.len();
+            // We already know the length is 1 so it's fine
+            #[expect(clippy::indexing_slicing)]
+            let label_string = if del_len == 1 {
+                format!(
+                    "About to delete {}",
+                    coll.entries[&del_uids[0]].path.display()
+                )
+            } else {
+                format!("About to delete {del_len} entries")
+            };
+            ui.label(&label_string);
+            ui.horizontal(|ui| {
+                if ui.add(Button::new("Confirm").fill(Color32::RED)).clicked() {
+                    if let Err(e) = remove_entries(del_uids, coll, state) {
+                        egui_state
+                            .modal
+                            .err(format!("Error deleting entries: {e:?}"));
+                    }
+                    win.delete_confirm = false;
+                    *close = true;
+                }
+                if esc_pressed || ui.add(Button::new("Cancel")).clicked() {
+                    win.delete_confirm = false;
+                    *close = false;
+                }
+            });
+        }
+        // endregion
+    });
 }
 
 fn remove_entries(
