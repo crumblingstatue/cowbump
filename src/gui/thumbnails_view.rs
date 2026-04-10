@@ -301,12 +301,16 @@ fn draw_thumbnail<'a: 'b, 'b>(
         sprite.set_texture(&res.movie_texture, true);
         window.draw_sprite(sprite, &RenderStates::DEFAULT);
     }
+    let downshift_text = !props.has_img || props.ffmpeg;
     let mut show_filename = !props.has_img;
-    let fname_pos = [x + 2.0, y + 64.0];
     if Key::LAlt.is_pressed() {
         show_filename = true;
     }
     if show_filename && let Some(path_string) = entries[&id].path.to_str() {
+        let mut pos = egui::pos2(x + 2.0, y + 2.0);
+        if downshift_text {
+            pos.y += 62.0;
+        }
         let galley = painter.ctx().fonts_mut(|fonts| {
             fonts.layout(
                 path_string.into(),
@@ -316,11 +320,11 @@ fn draw_thumbnail<'a: 'b, 'b>(
             )
         });
         painter.rect_filled(
-            egui::Rect::from_min_size(fname_pos.into(), galley.size()),
+            egui::Rect::from_min_size(pos, galley.size()),
             1.0,
             egui::Color32::from_rgba_premultiplied(0, 0, 0, 128),
         );
-        painter.galley(fname_pos.into(), galley, egui::Color32::WHITE);
+        painter.galley(pos, galley, egui::Color32::WHITE);
     }
 }
 
