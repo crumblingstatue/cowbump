@@ -274,7 +274,7 @@ fn file_menu(
                     ui.horizontal(|ui| {
                         match app.database.collections.get(&id) {
                             Some(coll) => {
-                                if ui.button(format!("🗁 {}", &coll.display())).clicked() {
+                                if ui.button(format!("🗁 {}", coll.display())).clicked() {
                                     action = Action::Open(id);
                                 }
                             }
