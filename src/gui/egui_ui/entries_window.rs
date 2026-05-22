@@ -40,6 +40,7 @@ use {
 #[derive(Default)]
 pub struct EntriesWindow {
     ids: Vec<entry::Id>,
+    selected_id: Option<entry::Id>,
     add_tag_buffer: String,
     rename_buffer: String,
     editing_tags: bool,
@@ -333,7 +334,7 @@ fn window_ui(
 fn left_side_ui(
     ui: &mut Ui,
     n_entries: usize,
-    win: &EntriesWindow,
+    win: &mut EntriesWindow,
     coll: &Collection,
     db: &mut Db,
     state: &mut State,
@@ -371,25 +372,36 @@ fn left_side_ui(
                 57.. => ts / 7.0,
             };
             let w = h * ratio;
-            if ui
-                .add(Button::image(SizedTexture::new(
-                    TextureId::User(id.0),
-                    (w, h),
-                )))
-                .clicked()
-                && !state
+            let btn = Button::image(SizedTexture::new(TextureId::User(id.0), (w, h)));
+            let re = ui.add(btn);
+            if win.selected_id == Some(id) {
+                ui.painter().rect_stroke(
+                    re.rect,
+                    2.0,
+                    egui::Stroke::new(2.0_f32, Color32::YELLOW),
+                    egui::StrokeKind::Middle,
+                );
+            }
+            if re.clicked() {
+                if win.selected_id == Some(id) {
+                    win.selected_id = None;
+                } else {
+                    win.selected_id = Some(id);
+                }
+                if !state
                     .thumbs_view
                     .highlight_and_seek_to_entry(id, rend_win.size().y)
-            {
-                // Can't find in view, open it in external instead
-                let paths = [OpenExternCandidate {
-                    path: &entry.path,
-                    open_with: None,
-                }];
-                if let Err(e) = external::open(&paths, &mut db.preferences) {
-                    egui_state
-                        .modal
-                        .err(format!("Error opening with external: {e}"));
+                {
+                    // Can't find in view, open it in external instead
+                    let paths = [OpenExternCandidate {
+                        path: &entry.path,
+                        open_with: None,
+                    }];
+                    if let Err(e) = external::open(&paths, &mut db.preferences) {
+                        egui_state
+                            .modal
+                            .err(format!("Error opening with external: {e}"));
+                    }
                 }
             }
         }
@@ -418,65 +430,13 @@ fn right_side_ui(
             cross_justify: false,
         };
         ui.with_layout(layout, |ui| {
-            for tagid in crate::entry_utils::common_tags(&win.ids, coll) {
-                let tag_name = coll.tags.first_name_of(&tagid);
-                let mut changed_filter = false;
-
-                if win.editing_tags {
-                    let mut del = false;
-                    tag(
-                        ui,
-                        &tag_name,
-                        tagid,
-                        Some(&mut del),
-                        &mut state.filter,
-                        coll,
-                        egui_state,
-                        &mut changed_filter,
-                        &mut state.thumbs_view,
-                        &state.sel,
-                    );
-                    if del {
-                        let result = try {
-                            for en_id in &win.ids {
-                                coll.entries
-                                    .get_mut(en_id)
-                                    .context("Failed to get entry")?
-                                    .tags
-                                    .retain(|&t| t != tagid);
-                            }
-                            state.thumbs_view.update_from_collection(
-                                coll,
-                                &state.filter,
-                                &state.sel,
-                            );
-                        };
-                        if let Err(e) = result {
-                            egui_state
-                                .modal
-                                .err(format!("Failed to delete tag(s): {e:?}"));
-                        }
-                    }
-                } else {
-                    tag(
-                        ui,
-                        &tag_name,
-                        tagid,
-                        None,
-                        &mut state.filter,
-                        coll,
-                        egui_state,
-                        &mut changed_filter,
-                        &mut state.thumbs_view,
-                        &state.sel,
-                    );
-                }
-                if changed_filter {
-                    state
-                        .thumbs_view
-                        .update_from_collection(coll, &state.filter, &state.sel);
-                    state.thumbs_view.clamp_bottom(rend_win);
-                }
+            let ids = if let Some(sel_id) = win.selected_id {
+                &[sel_id]
+            } else {
+                win.ids.as_slice()
+            };
+            for tagid in crate::entry_utils::common_tags(ids, coll) {
+                tag_ui(win, ids, coll, state, egui_state, rend_win, ui, tagid);
             }
         });
         // endregion
@@ -525,7 +485,11 @@ fn right_side_ui(
             }
             if re.ctx.input(|inp| inp.key_pressed(Key::Enter)) {
                 let add_tag_buffer: &str = &win.add_tag_buffer;
-                let entry_uids: &[entry::Id] = &win.ids;
+                let entry_uids: &[entry::Id] = if let Some(sel_id) = win.selected_id {
+                    &[sel_id]
+                } else {
+                    &win.ids
+                };
                 let tags = add_tag_buffer.split_whitespace();
                 for tag in tags {
                     match coll.resolve_tag(tag) {
@@ -767,6 +731,74 @@ fn right_side_ui(
         }
         delete_ui(ui, win, coll, state, egui_state, esc_pressed, close);
     });
+}
+
+fn tag_ui(
+    win: &EntriesWindow,
+    ids: &[entry::Id],
+    coll: &mut Collection,
+    state: &mut State,
+    egui_state: &mut EguiState,
+    rend_win: &RenderWindow,
+    ui: &mut Ui,
+    tagid: tag::Id,
+) {
+    let tag_name = coll.tags.first_name_of(&tagid);
+    let mut changed_filter = false;
+
+    if win.editing_tags {
+        let mut del = false;
+        tag(
+            ui,
+            &tag_name,
+            tagid,
+            Some(&mut del),
+            &mut state.filter,
+            coll,
+            egui_state,
+            &mut changed_filter,
+            &mut state.thumbs_view,
+            &state.sel,
+        );
+        if del {
+            let result = try {
+                for en_id in ids {
+                    coll.entries
+                        .get_mut(en_id)
+                        .context("Failed to get entry")?
+                        .tags
+                        .retain(|&t| t != tagid);
+                }
+                state
+                    .thumbs_view
+                    .update_from_collection(coll, &state.filter, &state.sel);
+            };
+            if let Err(e) = result {
+                egui_state
+                    .modal
+                    .err(format!("Failed to delete tag(s): {e:?}"));
+            }
+        }
+    } else {
+        tag(
+            ui,
+            &tag_name,
+            tagid,
+            None,
+            &mut state.filter,
+            coll,
+            egui_state,
+            &mut changed_filter,
+            &mut state.thumbs_view,
+            &state.sel,
+        );
+    }
+    if changed_filter {
+        state
+            .thumbs_view
+            .update_from_collection(coll, &state.filter, &state.sel);
+        state.thumbs_view.clamp_bottom(rend_win);
+    }
 }
 
 fn delete_ui(
