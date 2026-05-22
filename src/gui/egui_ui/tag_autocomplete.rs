@@ -8,7 +8,7 @@ use {
 };
 
 pub struct AcState {
-    /// Selection index in the autocomplet list
+    /// Selection index in the autocomplete list
     select: Option<usize>,
     /// Input changed this frame
     pub input_changed: bool,
