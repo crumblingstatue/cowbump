@@ -113,8 +113,9 @@ pub(super) fn tag_autocomplete_popup(
             ),
         ];
         let last_is_special = last.bytes().next() == Some(b'@');
+        let spec_filt = |spec: &(&str, &str, &str)| spec.0.contains(last);
         if last_is_special {
-            len += specials.len();
+            len += specials.into_iter().filter(spec_filt).count();
         }
         if len > 0 {
             enum C {
@@ -141,7 +142,9 @@ pub(super) fn tag_autocomplete_popup(
                     if last_is_special {
                         let enter =
                             ui.input_mut(|inp| inp.consume_key(egui::Modifiers::NONE, Key::Enter));
-                        for (i, (usage, desc, ins)) in specials.into_iter().enumerate() {
+                        for (i, (usage, desc, ins)) in
+                            specials.into_iter().filter(spec_filt).enumerate()
+                        {
                             let selected = state.select == Some(i);
                             let re = ui.selectable_label(selected, usage);
                             if selected {
