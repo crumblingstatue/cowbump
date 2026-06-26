@@ -26,7 +26,10 @@ use {
         egui::{
             self, Button, Color32, Key, Label, Modifiers, PointerButton, Response, Rgba, RichText,
             ScrollArea, Sense, TextEdit, TextWrapMode, TextureId, Ui,
-            epaint::text::cursor::CCursor, load::SizedTexture, text::CCursorRange, vec2,
+            epaint::text::cursor::CCursor,
+            load::SizedTexture,
+            text::{CCursorRange, CharIndex},
+            vec2,
         },
         sf2g::graphics::{RenderTarget, RenderWindow},
     },
@@ -156,7 +159,7 @@ pub fn text_edit_cursor_set_to_end(ui: &Ui, te_id: egui::Id) {
         return;
     };
     state.cursor.set_char_range(Some(CCursorRange::one(CCursor {
-        index: 100_000,
+        index: CharIndex(100_000),
         prefer_next_row: false,
     })));
     TextEdit::store_state(ui.ctx(), te_id, state);

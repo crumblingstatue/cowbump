@@ -50,7 +50,7 @@ pub(super) fn do_frame(
     }
     let n_selected = state.sel.current_mut().map_or(0, |buf| buf.len());
     let mut result = Ok(());
-    egui::Panel::top("top_panel").show_inside(ui, |ui| {
+    egui::Panel::top("top_panel").show(ui, |ui| {
         egui::MenuBar::new().ui(ui, |ui| {
             match state.activity {
                 Activity::Thumbnails => {

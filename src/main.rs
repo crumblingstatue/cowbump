@@ -110,7 +110,7 @@ fn fatal_error_report(title: &str, mut msg: &str) {
         }
         let di = sf_egui
             .run(&mut rw, |_, ui| {
-                egui::CentralPanel::default().show_inside(ui, |ui| {
+                egui::CentralPanel::default().show(ui, |ui| {
                     ui.heading("Cowbump panicked");
                     ui.separator();
                     egui::ScrollArea::vertical()

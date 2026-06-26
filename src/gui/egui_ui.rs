@@ -179,7 +179,7 @@ pub(super) fn do_ui(
         }
     }
     top_bar::do_frame(state, egui_state, ui, app, win)?;
-    egui::CentralPanel::no_frame().show_inside(ui, |ui| {
+    egui::CentralPanel::no_frame().show(ui, |ui| {
         egui_state.ptr_over_content_area = ui.ui_contains_pointer();
         if app.active_collection.is_none() {
             let msg = "Welcome to cowbump!\n\
