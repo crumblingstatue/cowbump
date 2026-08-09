@@ -488,7 +488,10 @@ pub(in crate::gui) fn handle_event(
                 flags.esc_pressed = true;
             }
         }
-        Event::MouseWheelScrolled { delta, .. } => {
+        Event::MouseWheelScrolled { delta, .. } => 'block: {
+            if !egui_state.ptr_over_content_area {
+                break 'block;
+            }
             state.thumbs_view.y_offset -= delta * preferences.scroll_wheel_multiplier;
             if delta > 0.0 {
                 state.thumbs_view.clamp_top();
