@@ -18,14 +18,13 @@ directories = "6.0"
 open = "5.1.2"
 zstd = "0.13.1"
 zip = { version = "8", default-features = false }
-egui-sf2g = "0.8.0"
+egui-sf2g = "0.9.0"
 sf2g.version = "0.4.0"
 rand = "0.10"
-egui-file-dialog.git = "https://github.com/crumblingstatue/egui-file-dialog.git"
-egui-file-dialog.branch = "egui-035"
+egui-file-dialog = "0.15"
 parking_lot = "0.12"
-egui_flex = "0.7.0"
-egui_colors = "0.12"
+egui_flex = "0.8.0"
+egui_colors = "0.13"
 constcat = "0.6"
 
 [dependencies.recently_used_list]
