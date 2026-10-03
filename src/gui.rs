@@ -320,6 +320,19 @@ struct Thumbnail {
     ffmpeg_loaded: bool,
 }
 
+impl Thumbnail {
+    /// Returns a `0.0` positioned egui Rectangle, if the texture is loaded
+    fn egui_rect(&self) -> Option<egui::Rect> {
+        self.texture.as_ref().map(|tex| {
+            let size = tex.size();
+            egui::Rect {
+                min: egui::pos2(0.0, 0.0),
+                max: egui::pos2(size.x as f32, size.y as f32),
+            }
+        })
+    }
+}
+
 type ThumbnailCache = EntryMap<Thumbnail>;
 
 struct State {

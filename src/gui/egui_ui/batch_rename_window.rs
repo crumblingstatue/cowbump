@@ -1,5 +1,8 @@
 use {
-    crate::{entry, gui::State},
+    crate::{
+        entry,
+        gui::{State, Thumbnail},
+    },
     anyhow::Context,
     egui_sf2g::{
         egui::{self, PointerButton, TextureId},
@@ -50,6 +53,20 @@ fn do_batch_rename(
     Ok(())
 }
 
+/// Scales `fittee` to fit `target`, while keeping its aspect ratio.
+///
+/// Ignores position, only cares about size.
+fn scale_to_fit_keep_aspect(fittee: egui::Rect, target: egui::Rect) -> egui::Rect {
+    let fittee_size = fittee.size();
+    let target_size = target.size();
+
+    let scale = (target_size.x / fittee_size.x).min(target_size.y / fittee_size.y);
+
+    let size = fittee_size * scale;
+
+    egui::Rect::from_min_size(egui::Pos2::ZERO, size)
+}
+
 pub(crate) fn do_frame(
     state: &mut State,
     egui_state: &mut super::EguiState,
@@ -84,7 +101,9 @@ pub(crate) fn do_frame(
                         .sort_by_key(|id| coll.entries.get(id).map(|en| &en.path));
                 }
             });
-            ui.label("lmb: swap, rmb: insert before, alt+lmb: view image");
+            ui.label(
+                "lmb: swap, rmb: insert before, alt+hover: preview image, alt+lmb: open in viewer",
+            );
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (i, id) in egui_state.batch_rename_window.ids.iter().enumerate() {
@@ -102,6 +121,34 @@ pub(crate) fn do_frame(
                         }
                         let re = ui.add(egui::Button::image(img));
                         let alt = ui.input(|inp| inp.modifiers.alt);
+                        let ui_rect = ui.clip_rect();
+                        // Draw a large size preview when holding alt
+                        if re.hovered()
+                            && alt
+                            && let Some(mut img_rect) =
+                                state.thumbnail_cache.get(id).and_then(Thumbnail::egui_rect)
+                        {
+                            img_rect = scale_to_fit_keep_aspect(img_rect, ui_rect);
+                            img_rect.min = ui_rect.min;
+
+                            let layer = egui::LayerId::new(
+                                egui::Order::Foreground,
+                                egui::Id::new("image_preview"),
+                            );
+
+                            let painter = ui.layer_painter(layer);
+
+                            painter.image(
+                                TextureId::User(id.0),
+                                img_rect,
+                                egui::Rect::from_min_max(
+                                    egui::pos2(0.0, 0.0),
+                                    egui::pos2(1.0, 1.0),
+                                ),
+                                egui::Color32::WHITE,
+                            );
+                        }
+
                         if re.clicked() && alt {
                             crate::gui::open::builtin::open_list(
                                 state,
