@@ -8,6 +8,7 @@ use {
         egui::{self, PointerButton, TextureId},
         sf2g::graphics::RenderWindow,
     },
+    sf2g::graphics::RenderTarget,
 };
 
 #[derive(Default)]
@@ -79,6 +80,8 @@ pub(crate) fn do_frame(
     }
     egui::Window::new("Batch rename")
         .open(&mut egui_state.batch_rename_window.open)
+        .default_width(rw.size().x as f32)
+        .default_height(rw.size().y as f32)
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Common prefix");
