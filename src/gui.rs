@@ -20,7 +20,7 @@ use {
         db::EntryMap,
         entry,
         filter_reqs::Requirements,
-        gui::thumbnails_view::add_all_to_selection,
+        gui::{egui_ui::img_cache::ImageCache, thumbnails_view::add_all_to_selection},
         preferences::{LightDarkPref, Preferences, SortPreference},
     },
     anyhow::Context as _,
@@ -350,6 +350,8 @@ struct State {
     select_a: Option<usize>,
     activity: Activity,
     viewer_state: ViewerState,
+    /// Cache for high-resolution images for the image viewer, and hi-res previews
+    hi_res_cache: ImageCache,
 }
 pub struct SelectionBuf {
     pub buf: Vec<entry::Id>,
@@ -544,6 +546,7 @@ impl State {
             select_a: None,
             activity: Activity::Thumbnails,
             viewer_state: ViewerState::default(),
+            hi_res_cache: ImageCache::default(),
         })
     }
     fn wipe_search(&mut self) {

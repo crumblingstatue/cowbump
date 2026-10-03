@@ -27,7 +27,7 @@ pub(in crate::gui) fn open_list(
     state.activity = Activity::Viewer;
     state.viewer_state.image_list = image_list;
     state.viewer_state.index = starting_index;
-    state.viewer_state.zoom_to_fit(window);
+    state.viewer_state.zoom_to_fit(window, &state.hi_res_cache);
 }
 
 /// Opens a single (usually clicked) entry, and:

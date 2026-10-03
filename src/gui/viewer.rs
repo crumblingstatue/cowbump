@@ -1,15 +1,14 @@
 use {
     super::{Activity, State, thumbnail_loader::imagebuf_to_sf_tex},
-    crate::{collection::Collection, dlog, entry},
+    crate::{collection::Collection, dlog, entry, gui::egui_ui::img_cache::ImageCache},
     egui_sf2g::{
         egui,
         sf2g::{
-            cpp::FBox,
-            graphics::{RenderStates, RenderTarget, RenderWindow, Sprite, Texture, Transformable},
+            graphics::{RenderStates, RenderTarget, RenderWindow, Sprite, Transformable},
             window::{Event, Key, mouse},
         },
     },
-    std::{collections::VecDeque, time::Instant},
+    std::time::Instant,
 };
 
 pub(super) fn draw(
@@ -24,7 +23,7 @@ pub(super) fn draw(
     }
     let id = state.viewer_state.image_list[state.viewer_state.index];
     let entry = &coll.entries[&id];
-    match state.viewer_state.image_cache.get(id) {
+    match state.hi_res_cache.get(id) {
         Some(result) => match result {
             Ok(tex) => {
                 let mut spr = Sprite::with_texture(tex);
@@ -56,16 +55,13 @@ pub(super) fn draw(
             match image::load_from_memory(&data) {
                 Ok(img) => {
                     let tex = imagebuf_to_sf_tex(img.to_rgba8());
-                    state.viewer_state.image_cache.insert((id, Ok(tex)));
+                    state.hi_res_cache.insert((id, Ok(tex)));
                 }
                 Err(e) => {
-                    state
-                        .viewer_state
-                        .image_cache
-                        .insert((id, Err(anyhow::anyhow!(e))));
+                    state.hi_res_cache.insert((id, Err(anyhow::anyhow!(e))));
                 }
             }
-            state.viewer_state.zoom_to_fit(window);
+            state.viewer_state.zoom_to_fit(window, &state.hi_res_cache);
         }
     }
 }
@@ -73,14 +69,14 @@ pub(super) fn draw(
 pub(super) fn handle_event(state: &mut State, event: &Event, window: &RenderWindow) {
     match *event {
         Event::KeyPressed { code, shift, .. } => match code {
-            Key::Left => state.viewer_state.prev(window),
-            Key::Right => state.viewer_state.next(window),
+            Key::Left => state.viewer_state.prev(window, &state.hi_res_cache),
+            Key::Right => state.viewer_state.next(window, &state.hi_res_cache),
             Key::Escape => state.activity = Activity::Thumbnails,
             Key::Equal if shift => state.viewer_state.zoom_in(),
             Key::Equal => state.viewer_state.original_scale(),
             Key::Hyphen => state.viewer_state.zoom_out(),
             Key::Delete => state.viewer_state.remove_from_view_list(),
-            Key::R => state.viewer_state.zoom_to_fit(window),
+            Key::R => state.viewer_state.zoom_to_fit(window, &state.hi_res_cache),
             _ => {}
         },
         Event::MouseButtonPressed {
@@ -107,41 +103,9 @@ pub(super) fn handle_event(state: &mut State, event: &Event, window: &RenderWind
     }
 }
 
-type ImageResult = Result<FBox<Texture>, anyhow::Error>;
-type CacheKvPair = (entry::Id, ImageResult);
-
-struct ImageCache {
-    img_results: VecDeque<CacheKvPair>,
-    capacity: usize,
-}
-
-impl Default for ImageCache {
-    fn default() -> Self {
-        Self {
-            img_results: Default::default(),
-            capacity: 100,
-        }
-    }
-}
-
-impl ImageCache {
-    fn get(&self, id: entry::Id) -> Option<&ImageResult> {
-        self.img_results
-            .iter()
-            .find_map(|kvpair| (kvpair.0 == id).then_some(&kvpair.1))
-    }
-    fn insert(&mut self, kvpair: CacheKvPair) {
-        self.img_results.push_back(kvpair);
-        if self.img_results.len() > self.capacity {
-            self.img_results.pop_front();
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct ViewerState {
     pub index: usize,
-    image_cache: ImageCache,
     scale: f32,
     image_offset: (i32, i32),
     grab_origin: Option<(i32, i32)>,
@@ -154,11 +118,11 @@ impl ViewerState {
     pub(in crate::gui) fn shown_entry(&self) -> Option<entry::Id> {
         self.image_list.get(self.index).copied()
     }
-    pub(in crate::gui) fn zoom_to_fit(&mut self, window: &RenderWindow) {
+    pub(in crate::gui) fn zoom_to_fit(&mut self, window: &RenderWindow, cache: &ImageCache) {
         self.scale = 1.0;
         self.image_offset = (0, 0);
         let id = self.image_list[self.index];
-        if let Some(Ok(img)) = self.image_cache.get(id) {
+        if let Some(Ok(img)) = cache.get(id) {
             let img_size = img.size();
             let win_size = window.size();
             let x_ratio = win_size.x as f32 / img_size.x as f32;
@@ -186,22 +150,22 @@ impl ViewerState {
         self.scale += 0.1;
     }
 
-    pub(in crate::gui) fn next(&mut self, window: &RenderWindow) {
+    pub(in crate::gui) fn next(&mut self, window: &RenderWindow, cache: &ImageCache) {
         if self.index == self.image_list.len() - 1 {
             self.index = 0;
         } else {
             self.index += 1;
         }
-        self.zoom_to_fit(window);
+        self.zoom_to_fit(window, cache);
     }
 
-    pub(in crate::gui) fn prev(&mut self, window: &RenderWindow) {
+    pub(in crate::gui) fn prev(&mut self, window: &RenderWindow, cache: &ImageCache) {
         if self.index == 0 {
             self.index = self.image_list.len() - 1;
         } else {
             self.index -= 1;
         }
-        self.zoom_to_fit(window);
+        self.zoom_to_fit(window, cache);
     }
 }
 
@@ -211,10 +175,10 @@ pub fn menu_ui(ui: &mut egui::Ui, state: &mut State, win: &RenderWindow) {
     }
     ui.menu_button("Viewer", |ui| {
         if ui.button("Previous (<-)").clicked() {
-            state.viewer_state.prev(win);
+            state.viewer_state.prev(win, &state.hi_res_cache);
         }
         if ui.button("Next (->)").clicked() {
-            state.viewer_state.next(win);
+            state.viewer_state.next(win, &state.hi_res_cache);
         }
         if ui.button("Zoom out (-)").clicked() {
             state.viewer_state.zoom_out();
@@ -226,7 +190,7 @@ pub fn menu_ui(ui: &mut egui::Ui, state: &mut State, win: &RenderWindow) {
             state.viewer_state.zoom_in();
         }
         if ui.button("Zoom to fit (R)").clicked() {
-            state.viewer_state.zoom_to_fit(win);
+            state.viewer_state.zoom_to_fit(win, &state.hi_res_cache);
         }
         ui.separator();
         if ui.button("Remove from view list (Del)").clicked() {
@@ -247,7 +211,7 @@ pub(crate) fn update(state: &mut State, win: &RenderWindow) {
             .last_slideshow_instant
             .get_or_insert(Instant::now());
         if last.elapsed().as_millis() >= u128::from(state.viewer_state.slideshow_timer_ms) {
-            state.viewer_state.next(win);
+            state.viewer_state.next(win, &state.hi_res_cache);
             state.viewer_state.last_slideshow_instant = Some(Instant::now());
         }
     }

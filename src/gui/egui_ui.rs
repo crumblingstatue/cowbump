@@ -7,6 +7,7 @@ mod entries_window;
 mod filter_popup;
 mod find_popup;
 mod icons;
+pub mod img_cache;
 mod load_folder_window;
 mod modal;
 mod preferences_window;
