@@ -321,6 +321,8 @@ pub(super) struct TexSrc<'state, 'res, 'db> {
 }
 
 impl<'state, 'res, 'db> TexSrc<'state, 'res, 'db> {
+    // Start of high resolution ids
+    pub const HI_RES_START: u64 = 2u64.pow(32);
     pub(super) fn new(
         state: &'state mut State,
         res: &'res Resources,
@@ -337,16 +339,28 @@ impl<'state, 'res, 'db> TexSrc<'state, 'res, 'db> {
 impl egui_sf2g::UserTexSource for TexSrc<'_, '_, '_> {
     fn get_texture(&mut self, id: u64) -> (f32, f32, &Texture) {
         let tex = match self.coll {
-            Some(coll) => {
-                get_tex_for_entry(
-                    &self.state.thumbnail_cache,
-                    entry::Id(id),
-                    &coll.entries,
-                    &self.state.thumbnail_loader,
-                    self.state.thumbs_view.thumb_size,
-                    self.res,
-                )
-                .1
+            Some(coll) => 'block: {
+                if id < Self::HI_RES_START {
+                    get_tex_for_entry(
+                        &self.state.thumbnail_cache,
+                        entry::Id(id),
+                        &coll.entries,
+                        &self.state.thumbnail_loader,
+                        self.state.thumbs_view.thumb_size,
+                        self.res,
+                    )
+                    .1
+                } else {
+                    let en_id = entry::Id(id - Self::HI_RES_START);
+                    let Some(en) = coll.entries.get(&en_id) else {
+                        break 'block &*self.res.error_texture;
+                    };
+                    let result = self.state.hi_res_cache.fetch(en_id, en).0;
+                    let Ok(tex) = result else {
+                        break 'block &*self.res.error_texture;
+                    };
+                    tex
+                }
             }
             None => &*self.res.error_texture,
         };

@@ -1,7 +1,7 @@
 use {
     crate::{
         entry,
-        gui::{State, Thumbnail},
+        gui::{SfTextureExt, State, egui_ui::TexSrc},
     },
     anyhow::Context,
     egui_sf2g::{
@@ -125,8 +125,13 @@ pub(crate) fn do_frame(
                         // Draw a large size preview when holding alt
                         if re.hovered()
                             && alt
-                            && let Some(mut img_rect) =
-                                state.thumbnail_cache.get(id).and_then(Thumbnail::egui_rect)
+                            && let Some(en) = coll.entries.get(id)
+                            && let Ok(mut img_rect) = state
+                                .hi_res_cache
+                                .fetch(*id, en)
+                                .0
+                                .as_ref()
+                                .map(|tex| tex.egui_rect())
                         {
                             img_rect = scale_to_fit_keep_aspect(img_rect, ui_rect);
                             img_rect.min = ui_rect.min;
@@ -137,9 +142,10 @@ pub(crate) fn do_frame(
                             );
 
                             let painter = ui.layer_painter(layer);
-
+                            let mut id = id.0;
+                            id += TexSrc::HI_RES_START;
                             painter.image(
-                                TextureId::User(id.0),
+                                TextureId::User(id),
                                 img_rect,
                                 egui::Rect::from_min_max(
                                     egui::pos2(0.0, 0.0),
