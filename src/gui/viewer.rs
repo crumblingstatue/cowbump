@@ -1,6 +1,6 @@
 use {
-    super::{Activity, State, thumbnail_loader::imagebuf_to_sf_tex},
-    crate::{collection::Collection, dlog, entry, gui::egui_ui::img_cache::ImageCache},
+    super::{Activity, State},
+    crate::{collection::Collection, entry, gui::egui_ui::img_cache::ImageCache},
     egui_sf2g::{
         egui,
         sf2g::{
@@ -23,46 +23,33 @@ pub(super) fn draw(
     }
     let id = state.viewer_state.image_list[state.viewer_state.index];
     let entry = &coll.entries[&id];
-    match state.hi_res_cache.get(id) {
-        Some(result) => match result {
-            Ok(tex) => {
-                let mut spr = Sprite::with_texture(tex);
-                spr.move_((
-                    state.viewer_state.image_offset.0 as f32,
-                    state.viewer_state.image_offset.1 as f32,
-                ));
-                spr.set_scale((state.viewer_state.scale, state.viewer_state.scale));
-                window.draw_sprite(&spr, &RenderStates::DEFAULT);
+    let mut just_loaded_indeed = false;
+    let (result, just_loaded) = state.hi_res_cache.fetch(id, entry);
+    match result {
+        Ok(tex) => {
+            let mut spr = Sprite::with_texture(tex);
+            spr.move_((
+                state.viewer_state.image_offset.0 as f32,
+                state.viewer_state.image_offset.1 as f32,
+            ));
+            spr.set_scale((state.viewer_state.scale, state.viewer_state.scale));
+            window.draw_sprite(&spr, &RenderStates::DEFAULT);
+            if just_loaded {
+                just_loaded_indeed = true;
             }
-            Err(e) => {
-                painter.text(
-                    egui::pos2(200.0, 200.0),
-                    egui::Align2::LEFT_TOP,
-                    e.to_string(),
-                    egui::FontId::proportional(14.0),
-                    egui::Color32::RED,
-                );
-            }
-        },
-        None => {
-            let data = match std::fs::read(&entry.path) {
-                Ok(data) => data,
-                Err(e) => {
-                    dlog!("Error loading image: {e}");
-                    return;
-                }
-            };
-            match image::load_from_memory(&data) {
-                Ok(img) => {
-                    let tex = imagebuf_to_sf_tex(img.to_rgba8());
-                    state.hi_res_cache.insert((id, Ok(tex)));
-                }
-                Err(e) => {
-                    state.hi_res_cache.insert((id, Err(anyhow::anyhow!(e))));
-                }
-            }
-            state.viewer_state.zoom_to_fit(window, &state.hi_res_cache);
         }
+        Err(e) => {
+            painter.text(
+                egui::pos2(200.0, 200.0),
+                egui::Align2::LEFT_TOP,
+                e.to_string(),
+                egui::FontId::proportional(14.0),
+                egui::Color32::RED,
+            );
+        }
+    }
+    if just_loaded_indeed {
+        state.viewer_state.zoom_to_fit(window, &state.hi_res_cache);
     }
 }
 
