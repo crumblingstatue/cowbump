@@ -372,7 +372,10 @@ pub(in crate::gui) fn handle_event(
                             };
                             let (min, max) = (a.min(curr_thumb_idx), a.max(curr_thumb_idx));
                             for id in state.thumbs_view.iter().skip(min).take((max + 1) - min) {
-                                sel_buf.buf.push(id);
+                                // Prevent adding the same id multiple times
+                                if !sel_buf.contains(&id) {
+                                    sel_buf.buf.push(id);
+                                }
                             }
                             state.select_a = None;
                         }
