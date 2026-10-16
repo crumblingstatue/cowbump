@@ -141,7 +141,7 @@ pub(crate) fn do_frame(
 
                             let layer = egui::LayerId::new(
                                 egui::Order::Foreground,
-                                egui::Id::new("image_preview"),
+                                egui::Id::unique("image_preview"),
                             );
 
                             let painter = ui.layer_painter(layer);

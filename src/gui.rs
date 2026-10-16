@@ -55,6 +55,9 @@ pub fn run(app: &mut Application) -> anyhow::Result<()> {
     let mut state = State::new(window.size().x, &app.database.preferences)?;
     let mut load_anim_rotation = 0.0;
     let mut sf_egui = SfEgui::new(&window);
+    sf_egui.context().add_font_provider(std::sync::Arc::new(
+        egui_system_font_provider::SystemFontProvider::new(),
+    ));
     if let Some(theme) = &app.database.preferences.color_theme
         && let Some(pref) = &theme.light_dark_preference
     {

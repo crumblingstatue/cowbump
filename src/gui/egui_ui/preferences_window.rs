@@ -207,7 +207,7 @@ fn file_assoc_categ_ui(
     ui.group(|ui| {
         let collap = CollapsingState::load_with_default_open(
             ui.ctx(),
-            egui::Id::new("add_new_collap"),
+            egui::Id::unique("add_new_collap"),
             false,
         );
         let head_re = collap.show_header(ui, |ui| {
@@ -240,7 +240,7 @@ fn file_assoc_categ_ui(
         let mut retain = true;
         let collap = CollapsingState::load_with_default_open(
             ui.ctx(),
-            egui::Id::new(&app.name).with(k.0),
+            egui::Id::unique(&app.name).with(k.0),
             false,
         );
         let head_re = collap.show_header(ui, |ui| {

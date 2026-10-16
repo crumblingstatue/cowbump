@@ -148,7 +148,7 @@ pub(super) fn tag_autocomplete_popup(
                             let selected = state.select == Some(i);
                             let re = ui.selectable_label(selected, usage);
                             if selected {
-                                egui::Area::new(egui::Id::new("suggestion_popup").with(i))
+                                egui::Area::new(egui::Id::unique("suggestion_popup").with(i))
                                     .fixed_pos(re.rect.right_top() + egui::vec2(16.0, 0.0))
                                     .show(ui.ctx(), |ui| {
                                         egui::Frame::window(ui.style()).show(ui, |ui| {

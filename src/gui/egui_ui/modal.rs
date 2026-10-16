@@ -250,7 +250,7 @@ impl ModalDialog {
 }
 
 fn show_modal_ui(ctx: &egui::Context, ui_fn: impl FnOnce(&mut egui::Ui)) {
-    let re = egui::Area::new(egui::Id::new("modal_area"))
+    let re = egui::Area::new(egui::Id::unique("modal_area"))
         .fixed_pos(egui::Pos2::ZERO)
         .show(ctx, |ui| {
             let screen_rect = ui.ctx().input(egui::InputState::content_rect);

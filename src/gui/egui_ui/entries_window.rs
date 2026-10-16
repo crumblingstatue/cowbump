@@ -215,7 +215,7 @@ pub(super) fn do_frame(
         let esc_pressed = egui_ctx.input(|inp| inp.key_pressed(Key::Escape));
         let mut close = esc_pressed;
         egui::Window::new(title)
-            .id(egui::Id::new("en_window").with(win.window_id))
+            .id(egui::Id::unique("en_window").with(win.window_id))
             .open(&mut open)
             .min_width(880.)
             .show(egui_ctx, |ui| {
