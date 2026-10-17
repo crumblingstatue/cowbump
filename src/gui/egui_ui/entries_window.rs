@@ -804,6 +804,30 @@ fn tag_ui(
     }
 }
 
+fn red_button_style(s: &mut egui::Style) {
+    let vis = &mut s.visuals.widgets;
+    vis.inactive.weak_bg_fill = Color32::DARK_RED;
+    vis.inactive.fg_stroke.color = Color32::WHITE;
+    vis.hovered.weak_bg_fill = Color32::RED;
+}
+
+trait EguiUiStyleExt {
+    fn with_style(&mut self, style_mod: impl FnOnce(&mut egui::Style), ui_fn: impl FnOnce(&mut Ui));
+}
+
+impl EguiUiStyleExt for Ui {
+    fn with_style(
+        &mut self,
+        style_mod: impl FnOnce(&mut egui::Style),
+        ui_fn: impl FnOnce(&mut Ui),
+    ) {
+        self.scope(|ui| {
+            style_mod(ui.style_mut());
+            ui_fn(ui);
+        });
+    }
+}
+
 fn delete_ui(
     ui: &mut Ui,
     win: &mut EntriesWindow,
@@ -814,19 +838,17 @@ fn delete_ui(
     close: &mut bool,
 ) {
     if !win.delete_confirm {
-        if ui
-            .add(
-                Button::new(
-                    RichText::new(concat!(icons::REMOVE, " Delete from disk"))
-                        .background_color(Color32::DARK_RED)
-                        .color(Color32::WHITE),
+        ui.with_style(red_button_style, |ui| {
+            if ui
+                .add(
+                    Button::new(concat!(icons::REMOVE, " Delete from disk"))
+                        .wrap_mode(TextWrapMode::Extend),
                 )
-                .wrap_mode(TextWrapMode::Extend),
-            )
-            .clicked()
-        {
-            win.delete_confirm ^= true;
-        }
+                .clicked()
+            {
+                win.delete_confirm ^= true;
+            }
+        });
     } else {
         let del_uids = &mut win.ids;
         let del_len = del_uids.len();
