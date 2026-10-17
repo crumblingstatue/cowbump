@@ -243,7 +243,7 @@ fn file_menu(
             egui_state.file_op = Some(FileOp::OpenDirectory);
             egui_state.file_dialog.pick_directory();
         }
-        if ui.button("↺ Reload folder").clicked() {
+        if ui.button("🔃 Reload folder").clicked() {
             match app.reload_active_collection() {
                 Ok(changes) => changes,
                 Err(e) => {
@@ -255,7 +255,7 @@ fn file_menu(
         if ui
             .add_enabled(
                 app.active_collection.is_some(),
-                Button::new("🗀 Close folder"),
+                Button::new("📁 Close folder"),
             )
             .clicked()
             && let Err(e) = app.switch_collection(None)
@@ -274,7 +274,7 @@ fn file_menu(
                     ui.horizontal(|ui| {
                         match app.database.collections.get(&id) {
                             Some(coll) => {
-                                if ui.button(format!("🗁 {}", coll.display())).clicked() {
+                                if ui.button(format!("📂 {}", coll.display())).clicked() {
                                     action = Action::Open(id);
                                 }
                             }
