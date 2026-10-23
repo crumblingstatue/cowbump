@@ -30,7 +30,7 @@ parking_lot = "0.12"
 egui_flex.git = "https://github.com/crumblingstatue/hello_egui.git"
 egui_colors = "0.14"
 constcat = "0.6"
-egui_system_font_provider = "0.37.0"
+egui_system_font_frog.git = "https://github.com/crumblingstatue/egui_system_font_frog.git"
 
 [dependencies.recently_used_list]
 git = "https://github.com/crumblingstatue/recently_used_list.git"
