@@ -1,19 +1,19 @@
 //! "Standard" icons for Cowbump
 
 pub const ADD: &str = "➕";
-pub const REMOVE: &str = "🗑";
-pub const CANCEL: &str = "🗙";
-pub const CANCEL_TEXT: &str = "🗙 Cancel";
+pub const REMOVE: &str = "🗑️";
+pub const CANCEL: &str = "❌";
+pub const CANCEL_TEXT: &str = "❌ Cancel";
 pub const CLEAR: &str = "❎";
-pub const CHECK: &str = "✔";
-pub const TAG: &str = "🏷";
-pub const EDIT: &str = "🖊";
+pub const CHECK: &str = "✅";
+pub const TAG: &str = "🏷️";
+pub const EDIT: &str = "🖊️";
 pub const TERM: &str = "💻";
 pub const COPY: &str = "📄";
-pub const WARN: &str = "⚠";
-pub const QUESTION: &str = "？";
+pub const WARN: &str = "⚠️";
+pub const QUESTION: &str = "❔";
 pub const FOLDER: &str = "📂";
 pub const HAMBURGER: &str = "☰";
-pub const CABINET: &str = "🗄";
+pub const CABINET: &str = "🗄️";
 pub const SAVE: &str = "💾";
-pub const SORT: &str = "♻";
+pub const SORT: &str = "♻️";

@@ -345,7 +345,7 @@ fn file_menu(
         }
         ui.separator();
         if ui
-            .add(Button::new("⎆ Quit").shortcut_text("Ctrl+Q"))
+            .add(Button::new("🚪 Quit").shortcut_text("Ctrl+Q"))
             .clicked()
         {
             egui_state.action = Some(Action::Quit);
