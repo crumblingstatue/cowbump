@@ -319,6 +319,7 @@ fn draw_thumbnail<'a: 'b, 'b>(
                 380.0,
             )
         });
+        let pos = pos / painter.pixels_per_point();
         painter.rect_filled(
             egui::Rect::from_min_size(pos, galley.size()),
             1.0,
