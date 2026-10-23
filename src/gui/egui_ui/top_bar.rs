@@ -456,7 +456,7 @@ fn actions_menu(
             egui_state.action = Some(Action::OpenEntriesWindow);
         }
         ui.separator();
-        SubMenuButton::new(concat!(icons::SORT, " Sort"))
+        SubMenuButton::new(concat!(icons::SORT, " Sort/Shuffle"))
             .config(MenuConfig::new().close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside))
             .ui(ui, |ui| sort_menu_ui(active_coll, ui, egui_state, state));
     });
@@ -471,19 +471,6 @@ fn sort_menu_ui(
     if !active_coll {
         ui.disable();
     }
-    if ui
-        .add(Button::new(concat!(icons::SORT, " Sort")).shortcut_text("S"))
-        .clicked()
-    {
-        egui_state.action = Some(Action::Sort);
-    }
-    if ui
-        .add(Button::new(concat!(icons::QUESTION, " Shuffle")).shortcut_text("R"))
-        .clicked()
-    {
-        egui_state.action = Some(Action::Shuffle);
-    }
-    ui.separator();
     ui.selectable_value(
         &mut state.thumbs_view.sort_by,
         SortBy::Path,
@@ -506,4 +493,17 @@ fn sort_menu_ui(
         SortOrder::Desc,
         "🔽 Descending",
     );
+    ui.separator();
+    ui.horizontal(|ui| {
+        if ui.add(Button::new("📶 Sort").shortcut_text("S")).clicked() {
+            egui_state.action = Some(Action::Sort);
+        }
+        ui.separator();
+        if ui
+            .add(Button::new("🎲 Shuffle").shortcut_text("R"))
+            .clicked()
+        {
+            egui_state.action = Some(Action::Shuffle);
+        }
+    });
 }
