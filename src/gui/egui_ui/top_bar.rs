@@ -484,22 +484,26 @@ fn sort_menu_ui(
         egui_state.action = Some(Action::Shuffle);
     }
     ui.separator();
-    ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Path, "By filename");
-    ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Id, "By id");
+    ui.selectable_value(
+        &mut state.thumbs_view.sort_by,
+        SortBy::Path,
+        "📄 By filename",
+    );
+    ui.selectable_value(&mut state.thumbs_view.sort_by, SortBy::Id, "🔢 By id");
     ui.selectable_value(
         &mut state.thumbs_view.sort_by,
         SortBy::NTags,
-        "By number of tags",
+        "🏷️ By number of tags",
     );
     ui.separator();
     ui.selectable_value(
         &mut state.thumbs_view.sort_order,
         SortOrder::Asc,
-        "Ascending",
+        "🔼 Ascending",
     );
     ui.selectable_value(
         &mut state.thumbs_view.sort_order,
         SortOrder::Desc,
-        "Descending",
+        "🔽 Descending",
     );
 }
