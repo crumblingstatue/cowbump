@@ -195,7 +195,7 @@ fn help_menu(ui: &mut egui::Ui, app: &Application, egui_state: &mut EguiState) {
         }
         ui.separator();
         ui.vertical_centered(|ui| {
-            ui.label("= Debug =");
+            ui.label("🐞 Debug 🐞");
         });
         if ui
             .button(concat!(icons::FOLDER, " Open data dir"))
